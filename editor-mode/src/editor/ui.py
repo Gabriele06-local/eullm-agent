@@ -58,7 +58,8 @@ class LoginRequired(Exception):
 
 def safe_path(value: str | None, default: str = "/") -> str:
     """A local path to go back to; anything else becomes the default."""
-    if value and value.startswith("/") and not value.startswith("//") and "\\" not in value:
+    if (value and value.startswith("/") and not value.startswith("//") and "\\" not in value
+            and "\n" not in value and "\r" not in value):
         return value
     return default
 
