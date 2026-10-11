@@ -71,6 +71,9 @@ impl ApiToken {
             (None, Some(var)) => {
                 let t = std::env::var(var)
                     .with_context(|| format!("environment variable {var} is not set"))?;
+                // Files and shells often add a trailing newline; the request
+                // side trims the Bearer token, so trim here too.
+                let t = t.trim().to_string();
                 if t.len() < 32 {
                     bail!("api token '{}' is shorter than 32 characters", cfg.name);
                 }
@@ -505,4 +508,26 @@ async fn shutdown_signal() {
         _ = term => {},
     }
     tracing::info!("shutting down: no new requests accepted");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn token_from_env_ignores_surrounding_whitespace() {
+        let var = "EULLM_AGENT_TEST_TOKEN_TRIM";
+        std::env::set_var(var, "test-token-0123456789abcdef01234567\n");
+        let token = ApiToken::resolve(&ApiTokenConfig {
+            name: "t".into(),
+            tenant: "default".into(),
+            token_sha256: None,
+            token_env: Some(var.into()),
+            profiles: vec![],
+        })
+        .unwrap();
+        std::env::remove_var(var);
+        let expected: [u8; 32] = Sha256::digest(b"test-token-0123456789abcdef01234567").into();
+        assert_eq!(token.sha256, expected);
+    }
 }
