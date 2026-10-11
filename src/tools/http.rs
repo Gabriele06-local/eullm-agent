@@ -250,8 +250,13 @@ impl Tool for FetchUrlTool {
         let url_str = arguments["url"]
             .as_str()
             .ok_or_else(|| anyhow::anyhow!("Missing 'url'"))?;
-        let method: Method = arguments["method"]
-            .as_str()
+        let method: Method = arguments
+            .get("method")
+            .map(|m| {
+                m.as_str()
+                    .ok_or_else(|| anyhow::anyhow!("'method' must be a string"))
+            })
+            .transpose()?
             .unwrap_or("GET")
             .to_ascii_uppercase()
             .parse()
@@ -265,9 +270,14 @@ impl Tool for FetchUrlTool {
             .as_object()
             .map(|h| {
                 h.iter()
-                    .filter_map(|(k, v)| v.as_str().map(|v| (k.clone(), v.to_string())))
-                    .collect()
+                    .map(|(k, v)| {
+                        v.as_str()
+                            .map(|v| (k.clone(), v.to_string()))
+                            .with_context(|| format!("header '{k}' must be a string"))
+                    })
+                    .collect::<Result<Vec<_>>>()
             })
+            .transpose()?
             .unwrap_or_default();
         let body = if !arguments["json_body"].is_null() {
             Some(RequestBody::Json(arguments["json_body"].clone()))
@@ -302,5 +312,29 @@ impl Tool for FetchUrlTool {
         } else {
             Ok(format!("[HTTP {status}]\n{out}"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tool() -> FetchUrlTool {
+        let cfg: HttpToolConfig = serde_json::from_value(json!({"enabled": true})).unwrap();
+        FetchUrlTool::new(&cfg)
+    }
+
+    #[tokio::test]
+    async fn non_string_method_and_headers_are_rejected() {
+        let err = tool()
+            .execute(&json!({"url": "https://example.com", "method": 123}))
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("'method' must be a string"));
+        let err = tool()
+            .execute(&json!({"url": "https://example.com", "headers": {"Accept": 123}}))
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("header 'Accept' must be a string"));
     }
 }
