@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from editor import auth, publishing
 from editor.api import create_app
+from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
 
 PAGES = ["/", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
@@ -86,3 +87,11 @@ def test_site_switch_and_tokens(db, tenant):
     assert "non verrà più mostrato" in page.text and "Giulia" in page.text
     assert c.post("/logout", follow_redirects=False).headers["location"] == "/login"
     assert c.get("/", follow_redirects=False).status_code == 303
+
+
+def test_safe_path_rejects_crlf():
+    assert safe_path("/sources") == "/sources"
+    assert safe_path("/\nX") == "/"
+    assert safe_path("/\r\nX") == "/"
+    assert safe_path("https://evil.example") == "/"
+    assert safe_path(None) == "/"
