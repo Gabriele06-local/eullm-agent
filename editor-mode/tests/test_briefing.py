@@ -92,6 +92,19 @@ def test_telegram_ok_false_is_not_marked_sent(db, tenant):
     assert row.sent_email_at and row.sent_telegram_at is None and "telegram" in (row.send_error or "")
 
 
+def test_unconfigured_channels_are_errors_not_silence(db, tenant):
+    add_recipients(db, tenant)
+    sender = briefing.Sender(Settings())
+    bid = briefing.build(db, tenant, date(2026, 10, 9))
+    result = sender.send(db, tenant, bid)
+    assert result == {"email": 0, "telegram": 0,
+                      "errors": ["email: smtp is not configured", "telegram: token is not configured"]}
+    with db.tenant(tenant) as s:
+        row = s.execute(text("SELECT sent_email_at, sent_telegram_at, send_error FROM editor.briefings "
+                             "WHERE id = :i"), {"i": bid}).one()
+    assert row.sent_email_at is None and row.sent_telegram_at is None and row.send_error
+
+
 def test_html_is_escaped(db, tenant):
     with db.tenant(tenant) as s:
         repo.ensure_site(s, tenant, "x.example", "<script>alert(1)</script>")

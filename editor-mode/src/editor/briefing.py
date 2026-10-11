@@ -208,6 +208,10 @@ class Sender:
                 result["telegram"] = len(chats)
             except (httpx.HTTPError, ValueError) as e:
                 errors.append(f"telegram: {type(e).__name__}")
+        if emails and b.sent_email_at is None and not self.settings.smtp_host:
+            errors.append("email: smtp is not configured")
+        if chats and b.sent_telegram_at is None and not self.settings.telegram_token:
+            errors.append("telegram: token is not configured")
         values["send_error"] = "; ".join(errors) or None
         with db.tenant(tenant_id) as s:
             s.execute(update(m.briefings).where(m.briefings.c.id == briefing_id).values(**values))
