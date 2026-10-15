@@ -1,3 +1,4 @@
+import ssl
 from datetime import UTC, date, datetime
 
 import httpx
@@ -22,8 +23,10 @@ class FakeSMTP:
     def __exit__(self, *a):
         return False
 
-    def starttls(self):
-        pass
+    tls = []
+
+    def starttls(self, context=None):
+        FakeSMTP.tls.append(context)
 
     def login(self, u, p):
         pass
@@ -61,6 +64,9 @@ def test_morning_builds_and_sends_once(db, tenant):
         again = sender.send(db, tenant, bid)
         assert again == {"email": 0, "telegram": 0, "errors": []} and tg.call_count == 1
     assert len(FakeSMTP.sent) == 1
+    # TLS is started with a verifying context before the login
+    ctx = FakeSMTP.tls[-1]
+    assert ctx is not None and ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
     msg = FakeSMTP.sent[0]
     assert msg["Bcc"] == "francesco@example.com" and msg["To"] == "editor@i3k.eu"
     with db.tenant(tenant) as s:

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import html
 import smtplib
+import ssl
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from email.message import EmailMessage
@@ -226,7 +227,8 @@ class Sender:
         msg.set_content(text)
         msg.add_alternative(page, subtype="html")
         with self.smtp_factory(self.settings.smtp_host, self.settings.smtp_port, timeout=30) as smtp:
-            smtp.starttls()
+            # Verified certificate: the login below sends the SMTP password.
+            smtp.starttls(context=ssl.create_default_context())
             if self.settings.smtp_user:
                 smtp.login(self.settings.smtp_user, self.settings.smtp_password)
             smtp.send_message(msg)
