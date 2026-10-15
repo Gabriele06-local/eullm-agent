@@ -345,6 +345,7 @@ impl<'a> Agent<'a> {
                     tool: tc.name.clone(),
                     arguments: tc.arguments.clone(),
                     reason: reason.clone(),
+                    run_deadline: Some(deadline),
                 };
                 match self.approver.request(req).await {
                     Ok((id, outcome)) => {

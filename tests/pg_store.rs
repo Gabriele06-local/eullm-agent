@@ -128,6 +128,7 @@ async fn approvals_are_decided_once_and_scoped() {
         tool: "write_file".into(),
         arguments: json!({"path": "x", "content": "y"}),
         reason: "test".into(),
+        run_deadline: None,
     };
     let waiter = tokio::spawn(async move { q.request_with(req, None).await });
 
@@ -200,6 +201,7 @@ async fn unanswered_approval_expires() {
                 tool: "run_program".into(),
                 arguments: json!({}),
                 reason: "test".into(),
+                run_deadline: None,
             },
             None,
         )
@@ -229,6 +231,7 @@ async fn a_decision_taken_elsewhere_reaches_the_waiting_run() {
         tool: "write_file".into(),
         arguments: json!({}),
         reason: "test".into(),
+        run_deadline: None,
     };
     let waiter = tokio::spawn(async move { q.request_with(req, None).await });
     let pending = loop {

@@ -377,6 +377,32 @@ async fn sensitive_action_waits_for_approval_then_runs() {
 }
 
 #[tokio::test]
+async fn an_approval_never_outlives_its_run() {
+    // The queue would wait 5 s; the run has 1 s, so it ends at 1 s and
+    // frees its slot instead of waiting for an answer it cannot use.
+    let h = harness_with(
+        "provider:\n  type: eullm\n  model: test\nprofiles:\n  default:\n    max_run_seconds: 1\n",
+        vec![tool_call("danger", json!({}))],
+    );
+    let started = std::time::Instant::now();
+    let (_, acc) = call(
+        &h.app,
+        "POST",
+        "/v1/runs",
+        Some(TOKEN_A),
+        Some(json!({"input": "go"})),
+    )
+    .await;
+    let run = wait_for(&h.app, acc["id"].as_str().unwrap(), TOKEN_A, "failed").await;
+    assert!(started.elapsed() < Duration::from_secs(3), "{run}");
+    assert!(
+        run["error"].as_str().unwrap().contains("time limit"),
+        "{run}"
+    );
+    assert_eq!(*h.danger_runs.lock().unwrap(), 0);
+}
+
+#[tokio::test]
 async fn refused_action_is_reported_to_the_model() {
     let h = harness(vec![tool_call("danger", json!({}))]);
     let (_, acc) = call(
