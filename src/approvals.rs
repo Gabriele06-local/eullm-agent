@@ -25,6 +25,9 @@ pub struct ApprovalRequest {
     pub tool: String,
     pub arguments: Value,
     pub reason: String,
+    /// When the run itself ends: waiting past it would only hold a slot
+    /// for a run that can no longer use the answer.
+    pub run_deadline: Option<std::time::Instant>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -114,6 +117,7 @@ impl ApprovalQueue {
         req: ApprovalRequest,
         notify: Option<&Notify>,
     ) -> Result<(Option<String>, Outcome)> {
+        let req_deadline = req.run_deadline;
         let approval = Approval {
             id: uuid::Uuid::new_v4().to_string(),
             tenant: req.tenant,
@@ -136,7 +140,10 @@ impl ApprovalQueue {
         if let Some(n) = notify {
             n(&approval);
         }
-        let deadline = tokio::time::Instant::now() + self.timeout;
+        let mut deadline = tokio::time::Instant::now() + self.timeout;
+        if let Some(end) = req_deadline {
+            deadline = deadline.min(tokio::time::Instant::from_std(end));
+        }
         let mut rx = rx;
         let mut poll = tokio::time::interval_at(tokio::time::Instant::now() + POLL, POLL);
         let decided = loop {

@@ -31,7 +31,7 @@ pub fn run(config_path: &std::path::Path) -> Result<Config> {
         api: None,
     };
 
-    let yaml = serde_yaml::to_string(&config)?;
+    let yaml = serde_saphyr::to_string(&config)?;
     write_private(config_path, &yaml)?;
     println!(
         "\nConfig saved to '{}'. Starting...\n",

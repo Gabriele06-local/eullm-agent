@@ -162,6 +162,7 @@ impl LlmClient for OllamaClient {
             content,
             tool_calls,
             usage,
+            served_by: None,
         })
     }
 

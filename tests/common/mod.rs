@@ -189,6 +189,7 @@ impl LlmClient for Scripted {
                 input_tokens: 10,
                 output_tokens: 2,
             }),
+            served_by: None,
         }))
     }
     fn provider_name(&self) -> &str {
@@ -211,6 +212,7 @@ pub fn tool_call(name: &str, arguments: Value) -> ChatResponse {
             input_tokens: 100,
             output_tokens: 20,
         }),
+        served_by: None,
     }
 }
 

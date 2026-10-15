@@ -272,8 +272,14 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
 
     body = render(article, sources, profile.get("language"))
     with db.tenant(tenant_id) as s:
+        # The model was paid for whatever happens next.
         for c in calls:
             repo.record_llm_usage(s, tenant_id, "draft", c.model, c.usage, c.cost)
+    with db.tenant(tenant_id) as s:
+        # Checked again with the insert: other drafts may have been written
+        # while this one was with the model.
+        quotas.check(s, "drafts")
+        quotas.lock(s, f"editor-draft-version:{proposal_id}")
         version = (s.execute(select(func.max(m.drafts.c.version)).where(m.drafts.c.proposal_id == proposal_id)).scalar() or 0) + 1
         did = s.execute(insert(m.drafts).values(
             tenant_id=tenant_id, proposal_id=proposal_id, site_id=prop.site_id, version=version,

@@ -166,8 +166,10 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
 
     @app.put("/api/sites/{site_id}/profile")
     def edit_profile(site_id: int, body: dict, c: auth.Caller = Depends(need("owner"))):
-        if not isinstance(body.get("subtopics"), list):
-            raise HTTPException(400, "a profile needs a subtopics list")
+        try:
+            body = prof.validate_edit(body)
+        except ValueError as e:
+            raise HTTPException(400, f"invalid profile: {e}") from None
         with db.tenant(c.tenant_id) as s:
             site = site_or_404(s, site_id)
             body["domain"] = site.domain

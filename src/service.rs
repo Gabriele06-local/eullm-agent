@@ -523,17 +523,16 @@ impl Core {
             Err(_) => Err(anyhow::anyhow!("model call timed out")),
         };
         let usage = result.as_ref().ok().and_then(|r| r.usage);
-        let cost = match (usage, model.pricing) {
-            (Some(u), Some(p)) => Some(
-                (u.input_tokens as f64 * p.input_per_mtok
-                    + u.output_tokens as f64 * p.output_per_mtok)
-                    / 1_000_000.0,
-            ),
-            _ => None,
-        };
+        let cost = result.as_ref().ok().and_then(|r| r.cost(model.pricing));
+        let served = result.as_ref().ok().and_then(|r| r.served_by.clone());
         let record = LlmCallRecord {
-            provider: model.client.provider_name().to_string(),
-            model: model.client.model().to_string(),
+            provider: served.as_ref().map_or_else(
+                || model.client.provider_name().to_string(),
+                |s| s.provider.clone(),
+            ),
+            model: served
+                .as_ref()
+                .map_or_else(|| model.client.model().to_string(), |s| s.model.clone()),
             duration_ms: started.elapsed().as_millis() as u64,
             input_tokens: usage.map(|u| u.input_tokens),
             output_tokens: usage.map(|u| u.output_tokens),

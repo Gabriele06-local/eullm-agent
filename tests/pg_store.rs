@@ -128,6 +128,7 @@ async fn approvals_are_decided_once_and_scoped() {
         tool: "write_file".into(),
         arguments: json!({"path": "x", "content": "y"}),
         reason: "test".into(),
+        run_deadline: None,
     };
     let waiter = tokio::spawn(async move { q.request_with(req, None).await });
 
@@ -200,6 +201,7 @@ async fn unanswered_approval_expires() {
                 tool: "run_program".into(),
                 arguments: json!({}),
                 reason: "test".into(),
+                run_deadline: None,
             },
             None,
         )
@@ -229,6 +231,7 @@ async fn a_decision_taken_elsewhere_reaches_the_waiting_run() {
         tool: "write_file".into(),
         arguments: json!({}),
         reason: "test".into(),
+        run_deadline: None,
     };
     let waiter = tokio::spawn(async move { q.request_with(req, None).await });
     let pending = loop {
@@ -289,7 +292,24 @@ async fn runs_left_unfinished_are_closed_at_startup() {
         decided_at_ms: None,
     };
     s.create_approval(&approval).await.unwrap();
-    assert!(s.recover_interrupted("api:").await.unwrap() >= 1);
+    // A second process starting now leaves the runs of the live one alone.
+    let other = store().await.unwrap();
+    other.recover_interrupted("api:").await.unwrap();
+    let api = s.get_run(&t, &api_run.id).await.unwrap().unwrap();
+    assert_eq!(api.summary.status, RunStatus::WaitingApproval);
+    // Once that process is gone, its runs are closed.
+    drop(s);
+    let s = other;
+    let mut closed = 0;
+    for _ in 0..50 {
+        // the server notices the closed connection a moment later
+        closed = s.recover_interrupted("api:").await.unwrap();
+        if closed >= 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(closed >= 1);
     let api = s.get_run(&t, &api_run.id).await.unwrap().unwrap();
     assert_eq!(api.summary.status, RunStatus::Failed);
     assert!(api.error.unwrap().contains("interrupted"));

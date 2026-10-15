@@ -164,3 +164,58 @@ def test_active_source_limit_keeps_new_ones_as_candidates(db, pg_urls, tenant, m
     with db.tenant(tenant) as s:
         st = s.execute(text("SELECT status FROM editor.sources WHERE kind = 'hackernews'")).scalar()
     assert st == "candidate"
+
+
+def _together(n, work):
+    """Run ``work(i)`` in n threads started at the same moment; results or exceptions."""
+    import threading
+
+    gate, out = threading.Barrier(n), [None] * n
+
+    def run(i):
+        gate.wait()
+        try:
+            out[i] = work(i)
+        except Exception as e:  # noqa: BLE001 - the test inspects it
+            out[i] = e
+
+    threads = [threading.Thread(target=run, args=(i,)) for i in range(n)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    return out
+
+
+def test_concurrent_checks_cannot_both_pass_a_limit(db, pg_urls, tenant):
+    set_plan(pg_urls[0], tenant, max_sites=1)
+
+    def add(i):
+        with db.tenant(tenant) as s:
+            sid = repo.ensure_site(s, tenant, f"s{i}.example", f"S{i}")
+            s.execute(text("SELECT pg_sleep(0.2)"))  # the window another check used to slip into
+            return sid
+
+    out = _together(4, add)
+    assert sum(isinstance(r, int) for r in out) == 1
+    assert all(isinstance(r, (int, QuotaExceeded)) for r in out), out
+
+
+def test_concurrent_profile_versions_do_not_collide(db, tenant):
+    from editor import profile as prof
+
+    with db.tenant(tenant) as s:
+        site_id = repo.ensure_site(s, tenant, "v.example", "V")
+
+    def save(i):
+        with db.tenant(tenant) as s:
+            pid = prof.save_draft(s, tenant, site_id, {"subtopics": []}, "manual")
+            s.execute(text("SELECT pg_sleep(0.1)"))
+            return pid
+
+    out = _together(4, save)
+    assert all(isinstance(r, int) for r in out), out
+    with db.tenant(tenant) as s:
+        versions = sorted(s.execute(text("SELECT version FROM editor.editorial_profiles WHERE site_id = :s"),
+                                    {"s": site_id}).scalars())
+    assert versions == [1, 2, 3, 4]

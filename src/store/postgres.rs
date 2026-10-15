@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use serde_json::{json, Value};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
 use sqlx::Row;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use super::*;
@@ -11,7 +12,14 @@ use super::*;
 #[derive(Clone)]
 pub struct PgStore {
     pool: PgPool,
+    /// This process, as written on its runs; alive while `lock` holds the
+    /// advisory lock (`INSTANCE_LOCKS`, instance).
+    instance: i32,
+    _lock: Arc<std::sync::Mutex<sqlx::PgConnection>>,
 }
+
+/// First key of the advisory locks that mark live processes.
+const INSTANCE_LOCKS: i32 = 0x4575_4c4c;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
@@ -39,7 +47,27 @@ impl PgStore {
             .run(&pool)
             .await
             .context("database migration failed")?;
-        Ok(Self { pool })
+        // A connection of its own holds the lock for the life of the
+        // process; when the process dies the lock goes with it.
+        let mut conn = pool.acquire().await?.detach();
+        let instance = loop {
+            let bytes = Uuid::new_v4().into_bytes();
+            let candidate =
+                (u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) >> 1) as i32;
+            let locked: bool = sqlx::query_scalar("SELECT pg_try_advisory_lock($1, $2)")
+                .bind(INSTANCE_LOCKS)
+                .bind(candidate)
+                .fetch_one(&mut conn)
+                .await?;
+            if locked {
+                break candidate;
+            }
+        };
+        Ok(Self {
+            pool,
+            instance,
+            _lock: Arc::new(std::sync::Mutex::new(conn)),
+        })
     }
 
     pub fn pool(&self) -> &PgPool {
@@ -111,14 +139,15 @@ impl Store for PgStore {
         let id = uuid(&run.id)?;
         let mut tx = self.pool.begin().await?;
         sqlx::query(
-            "INSERT INTO core.runs (id, tenant, profile, source, status, input) \
-             VALUES ($1, $2, $3, $4, 'queued', $5)",
+            "INSERT INTO core.runs (id, tenant, profile, source, status, input, instance) \
+             VALUES ($1, $2, $3, $4, 'queued', $5, $6)",
         )
         .bind(id)
         .bind(&run.tenant)
         .bind(&run.profile)
         .bind(&run.source)
         .bind(&run.input)
+        .bind(self.instance)
         .execute(&mut *tx)
         .await?;
         self.audit(
@@ -557,9 +586,15 @@ impl Store for PgStore {
             "UPDATE core.runs SET status = 'failed', finished_at = now(), \
              error = 'interrupted: the service stopped before the run finished' \
              WHERE status IN ('queued', 'running', 'waiting_approval') \
-             AND starts_with(source, $1) RETURNING id, tenant",
+             AND starts_with(source, $1) \
+             AND (instance IS NULL OR (instance <> $2 AND NOT EXISTS ( \
+                 SELECT 1 FROM pg_locks l WHERE l.locktype = 'advisory' AND l.granted \
+                 AND l.classid = $3::oid AND l.objid = runs.instance::oid AND l.objsubid = 2))) \
+             RETURNING id, tenant",
         )
         .bind(source_prefix)
+        .bind(self.instance)
+        .bind(INSTANCE_LOCKS)
         .fetch_all(&mut *tx)
         .await?;
         let ids: Vec<Uuid> = runs.iter().map(|(id, _)| *id).collect();

@@ -17,12 +17,14 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from datetime import UTC, datetime
+from typing import Annotated
 
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import repo
+from . import quotas, repo
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
 from .normalize import url_hash
@@ -32,6 +34,62 @@ from .text import tokens
 log = logging.getLogger(__name__)
 
 DEFAULT_SETTINGS = {"proposals_per_day": 3, "min_relevance": 0.15, "exclude": []}
+
+
+# --- manual edits ---------------------------------------------------------------
+# A person's edit is checked before it is stored: a malformed body would be
+# kept and then break the dashboard and the drafts every time they read it.
+# Known parts are typed; other keys (analysis, gaps, ...) are kept as they are.
+
+_Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+
+
+class _Part(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class _Labelled(_Part):
+    value: str | None = Field(None, max_length=500)
+    evidence: list[str] = Field(default_factory=list, max_length=50)
+
+
+class _Subtopic(_Part):
+    name: _Text
+    keywords: list[_Text] = Field(default_factory=list, max_length=50)
+    share: float | None = Field(None, ge=0, le=1)
+    evidence: list[str] = Field(default_factory=list, max_length=50)
+
+
+class _Style(_Part):
+    tone: str | None = Field(None, max_length=200)
+    formats: list[_Text] = Field(default_factory=list, max_length=20)
+    typical_words: int | None = Field(None, ge=0, le=100_000)
+    evidence: list[str] = Field(default_factory=list, max_length=50)
+
+
+class _Settings(_Part):
+    proposals_per_day: int = Field(DEFAULT_SETTINGS["proposals_per_day"], ge=0, le=50)
+    min_relevance: float = Field(DEFAULT_SETTINGS["min_relevance"], ge=0, le=1)
+    exclude: list[_Text] = Field(default_factory=list, max_length=200)
+
+
+class _ProfileEdit(_Part):
+    subtopics: list[_Subtopic] = Field(..., max_length=50)
+    sector: _Labelled | None = None
+    audience: _Labelled | None = None
+    style: _Style | None = None
+    settings: _Settings | None = None
+    search_terms: list[_Text] = Field(default_factory=list, max_length=100)
+
+
+def validate_edit(body) -> dict:
+    """The edit as it will be stored, or ValueError saying what is wrong."""
+    try:
+        return _ProfileEdit.model_validate(body).model_dump(exclude_unset=True)
+    except ValidationError as e:
+        problems = "; ".join(f"{'.'.join(str(x) for x in err['loc']) or 'body'}: {err['msg']}"
+                             for err in e.errors()[:5])
+        raise ValueError(problems) from None
 
 
 # --- baseline -------------------------------------------------------------
@@ -248,6 +306,8 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
 
 
 def _next_version(s, site_id: int) -> int:
+    # Analysis, reviews and manual edits can save a version at the same time.
+    quotas.lock(s, f"editor-profile-version:{site_id}")
     v = s.execute(select(func.max(m.editorial_profiles.c.version)).where(m.editorial_profiles.c.site_id == site_id)).scalar()
     return (v or 0) + 1
 

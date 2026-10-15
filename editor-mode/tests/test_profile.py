@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 import httpx
 import respx
 from sqlalchemy import text
@@ -161,3 +163,12 @@ def test_manual_edit_keeps_explicit_settings(db, tenant):
                                                       "settings": settings})
         body = s.execute(text("SELECT body FROM editor.editorial_profiles WHERE id = :i"), {"i": pid}).scalar()
     assert body["settings"] == settings
+
+
+def test_validate_edit_keeps_unknown_parts_and_unset_settings():
+    body = {"subtopics": [{"name": " Fibra ", "keywords": ["ftth"], "note": "x"}], "gaps": ["g"]}
+    out = prof.validate_edit(body)
+    assert out == {"subtopics": [{"name": "Fibra", "keywords": ["ftth"], "note": "x"}], "gaps": ["g"]}
+    assert "settings" not in out  # so the owner's approved settings are kept
+    with pytest.raises(ValueError, match="subtopics"):
+        prof.validate_edit({"subtopics": "fibra"})

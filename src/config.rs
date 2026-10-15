@@ -591,7 +591,7 @@ impl Config {
     }
 
     pub fn from_yaml(text: &str) -> Result<Self> {
-        let config: Config = serde_yaml::from_str(text)?;
+        let config: Config = serde_saphyr::from_str(text)?;
         config.validate()?;
         Ok(config)
     }
@@ -749,5 +749,15 @@ mod tests {
         assert!(!c.tools.filesystem.allow_write);
         assert!(!c.modules.enabled);
         assert!(c.deprecation_warnings().is_empty());
+    }
+
+    #[test]
+    fn a_saved_config_loads_back_unchanged() {
+        // The setup wizard writes the config with the same YAML library.
+        let c = Config::from_yaml(include_str!("../config.example.yaml")).unwrap();
+        let text = serde_saphyr::to_string(&c).unwrap();
+        let again = Config::from_yaml(&text).unwrap();
+        assert_eq!(serde_saphyr::to_string(&again).unwrap(), text);
+        assert_eq!(again.system_prompt, c.system_prompt);
     }
 }
