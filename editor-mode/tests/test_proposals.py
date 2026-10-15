@@ -8,6 +8,7 @@ from sqlalchemy import text
 from editor import opportunity as opp
 from editor import profile as prof
 from editor import proposals as props
+from editor import models as m
 from editor import repo
 from editor.collectors import Item
 from editor.core_client import CoreClient
@@ -71,10 +72,9 @@ def test_site_history_lowers_novelty(db, tenant):
     before = {o.matched_subtopic: o for o in opp.score_site(db, tenant, site_id)}
     with db.tenant(tenant) as s:
         title = "Open Fiber completa la fibra FTTH a Bari"
-        s.execute(text(
-            "INSERT INTO editor.site_posts (tenant_id, site_id, url, url_hash, title, minhash, published_at) "
-            "VALUES (:t, :s, 'https://blog.example/bari', :h, :title, :mh, now())"),
-            {"t": tenant, "s": site_id, "h": url_hash("https://blog.example/bari"), "title": title, "mh": minhash(title)})
+        s.execute(m.site_posts.insert().values(
+            tenant_id=tenant, site_id=site_id, url="https://blog.example/bari", url_hash=url_hash("https://blog.example/bari"),
+            title=title, minhash=minhash(title), published_at=datetime.now(UTC)))
     after = {o.matched_subtopic: o for o in opp.score_site(db, tenant, site_id)}
     assert after["Fibra"].components["novelty"] < before["Fibra"].components["novelty"]
     assert after["Fibra"].score < before["Fibra"].score
@@ -137,6 +137,6 @@ def test_citation_to_missing_item_is_impossible(db, tenant):
         with db.tenant(tenant) as s:
             s.execute(text("INSERT INTO editor.proposal_citations VALUES (:t, :p, 987654321)"), {"t": tenant, "p": pid})
     except Exception as e:
-        assert "foreign key" in str(e)
+        assert "foreign key" in str(e).lower()
     else:
         raise AssertionError("a citation to a missing item was accepted")

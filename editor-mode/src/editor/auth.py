@@ -44,6 +44,11 @@ def create_token(db, tenant_id: str, name: str, role: str) -> str:
 def resolve(db, token: str | None) -> Caller | None:
     if not token:
         return None
+    # On PostgreSQL only this function reads tokens across tenants.
+    q = ("SELECT a.tenant_id, a.name, a.role FROM editor.access_tokens a "
+         "JOIN editor.tenants t ON t.tenant_id = a.tenant_id "
+         "WHERE a.token_sha256 = :d AND a.revoked_at IS NULL AND t.active" if db.sqlite
+         else "SELECT * FROM editor.resolve_token(:d)")
     with db.engine.connect() as conn:
-        row = conn.execute(text("SELECT * FROM editor.resolve_token(:d)"), {"d": digest(token)}).first()
+        row = conn.execute(text(q), {"d": digest(token)}).first()
     return Caller(row.tenant_id, row.name, row.role) if row else None

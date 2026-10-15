@@ -3,9 +3,9 @@ from datetime import UTC, date, datetime
 
 import httpx
 import respx
-from sqlalchemy import text
+from sqlalchemy import select, text
 
-from editor import briefing, profile as prof, repo
+from editor import briefing, models as m, profile as prof, repo
 from editor.config import Settings
 from editor.schedule import Runner
 from test_proposals import setup_site
@@ -70,7 +70,7 @@ def test_morning_builds_and_sends_once(db, tenant):
     msg = FakeSMTP.sent[0]
     assert msg["Bcc"] == "francesco@example.com" and msg["To"] == "editor@i3k.eu"
     with db.tenant(tenant) as s:
-        b = s.execute(text("SELECT body_md, body_html, proposal_ids, sent_email_at, sent_telegram_at FROM editor.briefings")).one()
+        b = s.execute(select(m.briefings)).one()
     assert b.sent_email_at and b.sent_telegram_at and len(b.proposal_ids) == 2
     assert "## Blog Rete (blog.example)" in b.body_md
     assert "Profilo editoriale da approvare" in b.body_md and "no publication dates found" in b.body_md

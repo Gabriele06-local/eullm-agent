@@ -1,5 +1,6 @@
 """F6: two tenants on the same database see nothing of each other, cannot
-change their own plan, and are held to their limits."""
+change their own plan, and are held to their limits. Isolation is a
+PostgreSQL matter (the local SQLite file has one tenant); limits hold on both."""
 
 import json
 import socket
@@ -16,6 +17,8 @@ from editor.core_client import CoreClient, CoreError
 from editor.ingest import SourceReport, store_items
 from editor.quotas import QuotaExceeded
 
+from conftest import pause, set_plan
+
 
 def tenant_tables(admin_url):
     with psycopg.connect(admin_url) as conn:
@@ -23,12 +26,6 @@ def tenant_tables(admin_url):
             "SELECT c.table_name FROM information_schema.columns c JOIN information_schema.tables t "
             "USING (table_schema, table_name) WHERE c.table_schema = 'editor' AND c.column_name = 'tenant_id' "
             "AND t.table_type = 'BASE TABLE' ORDER BY 1").fetchall()]
-
-
-def set_plan(admin_url, tenant, **limits):
-    sets = ", ".join(f"{k} = %({k})s" for k in limits)
-    with psycopg.connect(admin_url, autocommit=True) as conn:
-        conn.execute(f"UPDATE editor.tenants SET {sets} WHERE tenant_id = %(t)s", limits | {"t": tenant})
 
 
 def populate(db, tenant, monkeypatch):
@@ -56,6 +53,7 @@ def populate(db, tenant, monkeypatch):
         pass
 
 
+@pytest.mark.postgres
 def test_two_tenants_are_fully_isolated(db, pg_urls, tenant, monkeypatch):
     populate(db, tenant, monkeypatch)
     other = f"{tenant}-b"
@@ -83,15 +81,16 @@ def test_two_tenants_are_fully_isolated(db, pg_urls, tenant, monkeypatch):
     assert auth.resolve(db, tok_b).tenant_id == other
 
 
-def test_inactive_tenant_loses_access(db, pg_urls, tenant):
+def test_inactive_tenant_loses_access(db, tenant):
     token = auth.create_token(db, tenant, "owner", "owner")
     assert auth.resolve(db, token).tenant_id == tenant
-    set_plan(pg_urls[0], tenant, active=False)
+    set_plan(db, tenant, active=False)
     assert auth.resolve(db, token) is None
-    set_plan(pg_urls[0], tenant, active=True)
+    set_plan(db, tenant, active=True)
     assert auth.resolve(db, token).tenant_id == tenant
 
 
+@pytest.mark.postgres
 def test_tenant_cannot_change_its_plan(db, tenant):
     with pytest.raises(Exception, match="permission denied"):
         with db.tenant(tenant) as s:
@@ -101,8 +100,8 @@ def test_tenant_cannot_change_its_plan(db, tenant):
             s.execute(text("INSERT INTO editor.tenants (tenant_id, name, max_sites) VALUES (:t, 'x', 99)"), {"t": tenant + "x"})
 
 
-def test_site_and_item_limits(db, pg_urls, tenant):
-    set_plan(pg_urls[0], tenant, max_sites=1, max_items_per_day=3)
+def test_site_and_item_limits(db, tenant):
+    set_plan(db, tenant, max_sites=1, max_items_per_day=3)
     with db.tenant(tenant) as s:
         repo.ensure_site(s, tenant, "a.example", "A")
         repo.ensure_site(s, tenant, "a.example", "A again")  # same site: fine
@@ -119,8 +118,8 @@ def test_site_and_item_limits(db, pg_urls, tenant):
     assert u.used["items_today"] == 3 and u.remaining("items") == 0
 
 
-def test_model_budget_stops_calls_before_they_reach_the_core(db, pg_urls, tenant):
-    set_plan(pg_urls[0], tenant, max_llm_cost_month=0.01)
+def test_model_budget_stops_calls_before_they_reach_the_core(db, tenant):
+    set_plan(db, tenant, max_llm_cost_month=0.01)
     core = CoreClient("http://core.test", "tok").for_tenant(db, tenant)
     with respx.mock() as router:
         llm = router.post("http://core.test/v1/llm/chat").mock(return_value=httpx.Response(
@@ -133,8 +132,8 @@ def test_model_budget_stops_calls_before_they_reach_the_core(db, pg_urls, tenant
         assert llm.call_count == 1
 
 
-def test_tenant_core_token(db, pg_urls, tenant, monkeypatch):
-    set_plan(pg_urls[0], tenant, core_token_env="CORE_TOKEN_T1")
+def test_tenant_core_token(db, tenant, monkeypatch):
+    set_plan(db, tenant, core_token_env="CORE_TOKEN_T1")
     monkeypatch.setenv("CORE_TOKEN_T1", "tenant-token")
     core = CoreClient("http://core.test", "shared").for_tenant(db, tenant)
     with respx.mock() as router:
@@ -144,13 +143,13 @@ def test_tenant_core_token(db, pg_urls, tenant, monkeypatch):
     assert llm.calls[0].request.headers["authorization"] == "Bearer tenant-token"
 
 
-def test_active_source_limit_keeps_new_ones_as_candidates(db, pg_urls, tenant, monkeypatch):
+def test_active_source_limit_keeps_new_ones_as_candidates(db, tenant, monkeypatch):
     from conftest import fixture
     from editor import sources
     from test_proposals import setup_site
 
     site_id = setup_site(db, tenant)  # one active source already
-    set_plan(pg_urls[0], tenant, max_active_sources=1)
+    set_plan(db, tenant, max_active_sources=1)
     monkeypatch.setattr(sources, "api_candidates", lambda body: [sources.Candidate(
         "hackernews", "HN: fibra", "https://hn.algolia.com/api/v1/search", {"query": "fibra"}, "api_query")])
     monkeypatch.setattr(sources, "rate", lambda items, kws, **kw: {
@@ -187,13 +186,13 @@ def _together(n, work):
     return out
 
 
-def test_concurrent_checks_cannot_both_pass_a_limit(db, pg_urls, tenant):
-    set_plan(pg_urls[0], tenant, max_sites=1)
+def test_concurrent_checks_cannot_both_pass_a_limit(db, tenant):
+    set_plan(db, tenant, max_sites=1)
 
     def add(i):
         with db.tenant(tenant) as s:
             sid = repo.ensure_site(s, tenant, f"s{i}.example", f"S{i}")
-            s.execute(text("SELECT pg_sleep(0.2)"))  # the window another check used to slip into
+            pause(s, 0.2)  # the window another check used to slip into
             return sid
 
     out = _together(4, add)
@@ -210,7 +209,7 @@ def test_concurrent_profile_versions_do_not_collide(db, tenant):
     def save(i):
         with db.tenant(tenant) as s:
             pid = prof.save_draft(s, tenant, site_id, {"subtopics": []}, "manual")
-            s.execute(text("SELECT pg_sleep(0.1)"))
+            pause(s, 0.1)
             return pid
 
     out = _together(4, save)

@@ -4,11 +4,12 @@ from email.utils import format_datetime
 
 import httpx
 import respx
-from sqlalchemy import text
+from sqlalchemy import select, text, update
 
 import fakesite
 from conftest import fixture
 from editor import profile as prof
+from editor import models as m
 from editor import repo
 from editor import sources as src
 from editor.collectors import Item
@@ -105,7 +106,8 @@ def test_discovery_and_maintenance(db, tenant):
         assert not home_of_blocked.called
 
     with db.tenant(tenant) as s:
-        rows = s.execute(text("SELECT kind, name, origin, status, score, evidence FROM editor.sources ORDER BY id")).all()
+        c = m.sources.c
+        rows = s.execute(select(c.kind, c.name, c.origin, c.status, c.score, c.evidence).order_by(c.id)).all()
     by_origin = {(r.kind, r.origin): r for r in rows}
     agcom = by_origin[("rss", "site_outbound")]
     assert agcom.status == "active" and agcom.evidence["cited_by_site"] >= 1
@@ -149,6 +151,6 @@ def test_stale_source_is_suspended(db, tenant):
     from editor import repo
     with db.tenant(tenant) as s:
         sid = repo.upsert_source(s, tenant, kind="rss", name="old", url="https://old.example/feed")
-        s.execute(text("UPDATE editor.sources SET last_item_at = now() - interval '90 days' WHERE id = :i"), {"i": sid})
+        s.execute(update(m.sources).where(m.sources.c.id == sid).values(last_item_at=datetime.now(UTC) - timedelta(days=90)))
     rep = src.maintain(db, tenant)
     assert rep.suspended == [(sid, "nothing new for more than 45 days")]

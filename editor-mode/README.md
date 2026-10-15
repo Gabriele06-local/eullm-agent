@@ -55,6 +55,15 @@ Screenshots use demo data on fictitious `.example` domains.
 
 ## Setup
 
+Two installations, same code:
+
+- **Local, one user:** `EDITOR_DATABASE_URL=sqlite:///editor.db`. One file,
+  created by `editor migrate`, nothing to install; the file holds one tenant
+  (a second is refused) and `editor worker` is a plain hourly loop. Steps 2
+  and the `tenant-plan` limits are optional there.
+- **Server, several tenants:** PostgreSQL, with row-level security between
+  tenants and procrastinate for the hourly tick. All the steps below apply.
+
 1. **Core.** Enable fetch and give Editor Mode a token per tenant in the
    Core configuration (`eullm-agent token new` prints the token and its
    SHA-256; only the hash goes in the file). Limits in `api.tenants` are the
@@ -69,7 +78,7 @@ Screenshots use demo data on fictitious `.example` domains.
          tenants:
            editor-acme: {max_cost_per_month: 50.0, max_fetches_per_day: 20000}
 
-2. **Database.** The migrations create the schema `editor` and the role
+2. **Database (PostgreSQL).** The migrations create the schema `editor` and the role
    `editor_app` (NOLOGIN, NOBYPASSRLS). The application connects with a login
    role that is a member of it, so row-level security always applies:
 
@@ -117,5 +126,12 @@ publication waits for an owner's approval.
     uv sync
     EDITOR_TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres uv run pytest
 
-Database tests create and drop their own database; without the variable
-they are skipped.
+Every database test runs on SQLite (a new file per test) and on
+PostgreSQL; the PostgreSQL run creates and drops its own database and is
+skipped without the variable. Tests marked `postgres` (row-level security,
+roles, several tenants) run on PostgreSQL only.
+
+A migration that changes tables is written twice: an Alembic revision in
+`src/editor/migrations/versions/` and a numbered SQL file in
+`src/editor/migrations_sqlite/`; `test_same_columns_as_postgres` checks
+that the two schemas have the same columns.

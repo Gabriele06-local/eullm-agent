@@ -304,3 +304,15 @@ def decide(db, tenant_id: str, draft_id: int, approve: bool, by: str) -> bool:
         s.execute(update(m.drafts).where(m.drafts.c.id == draft_id).values(
             status="approved" if approve else "rejected", decided_by=by, decided_at=datetime.now(UTC)))
     return True
+
+
+def stored_claims(s, draft_id: int) -> list[dict]:
+    """The claims of a draft in order, each with the ids of its sources."""
+    c, cs = m.draft_claims, m.draft_claim_sources
+    sources: dict[int, list[int]] = {}
+    for r in s.execute(select(cs.c.claim_id, cs.c.item_id).join(c, c.c.id == cs.c.claim_id)
+                       .where(c.c.draft_id == draft_id).order_by(cs.c.item_id)):
+        sources.setdefault(r.claim_id, []).append(r.item_id)
+    rows = s.execute(select(c.c.id, c.c.ordinal, c.c.section, c.c.text)
+                     .where(c.c.draft_id == draft_id).order_by(c.c.ordinal))
+    return [dict(r._mapping, sources=sources.get(r.id, [])) for r in rows]

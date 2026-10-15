@@ -17,6 +17,10 @@
   a task), tasks with every model and tool call, approvals, usage. It reads
   everything through `/v1` with the browser's token; no inline scripts.
 - `GET /v1/profiles`: the profiles a token may use.
+- Editor Mode on SQLite (`EDITOR_DATABASE_URL=sqlite:///editor.db`) for the
+  local installation: one file with one tenant, the same code and tests as
+  PostgreSQL (every database test runs on both), and `editor worker` as a
+  plain hourly loop. PostgreSQL stays the choice for several tenants.
 
 ### Changed
 

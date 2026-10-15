@@ -1,6 +1,8 @@
-"""Shared fixtures. Database tests need EDITOR_TEST_DATABASE_URL (a superuser
-connection to a disposable server, e.g. postgres://postgres@127.0.0.1:5432/postgres);
-each test session creates its own database and drops it at the end."""
+"""Shared fixtures. Every database test runs twice: on SQLite (a new file per
+test) and on PostgreSQL. The PostgreSQL run needs EDITOR_TEST_DATABASE_URL (a
+superuser connection to a disposable server, e.g.
+postgres://postgres@127.0.0.1:5432/postgres) and is skipped without it; each
+test session creates its own database and drops it at the end."""
 
 from __future__ import annotations
 
@@ -54,8 +56,26 @@ def pg_urls():
 
 
 @pytest.fixture(scope="session")
-def db(pg_urls) -> Database:
+def pg_db(pg_urls) -> Database:
     database = Database.from_url(pg_urls[1])
+    database.admin_url = pg_urls[0]
+    yield database
+    database.engine.dispose()
+
+
+@pytest.fixture(params=["sqlite", "postgres"])
+def db(request, tmp_path) -> Database:
+    """Tests marked ``postgres`` (row level security, roles, several tenants)
+    run on PostgreSQL only."""
+    if request.param == "sqlite" and request.node.get_closest_marker("postgres"):
+        pytest.skip("PostgreSQL only")
+    if request.param == "postgres":
+        yield request.getfixturevalue("pg_db")
+        return
+    url = f"sqlite:///{tmp_path}/editor.db"
+    migrate.upgrade(url)
+    database = Database.from_url(url)
+    database.admin_url = url
     yield database
     database.engine.dispose()
 
@@ -69,3 +89,28 @@ def tenant(db) -> str:
     with db.tenant(tid) as s:
         repo.ensure_tenant(s, tid, name=tid)
     return tid
+
+
+def set_plan(db, tenant, **fields):
+    """Change the tenant row as the operator does (`editor tenant-plan`)."""
+    from sqlalchemy import text
+
+    admin = Database.from_url(db.admin_url)
+    try:
+        with admin.engine.begin() as conn:
+            sets = ", ".join(f"{k} = :{k}" for k in fields)
+            conn.execute(text(f"UPDATE editor.tenants SET {sets} WHERE tenant_id = :t"), fields | {"t": tenant})
+    finally:
+        admin.engine.dispose()
+
+
+def pause(s, seconds: float) -> None:
+    """Wait inside the transaction, holding what it holds."""
+    import time
+
+    from sqlalchemy import text
+
+    if s.get_bind().dialect.name == "sqlite":
+        time.sleep(seconds)
+    else:
+        s.execute(text("SELECT pg_sleep(:s)"), {"s": seconds})
