@@ -83,6 +83,15 @@ def test_two_tenants_are_fully_isolated(db, pg_urls, tenant, monkeypatch):
     assert auth.resolve(db, tok_b).tenant_id == other
 
 
+def test_inactive_tenant_loses_access(db, pg_urls, tenant):
+    token = auth.create_token(db, tenant, "owner", "owner")
+    assert auth.resolve(db, token).tenant_id == tenant
+    set_plan(pg_urls[0], tenant, active=False)
+    assert auth.resolve(db, token) is None
+    set_plan(pg_urls[0], tenant, active=True)
+    assert auth.resolve(db, token).tenant_id == tenant
+
+
 def test_tenant_cannot_change_its_plan(db, tenant):
     with pytest.raises(Exception, match="permission denied"):
         with db.tenant(tenant) as s:
