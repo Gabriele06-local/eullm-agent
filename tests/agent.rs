@@ -42,6 +42,7 @@ impl LlmClient for ScriptedLlm {
             content: "done".into(),
             tool_calls: vec![],
             usage: None,
+            served_by: None,
         }))
     }
     fn provider_name(&self) -> &str {
@@ -61,6 +62,7 @@ fn call(name: &str, arguments: Value) -> ChatResponse {
             arguments,
         }],
         usage: None,
+        served_by: None,
     }
 }
 

@@ -228,6 +228,7 @@ impl LlmClient for AnthropicClient {
                 input_tokens: u.input_tokens,
                 output_tokens: u.output_tokens,
             }),
+            served_by: None,
         })
     }
 

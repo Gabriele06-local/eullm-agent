@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::config::{Config, Pricing};
-use crate::llm::{ChatResponse, LlmClient, Message, ToolCall, ToolDefinition, Usage};
+use crate::llm::{ChatResponse, LlmClient, Message, ServedBy, ToolCall, ToolDefinition, Usage};
 use crate::setup::build_client;
 
 #[derive(Clone)]
@@ -50,12 +50,12 @@ impl ModelRouter {
         let mut models = HashMap::new();
         for name in base.keys() {
             // Follow the fallback chain, refusing cycles.
-            let mut chain: Vec<Arc<dyn LlmClient>> = Vec::new();
+            let mut chain: Vec<(Arc<dyn LlmClient>, Option<Pricing>)> = Vec::new();
             let mut seen = vec![name.clone()];
             let mut cur = name.clone();
             loop {
-                let (client, _, fallback) = &base[&cur];
-                chain.push(Arc::clone(client));
+                let (client, pricing, fallback) = &base[&cur];
+                chain.push((Arc::clone(client), *pricing));
                 match fallback {
                     Some(f) if seen.contains(f) => bail!("fallback cycle at model '{f}'"),
                     Some(f) => {
@@ -69,6 +69,7 @@ impl ModelRouter {
                 chain
                     .pop()
                     .expect("fallback chain always holds the model itself")
+                    .0
             } else {
                 Arc::new(FallbackClient { chain })
             };
@@ -193,13 +194,14 @@ impl LlmClient for EstimatedUsage {
     }
 }
 
-/// Tries each model in order until one answers.
+/// Tries each model in order until one answers; the answer says which
+/// model served it, with that model's price.
 pub struct FallbackClient {
-    chain: Vec<Arc<dyn LlmClient>>,
+    chain: Vec<(Arc<dyn LlmClient>, Option<Pricing>)>,
 }
 
 impl FallbackClient {
-    pub fn new(chain: Vec<Arc<dyn LlmClient>>) -> Self {
+    pub fn new(chain: Vec<(Arc<dyn LlmClient>, Option<Pricing>)>) -> Self {
         assert!(!chain.is_empty());
         Self { chain }
     }
@@ -209,9 +211,16 @@ impl FallbackClient {
 impl LlmClient for FallbackClient {
     async fn chat(&self, messages: &[Message], tools: &[ToolDefinition]) -> Result<ChatResponse> {
         let mut last_err = None;
-        for (i, c) in self.chain.iter().enumerate() {
+        for (i, (c, pricing)) in self.chain.iter().enumerate() {
             match c.chat(messages, tools).await {
-                Ok(r) => return Ok(r),
+                Ok(mut r) => {
+                    r.served_by = Some(ServedBy {
+                        provider: c.provider_name().to_string(),
+                        model: c.model().to_string(),
+                        pricing: *pricing,
+                    });
+                    return Ok(r);
+                }
                 Err(e) => {
                     if i + 1 < self.chain.len() {
                         tracing::warn!(
@@ -228,11 +237,11 @@ impl LlmClient for FallbackClient {
     }
 
     fn provider_name(&self) -> &str {
-        self.chain[0].provider_name()
+        self.chain[0].0.provider_name()
     }
 
     fn model(&self) -> &str {
-        self.chain[0].model()
+        self.chain[0].0.model()
     }
 }
 
@@ -250,6 +259,7 @@ mod tests {
                 content: "a".repeat(400),
                 tool_calls: vec![],
                 usage: self.0,
+                served_by: None,
             })
         }
         fn provider_name(&self) -> &str {
@@ -286,6 +296,47 @@ mod tests {
         let client = EstimatedUsage::wrap(Arc::new(Silent(Some(reported))));
         let r = client.chat(&[Message::user("x")], &[]).await.unwrap();
         assert_eq!(r.usage, Some(reported));
+    }
+
+    struct Failing;
+
+    #[async_trait]
+    impl LlmClient for Failing {
+        async fn chat(&self, _: &[Message], _: &[ToolDefinition]) -> Result<ChatResponse> {
+            bail!("down")
+        }
+        fn provider_name(&self) -> &str {
+            "primary"
+        }
+        fn model(&self) -> &str {
+            "big"
+        }
+    }
+
+    #[tokio::test]
+    async fn a_fallback_answer_is_billed_to_the_fallback() {
+        let usage = Usage {
+            input_tokens: 1_000_000,
+            output_tokens: 0,
+        };
+        let price = |p| {
+            Some(Pricing {
+                input_per_mtok: p,
+                output_per_mtok: 0.0,
+            })
+        };
+        let chain = FallbackClient::new(vec![
+            (Arc::new(Failing), price(10.0)),
+            (Arc::new(Silent(Some(usage))), price(1.0)),
+        ]);
+        let r = chain.chat(&[Message::user("x")], &[]).await.unwrap();
+        let served = r.served_by.as_ref().expect("the chain says who answered");
+        assert_eq!(
+            (served.provider.as_str(), served.model.as_str()),
+            ("silent", "m")
+        );
+        // The primary's price (10) would be the wrong bill.
+        assert_eq!(r.cost(price(10.0)), Some(1.0));
     }
 
     #[test]

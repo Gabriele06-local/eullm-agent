@@ -89,6 +89,33 @@ pub struct ChatResponse {
     pub content: String,
     pub tool_calls: Vec<ToolCall>,
     pub usage: Option<Usage>,
+    /// Set by a fallback chain: the model that actually answered, so usage
+    /// and cost are recorded against it, not against the first in the chain.
+    pub served_by: Option<ServedBy>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServedBy {
+    pub provider: String,
+    pub model: String,
+    pub pricing: Option<crate::config::Pricing>,
+}
+
+impl ChatResponse {
+    /// Cost of this answer at `pricing`, or at the price of the model that
+    /// served it when a fallback answered.
+    pub fn cost(&self, pricing: Option<crate::config::Pricing>) -> Option<f64> {
+        let pricing = match &self.served_by {
+            Some(s) => s.pricing,
+            None => pricing,
+        }?;
+        let u = self.usage?;
+        Some(
+            (u.input_tokens as f64 * pricing.input_per_mtok
+                + u.output_tokens as f64 * pricing.output_per_mtok)
+                / 1_000_000.0,
+        )
+    }
 }
 
 #[async_trait]

@@ -27,13 +27,6 @@ use crate::tools::{
     ToolRegistry,
 };
 
-pub fn build_llm(config: &Config) -> Result<Arc<dyn LlmClient>> {
-    build_client(
-        &config.provider,
-        Duration::from_secs(config.limits.llm_timeout_seconds),
-    )
-}
-
 /// A client for one provider block.
 pub fn build_client(provider: &ProviderConfig, timeout: Duration) -> Result<Arc<dyn LlmClient>> {
     Ok(match provider {

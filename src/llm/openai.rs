@@ -210,6 +210,7 @@ impl LlmClient for OpenAiClient {
                 input_tokens: u.prompt_tokens,
                 output_tokens: u.completion_tokens,
             }),
+            served_by: None,
         })
     }
 

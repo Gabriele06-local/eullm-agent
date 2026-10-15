@@ -7,7 +7,7 @@ use tracing::{debug, info, warn};
 use crate::approvals::{ApprovalRequest, Approver, DenyAll, Outcome};
 use crate::audit::{Audit, Recorder, RunInfo};
 use crate::config::{LimitsConfig, Pricing, ProfileConfig};
-use crate::llm::{strip_think_blocks, LlmClient, Message, ToolCall, ToolDefinition, Usage};
+use crate::llm::{strip_think_blocks, ChatResponse, LlmClient, Message, ToolCall, ToolDefinition};
 use crate::policy::{Decision, Policy};
 use crate::store::{LlmCallRecord, RunEnd, ToolCallRecord};
 use crate::tools::ToolRegistry;
@@ -198,14 +198,11 @@ impl<'a> Agent<'a> {
         self.allowed_tools.is_empty() || self.allowed_tools.iter().any(|t| t == name)
     }
 
-    fn account(&self, state: &mut RunState, usage: Option<Usage>) -> Option<f64> {
-        let u = usage?;
+    fn account(&self, state: &mut RunState, response: &ChatResponse) -> Option<f64> {
+        let u = response.usage?;
         state.input_tokens += u.input_tokens;
         state.output_tokens += u.output_tokens;
-        let p = self.pricing?;
-        let cost = (u.input_tokens as f64 * p.input_per_mtok
-            + u.output_tokens as f64 * p.output_per_mtok)
-            / 1_000_000.0;
+        let cost = response.cost(self.pricing)?;
         state.cost = Some(state.cost.unwrap_or(0.0) + cost);
         Some(cost)
     }
@@ -259,13 +256,16 @@ impl<'a> Agent<'a> {
                     )),
                 };
             let usage = response.as_ref().ok().and_then(|r| r.usage);
-            let cost = self.account(state, usage);
+            let cost = response.as_ref().ok().and_then(|r| self.account(state, r));
+            // A fallback that answered is recorded under its own name.
+            let served = response.as_ref().ok().and_then(|r| r.served_by.as_ref());
             if let Some(r) = &self.recorder {
                 r.llm_call(
                     info,
                     &LlmCallRecord {
-                        provider: info.provider.clone(),
-                        model: info.model.clone(),
+                        provider: served
+                            .map_or_else(|| info.provider.clone(), |s| s.provider.clone()),
+                        model: served.map_or_else(|| info.model.clone(), |s| s.model.clone()),
                         duration_ms: started.elapsed().as_millis() as u64,
                         input_tokens: usage.map(|u| u.input_tokens),
                         output_tokens: usage.map(|u| u.output_tokens),
