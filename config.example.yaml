@@ -71,7 +71,9 @@ provider:
 # policy_file: policy.yaml
 
 # ── Core API and database (eullm-agent api) ───────────────────────────────────
-# database:
+# database:                     # local installation (one user): one file,
+#   url: sqlite://eullm-agent.db  # created at the first start
+# database:                     # server with several tenants: PostgreSQL
 #   url_env: DATABASE_URL        # postgres://user:pass@host/db
 #
 # api:

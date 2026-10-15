@@ -98,10 +98,16 @@ example Editor Mode). The contract is
   hash goes in `api.tokens`. Each token belongs to a tenant and can be limited
   to some profiles. Data is always scoped to the token's tenant.
 - **State and audit:** with `database` configured, runs, model calls, tool
-  calls, policy decisions and approvals are stored in the `core` schema of
-  PostgreSQL (migrations run at start). `core.audit_events` is append-only:
-  updates and deletes are refused by the database. Without a database the
-  state is kept in memory.
+  calls, policy decisions and approvals are stored in a database
+  (migrations run at start). Two installations:
+  - **local, one user:** `url: sqlite://eullm-agent.db`, one file created at
+    the first start, nothing to install;
+  - **server, several tenants:** a `postgres://` url, schema `core`; several
+    Core processes can share it.
+
+  The audit table (`audit_events`) is append-only in both: updates and
+  deletes are refused by the database. Without a database the state is kept
+  in memory.
 - **Model Router and profiles:** `models` adds named models with fallback and
   pricing (`pricing` at the top level prices the `default` model);
   `profiles` choose a model, the tools a run may use and its budget

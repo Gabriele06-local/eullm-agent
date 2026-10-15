@@ -3,7 +3,7 @@
 //! Every sensitive tool is registered only when the configuration turns it
 //! on; anything missing from the config stays off.
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tracing::{info, warn};
@@ -16,7 +16,7 @@ use crate::modules::ModuleRegistry;
 use crate::policy::Policy;
 use crate::router::ModelRouter;
 use crate::service::Core;
-use crate::store::{MemoryStore, PgStore, Store};
+use crate::store::{MemoryStore, PgStore, SqliteStore, Store};
 use crate::tools::{
     exec::ExecTool,
     filesystem::{ListDirTool, ReadFileTool, WriteFileTool},
@@ -169,15 +169,25 @@ pub fn load_policy(config: &Config) -> Result<Arc<Policy>> {
     }))
 }
 
-/// PostgreSQL when `database` is configured, otherwise memory (state is
-/// lost on restart, fine for `run` and quick local use).
+/// The database named by `database`: a `sqlite:` url for the local
+/// installation, a `postgres:` url for a server with several tenants.
+/// Without `database`, memory (state is lost on restart, fine for `run`).
 pub async fn build_store(config: &Config) -> Result<Arc<dyn Store>> {
     match &config.database {
         Some(db) => {
             let url = resolve_secret(&db.url, &db.url_env)?
                 .context("database.url or database.url_env is required")?;
-            info!("store=postgresql");
-            Ok(Arc::new(PgStore::connect(&url, db.max_connections).await?))
+            if url.starts_with("sqlite:") {
+                info!("store=sqlite");
+                Ok(Arc::new(
+                    SqliteStore::connect(&url, db.max_connections).await?,
+                ))
+            } else if url.starts_with("postgres:") || url.starts_with("postgresql:") {
+                info!("store=postgresql");
+                Ok(Arc::new(PgStore::connect(&url, db.max_connections).await?))
+            } else {
+                bail!("database url must start with sqlite: or postgres:")
+            }
         }
         None => {
             warn!("no database configured: run state and approvals are kept in memory only");

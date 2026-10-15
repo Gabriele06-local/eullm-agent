@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- Local installation: the Core can keep its state in one SQLite file
+  (`database.url: sqlite://eullm-agent.db`), with the same tables, append-only
+  audit and startup recovery as PostgreSQL, which stays the choice for a
+  server with several tenants.
+
 ### Changed
 
 - `Cargo.lock` is in the repository and CI and release builds use
