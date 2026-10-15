@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
+
+Two installations, both with a web interface: on your computer (one
+command, data in SQLite, nothing else to install) and on a server for
+several tenants (PostgreSQL with docker compose).
 
 ### Added
 
