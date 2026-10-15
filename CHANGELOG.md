@@ -8,6 +8,15 @@
   (`database.url: sqlite://eullm-agent.db`), with the same tables, append-only
   audit and startup recovery as PostgreSQL, which stays the choice for a
   server with several tenants.
+- `eullm-agent start`: the agent on one computer with a web interface, no
+  setup to do by hand. It opens the browser with a link that logs in by
+  itself (a new token at every start, never written to disk), keeps state
+  in SQLite next to the config and, the first time, uses an EuLLM Engine it
+  finds at `localhost:11434`. It listens on loopback only.
+- Web interface, served by `start` and `api` at `/`: chat (each message is
+  a task), tasks with every model and tool call, approvals, usage. It reads
+  everything through `/v1` with the browser's token; no inline scripts.
+- `GET /v1/profiles`: the profiles a token may use.
 
 ### Changed
 

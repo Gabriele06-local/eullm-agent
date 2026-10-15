@@ -260,3 +260,24 @@ pub async fn build_core(
         extra,
     ))
 }
+
+/// The model an EuLLM Engine (or another OpenAI-compatible server) at
+/// `base_url` offers first, if one answers within two seconds.
+pub async fn detect_engine(base_url: &str) -> Option<String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .no_proxy()
+        .build()
+        .ok()?;
+    let v: serde_json::Value = client
+        .get(format!("{}/v1/models", base_url.trim_end_matches('/')))
+        .send()
+        .await
+        .ok()?
+        .error_for_status()
+        .ok()?
+        .json()
+        .await
+        .ok()?;
+    v["data"][0]["id"].as_str().map(str::to_string)
+}

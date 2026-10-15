@@ -33,6 +33,7 @@ pub const ROUTES: &[(&str, &str)] = &[
     ("post", "/v1/approvals/{id}"),
     ("post", "/v1/fetch"),
     ("get", "/v1/usage"),
+    ("get", "/v1/profiles"),
 ];
 
 const MAX_INPUT_BYTES: usize = 100 * 1024;
@@ -120,7 +121,9 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/approvals/{id}", post(decide_approval))
         .route("/v1/fetch", post(fetch))
         .route("/v1/usage", get(usage))
+        .route("/v1/profiles", get(profiles))
         .with_state(state)
+        .merge(crate::web::router())
 }
 
 pub struct ApiError(StatusCode, String);
@@ -409,6 +412,33 @@ async fn usage(
         "month": u.month,
         "limits": u.limits,
     })))
+}
+
+/// The profiles this token may use, with the model each one calls.
+async fn profiles(State(st): State<AppState>, Caller(caller): Caller) -> Json<Value> {
+    let config = &st.core.config;
+    let mut names: Vec<&String> = config.profiles.keys().collect();
+    let default = "default".to_string();
+    if !config.profiles.contains_key("default") {
+        names.push(&default);
+    }
+    names.sort();
+    let list: Vec<Value> = names
+        .into_iter()
+        .filter(|n| caller.may_use_profile(n))
+        .filter_map(|n| {
+            let p = config.profile(n)?;
+            let client = st.core.router.get(&p.model).map(|m| &m.client);
+            Some(json!({
+                "name": n,
+                "model": p.model,
+                "provider": client.map(|c| c.provider_name()),
+                "provider_model": client.map(|c| c.model()),
+                "tools": p.tools,
+            }))
+        })
+        .collect();
+    Json(json!({ "profiles": list }))
 }
 
 #[derive(Deserialize)]

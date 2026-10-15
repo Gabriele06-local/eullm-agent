@@ -28,7 +28,23 @@ without a person's yes.
 
 ```bash
 cargo build --release
-cp config.example.yaml config.yaml     # or run without a config for a wizard
+./target/release/eullm-agent start     # web interface on this computer
+```
+
+`start` opens the browser on `http://127.0.0.1:8088` with a link that logs
+in by itself; the link changes at every start and works only while the
+program runs. The first time, without a `config.yaml`, it looks for an
+EuLLM Engine at `http://localhost:11434` and uses its model, or asks for a
+provider. State is kept in `eullm-agent.db` (SQLite) next to the config, so
+nothing else needs installing. The interface has a chat (each message is a
+task for the agent), the list of tasks with every step, the approvals
+waiting for you and the usage of today and this month. `start` listens on
+this computer only; for a server use `eullm-agent api`, which serves the
+same interface to anyone with an API token.
+
+Other ways to use it:
+
+```bash
 ./target/release/eullm-agent run "List the files in the workspace"
 ./target/release/eullm-agent serve     # Telegram bot (needs telegram.allowed_users)
 ```
@@ -84,6 +100,8 @@ user, ideally in a container.
 `eullm-agent api` runs the agent as a service for other programs (for
 example Editor Mode). The contract is
 [docs/openapi.json](docs/openapi.json).
+It also serves the web interface at `/`: open it, paste an API token and
+you get the same pages as `start`, limited to that token's tenant.
 
 | Endpoint | What it does |
 |---|---|
@@ -92,6 +110,7 @@ example Editor Mode). The contract is
 | `POST /v1/llm/chat` | One model call through the Model Router, recorded with tokens and cost |
 | `GET /v1/approvals`, `POST /v1/approvals/{id}` | Actions waiting for a person; approve or deny |
 | `POST /v1/fetch` | HTTP GET for applications (crawling, feeds) with the address checks of `fetch_url`, a size limit and a per-host pace; off unless `api.fetch` is set |
+| `GET /v1/profiles` | Profiles the caller's token may use, with model and tools |
 | `GET /v1/usage` | Runs, model calls, tokens, cost and fetches of the caller's tenant today and this month (UTC), with its limits; `api.tenants` sets the limits and a request over one gets 429 |
 
 - **Tokens:** `eullm-agent token new` prints a token and its SHA-256; only the

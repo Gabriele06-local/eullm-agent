@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 
 use eullm_agent::approvals::TerminalApprover;
 use eullm_agent::audit::Audit;
-use eullm_agent::config::Config;
+use eullm_agent::config::{ApiTokenConfig, Config, ProviderConfig};
 use eullm_agent::modules::ModuleRegistry;
 use eullm_agent::{agent, api, setup, telegram, wizard};
 
@@ -36,6 +36,15 @@ enum Commands {
         /// Address to listen on (overrides api.listen)
         #[arg(long)]
         listen: Option<String>,
+    },
+    /// Start the local app: web interface on this computer, data in one file
+    Start {
+        /// Address to listen on; only this computer (loopback) is allowed
+        #[arg(long, default_value = "127.0.0.1:8088")]
+        listen: String,
+        /// Do not open the browser
+        #[arg(long)]
+        no_browser: bool,
     },
     /// List or install modules (operator only; the agent cannot install them)
     Module {
@@ -95,6 +104,8 @@ async fn main() -> Result<()> {
     let mut config = if cli.config.exists() {
         Config::load(&cli.config)
             .with_context(|| format!("Cannot load config from {:?}", cli.config))?
+    } else if matches!(cli.command, Commands::Start { .. }) {
+        first_local_config(&cli.config).await?
     } else {
         wizard::run(&cli.config)?
     };
@@ -128,6 +139,46 @@ async fn main() -> Result<()> {
             let core = setup::build_core(Arc::new(config), Arc::clone(&module_registry)).await?;
             setup::recover_runs(&core, "api:").await?;
             api::serve(core, &listen, tokens).await?;
+        }
+        Commands::Start { listen, no_browser } => {
+            let addr: std::net::SocketAddr = listen.parse().with_context(|| {
+                format!("--listen must be an address like 127.0.0.1:8088, not '{listen}'")
+            })?;
+            if !addr.ip().is_loopback() {
+                anyhow::bail!(
+                    "start serves this computer only (127.0.0.1); use `eullm-agent api` for a server"
+                );
+            }
+            if config.database.is_none() {
+                config.database = Some(wizard::local_database(&cli.config));
+            }
+            // The tokens of the config (other programs) stay valid; the
+            // browser gets a new one at every start, never written to disk.
+            let mut tokens = match &config.api {
+                Some(a) => a
+                    .tokens
+                    .iter()
+                    .map(api::ApiToken::resolve)
+                    .collect::<Result<Vec<_>>>()?,
+                None => Vec::new(),
+            };
+            let secret = api::new_token();
+            tokens.push(api::ApiToken::resolve(&ApiTokenConfig {
+                name: "browser".into(),
+                tenant: "default".into(),
+                token_sha256: Some(api::sha256_hex(&secret)),
+                token_env: None,
+                profiles: Vec::new(),
+            })?);
+            let core = setup::build_core(Arc::new(config), Arc::clone(&module_registry)).await?;
+            setup::recover_runs(&core, "api:").await?;
+            let url = format!("http://{addr}/#token={secret}");
+            println!("\nEuLLM Agent is ready. Open this link in your browser:\n\n  {url}\n");
+            println!("The link works until this program stops. Press Ctrl-C to stop.\n");
+            if !no_browser {
+                open_browser(&url);
+            }
+            api::serve(core, &addr.to_string(), tokens).await?;
         }
         Commands::Run { task } => {
             let router = eullm_agent::router::ModelRouter::from_config(&config)?;
@@ -204,4 +255,42 @@ fn module_state_path() -> PathBuf {
     PathBuf::from(home)
         .join(".eullm-agent")
         .join("module-state.json")
+}
+
+/// First start of the local app without a config: use an EuLLM Engine
+/// running on this computer if there is one, otherwise ask.
+async fn first_local_config(path: &std::path::Path) -> Result<Config> {
+    let base_url = "http://localhost:11434";
+    let Some(model) = setup::detect_engine(base_url).await else {
+        return wizard::run(path);
+    };
+    println!("\nFound an EuLLM Engine at {base_url} with model '{model}'.");
+    let config = wizard::new_config(
+        path,
+        ProviderConfig::Eullm {
+            base_url: base_url.into(),
+            model,
+            api_key: None,
+            api_key_env: None,
+        },
+        None,
+    );
+    wizard::save(path, &config)?;
+    println!("Config saved to '{}'.", path.display());
+    Ok(config)
+}
+
+/// Best effort: the link is printed anyway.
+fn open_browser(url: &str) {
+    #[cfg(target_os = "macos")]
+    let cmd = std::process::Command::new("open").arg(url).spawn();
+    #[cfg(target_os = "windows")]
+    let cmd = std::process::Command::new("cmd")
+        .args(["/C", "start", "", url])
+        .spawn();
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    let cmd = std::process::Command::new("xdg-open").arg(url).spawn();
+    if let Err(e) = cmd {
+        warn!("could not open the browser ({e}); open the link above");
+    }
 }
