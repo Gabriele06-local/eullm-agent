@@ -51,3 +51,26 @@ def test_relative_redirect_is_refused():
     r = httpx.Response(302, headers={"location": "/login"})
     with pytest.raises(pub.PublishError, match="not followed"):
         pub._ensure_no_redirect(r, "https://blog.example", public_resolver)
+
+
+def test_connection_goes_to_the_checked_address(monkeypatch):
+    """DNS rebinding: the socket is opened to the address that was checked,
+    and a name resolving to a private address is refused at connect time."""
+    import httpcore
+
+    opened = []
+    monkeypatch.setattr(httpcore.SyncBackend, "connect_tcp",
+                        lambda self, host, port, *a, **k: opened.append((host, port)))
+    public = lambda host, port, **kw: [(2, 1, 6, "", ("93.184.216.34", port))]  # noqa: E731
+    private = lambda host, port, **kw: [(2, 1, 6, "", ("169.254.169.254", port))]  # noqa: E731
+    pub._PinnedBackend(public).connect_tcp("cms.example", 443)
+    assert opened == [("93.184.216.34", 443)]
+    with pytest.raises(pub.PublishError, match="non-public"):
+        pub._PinnedBackend(private).connect_tcp("cms.example", 443)
+    assert len(opened) == 1
+
+
+def test_publisher_client_is_pinned_and_ignores_proxies():
+    client = pub.pinned_client()
+    assert isinstance(client._transport, pub._PinnedTransport)
+    assert not client._mounts
