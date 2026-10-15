@@ -63,6 +63,16 @@ def test_add_site_analyses_and_discovers(db, tenant):
     body["settings"]["exclude"] = ["gaming"]
     r = c.put(f"/api/sites/{sid}/profile", json=body, headers=h)
     assert r.json() == {"draft_version": 2}
+    # A malformed edit is refused before it is stored, not kept to break
+    # the dashboard and the drafts later.
+    for bad in ({"subtopics": ["fibra"]},
+                {"subtopics": [{"keywords": ["x"]}]},
+                {"subtopics": [], "settings": {"min_relevance": 5}},
+                {"subtopics": [], "style": "formale"}):
+        r = c.put(f"/api/sites/{sid}/profile", json=bad, headers=h)
+        assert r.status_code == 400, bad
+        assert "invalid profile" in r.json()["error"]
+    assert c.get("/site", headers=h).status_code == 200
 
 
 def test_dashboard_login_and_csrf(db, tenant):

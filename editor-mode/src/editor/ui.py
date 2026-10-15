@@ -337,9 +337,7 @@ def register(app, ctx) -> None:
             if site is None:
                 raise HTTPException(404, "site not found")
             try:
-                value = json.loads(body)
-                if not isinstance(value, dict) or not isinstance(value.get("subtopics"), list):
-                    raise ValueError("serve un oggetto JSON con la lista subtopics")
+                value = prof.validate_edit(json.loads(body))
             except ValueError as e:
                 return site_page(request, c, s, sites, site, editing=True, status_code=400,
                                  error=f"Profilo non valido: {e}")
