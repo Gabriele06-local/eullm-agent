@@ -103,8 +103,13 @@ example Editor Mode). The contract is
   updates and deletes are refused by the database. Without a database the
   state is kept in memory.
 - **Model Router and profiles:** `models` adds named models with fallback and
-  pricing; `profiles` choose a model, the tools a run may use and its budget
-  (`max_tokens`, `max_cost`, `max_iterations`, `max_run_seconds`).
+  pricing (`pricing` at the top level prices the `default` model);
+  `profiles` choose a model, the tools a run may use and its budget
+  (`max_tokens`, `max_cost`, `max_iterations`, `max_run_seconds`). When a
+  provider does not report token usage, the Core estimates it (about four
+  characters per token) so budgets never count a call as free; cost budgets
+  count only models with a price, and the Core warns at start when one would
+  never trigger.
 - **Policy:** `policy_file` (see [policy.example.yaml](policy.example.yaml))
   decides `allow`, `deny` or `require_approval` per tool and profile. A run
   that has read external content is *tainted*, and from then on tools with

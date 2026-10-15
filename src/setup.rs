@@ -202,11 +202,39 @@ pub async fn recover_runs(core: &Core, source_prefix: &str) -> Result<()> {
     Ok(())
 }
 
+/// Cost budgets count only priced models: say so at start instead of
+/// letting a budget silently never trigger.
+fn warn_unpriced_budgets(config: &Config, router: &ModelRouter) {
+    let unpriced = router.unpriced();
+    if unpriced.is_empty() {
+        return;
+    }
+    for (name, p) in &config.profiles {
+        if p.max_cost.is_some() && unpriced.contains(&p.model.as_str()) {
+            warn!(
+                "profile '{name}' has max_cost but model '{}' has no pricing: its cost is not counted",
+                p.model
+            );
+        }
+    }
+    let tenant_costs = config
+        .api
+        .as_ref()
+        .is_some_and(|a| a.tenants.values().any(|l| l.max_cost_per_month.is_some()));
+    if tenant_costs {
+        warn!(
+            "tenants have max_cost_per_month but these models have no pricing, so their calls are not counted: {}",
+            unpriced.join(", ")
+        );
+    }
+}
+
 pub async fn build_core(
     config: Arc<Config>,
     module_registry: Arc<Mutex<ModuleRegistry>>,
 ) -> Result<Arc<Core>> {
     let router = ModelRouter::from_config(&config)?;
+    warn_unpriced_budgets(&config, &router);
     let tools = build_tools(&config, module_registry)?;
     let policy = load_policy(&config)?;
     let store = build_store(&config).await?;
