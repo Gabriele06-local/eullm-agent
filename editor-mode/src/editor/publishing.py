@@ -26,6 +26,7 @@ import socket
 from datetime import UTC, datetime
 from urllib.parse import urljoin, urlsplit
 
+import httpcore
 import httpx
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -38,22 +39,62 @@ class PublishError(RuntimeError):
     pass
 
 
-def check_public_url(url: str, resolver=None) -> None:
+def _public_addresses(host: str, port: int, resolver=None) -> list[str]:
+    """Every address ``host`` resolves to, refusing if any is not public."""
     resolver = resolver or socket.getaddrinfo
+    try:
+        infos = resolver(host, port, proto=socket.IPPROTO_TCP)
+    except OSError as e:
+        raise PublishError(f"cannot resolve {host}") from e
+    addresses = []
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global:
+            raise PublishError(f"{host} resolves to a non-public address ({ip})")
+        addresses.append(str(ip))
+    if not addresses:
+        raise PublishError(f"cannot resolve {host}")
+    return addresses
+
+
+def check_public_url(url: str, resolver=None) -> None:
     parts = urlsplit(url)
     if parts.scheme != "https":
         raise PublishError("targets must use https")
     if parts.username or parts.password:
         raise PublishError("credentials in URLs are not allowed")
-    host = parts.hostname or ""
-    try:
-        infos = resolver(host, parts.port or 443, proto=socket.IPPROTO_TCP)
-    except OSError as e:
-        raise PublishError(f"cannot resolve {host}") from e
-    for info in infos:
-        ip = ipaddress.ip_address(info[4][0])
-        if not ip.is_global:
-            raise PublishError(f"{host} resolves to a non-public address ({ip})")
+    _public_addresses(parts.hostname or "", parts.port or 443, resolver)
+
+
+class _PinnedBackend(httpcore.SyncBackend):
+    """Connects only to the public address checked at connection time.
+
+    `check_public_url` alone leaves a gap: httpx would resolve the name again,
+    and a name that changes between the two lookups (DNS rebinding) reaches
+    an internal address. Here the name is resolved once, checked, and the
+    socket goes to that very address; TLS still verifies the certificate
+    against the original host name.
+    """
+
+    def __init__(self, resolver=None):
+        self.resolver = resolver
+
+    def connect_tcp(self, host, port, timeout=None, local_address=None, socket_options=None):
+        address = _public_addresses(host, port, self.resolver)[0]
+        return super().connect_tcp(address, port, timeout, local_address, socket_options)
+
+
+class _PinnedTransport(httpx.HTTPTransport):
+    def __init__(self, resolver=None):
+        super().__init__()
+        self._pool = httpcore.ConnectionPool(ssl_context=httpx.create_ssl_context(),
+                                             network_backend=_PinnedBackend(resolver))
+
+
+def pinned_client(resolver=None) -> httpx.Client:
+    """The client publications go out with: no proxy from the environment
+    (it would resolve the name itself), no redirects, pinned addresses."""
+    return httpx.Client(transport=_PinnedTransport(resolver), timeout=30, follow_redirects=False, trust_env=False)
 
 
 _REDIRECT_STATUS = {301, 302, 303, 307, 308}
@@ -163,7 +204,7 @@ def mark_uncertain_failed(db, tenant_id: str, pub_id: int, by: str) -> bool:
 
 class Publisher:
     def __init__(self, http: httpx.Client | None = None, resolver=None, telegram_api="https://api.telegram.org"):
-        self.http = http or httpx.Client(timeout=30, follow_redirects=False)
+        self.http = http or pinned_client(resolver)
         self.resolver = resolver
         self.telegram_api = telegram_api
 

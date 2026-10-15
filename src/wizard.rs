@@ -15,6 +15,7 @@ pub fn run(config_path: &std::path::Path) -> Result<Config> {
 
     let config = Config {
         provider,
+        pricing: None,
         telegram,
         tools: ToolsConfig::default(),
         modules: ModulesConfig::default(),

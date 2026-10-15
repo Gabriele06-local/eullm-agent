@@ -36,6 +36,11 @@ provider:
 #   model: gpt-4o
 #   # base_url: https://api.openai.com/v1
 
+# Price per million tokens of the provider above (the `default` model). Cost
+# budgets (profiles `max_cost`, tenants `max_cost_per_month`) count only
+# models with a price.
+# pricing: { input_per_mtok: 0.15, output_per_mtok: 0.60 }
+
 # ── Model Router and profiles ─────────────────────────────────────────────────
 # `default` is the provider above. Add more models by name, with an optional
 # fallback and price per million tokens (used for run cost and budgets).

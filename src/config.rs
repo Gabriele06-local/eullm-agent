@@ -6,6 +6,9 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub provider: ProviderConfig,
+    /// Price of `provider`, the `default` model (used for cost and budgets).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pricing: Option<Pricing>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub telegram: Option<TelegramConfig>,
     #[serde(default)]

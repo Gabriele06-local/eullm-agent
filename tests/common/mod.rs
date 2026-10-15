@@ -145,6 +145,8 @@ use serde_json::{json, Value};
 pub struct Scripted {
     pub script: Mutex<Vec<ChatResponse>>,
     pub seen: Mutex<Vec<Vec<Message>>>,
+    /// How long each answer takes, to make calls overlap.
+    pub delay: Mutex<std::time::Duration>,
 }
 
 impl Scripted {
@@ -153,6 +155,7 @@ impl Scripted {
         Self {
             script: Mutex::new(script),
             seen: Mutex::new(Vec::new()),
+            delay: Mutex::new(std::time::Duration::ZERO),
         }
     }
 
@@ -174,6 +177,10 @@ impl LlmClient for Scripted {
         _: &[ToolDefinition],
     ) -> anyhow::Result<ChatResponse> {
         self.seen.lock().unwrap().push(messages.to_vec());
+        let delay = *self.delay.lock().unwrap();
+        if !delay.is_zero() {
+            tokio::time::sleep(delay).await;
+        }
         let next = self.script.lock().unwrap().pop();
         Ok(next.unwrap_or(ChatResponse {
             content: "done".into(),
