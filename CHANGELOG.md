@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `Cargo.lock` is in the repository and CI and release builds use
+  `--locked`, so every build of a tag uses the same dependency versions.
+- Dependabot proposes dependency updates (Rust, Editor Mode, GitHub
+  Actions) once a week as pull requests; minor and patch updates are
+  grouped, a major version comes on its own.
+- Editor Mode: `pyyaml`, never imported, is no longer a dependency.
+
 ## 0.3.6
 
 ### Security

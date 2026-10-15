@@ -28,6 +28,11 @@ jobs:
             echo "@${PR_AUTHOR} is the copyright holder: no CLA needed."
             exit 0;;
           esac
+          # Dependabot only changes dependency versions and lock files.
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "Dependency update by Dependabot: no CLA needed."
+            exit 0
+          fi
           if [ "$PR_ASSOC" = "OWNER" ] || [ "$PR_ASSOC" = "MEMBER" ]; then
             echo "@${PR_AUTHOR} is ${PR_ASSOC} of the organisation: no CLA needed."
             exit 0
