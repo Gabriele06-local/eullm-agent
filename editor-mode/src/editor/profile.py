@@ -24,7 +24,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import repo
+from . import quotas, repo
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
 from .normalize import url_hash
@@ -306,6 +306,8 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
 
 
 def _next_version(s, site_id: int) -> int:
+    # Analysis, reviews and manual edits can save a version at the same time.
+    quotas.lock(s, f"editor-profile-version:{site_id}")
     v = s.execute(select(func.max(m.editorial_profiles.c.version)).where(m.editorial_profiles.c.site_id == site_id)).scalar()
     return (v or 0) + 1
 
