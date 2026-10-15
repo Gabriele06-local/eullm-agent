@@ -38,3 +38,4 @@ packages = ["src/editor"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = ["postgres: needs PostgreSQL (row level security, roles, several tenants); not run on SQLite"]

@@ -11,14 +11,14 @@ the JSON routes.
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import select, text
+from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
 from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, repo, sources, ui
@@ -253,12 +253,9 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
             d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
             if d is None:
                 raise HTTPException(404, "draft not found")
-            claims = s.execute(text(
-                "SELECT c.ordinal, c.section, c.text, array_agg(cs.item_id ORDER BY cs.item_id) AS sources "
-                "FROM editor.draft_claims c JOIN editor.draft_claim_sources cs ON cs.claim_id = c.id "
-                "WHERE c.draft_id = :d GROUP BY c.id ORDER BY c.ordinal"), {"d": draft_id}).all()
+            claims = drafts.stored_claims(s, draft_id)
         out = {k: v for k, v in d._mapping.items() if k != "tenant_id"}
-        out["claims"] = [dict(x._mapping) for x in claims]
+        out["claims"] = [{k: c[k] for k in ("ordinal", "section", "text", "sources")} for c in claims if c["sources"]]
         return out
 
     @app.post("/api/drafts/{draft_id}/decision")
@@ -336,9 +333,10 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
                        (SELECT score FROM editor.opportunity_scores o WHERE o.topic_id = t.id
                           AND (CAST(:site AS bigint) IS NULL OR o.site_id = :site) ORDER BY computed_at DESC LIMIT 1) AS opportunity,
                        (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items
-                FROM editor.topics t WHERE t.updated_at > now() - interval '7 days'
-                ORDER BY hype DESC NULLS LAST LIMIT 100""")
-            rows = s.execute(q, {"site": site_id}).all()
+                FROM editor.topics t WHERE t.updated_at > :since
+                ORDER BY hype DESC NULLS LAST LIMIT 100""").bindparams(
+                bindparam("since", type_=m.topics.c.updated_at.type)).columns(keywords=m.topics.c.keywords.type)
+            rows = s.execute(q, {"site": site_id, "since": datetime.now(UTC) - timedelta(days=7)}).all()
         return {"topics": [dict(r._mapping) for r in rows]}
 
     @app.get("/api/briefings/{day}")

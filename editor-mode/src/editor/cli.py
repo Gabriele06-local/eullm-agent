@@ -17,9 +17,23 @@ def _db():
 
 def cmd_migrate(a):
     from . import migrate
+    from .db import make_engine, sqlite_path
     from .runtime import settings
-    migrate.upgrade(settings().admin_database_url)
+    url = settings().admin_database_url
+    migrate.upgrade(url)
     print("editor schema up to date")
+    if sqlite_path(url) is None:  # the job queue of `editor worker`
+        engine = make_engine(url)
+        try:
+            with engine.connect() as conn:
+                queue = conn.execute(text("SELECT to_regclass('procrastinate_jobs')")).scalar()
+        finally:
+            engine.dispose()
+        if queue is None:
+            from .tasks import app
+            with app.open():
+                app.schema_manager.apply_schema()
+            print("job queue schema created")
 
 
 def cmd_tenant_add(a):
@@ -27,8 +41,14 @@ def cmd_tenant_add(a):
     from .publishing import TENANT_ID
     if not TENANT_ID.match(a.tenant):
         sys.exit("tenant ids are lowercase letters and digits, words joined by single dashes (e.g. i3k or rag-enterprise)")
-    with _db().tenant(a.tenant) as s:
-        repo.ensure_tenant(s, a.tenant, a.name or a.tenant)
+    from sqlalchemy.exc import IntegrityError
+    try:
+        with _db().tenant(a.tenant) as s:
+            repo.ensure_tenant(s, a.tenant, a.name or a.tenant)
+    except IntegrityError as e:
+        if "one tenant" in str(e):
+            sys.exit("this installation (SQLite) has one tenant already: several tenants need PostgreSQL")
+        raise
     print(f"tenant {a.tenant} ready")
 
 
@@ -163,11 +183,35 @@ def cmd_serve(a):
 
 
 def cmd_worker(a):
+    from .db import sqlite_path
+    from .runtime import settings
+    if sqlite_path(settings().database_url) is not None:
+        return _local_worker()
     from .tasks import app
     with app.open():
         if a.apply_schema:
             app.schema_manager.apply_schema()
         app.run_worker()
+
+
+def _local_worker():
+    """SQLite has no job queue: one process ticks at start and at every hour."""
+    import logging
+    import time
+    from datetime import timedelta
+
+    from .runtime import runner
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    log = logging.getLogger("editor.worker")
+    while True:
+        try:
+            report = runner().tick()
+            log.info("tick: %s", {"tenants": report.tenants, "errors": report.errors})
+        except Exception:
+            log.exception("tick failed")
+        now = datetime.now(UTC)
+        time.sleep(((now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)) - now).total_seconds())
 
 
 def main(argv=None):
@@ -209,7 +253,7 @@ def main(argv=None):
     sp = add("briefing", cmd_briefing, "build (and with --send, also propose and send) a briefing")
     sp.add_argument("--tenant", required=True); sp.add_argument("--date"); sp.add_argument("--send", action="store_true")
     sp = add("serve", cmd_serve, "dashboard and API"); sp.add_argument("--host", default="127.0.0.1"); sp.add_argument("--port", type=int, default=8090)
-    sp = add("worker", cmd_worker, "procrastinate worker (hourly tick)"); sp.add_argument("--apply-schema", action="store_true")
+    sp = add("worker", cmd_worker, "hourly tick: procrastinate on PostgreSQL, a plain loop on SQLite"); sp.add_argument("--apply-schema", action="store_true")
     a = p.parse_args(argv)
     a.fn(a)
 

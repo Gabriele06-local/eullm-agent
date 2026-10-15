@@ -4,6 +4,9 @@ from sqlalchemy import text
 
 from editor.db import Database
 
+# Roles and row level security: the server installation.
+pytestmark = pytest.mark.postgres
+
 
 def test_app_role_cannot_bypass_rls(pg_urls):
     with psycopg.connect(pg_urls[1]) as conn:

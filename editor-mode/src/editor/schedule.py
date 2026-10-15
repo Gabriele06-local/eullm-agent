@@ -65,8 +65,11 @@ class Runner:
         self.sender = sender
 
     def tenants(self) -> list[str]:
+        # On PostgreSQL only this function reads across tenants.
+        q = ("SELECT tenant_id FROM editor.tenants WHERE active ORDER BY tenant_id" if self.db.sqlite
+             else "SELECT * FROM editor.active_tenants()")
         with self.db.engine.connect() as conn:
-            return list(conn.execute(text("SELECT * FROM editor.active_tenants()")).scalars())
+            return list(conn.execute(text(q)).scalars())
 
     def tick(self, now: datetime | None = None) -> TickReport:
         now = now or datetime.now(UTC)

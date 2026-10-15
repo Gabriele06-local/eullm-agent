@@ -1,0 +1,88 @@
+# EuLLM Agent, server installation: PostgreSQL, the Core and Editor Mode
+# (dashboard, worker) for several tenants. Guide: deploy/server/README.md.
+#
+#   cp .env.example .env && cp core.example.yaml core.yaml   # then edit both
+#   docker compose up -d --build
+
+name: eullm-agent
+
+x-editor-env: &editor-env
+  EDITOR_DATABASE_URL: postgres://editor_web:${EDITOR_WEB_DB_PASSWORD}@postgres:5432/eullm
+  EDITOR_ADMIN_DATABASE_URL: postgres://editor_owner:${EDITOR_OWNER_DB_PASSWORD}@postgres:5432/eullm
+  EDITOR_CORE_URL: http://core:8088
+  EDITOR_CORE_TOKEN: ${EDITOR_CORE_TOKEN}
+  EDITOR_TIMEZONE: ${EDITOR_TIMEZONE:-Europe/Rome}
+  EDITOR_SMTP_HOST: ${EDITOR_SMTP_HOST:-}
+  EDITOR_SMTP_PORT: ${EDITOR_SMTP_PORT:-587}
+  EDITOR_SMTP_USER: ${EDITOR_SMTP_USER:-}
+  EDITOR_SMTP_PASSWORD: ${EDITOR_SMTP_PASSWORD:-}
+  EDITOR_MAIL_FROM: ${EDITOR_MAIL_FROM:-}
+  EDITOR_TELEGRAM_TOKEN: ${EDITOR_TELEGRAM_TOKEN:-}
+
+services:
+  postgres:
+    image: postgres:18.6-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      CORE_DB_PASSWORD: ${CORE_DB_PASSWORD:?set CORE_DB_PASSWORD in .env}
+      EDITOR_OWNER_DB_PASSWORD: ${EDITOR_OWNER_DB_PASSWORD:?set EDITOR_OWNER_DB_PASSWORD in .env}
+      EDITOR_WEB_DB_PASSWORD: ${EDITOR_WEB_DB_PASSWORD:?set EDITOR_WEB_DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "eullm"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  core:
+    build: ../..
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgres://core:${CORE_DB_PASSWORD}@postgres:5432/eullm
+      EDITOR_CORE_TOKEN: ${EDITOR_CORE_TOKEN:?set EDITOR_CORE_TOKEN in .env}
+      CORE_ADMIN_TOKEN: ${CORE_ADMIN_TOKEN:?set CORE_ADMIN_TOKEN in .env}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      RUST_LOG: ${RUST_LOG:-eullm_agent=info}
+    volumes:
+      - ./core.yaml:/etc/eullm-agent/config.yaml:ro
+      - core-workspace:/var/lib/eullm-agent/workspace
+    extra_hosts:
+      - host.docker.internal:host-gateway   # a model server on this machine
+    ports:
+      - ${BIND:-127.0.0.1}:${CORE_PORT:-8088}:8088
+
+  editor-migrate:
+    build: ../../editor-mode
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment: *editor-env
+    command: ["editor", "migrate"]
+    restart: "no"
+
+  editor-web:
+    build: ../../editor-mode
+    restart: unless-stopped
+    depends_on:
+      editor-migrate: {condition: service_completed_successfully}
+      core: {condition: service_started}
+    environment: *editor-env
+    ports:
+      - ${BIND:-127.0.0.1}:${EDITOR_PORT:-8090}:8090
+
+  editor-worker:
+    build: ../../editor-mode
+    restart: unless-stopped
+    depends_on:
+      editor-migrate: {condition: service_completed_successfully}
+      core: {condition: service_started}
+    environment: *editor-env
+    command: ["editor", "worker"]
+
+volumes:
+  pgdata:
+  core-workspace:

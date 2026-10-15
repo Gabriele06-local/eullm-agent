@@ -1,14 +1,17 @@
 """Per-tenant limits. The plan lives on the tenant row (set by the operator
-with `editor tenant-plan`); usage comes from the editor.tenant_usage view.
-A missing limit means unlimited."""
+with `editor tenant-plan`); usage is counted here, with days and months in
+the tenant's time zone. A missing limit means unlimited."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from . import models as m
+from .db import is_sqlite
 
 
 class QuotaExceeded(RuntimeError):
@@ -36,8 +39,37 @@ class Usage:
 
 
 def lock(s, key: str) -> None:
-    """Serialise, until this transaction ends, everything that takes the same key."""
-    s.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": key})
+    """Serialise, until this transaction ends, everything that takes the same key.
+    On SQLite every transaction already holds the database's write lock."""
+    if not is_sqlite(s):
+        s.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": key})
+
+
+def _used(s, t, now: datetime | None = None) -> dict:
+    now = (now or datetime.now(UTC)).astimezone(ZoneInfo(t.timezone or "UTC"))
+    day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    month = day.replace(day=1)
+    tid = t.tenant_id
+
+    def one(q):
+        return s.execute(q).scalar() or 0
+
+    u = m.llm_usage
+    return {
+        "tenant_id": tid,
+        "sites": one(select(func.count()).select_from(m.sites).where(m.sites.c.tenant_id == tid)),
+        "active_sources": one(select(func.count()).select_from(m.sources).where(
+            m.sources.c.tenant_id == tid, m.sources.c.status == "active")),
+        "items_today": one(select(func.count()).select_from(m.source_items).where(
+            m.source_items.c.tenant_id == tid, m.source_items.c.fetched_at >= day)),
+        "llm_cost_month": one(select(func.coalesce(func.sum(u.c.cost), 0)).where(
+            u.c.tenant_id == tid, u.c.at >= month)),
+        "llm_tokens_month": one(select(func.coalesce(func.sum(u.c.input_tokens), 0)
+                                       + func.coalesce(func.sum(u.c.output_tokens), 0)).where(
+            u.c.tenant_id == tid, u.c.at >= month)),
+        "drafts_month": one(select(func.count()).select_from(m.drafts).where(
+            m.drafts.c.tenant_id == tid, m.drafts.c.created_at >= month)),
+    }
 
 
 def usage(s, hold: bool = False) -> Usage | None:
@@ -49,8 +81,7 @@ def usage(s, hold: bool = False) -> Usage | None:
         return None
     if hold:
         lock(s, f"editor-quota:{t.tenant_id}")
-    u = s.execute(text("SELECT * FROM editor.tenant_usage")).first()
-    return Usage(dict(t._mapping), dict(u._mapping) if u else {})
+    return Usage(dict(t._mapping), _used(s, t))
 
 
 def check(s, what: str, adding: float = 1) -> None:

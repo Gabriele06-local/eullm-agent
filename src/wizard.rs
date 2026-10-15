@@ -1,19 +1,35 @@
 use anyhow::Result;
 use std::io::{self, Write};
+use std::path::Path;
 
 use crate::config::{
-    default_system_prompt, Config, LimitsConfig, ModulesConfig, ProviderConfig, TelegramConfig,
-    ToolsConfig,
+    default_system_prompt, Config, DatabaseConfig, LimitsConfig, ModulesConfig, ProviderConfig,
+    TelegramConfig, ToolsConfig,
 };
 
-pub fn run(config_path: &std::path::Path) -> Result<Config> {
+pub fn run(config_path: &Path) -> Result<Config> {
     println!("\nNo config file found at '{}'.", config_path.display());
     println!("Answer a few questions to get started.\n");
 
     let provider = pick_provider()?;
     let telegram = pick_telegram()?;
+    let config = new_config(config_path, provider, telegram);
+    save(config_path, &config)?;
+    println!(
+        "\nConfig saved to '{}'. Starting...\n",
+        config_path.display()
+    );
+    Ok(config)
+}
 
-    let config = Config {
+/// A first configuration with safe defaults, for the local installation:
+/// state in an SQLite file next to the config.
+pub fn new_config(
+    config_path: &Path,
+    provider: ProviderConfig,
+    telegram: Option<TelegramConfig>,
+) -> Config {
+    Config {
         provider,
         pricing: None,
         telegram,
@@ -27,18 +43,34 @@ pub fn run(config_path: &std::path::Path) -> Result<Config> {
         models: Default::default(),
         profiles: Default::default(),
         policy_file: None,
-        database: None,
+        database: Some(local_database(config_path)),
         api: None,
-    };
+    }
+}
 
-    let yaml = serde_saphyr::to_string(&config)?;
-    write_private(config_path, &yaml)?;
-    println!(
-        "\nConfig saved to '{}'. Starting...\n",
-        config_path.display()
-    );
+/// `sqlite://<directory of the config>/eullm-agent.db`.
+/// The directory of the config file, absolute when it exists.
+pub fn config_dir(config_path: &Path) -> std::path::PathBuf {
+    let dir = config_path
+        .parent()
+        .filter(|d| !d.as_os_str().is_empty())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    std::fs::canonicalize(&dir).unwrap_or(dir)
+}
 
-    Ok(config)
+pub fn local_database(config_path: &Path) -> DatabaseConfig {
+    let dir = config_dir(config_path);
+    DatabaseConfig {
+        url: Some(format!("sqlite://{}", dir.join("eullm-agent.db").display())),
+        url_env: None,
+        max_connections: 5,
+    }
+}
+
+/// Write the config file (owner-only: it may hold secrets).
+pub fn save(config_path: &Path, config: &Config) -> Result<()> {
+    write_private(config_path, &serde_saphyr::to_string(config)?)
 }
 
 fn pick_provider() -> Result<ProviderConfig> {

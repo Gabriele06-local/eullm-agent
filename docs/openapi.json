@@ -673,6 +673,57 @@
             "$ref": "#/components/schemas/TenantLimits"
           }
         }
+      },
+      "Profile": {
+        "type": "object",
+        "required": [
+          "name",
+          "model",
+          "tools"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model name in the Model Router (`default` is the top-level provider)"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider_model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Model id at the provider (the first of a fallback chain)"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tools the profile may use; empty means all"
+          }
+        }
+      },
+      "ProfileList": {
+        "type": "object",
+        "required": [
+          "profiles"
+        ],
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Profile"
+            }
+          }
+        }
       }
     }
   },
@@ -1149,6 +1200,33 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TenantUsage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/profiles": {
+      "get": {
+        "summary": "Profiles the caller's token may use, with the model each one calls",
+        "responses": {
+          "200": {
+            "description": "Profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileList"
                 }
               }
             }

@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import BackgroundTasks, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import func, select, text, update
+from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
 from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas
@@ -182,9 +182,10 @@ def register(app, ctx) -> None:
                    (SELECT score FROM editor.opportunity_scores o WHERE o.topic_id = t.id AND o.site_id = :site
                      ORDER BY computed_at DESC LIMIT 1) AS opportunity,
                    (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items
-            FROM editor.topics t WHERE t.updated_at > now() - interval '7 days'
-            ORDER BY opportunity DESC NULLS LAST, hype DESC NULLS LAST LIMIT :lim"""),
-            {"site": site_id, "lim": limit}).all()
+            FROM editor.topics t WHERE t.updated_at > :since
+            ORDER BY opportunity DESC NULLS LAST, hype DESC NULLS LAST LIMIT :lim""").bindparams(
+            bindparam("since", type_=m.topics.c.updated_at.type)),
+            {"site": site_id, "lim": limit, "since": datetime.now(UTC) - timedelta(days=7)}).all()
 
     def proposal_rows(s, site_id: int | None, statuses: tuple[str, ...], limit: int = 30):
         p = m.proposals
@@ -448,14 +449,10 @@ def register(app, ctx) -> None:
             d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
             if d is None:
                 raise HTTPException(404, "draft not found")
-            claims = s.execute(text(
-                "SELECT c.id, c.ordinal, c.section, c.text, "
-                "array_remove(array_agg(cs.item_id ORDER BY cs.item_id), NULL) AS sources "
-                "FROM editor.draft_claims c LEFT JOIN editor.draft_claim_sources cs ON cs.claim_id = c.id "
-                "WHERE c.draft_id = :d GROUP BY c.id ORDER BY c.ordinal"), {"d": draft_id}).all()
+            claims = drafts.stored_claims(s, draft_id)
             order: list[int] = []
             for cl in claims:
-                order += [i for i in cl.sources if i not in order]
+                order += [i for i in cl["sources"] if i not in order]
             items = {r.id: r for r in s.execute(
                 select(m.source_items.c.id, m.source_items.c.title, m.source_items.c.url,
                        m.source_items.c.published_at, m.sources.c.name.label("source"))
@@ -465,12 +462,12 @@ def register(app, ctx) -> None:
             flagged = {f.get("claim") for f in d.flags or []}
             sections, current = [], None
             for cl in claims:
-                if current is None or cl.section != current["title"]:
-                    current = {"title": cl.section, "claims": []}
+                if current is None or cl["section"] != current["title"]:
+                    current = {"title": cl["section"], "claims": []}
                     sections.append(current)
-                current["claims"].append({"ordinal": cl.ordinal, "text": cl.text,
-                                          "refs": [refs[i] for i in cl.sources],
-                                          "flagged": cl.ordinal in flagged})
+                current["claims"].append({"ordinal": cl["ordinal"], "text": cl["text"],
+                                          "refs": [refs[i] for i in cl["sources"]],
+                                          "flagged": cl["ordinal"] in flagged})
             flags = d.flags or []
             problems = " ".join(p for f in flags for p in f.get("problems", []))
             checks = [{"label": label, "ok": key not in problems} for key, label in CHECKS]
@@ -582,8 +579,9 @@ def register(app, ctx) -> None:
                 meters.append({"label": QUOTA_LABELS[what], "used": used, "limit": limit, "money": what == "llm_cost",
                                "pct": min(100, round(100 * used / limit)) if limit else 0})
         recipients = s.execute(select(m.recipients).order_by(m.recipients.c.id)).all()
-        tokens = s.execute(text("SELECT id, name, role, created_at, revoked_at FROM editor.access_tokens "
-                                "ORDER BY revoked_at IS NOT NULL, created_at")).all() if c.can("owner") else []
+        t = m.access_tokens
+        tokens = s.execute(select(t.c.id, t.c.name, t.c.role, t.c.created_at, t.c.revoked_at)
+                           .order_by(t.c.revoked_at.is_not(None), t.c.created_at)).all() if c.can("owner") else []
         return render(request, "settings.html.j2", c, s, "settings", usage=usage, meters=meters,
                       recipients=recipients, tokens=tokens, new_token=new_token)
 
@@ -626,6 +624,7 @@ def register(app, ctx) -> None:
     @app.post("/ui/tokens/{tid}/revoke")
     def ui_revoke(tid: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
-            n = s.execute(text("UPDATE editor.access_tokens SET revoked_at = now() "
-                               "WHERE id = :i AND revoked_at IS NULL"), {"i": tid}).rowcount
+            t = m.access_tokens
+            n = s.execute(update(t).where(t.c.id == tid, t.c.revoked_at.is_(None))
+                          .values(revoked_at=datetime.now(UTC))).rowcount
         return done("/settings", "Accesso revocato." if n else "Accesso già revocato.")

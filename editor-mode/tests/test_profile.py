@@ -4,9 +4,10 @@ import pytest
 
 import httpx
 import respx
-from sqlalchemy import text
+from sqlalchemy import select, text, update
 
 import fakesite
+from editor import models as m
 from editor import profile as prof
 from editor.core_client import CoreClient
 from editor.site import SiteCrawler
@@ -115,9 +116,9 @@ def test_site_analysis_and_review_lifecycle(db, tenant):
     moved = prof.analyse_site(db, tenant, "blog.example", crawler(fakesite.SHIFTED))
     assert moved["significant"] and moved["profile_id"]
     with db.tenant(tenant) as s:
-        rows = s.execute(text(
-            "SELECT version, status, origin, based_on, changes FROM editor.editorial_profiles ORDER BY version"
-        )).all()
+        p = m.editorial_profiles
+        rows = s.execute(select(p.c.version, p.c.status, p.c.origin, p.c.based_on, p.c.changes)
+                         .order_by(p.c.version)).all()
         reviews = s.execute(text("SELECT count(*), count(*) FILTER (WHERE significant) FROM editor.profile_reviews")).one()
         posts = s.execute(text("SELECT count(*) FROM editor.site_posts")).scalar()
     assert [(r.version, r.status, r.origin) for r in rows] == [(1, "approved", "analysis"), (2, "draft", "reanalysis")]
@@ -141,10 +142,13 @@ def test_manual_edit_keeps_owner_settings(db, tenant):
     first = prof.analyse_site(db, tenant, "blog.example", crawler(fakesite.ARTICLES))
     with db.tenant(tenant) as s:
         assert prof.approve(s, first["site_id"], 1, "francesco")
-        s.execute(text("UPDATE editor.editorial_profiles SET body = jsonb_set(body, '{settings,exclude}', '[\"calcio\"]') "
-                       "WHERE site_id = :s AND status = 'approved'"), {"s": first["site_id"]})
+        p = m.editorial_profiles
+        approved = (p.c.site_id == first["site_id"]) & (p.c.status == "approved")
+        body = s.execute(select(p.c.body).where(approved)).scalar()
+        body.setdefault("settings", {})["exclude"] = ["calcio"]
+        s.execute(update(p).where(approved).values(body=body))
         pid = prof.edit(s, tenant, first["site_id"], {"subtopics": [{"name": "Fibra", "keywords": ["fibra"]}]})
-        body = s.execute(text("SELECT body FROM editor.editorial_profiles WHERE id = :i"), {"i": pid}).scalar()
+        body = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.id == pid)).scalar()
     assert body["settings"]["exclude"] == ["calcio"]
 
 
@@ -161,7 +165,7 @@ def test_manual_edit_keeps_explicit_settings(db, tenant):
         assert prof.approve(s, first["site_id"], 1, "francesco")
         pid = prof.edit(s, tenant, first["site_id"], {"subtopics": [{"name": "Fibra", "keywords": ["fibra"]}],
                                                       "settings": settings})
-        body = s.execute(text("SELECT body FROM editor.editorial_profiles WHERE id = :i"), {"i": pid}).scalar()
+        body = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.id == pid)).scalar()
     assert body["settings"] == settings
 
 

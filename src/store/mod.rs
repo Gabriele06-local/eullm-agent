@@ -1,7 +1,8 @@
 //! Run state and audit for the Core service.
 //!
-//! [`PgStore`] keeps everything in the `core` schema of PostgreSQL;
-//! [`MemoryStore`] keeps it in memory for tests and quick local use.
+//! [`PgStore`] keeps everything in the `core` schema of PostgreSQL (server,
+//! several tenants); [`SqliteStore`] in one SQLite file (local installation,
+//! one user); [`MemoryStore`] in memory for tests and quick local use.
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -10,9 +11,11 @@ use serde_json::Value;
 
 pub mod memory;
 pub mod postgres;
+pub mod sqlite;
 
 pub use memory::MemoryStore;
 pub use postgres::PgStore;
+pub use sqlite::SqliteStore;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

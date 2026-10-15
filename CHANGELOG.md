@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Added
+
+- Local installation: the Core can keep its state in one SQLite file
+  (`database.url: sqlite://eullm-agent.db`), with the same tables, append-only
+  audit and startup recovery as PostgreSQL, which stays the choice for a
+  server with several tenants.
+- `eullm-agent start`: the agent on one computer with a web interface, no
+  setup to do by hand. It opens the browser with a link that logs in by
+  itself (a new token at every start, never written to disk), keeps state
+  in SQLite next to the config and, the first time, uses an EuLLM Engine it
+  finds at `localhost:11434`. It listens on loopback only.
+- Web interface, served by `start` and `api` at `/`: chat (each message is
+  a task), tasks with every model and tool call, approvals, usage. It reads
+  everything through `/v1` with the browser's token; no inline scripts.
+- `GET /v1/profiles`: the profiles a token may use.
+- Editor Mode on SQLite (`EDITOR_DATABASE_URL=sqlite:///editor.db`) for the
+  local installation: one file with one tenant, the same code and tests as
+  PostgreSQL (every database test runs on both), and `editor worker` as a
+  plain hourly loop. PostgreSQL stays the choice for several tenants.
+- Local installation script (`install/local.sh`, Linux and macOS): the Core
+  and Editor Mode in `~/.eullm-agent`, Python through uv, started with
+  `eullm-local`; `start` runs Editor Mode's dashboard and worker when it is
+  installed next to the config.
+- Server installation (`deploy/server`): `docker compose` with PostgreSQL 18,
+  the Core and Editor Mode, roles created at the first start, a guide.
+  `editor migrate` also creates the worker's job queue on PostgreSQL.
+
 ### Changed
 
 - `Cargo.lock` is in the repository and CI and release builds use

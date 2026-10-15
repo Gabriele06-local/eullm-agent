@@ -2,9 +2,9 @@ import json
 
 import httpx
 import respx
-from sqlalchemy import text
+from sqlalchemy import select, text
 
-from editor import drafts, opportunity as opp, proposals as props
+from editor import drafts, models as m, opportunity as opp, proposals as props
 from editor.core_client import CoreClient
 from test_proposals import setup_site
 
@@ -80,7 +80,7 @@ def test_draft_every_claim_has_a_source(db, tenant):
         retry_prompt = json.loads(llm.calls[1].request.content)["messages"][-1]["content"]
         assert "claim without sources" in retry_prompt
     with db.tenant(tenant) as s:
-        d = s.execute(text("SELECT status, flags, body_md, version FROM editor.drafts WHERE id = :d"), {"d": did}).one()
+        d = s.execute(select(m.drafts).where(m.drafts.c.id == did)).one()
         claims = s.execute(text("SELECT c.ordinal, count(cs.item_id) FROM editor.draft_claims c "
                                 "LEFT JOIN editor.draft_claim_sources cs ON cs.claim_id = c.id WHERE c.draft_id = :d "
                                 "GROUP BY c.ordinal ORDER BY c.ordinal"), {"d": did}).all()
@@ -103,7 +103,7 @@ def test_unfixable_draft_is_kept_for_review(db, tenant):
         router.post("http://core.test/v1/llm/chat").mock(return_value=chat(invented))
         did = drafts.write_draft(db, tenant, pid, CoreClient("http://core.test", "tok"), None)
     with db.tenant(tenant) as s:
-        status, flags = s.execute(text("SELECT status, flags FROM editor.drafts WHERE id = :d"), {"d": did}).one()
+        status, flags = s.execute(select(m.drafts.c.status, m.drafts.c.flags).where(m.drafts.c.id == did)).one()
     assert status == "needs_review"
     assert flags[0]["claim"] == 0 and "999" in flags[0]["problems"][0]
     assert drafts.decide(db, tenant, did, False, "francesco")

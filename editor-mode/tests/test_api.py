@@ -1,4 +1,5 @@
 import httpx
+import pytest
 import respx
 from fastapi.testclient import TestClient
 
@@ -15,6 +16,7 @@ def client_for(db, tenant, role="owner", http_factory=None):
     return TestClient(app), {"Authorization": f"Bearer {token}"}, token
 
 
+@pytest.mark.postgres
 def test_tokens_scope_every_route_to_one_tenant(db, tenant):
     site_id = setup_site(db, tenant)
     other = f"{tenant}-other"

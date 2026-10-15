@@ -1071,3 +1071,54 @@ async fn a_long_run_stops_at_the_monthly_budget() {
         "{run}"
     );
 }
+
+// --- profiles and web interface ----------------------------------------------
+
+#[tokio::test]
+async fn profiles_list_only_what_the_token_may_use() {
+    let spec = spec();
+    let h = harness(vec![]);
+    let (s, v) = call(&h.app, "GET", "/v1/profiles", Some(TOKEN_A), None).await;
+    assert_eq!(s, StatusCode::OK);
+    conforms(
+        &spec,
+        response_schema(&spec, "get", "/v1/profiles", s),
+        &v,
+        "profiles",
+    );
+    let names: Vec<&str> = v["profiles"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["default", "writer"]);
+    assert_eq!(v["profiles"][0]["provider"], "scripted");
+    let (_, v) = call(&h.app, "GET", "/v1/profiles", Some(TOKEN_LIMITED), None).await;
+    assert_eq!(v["profiles"].as_array().unwrap().len(), 1);
+    assert_eq!(v["profiles"][0]["name"], "writer");
+    let (s, _) = call(&h.app, "GET", "/v1/profiles", None, None).await;
+    assert_eq!(s, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn the_web_interface_is_served_with_a_strict_policy() {
+    let h = harness(vec![]);
+    for (path, kind) in [
+        ("/", "text/html"),
+        ("/ui/app.js", "text/javascript"),
+        ("/ui/app.css", "text/css"),
+    ] {
+        let req = Request::builder().uri(path).body(Body::empty()).unwrap();
+        let resp = h.app.clone().oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK, "{path}");
+        let headers = resp.headers();
+        assert!(headers["content-type"].to_str().unwrap().starts_with(kind));
+        let csp = headers["content-security-policy"].to_str().unwrap();
+        assert!(csp.contains("script-src 'self'") && csp.contains("frame-ancestors 'none'"));
+        assert_eq!(headers["x-content-type-options"], "nosniff");
+    }
+    // The page itself holds no data: everything else still needs a token.
+    let (s, _) = call(&h.app, "GET", "/v1/runs", None, None).await;
+    assert_eq!(s, StatusCode::UNAUTHORIZED);
+}

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select, text, update
+from sqlalchemy import case, literal, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -89,7 +89,9 @@ def mark_source(
     if error is None:
         values |= {"etag": etag, "last_modified": last_modified, "consecutive_errors": 0}
         if newest is not None:
-            values["last_item_at"] = func.greatest(func.coalesce(src.c.last_item_at, newest), newest)
+            new = literal(newest, src.c.last_item_at.type)
+            values["last_item_at"] = case((or_(src.c.last_item_at.is_(None), src.c.last_item_at < new), new),
+                                          else_=src.c.last_item_at)
     else:
         values["consecutive_errors"] = src.c.consecutive_errors + 1
     s.execute(update(src).where(src.c.id == source_id).values(**values))
@@ -120,7 +122,3 @@ def record_llm_usage(s: Session, tenant_id: str, purpose: str, model: str, usage
             input_tokens=usage.get("input_tokens"), output_tokens=usage.get("output_tokens"), cost=cost,
         )
     )
-
-
-def tenant_setting(s: Session) -> str:
-    return s.execute(text("SELECT current_setting('app.tenant_id', true)")).scalar()
