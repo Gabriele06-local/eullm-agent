@@ -57,6 +57,20 @@
   briefing is sent again within its window; recipients get it in Bcc.
 - Editor Mode: a publication is marked `sending` before anything leaves; one
   cut short waits for a person to check the CMS instead of being sent twice.
+- A fallback answer is recorded and billed as the model that served it,
+  with that model's price, not the primary's.
+- An approval wait ends when its run's time limit does, so a forgotten
+  approval no longer holds a run slot past the run's deadline.
+- Two Core processes on the same database (a rolling restart, a second
+  instance) no longer close each other's runs at startup: each process
+  holds an instance lock and recovery skips runs of a live one
+  (migration 0003, applied at start).
+- Editor Mode: a profile edit (`PUT /api/sites/{id}/profile` and the
+  dashboard) is validated and refused with 400 if malformed, instead of
+  breaking the site pages.
+- Editor Mode: quota checks and profile and draft version numbers are safe
+  under concurrent requests.
+- YAML is read and written with `serde-saphyr`; `serde_yaml` is deprecated.
 
 ## 0.3.5
 

@@ -341,7 +341,7 @@ mod tests {
 
     #[test]
     fn default_model_takes_the_top_level_price() {
-        let config: Config = serde_yaml::from_str(
+        let config: Config = serde_saphyr::from_str(
             "provider:\n  type: eullm\n  model: test\npricing: { input_per_mtok: 1.0, output_per_mtok: 2.0 }\n",
         )
         .unwrap();

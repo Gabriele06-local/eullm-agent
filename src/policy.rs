@@ -154,7 +154,7 @@ impl Policy {
     }
 
     pub fn from_yaml(text: &str) -> Result<Self> {
-        Ok(serde_yaml::from_str(text)?)
+        Ok(serde_saphyr::from_str(text)?)
     }
 
     /// `tainted`: the run has read external content. `read_private`: it has
