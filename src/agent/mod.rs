@@ -14,10 +14,11 @@ use crate::tools::ToolRegistry;
 use crate::util::truncate_utf8;
 
 /// A limit outside the run (e.g. a tenant's monthly budget), checked
-/// before each model call after the first.
+/// before each model call. What `admit` returns is held until the call is
+/// recorded, so calls under way count against the limit.
 #[async_trait::async_trait]
 pub trait BudgetGuard: Send + Sync {
-    async fn check(&self) -> Result<()>;
+    async fn admit(&self) -> Result<Box<dyn std::any::Any + Send>>;
 }
 
 /// One ReAct loop: the model proposes, the policy decides, the tool runs
@@ -244,11 +245,10 @@ impl<'a> Agent<'a> {
             if remaining.is_zero() {
                 bail!("run time limit reached ({}s)", self.max_run.as_secs());
             }
-            if iteration > 0 {
-                if let Some(b) = &self.budget {
-                    b.check().await?;
-                }
-            }
+            let admitted = match &self.budget {
+                Some(b) => Some(b.admit().await?),
+                None => None,
+            };
             let started = Instant::now();
             let response =
                 match tokio::time::timeout(remaining, self.llm.chat(&messages, &tool_defs)).await {
@@ -275,6 +275,7 @@ impl<'a> Agent<'a> {
                 )
                 .await;
             }
+            drop(admitted);
             let response = response?;
             self.check_budget(state)?;
 

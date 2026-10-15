@@ -986,6 +986,45 @@ async fn concurrent_fetches_cannot_slip_under_the_daily_limit() {
 }
 
 #[tokio::test]
+async fn concurrent_model_calls_cannot_slip_under_the_monthly_budget() {
+    let h = harness_with(
+        "provider:\n  type: eullm\n  model: test\napi:\n  tenants:\n    tenant-a:\n      max_tokens_per_month: 30\n",
+        vec![],
+    );
+    let chat = json!({"messages": [{"role": "user", "content": "hi"}]});
+    // One call sets the average: 12 tokens.
+    let (s, v) = call(
+        &h.app,
+        "POST",
+        "/v1/llm/chat",
+        Some(TOKEN_A),
+        Some(chat.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    *h.llm.delay.lock().unwrap() = Duration::from_millis(200);
+    let calls = (0..6).map(|_| {
+        let app = h.app.clone();
+        let chat = chat.clone();
+        tokio::spawn(async move {
+            call(&app, "POST", "/v1/llm/chat", Some(TOKEN_A), Some(chat))
+                .await
+                .0
+        })
+    });
+    let mut ok = 0;
+    for c in calls {
+        if c.await.unwrap() == StatusCode::OK {
+            ok += 1;
+        }
+    }
+    // 12 used: the first call admitted projects 12 + 0, the second 12 + 12,
+    // the third would make 36, past 30. Without the reservation all six pass.
+    assert_eq!(ok, 2);
+    assert_eq!(h.store.loose_llm_calls().len(), 3);
+}
+
+#[tokio::test]
 async fn a_long_run_stops_at_the_monthly_budget() {
     let h = harness_with(
         "provider:\n  type: eullm\n  model: test\napi:\n  tenants:\n    tenant-a:\n      max_tokens_per_month: 50\n",

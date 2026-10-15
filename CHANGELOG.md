@@ -20,6 +20,19 @@
   bomb), and a truncated one no longer stops the analysis.
 - Editor Mode: robots.txt is checked under the name the Core sends
   (`eullm-agent`), also before reading the articles cited in drafts.
+- Editor Mode: a deactivated tenant loses access to API and dashboard at
+  once (migration 0010), not only its scheduled work.
+- Editor Mode: publications connect to the address that was checked, so a
+  name that changes between lookups (DNS rebinding) cannot reach internal
+  addresses; environment proxies are not used for publications.
+- Editor Mode: SMTP STARTTLS verifies the server certificate before the
+  login sends the password.
+- Monthly budgets count model calls under way at the month's average per
+  call, so concurrent requests cannot all slip under the limit.
+- A provider that does not report token usage no longer makes calls free:
+  the Core estimates it. The `default` model can be priced (`pricing` at
+  the top level), and the Core warns at start when a cost budget applies to
+  a model without a price.
 
 ### Changed
 

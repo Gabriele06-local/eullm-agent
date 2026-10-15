@@ -36,7 +36,7 @@ pub struct Core {
     /// store yet, so that concurrent requests cannot all slip under a limit.
     in_flight: InFlight,
     /// Serialises "check, then reserve" within this process.
-    limit_gate: Mutex<()>,
+    limit_gate: Arc<Mutex<()>>,
 }
 
 type InFlight = Arc<std::sync::Mutex<HashMap<(String, Consume), u64>>>;
@@ -63,42 +63,106 @@ impl Drop for Reservation {
 /// one long run cannot overshoot it.
 pub struct TenantBudget {
     store: Arc<dyn Store>,
+    in_flight: InFlight,
+    gate: Arc<Mutex<()>>,
     tenant: String,
     limits: TenantLimits,
 }
 
 #[async_trait::async_trait]
 impl crate::agent::BudgetGuard for TenantBudget {
-    async fn check(&self) -> Result<()> {
-        check_tenant_limits(
+    async fn admit(&self) -> Result<Box<dyn std::any::Any + Send>> {
+        let r = reserve_slot(
             self.store.as_ref(),
-            &self.limits,
+            &self.in_flight,
+            &self.gate,
+            Some(&self.limits),
             &self.tenant,
             Consume::ModelCall,
-            0,
         )
-        .await
+        .await?;
+        Ok(Box::new(r))
     }
 }
 
+fn pending(in_flight: &InFlight, tenant: &str, what: Consume) -> u64 {
+    in_flight
+        .lock()
+        .unwrap()
+        .get(&(tenant.to_string(), what))
+        .copied()
+        .unwrap_or(0)
+}
+
+/// Check the limits and hold a slot until the work is recorded: requests
+/// arriving together are counted one after the other, not all against the
+/// same total. (Within one process; several Core processes on one database
+/// can still overshoot by the work they admit at once.)
+async fn reserve_slot(
+    store: &dyn Store,
+    in_flight: &InFlight,
+    gate: &Mutex<()>,
+    limits: Option<&TenantLimits>,
+    tenant: &str,
+    what: Consume,
+) -> Result<Reservation> {
+    let key = (tenant.to_string(), what);
+    let reservation = || {
+        *in_flight.lock().unwrap().entry(key.clone()).or_default() += 1;
+        Reservation {
+            in_flight: Arc::clone(in_flight),
+            key: key.clone(),
+        }
+    };
+    let Some(l) = limits else {
+        return Ok(reservation());
+    };
+    let _gate = gate.lock().await;
+    // Model calls admitted and not yet recorded, plus runs about to make
+    // their first one: each is expected to cost like the average call.
+    let calls =
+        pending(in_flight, tenant, Consume::ModelCall) + pending(in_flight, tenant, Consume::Run);
+    check_tenant_limits(
+        store,
+        l,
+        tenant,
+        what,
+        pending(in_flight, tenant, what),
+        calls,
+    )
+    .await?;
+    Ok(reservation())
+}
+
 /// Refuse when the tenant has reached a limit that applies to `what`;
-/// `pending` counts work already admitted but not yet recorded.
+/// `pending` counts work of this kind already admitted but not yet
+/// recorded, `pending_calls` the model calls under way. The monthly budget
+/// counts each of these at the month's average cost and tokens per call.
 async fn check_tenant_limits(
     store: &dyn Store,
     l: &TenantLimits,
     tenant: &str,
     what: Consume,
     pending: u64,
+    pending_calls: u64,
 ) -> Result<()> {
     let (day_start, month_start) = period_starts(now_ms());
     let monthly = l.max_cost_per_month.is_some() || l.max_tokens_per_month.is_some();
     // Runs call the model too, so they count against the monthly budget.
     if matches!(what, Consume::Run | Consume::ModelCall) && monthly {
         let m = store.usage(tenant, month_start).await?;
+        let per_call = |total: f64| {
+            if m.llm_calls == 0 {
+                0.0
+            } else {
+                total / m.llm_calls as f64
+            }
+        };
         if let Some(max) = l.max_cost_per_month {
-            if m.cost >= max {
+            let projected = m.cost + pending_calls as f64 * per_call(m.cost);
+            if projected >= max {
                 return Err(LimitReached(format!(
-                    "monthly cost limit reached ({:.2} of {max:.2})",
+                    "monthly cost limit reached ({:.2} of {max:.2}, {pending_calls} call(s) under way)",
                     m.cost
                 ))
                 .into());
@@ -106,10 +170,12 @@ async fn check_tenant_limits(
         }
         if let Some(max) = l.max_tokens_per_month {
             let used = m.input_tokens + m.output_tokens;
-            if used >= max {
-                return Err(
-                    LimitReached(format!("monthly token limit reached ({used} of {max})")).into(),
-                );
+            let projected = used + (pending_calls as f64 * per_call(used as f64)).ceil() as u64;
+            if projected >= max {
+                return Err(LimitReached(format!(
+                    "monthly token limit reached ({used} of {max}, {pending_calls} call(s) under way)"
+                ))
+                .into());
             }
         }
     }
@@ -287,7 +353,7 @@ impl Core {
                     credentials: resolve_credentials(&f.credentials),
                 }),
             in_flight: Arc::default(),
-            limit_gate: Mutex::new(()),
+            limit_gate: Arc::new(Mutex::new(())),
             config,
         })
     }
@@ -335,44 +401,17 @@ impl Core {
         })
     }
 
-    /// Refuse when the tenant has reached a limit that applies to `what`.
-    /// The check is made before the work: a call already under way may
-    /// take a tenant slightly past a monthly budget, never further.
-    pub async fn check_limits(&self, tenant: &str, what: Consume) -> Result<()> {
-        self.reserve(tenant, what).await.map(drop)
-    }
-
-    /// Check the limits and hold a slot until the work is recorded: requests
-    /// arriving together are counted one after the other, not all against
-    /// the same total. (Within one process; several Core processes on one
-    /// database can still overshoot by the work they admit at once.)
+    /// Check the limits and hold a slot until the work is recorded.
     pub async fn reserve(&self, tenant: &str, what: Consume) -> Result<Reservation> {
-        let key = (tenant.to_string(), what);
-        let reservation = || {
-            *self
-                .in_flight
-                .lock()
-                .unwrap()
-                .entry(key.clone())
-                .or_default() += 1;
-            Reservation {
-                in_flight: Arc::clone(&self.in_flight),
-                key: key.clone(),
-            }
-        };
-        let Some(l) = self.limits(tenant) else {
-            return Ok(reservation());
-        };
-        let _gate = self.limit_gate.lock().await;
-        let pending = self
-            .in_flight
-            .lock()
-            .unwrap()
-            .get(&key)
-            .copied()
-            .unwrap_or(0);
-        check_tenant_limits(self.store.as_ref(), l, tenant, what, pending).await?;
-        Ok(reservation())
+        reserve_slot(
+            self.store.as_ref(),
+            &self.in_flight,
+            &self.limit_gate,
+            self.limits(tenant),
+            tenant,
+            what,
+        )
+        .await
     }
 
     /// Validate and record a run, then execute it in the background.
@@ -450,6 +489,8 @@ impl Core {
         .with_budget(self.limits(&req.tenant).map(|l| {
             Arc::new(TenantBudget {
                 store: Arc::clone(&self.store),
+                in_flight: Arc::clone(&self.in_flight),
+                gate: Arc::clone(&self.limit_gate),
                 tenant: req.tenant.clone(),
                 limits: l.clone(),
             }) as Arc<dyn crate::agent::BudgetGuard>
@@ -473,7 +514,8 @@ impl Core {
             .get(model_name)
             .with_context(|| format!("unknown model '{model_name}'"))?
             .clone();
-        self.check_limits(tenant, Consume::ModelCall).await?;
+        // Held until the call is recorded: calls under way count against the budget.
+        let _reserved = self.reserve(tenant, Consume::ModelCall).await?;
         let started = Instant::now();
         let timeout = Duration::from_secs(self.config.limits.llm_timeout_seconds.max(1));
         let result = match tokio::time::timeout(timeout, model.client.chat(messages, tools)).await {
