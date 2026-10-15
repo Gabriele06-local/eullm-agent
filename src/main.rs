@@ -170,15 +170,57 @@ async fn main() -> Result<()> {
                 token_env: None,
                 profiles: Vec::new(),
             })?);
+            // Editor Mode, when the local installation put it next to the
+            // config: it reads the web through the Core and gets its own
+            // token, also new at every start.
+            let editor = eullm_agent::editor_mode::find(&wizard::config_dir(&cli.config));
+            let editor_secret = api::new_token();
+            if editor.is_some() {
+                let api_cfg = config
+                    .api
+                    .get_or_insert_with(|| serde_json::from_value(serde_json::json!({})).unwrap());
+                if api_cfg.fetch.is_none() {
+                    api_cfg.fetch = Some(serde_json::from_value(serde_json::json!({}))?);
+                }
+                tokens.push(api::ApiToken::resolve(&ApiTokenConfig {
+                    name: "editor-mode".into(),
+                    tenant: "default".into(),
+                    token_sha256: Some(api::sha256_hex(&editor_secret)),
+                    token_env: None,
+                    profiles: Vec::new(),
+                })?);
+            }
             let core = setup::build_core(Arc::new(config), Arc::clone(&module_registry)).await?;
             setup::recover_runs(&core, "api:").await?;
+            let listen = addr.to_string();
+            let server = tokio::spawn(async move { api::serve(core, &listen, tokens).await });
+            let editor = match editor {
+                Some(e) => match e.launch(&format!("http://{addr}"), &editor_secret).await {
+                    Ok(r) => Some(r),
+                    Err(e) => {
+                        warn!("Editor Mode did not start: {e:#}");
+                        None
+                    }
+                },
+                None => None,
+            };
             let url = format!("http://{addr}/#token={secret}");
             println!("\nEuLLM Agent is ready. Open this link in your browser:\n\n  {url}\n");
+            if let Some(e) = &editor {
+                println!(
+                    "Editor Mode: {}\n  login token: {}\n  logs: {}\n",
+                    e.url,
+                    e.login_token,
+                    e.logs.display()
+                );
+            }
             println!("The link works until this program stops. Press Ctrl-C to stop.\n");
             if !no_browser {
                 open_browser(&url);
             }
-            api::serve(core, &addr.to_string(), tokens).await?;
+            let result = server.await.context("the API stopped")?;
+            drop(editor);
+            result?;
         }
         Commands::Run { task } => {
             let router = eullm_agent::router::ModelRouter::from_config(&config)?;

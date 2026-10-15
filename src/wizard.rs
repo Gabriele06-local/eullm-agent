@@ -49,13 +49,18 @@ pub fn new_config(
 }
 
 /// `sqlite://<directory of the config>/eullm-agent.db`.
-pub fn local_database(config_path: &Path) -> DatabaseConfig {
+/// The directory of the config file, absolute when it exists.
+pub fn config_dir(config_path: &Path) -> std::path::PathBuf {
     let dir = config_path
         .parent()
         .filter(|d| !d.as_os_str().is_empty())
         .map(Path::to_path_buf)
         .unwrap_or_else(|| std::path::PathBuf::from("."));
-    let dir = std::fs::canonicalize(&dir).unwrap_or(dir);
+    std::fs::canonicalize(&dir).unwrap_or(dir)
+}
+
+pub fn local_database(config_path: &Path) -> DatabaseConfig {
+    let dir = config_dir(config_path);
     DatabaseConfig {
         url: Some(format!("sqlite://{}", dir.join("eullm-agent.db").display())),
         url_env: None,

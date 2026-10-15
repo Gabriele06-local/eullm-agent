@@ -8,6 +8,7 @@ pub mod api;
 pub mod approvals;
 pub mod audit;
 pub mod config;
+pub mod editor_mode;
 pub mod llm;
 pub mod modules;
 pub mod policy;

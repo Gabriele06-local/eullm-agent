@@ -21,6 +21,13 @@
   local installation: one file with one tenant, the same code and tests as
   PostgreSQL (every database test runs on both), and `editor worker` as a
   plain hourly loop. PostgreSQL stays the choice for several tenants.
+- Local installation script (`install/local.sh`, Linux and macOS): the Core
+  and Editor Mode in `~/.eullm-agent`, Python through uv, started with
+  `eullm-local`; `start` runs Editor Mode's dashboard and worker when it is
+  installed next to the config.
+- Server installation (`deploy/server`): `docker compose` with PostgreSQL 18,
+  the Core and Editor Mode, roles created at the first start, a guide.
+  `editor migrate` also creates the worker's job queue on PostgreSQL.
 
 ### Changed
 

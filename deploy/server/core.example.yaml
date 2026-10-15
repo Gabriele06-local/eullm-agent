@@ -1,0 +1,31 @@
+# Core configuration for deploy/server. Copy to core.yaml; secrets stay in .env.
+
+# The model. EuLLM Engine on this machine:
+provider:
+  type: eullm
+  base_url: http://host.docker.internal:11434
+  model: default
+# Or an OpenAI-compatible service (Groq, OpenRouter, ...):
+# provider:
+#   type: openai
+#   base_url: https://api.groq.com/openai/v1
+#   model: openai/gpt-oss-120b
+#   api_key_env: LLM_API_KEY
+
+workspace: /var/lib/eullm-agent/workspace
+
+database:
+  url_env: DATABASE_URL
+
+api:
+  listen: 0.0.0.0:8088
+  tokens:
+    - name: editor-mode
+      tenant: editor
+      token_env: EDITOR_CORE_TOKEN
+    - name: admin
+      tenant: default
+      token_env: CORE_ADMIN_TOKEN
+  fetch: {}            # Editor Mode reads the web through the Core
+  # tenants:           # limits per tenant, see config.example.yaml
+  #   editor: {max_cost_per_month: 50.0, max_fetches_per_day: 20000}

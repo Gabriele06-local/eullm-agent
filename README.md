@@ -24,6 +24,25 @@ without a person's yes.
 
 ![Editor Mode dashboard built on the EuLLM Agent Core](editor-mode/docs/screenshots/hero.png)
 
+## Install
+
+Two installations, both with a web interface:
+
+- **On your computer** (one person, Linux or macOS): one command installs the
+  Core and Editor Mode in `~/.eullm-agent`, with Python brought by
+  [uv](https://docs.astral.sh/uv/) and the data in SQLite files. Nothing
+  else to install.
+
+  ```bash
+  curl -LsSf https://raw.githubusercontent.com/eullm/eullm-agent/main/install/local.sh | sh
+  eullm-local
+  ```
+
+  From a checkout: `sh install/local.sh --source .` (builds with cargo).
+
+- **On a server** (several tenants): PostgreSQL, the Core and Editor Mode
+  with `docker compose`; see [deploy/server](deploy/server/README.md).
+
 ## Quick start
 
 ```bash
@@ -40,7 +59,10 @@ nothing else needs installing. The interface has a chat (each message is a
 task for the agent), the list of tasks with every step, the approvals
 waiting for you and the usage of today and this month. `start` listens on
 this computer only; for a server use `eullm-agent api`, which serves the
-same interface to anyone with an API token.
+same interface to anyone with an API token. When Editor Mode sits next to
+the config (`editor-mode/` with its `.venv`, as the local installation
+leaves it), `start` also runs its dashboard on `http://127.0.0.1:8090` and
+its hourly worker, and prints the dashboard's login token.
 
 Other ways to use it:
 

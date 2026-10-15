@@ -17,9 +17,23 @@ def _db():
 
 def cmd_migrate(a):
     from . import migrate
+    from .db import make_engine, sqlite_path
     from .runtime import settings
-    migrate.upgrade(settings().admin_database_url)
+    url = settings().admin_database_url
+    migrate.upgrade(url)
     print("editor schema up to date")
+    if sqlite_path(url) is None:  # the job queue of `editor worker`
+        engine = make_engine(url)
+        try:
+            with engine.connect() as conn:
+                queue = conn.execute(text("SELECT to_regclass('procrastinate_jobs')")).scalar()
+        finally:
+            engine.dispose()
+        if queue is None:
+            from .tasks import app
+            with app.open():
+                app.schema_manager.apply_schema()
+            print("job queue schema created")
 
 
 def cmd_tenant_add(a):
