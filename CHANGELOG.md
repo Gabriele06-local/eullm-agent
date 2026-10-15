@@ -2,45 +2,63 @@
 
 ## 0.4.0
 
-Two installations, both with a web interface: on your computer (one
-command, data in SQLite, nothing else to install) and on a server for
-several tenants (PostgreSQL with docker compose).
+Two installations, both with a web interface. On your computer: one
+command, data in SQLite, nothing else to install. On a server for several
+tenants: PostgreSQL, the Core and Editor Mode with `docker compose`.
 
 ### Added
 
-- Local installation: the Core can keep its state in one SQLite file
-  (`database.url: sqlite://eullm-agent.db`), with the same tables, append-only
-  audit and startup recovery as PostgreSQL, which stays the choice for a
-  server with several tenants.
-- `eullm-agent start`: the agent on one computer with a web interface, no
-  setup to do by hand. It opens the browser with a link that logs in by
-  itself (a new token at every start, never written to disk), keeps state
-  in SQLite next to the config and, the first time, uses an EuLLM Engine it
-  finds at `localhost:11434`. It listens on loopback only.
-- Web interface, served by `start` and `api` at `/`: chat (each message is
-  a task), tasks with every model and tool call, approvals, usage. It reads
-  everything through `/v1` with the browser's token; no inline scripts.
+- **Local installation** (`install/local.sh`, Linux and macOS): one command
+  puts the Core and Editor Mode in `~/.eullm-agent`, with the Python Editor
+  Mode needs brought by uv, and adds the `eullm-local` command. From a
+  checkout: `sh install/local.sh --source .`.
+- **`eullm-agent start`**: the agent on one computer, no setup by hand. It
+  opens the browser with a link that logs in by itself (a new token at
+  every start, never written to disk), keeps its state in SQLite next to
+  the config, uses an EuLLM Engine it finds at `localhost:11434` the first
+  time (or asks for a provider) and listens on this computer only. When
+  Editor Mode is installed next to the config, it also runs its dashboard
+  (`127.0.0.1:8090`) and hourly worker, and prints the dashboard's login
+  token; logs go to `logs/`.
+- **Web interface** of the Core, served by `start` and `api` at `/`: chat
+  (each message is a task), tasks with every model and tool call,
+  approvals, usage of today and this month. It reads everything through
+  `/v1` with the browser's token, under a strict content security policy.
+- **SQLite store** for the Core (`database.url: sqlite://eullm-agent.db`):
+  the same tables, append-only audit and startup recovery as PostgreSQL,
+  checked by the same tests.
+- **Editor Mode on SQLite** (`EDITOR_DATABASE_URL=sqlite:///editor.db`): one
+  file with one tenant (a second is refused), the same code as PostgreSQL,
+  and `editor worker` as a plain hourly loop. Every database test runs on
+  both.
+- **Server installation** (`deploy/server`): `docker compose` with
+  PostgreSQL 18, the Core, Editor Mode's dashboard and worker, database
+  roles created at the first start, and a guide (HTTPS, backups, updates).
+  Images: `Dockerfile` (Core) and `editor-mode/Dockerfile`.
 - `GET /v1/profiles`: the profiles a token may use.
-- Editor Mode on SQLite (`EDITOR_DATABASE_URL=sqlite:///editor.db`) for the
-  local installation: one file with one tenant, the same code and tests as
-  PostgreSQL (every database test runs on both), and `editor worker` as a
-  plain hourly loop. PostgreSQL stays the choice for several tenants.
-- Local installation script (`install/local.sh`, Linux and macOS): the Core
-  and Editor Mode in `~/.eullm-agent`, Python through uv, started with
-  `eullm-local`; `start` runs Editor Mode's dashboard and worker when it is
-  installed next to the config.
-- Server installation (`deploy/server`): `docker compose` with PostgreSQL 18,
-  the Core and Editor Mode, roles created at the first start, a guide.
-  `editor migrate` also creates the worker's job queue on PostgreSQL.
 
 ### Changed
 
+- `editor migrate` on PostgreSQL also creates the worker's job queue;
+  `editor worker --apply-schema` is no longer needed.
+- Editor Mode counts tenant usage in its own code instead of the
+  `editor.tenant_usage` view, with days and months in the tenant's time
+  zone as before.
 - `Cargo.lock` is in the repository and CI and release builds use
   `--locked`, so every build of a tag uses the same dependency versions.
 - Dependabot proposes dependency updates (Rust, Editor Mode, GitHub
   Actions) once a week as pull requests; minor and patch updates are
-  grouped, a major version comes on its own.
+  grouped, a major version comes on its own. First round merged:
+  `serde_json`, `actions/checkout` 7, `actions/upload-artifact` 7,
+  `actions/download-artifact` 8, `softprops/action-gh-release` 3.
 - Editor Mode: `pyyaml`, never imported, is no longer a dependency.
+
+### Upgrading from 0.3.x
+
+Nothing to change: PostgreSQL installations keep working as they are and
+the Core applies no new migration. `editor migrate` needs no new revision
+either; run it once to create the job queue if the worker used
+`--apply-schema`.
 
 ## 0.3.6
 

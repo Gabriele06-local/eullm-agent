@@ -4,13 +4,24 @@ Autonomous ReAct agent with multi-provider LLM support (EuLLM Engine, Ollama,
 OpenAI-compatible APIs, Anthropic), a small set of sandboxed tools, optional
 modules and a Telegram interface.
 
-**New in 0.3.0: the agent becomes a platform.** `eullm-agent api` turns it
-into a multi-tenant Core that other applications build on:
+**New in 0.4.0: two installations, both with a web interface.**
+
+- **On your computer:** one command installs everything; `eullm-local`
+  opens the browser on a chat with the agent, the tasks with every step,
+  the approvals waiting for you and the usage. Data stays in SQLite files,
+  the first start finds a local EuLLM Engine by itself, and Editor Mode
+  runs alongside. No database, Python or configuration to set up by hand.
+- **On a server:** `docker compose` with PostgreSQL, the Core and Editor
+  Mode, for several tenants isolated by row-level security.
+
+Since 0.3.0 the agent is a platform: `eullm-agent api` is a multi-tenant
+Core that other applications build on.
 
 - **The model proposes, the policy decides, a person approves.** Every
-  sensitive action stops in an approval queue (API, Telegram or terminal).
+  sensitive action stops in an approval queue (web interface, API,
+  Telegram or terminal).
 - **Everything is on record.** Runs, model calls, tools and fetches land in
-  PostgreSQL with an append-only audit trail.
+  the database (SQLite or PostgreSQL) with an append-only audit trail.
 - **Safe web access for apps.** `POST /v1/fetch` crawls with SSRF checks on
   every redirect, size limits and a per-host pace.
 - **Costs under control.** Model router with fallback and pricing, budgets
@@ -43,7 +54,7 @@ Two installations, both with a web interface:
 - **On a server** (several tenants): PostgreSQL, the Core and Editor Mode
   with `docker compose`; see [deploy/server](deploy/server/README.md).
 
-## Quick start
+## From source
 
 ```bash
 cargo build --release
