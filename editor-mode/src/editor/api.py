@@ -263,6 +263,11 @@ def create_app(db, core=None) -> FastAPI:
             raise HTTPException(409, "draft not found or already decided")
         return {"status": "approved" if body.accept else "rejected"}
 
+    @app.get("/api/export")
+    def get_export(c: auth.Caller = Depends(need("owner"))):
+        """Every row of the tenant, credentials left out."""
+        return ui.export_response(db, c.tenant_id)
+
     @app.get("/api/usage")
     def get_usage(c: auth.Caller = Depends(need("owner"))):
         from . import quotas

@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select, text
 
-from . import briefing, jobs, models as m, opportunity, proposals, sources
+from . import briefing, jobs, models as m, opportunity, proposals, sources, tenant_data
 from .ingest import collect_tenant
 from .profile import analyse_site
 from .scoring import score_topics
@@ -133,7 +133,10 @@ class Runner:
                 score_topics(self.db, tenant, now=now)
             self.step(tenant, "collect", done, failed, collect)
             if maintenance_due(local, last_maintain):
-                self.step(tenant, "maintain", done, failed, lambda: sources.maintain(self.db, tenant, client, now=now))
+                def maintain():
+                    sources.maintain(self.db, tenant, client, now=now)
+                    tenant_data.prune(self.db, tenant, now=now)
+                self.step(tenant, "maintain", done, failed, maintain)
             if review_due(local, last_review):
                 self.step(tenant, "review", done, failed, lambda: self.review(tenant, client))
             with self.db.tenant(tenant) as s:

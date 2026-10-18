@@ -101,6 +101,7 @@ Two installations, same code:
    | `EDITOR_CORE_DELEGATE` | `true` when the Core token has `delegate: true`: each tenant acts as Core tenant `<token tenant>/<tenant>` |
    | `EDITOR_WORKER_CONCURRENCY` | tenants the worker runs at the same time (default 2, PostgreSQL) |
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
+   | `EDITOR_RETENTION_DAYS` | collected items and finished jobs older than this are deleted at the daily maintenance (default 365, `0` keeps everything); items cited by a proposal or a draft and model usage are kept |
    | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | briefing by email (STARTTLS) |
    | `EDITOR_TELEGRAM_TOKEN` | briefing by Telegram |
    | `EDITOR_SECRET_KEY` | key (32 bytes in base64, `editor secret-key` prints one) of the publishing credentials that owners enter in the dashboard: they are stored encrypted (AES-256-GCM) in `editor.secrets` and never shown again. Without it a server stores none; the local installation keeps its key in `editor-secret.key` next to the database |
@@ -127,6 +128,12 @@ Two installations, same code:
 
        uv run editor worker                  # queued work and the hourly tick: collection, briefing at 08:00 local, maintenance, reviews
        uv run editor serve --port 8090       # dashboard and API
+
+A tenant's data: `editor tenant-export <tenant> --out file.json` writes
+every row of it, credentials left out (the owner downloads the same file
+from Impostazioni, or `GET /api/export`); `editor tenant-delete <tenant>
+--confirm <tenant>` deletes it for good, with the owner connection. Its
+usage and audit in the Core stay there.
 
 Drafts and publications are started from the dashboard or the API; every
 publication waits for an owner's approval. The dashboard only queues work

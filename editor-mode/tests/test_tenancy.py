@@ -46,7 +46,8 @@ def populate(db, tenant, monkeypatch):
         s.execute(text("INSERT INTO editor.site_analyses (tenant_id, site_id, status, snapshot) VALUES (:t, :s, 'partial', '{}')"),
                   {"t": tenant, "s": site_id})
         s.execute(text("INSERT INTO editor.site_posts (tenant_id, site_id, url, url_hash, title, minhash) "
-                       "VALUES (:t, :s, 'https://x/1', 'h', 'x', '{1}')"), {"t": tenant, "s": site_id})
+                       "VALUES (:t, :s, 'https://x/1', 'h', 'x', :mh)"),
+                  {"t": tenant, "s": site_id, "mh": "[1]" if db.sqlite else "{1}"})
         s.execute(text("INSERT INTO editor.profile_reviews (tenant_id, site_id, drift, significant) VALUES (:t, :s, '{}', false)"),
                   {"t": tenant, "s": site_id})
         proposals.record_feedback(s, tenant, "source", 1, "up", "x")

@@ -14,11 +14,11 @@ from urllib.parse import quote, unquote
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, vault
+from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -84,6 +84,12 @@ def plural(n, one: str, many: str) -> str:
 
 def score100(value) -> str:
     return "–" if value is None else str(round(value))
+
+
+def export_response(db, tenant_id: str) -> Response:
+    day = datetime.now(UTC).date().isoformat()
+    return Response(tenant_data.export_json(db, tenant_id), media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="{tenant_id}-{day}.json"'})
 
 
 def register(app, ctx) -> None:
@@ -626,6 +632,10 @@ def register(app, ctx) -> None:
         with db.tenant(c.tenant_id) as s:
             s.execute(m.recipients.delete().where(m.recipients.c.id == rid))
         return done("/settings", "Destinatario rimosso.")
+
+    @app.get("/ui/export")
+    def ui_export(c: auth.Caller = Depends(ctx.need("owner"))):
+        return export_response(db, c.tenant_id)
 
     @app.post("/ui/tokens", response_class=HTMLResponse)
     def ui_new_token(request: Request, name: str = Form(...), role: str = Form(...),
