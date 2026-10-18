@@ -68,6 +68,7 @@ pub fn build_client(provider: &ProviderConfig, timeout: Duration) -> Result<Arc<
             api_key_env,
             model,
             base_url,
+            max_tokens,
         } => {
             let key = resolve_secret(api_key, api_key_env)?;
             if key.is_none() && base_url.is_none() {
@@ -75,12 +76,13 @@ pub fn build_client(provider: &ProviderConfig, timeout: Duration) -> Result<Arc<
             }
             let base = base_url.as_deref().unwrap_or("https://api.openai.com/v1");
             info!("provider=openai base_url={base} model={model}");
-            Arc::new(OpenAiClient::new(
-                key,
-                model.clone(),
-                base_url.clone(),
-                timeout,
-            ))
+            let mut extra = serde_json::Map::new();
+            if let Some(n) = max_tokens {
+                extra.insert("max_tokens".into(), (*n).into());
+            }
+            Arc::new(
+                OpenAiClient::new(key, model.clone(), base_url.clone(), timeout).with_extra(extra),
+            )
         }
     })
 }

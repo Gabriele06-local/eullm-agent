@@ -89,6 +89,40 @@ async fn eullm_without_key_sends_no_authorization() {
 }
 
 #[tokio::test]
+async fn openai_max_tokens_from_the_config_is_sent() {
+    let srv = MockServer::start(|_, _| {
+        http_response(
+            "200 OK",
+            "",
+            r#"{"choices":[{"message":{"content":"ok"}}]}"#,
+        )
+    })
+    .await;
+    let provider: eullm_agent::config::ProviderConfig = from_json(&format!(
+        r#"{{"type":"openai","api_key":"k","model":"m","base_url":"{}/v1","max_tokens":16384}}"#,
+        srv.url()
+    ));
+    let client = eullm_agent::setup::build_client(&provider, Duration::from_secs(5)).unwrap();
+    client.chat(&[Message::user("hi")], &[]).await.unwrap();
+    let body: Value = serde_json::from_str(&srv.recorded()[0].body).unwrap();
+    assert_eq!(body["max_tokens"], 16384);
+
+    // Without it nothing is sent and the service decides.
+    let provider: eullm_agent::config::ProviderConfig = from_json(&format!(
+        r#"{{"type":"openai","api_key":"k","model":"m","base_url":"{}/v1"}}"#,
+        srv.url()
+    ));
+    let client = eullm_agent::setup::build_client(&provider, Duration::from_secs(5)).unwrap();
+    client.chat(&[Message::user("hi")], &[]).await.unwrap();
+    let body: Value = serde_json::from_str(&srv.recorded()[1].body).unwrap();
+    assert!(body.get("max_tokens").is_none());
+}
+
+fn from_json<T: serde::de::DeserializeOwned>(json_text: &str) -> T {
+    serde_json::from_str(json_text).unwrap()
+}
+
+#[tokio::test]
 async fn busy_engine_is_retried_once_after_retry_after() {
     let srv = MockServer::start(|_, n| {
         if n == 0 {
