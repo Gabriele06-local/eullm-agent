@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Added
+
+- **Sub-tenants for applications with many customers.** A Core token with
+  `delegate: true` may add `X-EuLLM-Tenant: <name>` to any request and act
+  as tenant `<tenant>/<name>`: its own runs, approvals, usage, audit and
+  limits. `PUT /v1/tenants/{name}/limits` sets a sub-tenant's limits,
+  stored in the database (migration 0004, SQLite 0002) and effective at
+  once, with no change to the configuration and no restart;
+  `delegate_limits` applies to a sub-tenant that has none. Limits in
+  `api.tenants` still take precedence. Any other token is refused with the
+  header, and a sub-tenant cannot set limits.
+- Editor Mode uses it with `EDITOR_CORE_DELEGATE=true`: each tenant's model
+  calls and fetches run as its own Core tenant, and `editor tenant-plan
+  --max-cost-month` also sets that tenant's monthly budget in the Core,
+  where calls under way are reserved. `deploy/server` is configured this
+  way. A tenant with its own token (`--core-token-env`) keeps using it.
+
 ### Changed
 
 - **Editor Mode: durable job queue, fair between tenants.** Site analyses,
@@ -24,6 +41,15 @@
   runs the waiting work in the foreground.
 
 ### Upgrading from 0.4.0
+
+The Core applies its migration 0004 by itself at start. For a server
+installed with `deploy/server`: add `delegate: true` and a
+`delegate_limits` line to the `editor-mode` token of `core.yaml` (see
+`core.example.yaml`; `compose.yaml` already sets `EDITOR_CORE_DELEGATE`),
+then run `editor tenant-plan <tenant> --max-cost-month <budget>` for each
+tenant to give it its limit in the Core. Usage counted before under the
+shared `editor` tenant stays there; each tenant starts counting as
+`editor/<tenant>`.
 
 Run `editor migrate` (PostgreSQL revision 0011, SQLite file
 `0002_job_queue`), then restart the dashboard and the worker. The

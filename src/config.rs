@@ -125,7 +125,7 @@ pub struct ApiConfig {
     pub tenants: BTreeMap<String, TenantLimits>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize)]
 pub struct TenantLimits {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_cost_per_month: Option<f64>,
@@ -236,6 +236,16 @@ pub struct ApiTokenConfig {
     /// Profiles this client may run; empty means all.
     #[serde(default)]
     pub profiles: Vec<String>,
+    /// The client may act for sub-tenants of its own tenant: a request
+    /// with the header `X-EuLLM-Tenant: <name>` runs as tenant
+    /// `<tenant>/<name>`, with its own runs, usage, audit and limits. For
+    /// an application that serves several customers with one token.
+    #[serde(default)]
+    pub delegate: bool,
+    /// Limits of a sub-tenant that has none of its own, neither in
+    /// `api.tenants` nor set with `PUT /v1/tenants/{name}/limits`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delegate_limits: Option<TenantLimits>,
 }
 
 pub fn default_tenant() -> String {

@@ -58,7 +58,28 @@ def cmd_tenant_plan(a):
     sets = ", ".join(f"{k} = :{k}" for k in fields)
     with admin.engine.begin() as conn:
         n = conn.execute(text(f"UPDATE editor.tenants SET {sets} WHERE tenant_id = :tenant"), fields | {"tenant": a.tenant}).rowcount
-    print("updated" if n else f"no tenant {a.tenant}")
+    if not n:
+        sys.exit(f"no tenant {a.tenant}")
+    print("updated")
+    if "max_llm_cost_month" in fields:
+        _core_limits(a.tenant, fields["max_llm_cost_month"])
+
+
+def _core_limits(tenant: str, max_cost_month: float | None) -> None:
+    """With a delegating Core token, the plan's model budget becomes the
+    tenant's limit in the Core too: the Core reserves calls under way, so
+    work running at the same time cannot overshoot it."""
+    from .core_client import CoreError
+    from .runtime import core, settings
+    client = core()
+    if client is None or not settings().core_delegate:
+        return
+    limits = {} if max_cost_month is None else {"max_cost_per_month": max_cost_month}
+    try:
+        r = client.set_limits(tenant, limits)
+    except CoreError as e:
+        sys.exit(f"plan saved, but the Core limits of {tenant} were not updated: {e}")
+    print(f"Core limits of {r['tenant']}: {json.dumps(r['effective'])}")
 
 
 def cmd_usage(a):
@@ -93,13 +114,16 @@ def _site_id(s, domain):
 
 def cmd_site_add(a):
     from . import profile, sources
+    from .core_fetch import acting_for
     from .runtime import core, http
     from .site import SiteCrawler
-    with http() as client:
-        res = profile.analyse_site(_db(), a.tenant, a.domain, SiteCrawler(client, max_pages=a.max_pages), core())
+    base = core()
+    model = base.for_tenant(_db(), a.tenant) if base is not None else None
+    with acting_for(a.tenant), http() as client:
+        res = profile.analyse_site(_db(), a.tenant, a.domain, SiteCrawler(client, max_pages=a.max_pages), model)
         print(json.dumps({k: res[k] for k in ("status", "problems", "profile_id", "changes")}, indent=2, default=str))
         if res["status"] != "failed" and not a.no_discovery:
-            rep = sources.discover(_db(), a.tenant, res["site_id"], client, core())
+            rep = sources.discover(_db(), a.tenant, res["site_id"], client, model)
             print(f"sources: {rep.candidates} rated, {rep.active} active, {rep.candidate} candidates, "
                   f"{rep.rejected} rejected, {rep.failed} unreadable")
             for n in rep.notes:

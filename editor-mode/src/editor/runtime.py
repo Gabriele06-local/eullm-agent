@@ -25,14 +25,14 @@ def database() -> Database:
 
 def core() -> CoreClient | None:
     st = settings()
-    return CoreClient(st.core_url, st.core_token, st.core_model) if st.core_token else None
+    return CoreClient(st.core_url, st.core_token, st.core_model, delegate=st.core_delegate) if st.core_token else None
 
 
 def http():
     st = settings()
     if not st.core_token:
         raise SystemExit("EDITOR_CORE_TOKEN is not set: Editor Mode reads the web only through the Core")
-    return core_http_client(st.core_url, st.core_token)
+    return core_http_client(st.core_url, st.core_token, delegate=st.core_delegate)
 
 
 def runner() -> Runner:

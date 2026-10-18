@@ -6,14 +6,14 @@ use axum::extract::{FromRequestParts, Path, Query, State};
 use axum::http::request::Parts;
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
 
-use crate::config::ApiTokenConfig;
+use crate::config::{ApiTokenConfig, TenantLimits};
 use crate::llm::{Message, Role, ToolDefinition};
 use crate::service::{Core, FetchError, LimitReached, StartRun};
 use crate::store::ApprovalStatus;
@@ -34,7 +34,11 @@ pub const ROUTES: &[(&str, &str)] = &[
     ("post", "/v1/fetch"),
     ("get", "/v1/usage"),
     ("get", "/v1/profiles"),
+    ("put", "/v1/tenants/{name}/limits"),
 ];
+
+/// Header with which a delegating token acts for one of its sub-tenants.
+pub const TENANT_HEADER: &str = "x-eullm-tenant";
 
 const MAX_INPUT_BYTES: usize = 100 * 1024;
 
@@ -43,6 +47,8 @@ pub struct ApiToken {
     pub name: String,
     pub tenant: String,
     pub profiles: Vec<String>,
+    /// May act for `<tenant>/<name>` with the `X-EuLLM-Tenant` header.
+    pub delegate: bool,
     sha256: [u8; 32],
 }
 
@@ -86,6 +92,7 @@ impl ApiToken {
             name: cfg.name.clone(),
             tenant: cfg.tenant.clone(),
             profiles: cfg.profiles.clone(),
+            delegate: cfg.delegate,
             sha256,
         })
     }
@@ -122,6 +129,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/fetch", post(fetch))
         .route("/v1/usage", get(usage))
         .route("/v1/profiles", get(profiles))
+        .route("/v1/tenants/{name}/limits", put(set_tenant_limits))
         .with_state(state)
         .merge(crate::web::router())
 }
@@ -177,8 +185,35 @@ impl FromRequestParts<AppState> for Caller {
                 found = Some(t.clone());
             }
         }
-        found.map(Caller).ok_or_else(unauthorized)
+        let mut caller = found.ok_or_else(unauthorized)?;
+        if let Some(sub) = parts.headers.get(TENANT_HEADER) {
+            let sub = sub.to_str().unwrap_or_default();
+            if !caller.delegate {
+                return Err(ApiError(
+                    StatusCode::FORBIDDEN,
+                    "this token cannot act for another tenant".into(),
+                ));
+            }
+            if !valid_sub_tenant(sub) {
+                return Err(bad_request(
+                    "X-EuLLM-Tenant: 1 to 64 characters, a-z 0-9 - _ . and not starting with a symbol",
+                ));
+            }
+            caller.tenant = format!("{}/{sub}", caller.tenant);
+            // A sub-tenant cannot delegate further.
+            caller.delegate = false;
+        }
+        Ok(Caller(caller))
     }
+}
+
+/// A sub-tenant name: lower-case letters, digits, `-`, `_`, `.`, starting
+/// with a letter or a digit, so `parent/name` stays one unambiguous level.
+fn valid_sub_tenant(s: &str) -> bool {
+    (1..=64).contains(&s.len())
+        && s.starts_with(|c: char| c.is_ascii_lowercase() || c.is_ascii_digit())
+        && s.chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || "-_.".contains(c))
 }
 
 async fn health() -> Json<Value> {
@@ -414,6 +449,43 @@ async fn usage(
     })))
 }
 
+/// Set the limits of a sub-tenant of the caller's tenant (`<tenant>/<name>`),
+/// for an application that adds customers without touching the
+/// configuration. Only a delegating token, for its own sub-tenants.
+async fn set_tenant_limits(
+    State(st): State<AppState>,
+    Caller(caller): Caller,
+    Path(name): Path<String>,
+    Json(limits): Json<TenantLimits>,
+) -> Result<Json<Value>, ApiError> {
+    if !caller.delegate {
+        return Err(ApiError(
+            StatusCode::FORBIDDEN,
+            "only a delegating token sets the limits of its sub-tenants".into(),
+        ));
+    }
+    if !valid_sub_tenant(&name) {
+        return Err(bad_request("invalid tenant name"));
+    }
+    let negative = [limits.max_cost_per_month]
+        .into_iter()
+        .flatten()
+        .any(|v| !v.is_finite() || v < 0.0);
+    if negative {
+        return Err(bad_request("max_cost_per_month must be a number >= 0"));
+    }
+    let tenant = format!("{}/{name}", caller.tenant);
+    st.core
+        .set_limits(&tenant, &limits, &format!("api:{}", caller.name))
+        .await?;
+    let effective = st.core.limits(&tenant).await?.unwrap_or_default();
+    Ok(Json(json!({
+        "tenant": tenant,
+        "limits": limits,
+        "effective": effective,
+    })))
+}
+
 /// The profiles this token may use, with the model each one calls.
 async fn profiles(State(st): State<AppState>, Caller(caller): Caller) -> Json<Value> {
     let config = &st.core.config;
@@ -554,6 +626,8 @@ mod tests {
             token_sha256: None,
             token_env: Some(var.into()),
             profiles: vec![],
+            delegate: false,
+            delegate_limits: None,
         })
         .unwrap();
         std::env::remove_var(var);

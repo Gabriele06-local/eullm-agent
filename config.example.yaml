@@ -85,6 +85,13 @@ provider:
 #       tenant: default
 #       token_sha256: "<64 hex characters>"
 #       profiles: [planner]       # empty = all profiles
+#     - name: editor-mode         # one token for an application with many
+#       tenant: editor            # customers: with the header
+#       token_env: EDITOR_CORE_TOKEN  # X-EuLLM-Tenant: acme a request runs as
+#       delegate: true            # tenant editor/acme (own runs, usage, audit,
+#       delegate_limits:          # limits). Limits of each customer: set with
+#         max_cost_per_month: 5.0 # PUT /v1/tenants/acme/limits; these apply
+#         max_fetches_per_day: 2000 # to a customer that has none.
 #   fetch:                        # POST /v1/fetch for applications (crawling,
 #     timeout_seconds: 20         # feeds); off without this section. Public
 #     max_response_bytes: 5242880 # addresses only, every redirect re-checked.

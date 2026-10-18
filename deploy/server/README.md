@@ -76,7 +76,8 @@ A reverse proxy on the same machine, for example Caddy
 | Restore | `docker compose exec -T postgres pg_restore -U postgres -d eullm --clean < file.dump` |
 | Stop | `docker compose down` (data stays in the `pgdata` volume) |
 
-Each tenant can use its own Core token, so the Core counts and limits
-its usage apart: add a token to `core.yaml` (`token_env: CORE_TOKEN_ACME`),
-the variable to the `core` and Editor services in `compose.yaml`, and
-`editor tenant-plan acme --core-token-env CORE_TOKEN_ACME`.
+Each tenant is a Core tenant of its own (`editor/acme`), with its own
+usage, audit and limits, through the delegating `editor-mode` token of
+`core.yaml`: `tenant-plan --max-cost-month` also sets the tenant's limit in
+the Core, and `delegate_limits` covers a tenant whose plan has no budget.
+Adding a tenant needs no change to `core.yaml` and no restart.

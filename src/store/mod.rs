@@ -9,6 +9,8 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::config::TenantLimits;
+
 pub mod memory;
 pub mod postgres;
 pub mod sqlite;
@@ -251,6 +253,10 @@ pub trait Store: Send + Sync {
         tenant: &str,
         status: Option<ApprovalStatus>,
     ) -> Result<Vec<Approval>>;
+    /// Limits set through the API for a tenant; `None` when none were set.
+    async fn tenant_limits(&self, tenant: &str) -> Result<Option<TenantLimits>>;
+    /// Set (replace) a tenant's limits; the change is audited.
+    async fn set_tenant_limits(&self, tenant: &str, limits: &TenantLimits, by: &str) -> Result<()>;
 }
 
 pub fn now_ms() -> i64 {

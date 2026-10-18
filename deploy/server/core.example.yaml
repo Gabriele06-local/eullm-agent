@@ -23,6 +23,11 @@ api:
     - name: editor-mode
       tenant: editor
       token_env: EDITOR_CORE_TOKEN
+      # Each Editor Mode tenant is a Core tenant of its own (editor/<tenant>),
+      # with the limits of its plan (`editor tenant-plan`). These apply to a
+      # tenant whose plan sets none: no customer is unlimited by omission.
+      delegate: true
+      delegate_limits: {max_cost_per_month: 5.0, max_fetches_per_day: 2000}
     - name: admin
       tenant: default
       token_env: CORE_ADMIN_TOKEN
