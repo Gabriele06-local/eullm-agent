@@ -23,19 +23,34 @@ class ChatResult:
     model: str
 
 
+TENANT_HEADER = "X-EuLLM-Tenant"
+
+
 class CoreClient:
     def __init__(self, base_url: str, token: str, model: str = "default", client: httpx.Client | None = None,
-                 guard=None):
+                 guard=None, delegate: bool = False, tenant: str | None = None):
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.model = model
         self.http = client or httpx.Client(timeout=180)
         # Called before every model call; raises to stop it (tenant quotas).
         self.guard = guard
+        # With a delegating Core token (`delegate: true`), each Editor Mode
+        # tenant is the Core tenant <token tenant>/<tenant id>: its own
+        # usage, audit and limits.
+        self.delegate = delegate
+        self.tenant = tenant
+
+    def headers(self) -> dict:
+        h = {"Authorization": f"Bearer {self.token}"}
+        if self.tenant:
+            h[TENANT_HEADER] = self.tenant
+        return h
 
     def for_tenant(self, db, tenant_id: str) -> "CoreClient":
-        """A client that uses the tenant's own Core token when it has one and
-        stops when the tenant's monthly model budget is spent."""
+        """A client for one tenant: its own Core token when it has one, else
+        the shared token acting for it when the token delegates; it stops
+        when the tenant's monthly model budget is spent."""
         import os
 
         from sqlalchemy import select
@@ -54,7 +69,21 @@ class CoreClient:
                 except QuotaExceeded as e:
                     raise CoreError(str(e)) from None
 
-        return CoreClient(self.base_url, token or self.token, self.model, self.http, guard)
+        own = bool(env and token)
+        return CoreClient(self.base_url, token or self.token, self.model, self.http, guard,
+                          delegate=False, tenant=tenant_id if self.delegate and not own else None)
+
+    def set_limits(self, tenant_id: str, limits: dict) -> dict:
+        """Set the Core limits of a tenant (PUT /v1/tenants/{tenant}/limits);
+        needs the delegating token."""
+        try:
+            r = self.http.put(f"{self.base_url}/v1/tenants/{tenant_id}/limits",
+                              headers={"Authorization": f"Bearer {self.token}"}, json=limits)
+        except httpx.HTTPError as e:
+            raise CoreError(f"Core unreachable: {e}") from e
+        if r.status_code != 200:
+            raise CoreError(f"Core returned {r.status_code}: {_error(r)}")
+        return r.json()
 
     def chat(self, messages: list[dict], model: str | None = None) -> ChatResult:
         model = model or self.model
@@ -63,17 +92,13 @@ class CoreClient:
         try:
             r = self.http.post(
                 f"{self.base_url}/v1/llm/chat",
-                headers={"Authorization": f"Bearer {self.token}"},
+                headers=self.headers(),
                 json={"model": model, "messages": messages},
             )
         except httpx.HTTPError as e:
             raise CoreError(f"Core unreachable: {e}") from e
         if r.status_code != 200:
-            try:
-                detail = r.json().get("error", r.text)
-            except ValueError:
-                detail = r.text
-            raise CoreError(f"Core returned {r.status_code}: {detail}")
+            raise CoreError(f"Core returned {r.status_code}: {_error(r)}")
         body = r.json()
         return ChatResult(body.get("content", ""), body.get("usage"), body.get("cost"), model)
 
@@ -97,6 +122,13 @@ class CoreClient:
                     {"role": "user", "content": f"The answer is not valid: {last_error}. Reply with the corrected JSON only."},
                 ]
         raise CoreError(f"invalid JSON from model: {last_error}")
+
+
+def _error(r: httpx.Response) -> str:
+    try:
+        return r.json().get("error", r.text)
+    except ValueError:
+        return r.text
 
 
 _FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.S)

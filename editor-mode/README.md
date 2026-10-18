@@ -64,19 +64,26 @@ Two installations, same code:
 - **Server, several tenants:** PostgreSQL, with row-level security between
   tenants; the worker runs several tenants at once. All the steps below apply.
 
-1. **Core.** Enable fetch and give Editor Mode a token per tenant in the
-   Core configuration (`eullm-agent token new` prints the token and its
-   SHA-256; only the hash goes in the file). Limits in `api.tenants` are the
-   Core's own guard; Editor Mode keeps its plan limits on top.
+1. **Core.** Enable fetch and give Editor Mode one delegating token
+   (`eullm-agent token new` prints the token and its SHA-256; only the hash
+   goes in the file). With `delegate: true` and `EDITOR_CORE_DELEGATE=true`
+   every Editor Mode tenant is a Core tenant of its own, `editor/<tenant>`:
+   its own usage and audit, and as Core limit the model budget of its plan
+   (`editor tenant-plan --max-cost-month` sets both). `delegate_limits`
+   applies to a tenant whose plan sets none, so nobody is unlimited by
+   omission. A new tenant needs no change to the Core and no restart.
 
        api:
          tokens:
-           - name: editor-acme
-             tenant: editor-acme
+           - name: editor-mode
+             tenant: editor
              token_sha256: "<sha256>"
+             delegate: true
+             delegate_limits: {max_cost_per_month: 5.0, max_fetches_per_day: 2000}
          fetch: {}
-         tenants:
-           editor-acme: {max_cost_per_month: 50.0, max_fetches_per_day: 20000}
+
+   A tenant can still have a token of its own (`tenant-plan
+   --core-token-env`); it is then used instead of the shared one.
 
 2. **Database (PostgreSQL).** The migrations create the schema `editor` and the role
    `editor_app` (NOLOGIN, NOBYPASSRLS). The application connects with a login
@@ -91,6 +98,8 @@ Two installations, same code:
    | `EDITOR_DATABASE_URL` | application connection (`editor_web`) |
    | `EDITOR_ADMIN_DATABASE_URL` | owner connection, for `migrate` and `tenant-plan` |
    | `EDITOR_CORE_URL`, `EDITOR_CORE_TOKEN`, `EDITOR_CORE_MODEL` | Core address, default token, model or profile name |
+   | `EDITOR_CORE_DELEGATE` | `true` when the Core token has `delegate: true`: each tenant acts as Core tenant `<token tenant>/<tenant>` |
+   | `EDITOR_WORKER_CONCURRENCY` | tenants the worker runs at the same time (default 2, PostgreSQL) |
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
    | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | briefing by email (STARTTLS) |
    | `EDITOR_TELEGRAM_TOKEN` | briefing by Telegram |

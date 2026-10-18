@@ -23,6 +23,9 @@ class Settings:
     core_url: str = "http://127.0.0.1:8088"
     core_token: str = ""
     core_model: str = "default"
+    # The Core token delegates (`delegate: true`): every tenant is a Core
+    # tenant of its own, with its usage and the limits of its plan.
+    core_delegate: bool = False
     timezone: str = "Europe/Rome"
     briefing_hour: int = 8
     smtp_host: str = ""
@@ -43,6 +46,7 @@ class Settings:
             core_url=env.get("EDITOR_CORE_URL", cls.core_url),
             core_token=env.get("EDITOR_CORE_TOKEN", ""),
             core_model=env.get("EDITOR_CORE_MODEL", cls.core_model),
+            core_delegate=env.get("EDITOR_CORE_DELEGATE", "").strip().lower() in ("1", "true", "yes"),
             timezone=env.get("EDITOR_TIMEZONE", cls.timezone),
             briefing_hour=int(env.get("EDITOR_BRIEFING_HOUR", cls.briefing_hour)),
             smtp_host=env.get("EDITOR_SMTP_HOST", ""),

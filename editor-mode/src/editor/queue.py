@@ -31,6 +31,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import insert, select, text, update
 
 from . import models as m
+from .core_fetch import acting_for
 from .quotas import lock
 
 log = logging.getLogger(__name__)
@@ -150,7 +151,8 @@ def run(db, job: Job, handlers: Handlers) -> bool:
     beater = threading.Thread(target=beat, name=f"heartbeat-{job.id}", daemon=True)
     beater.start()
     try:
-        fn(job.tenant_id, job.subject, job.args)
+        with acting_for(job.tenant_id):
+            fn(job.tenant_id, job.subject, job.args)
     except Exception as e:
         log.exception("%s failed for tenant %s (%s)", job.kind, job.tenant_id, job.subject)
         finish(db, job, f"{type(e).__name__}: {e}"[:500])

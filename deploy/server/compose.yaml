@@ -11,6 +11,7 @@ x-editor-env: &editor-env
   EDITOR_ADMIN_DATABASE_URL: postgres://editor_owner:${EDITOR_OWNER_DB_PASSWORD}@postgres:5432/eullm
   EDITOR_CORE_URL: http://core:8088
   EDITOR_CORE_TOKEN: ${EDITOR_CORE_TOKEN}
+  EDITOR_CORE_DELEGATE: "true"   # the editor-mode token of core.yaml delegates
   EDITOR_TIMEZONE: ${EDITOR_TIMEZONE:-Europe/Rome}
   EDITOR_SMTP_HOST: ${EDITOR_SMTP_HOST:-}
   EDITOR_SMTP_PORT: ${EDITOR_SMTP_PORT:-587}

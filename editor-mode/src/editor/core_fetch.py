@@ -11,10 +11,29 @@ the headers the Core accepts are forwarded.
 from __future__ import annotations
 
 import base64
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 import httpx
 
+from .core_client import TENANT_HEADER
+
 FORWARDED = ("accept", "accept-language", "if-none-match", "if-modified-since")
+
+
+# The Editor Mode tenant the current work is for; with a delegating Core
+# token every fetch made meanwhile is counted and limited as that tenant's.
+_acting_for: ContextVar[str | None] = ContextVar("editor_core_tenant", default=None)
+
+
+@contextmanager
+def acting_for(tenant_id: str) -> Iterator[None]:
+    token = _acting_for.set(tenant_id)
+    try:
+        yield
+    finally:
+        _acting_for.reset(token)
 
 
 class FetchRefused(httpx.TransportError):
@@ -22,19 +41,24 @@ class FetchRefused(httpx.TransportError):
 
 
 class CoreTransport(httpx.BaseTransport):
-    def __init__(self, base_url: str, token: str, client: httpx.Client | None = None):
+    def __init__(self, base_url: str, token: str, client: httpx.Client | None = None, delegate: bool = False):
         self.endpoint = base_url.rstrip("/") + "/v1/fetch"
         self.token = token
         self.http = client or httpx.Client(timeout=60)
+        self.delegate = delegate
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         if request.method != "GET":
             raise FetchRefused(f"only GET goes through the Core, not {request.method}", request=request)
         headers = {k: v for k, v in request.headers.items() if k.lower() in FORWARDED}
+        auth = {"Authorization": f"Bearer {self.token}"}
+        tenant = _acting_for.get()
+        if self.delegate and tenant:
+            auth[TENANT_HEADER] = tenant
         try:
             r = self.http.post(
                 self.endpoint,
-                headers={"Authorization": f"Bearer {self.token}"},
+                headers=auth,
                 json={"url": str(request.url), "headers": headers},
             )
         except httpx.HTTPError as e:
@@ -67,7 +91,9 @@ def _error(r: httpx.Response) -> str:
         return r.text
 
 
-def core_http_client(base_url: str, token: str, **kwargs) -> httpx.Client:
-    """An httpx client whose every request goes through the Core."""
+def core_http_client(base_url: str, token: str, delegate: bool = False, **kwargs) -> httpx.Client:
+    """An httpx client whose every request goes through the Core; with a
+    delegating token, as the tenant of `acting_for`."""
     # Redirects are followed by the Core, which checks every hop.
-    return httpx.Client(transport=CoreTransport(base_url, token), follow_redirects=False, timeout=90, **kwargs)
+    return httpx.Client(transport=CoreTransport(base_url, token, delegate=delegate), follow_redirects=False,
+                        timeout=90, **kwargs)
