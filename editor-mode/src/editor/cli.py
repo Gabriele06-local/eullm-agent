@@ -208,6 +208,11 @@ def cmd_worker(a):
     queue.Worker(db, handlers(), concurrency=slots).run()
 
 
+def cmd_secret_key(a):
+    from . import vault
+    print(vault.new_key())
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="editor", description="EuLLM Agent Editor Mode")
     sub = p.add_subparsers(required=True)
@@ -250,6 +255,7 @@ def main(argv=None):
     sp = add("worker", cmd_worker, "run queued work and every tenant's hourly tick")
     sp.add_argument("--concurrency", type=int, default=int(os.environ.get("EDITOR_WORKER_CONCURRENCY", "2")),
                     help="jobs run at the same time, each for a different tenant (PostgreSQL only)")
+    add("secret-key", cmd_secret_key, "print a new EDITOR_SECRET_KEY (key of the credentials stored in the database)")
     a = p.parse_args(argv)
     a.fn(a)
 

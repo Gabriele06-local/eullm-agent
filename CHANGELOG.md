@@ -19,6 +19,19 @@
   where calls under way are reserved. `deploy/server` is configured this
   way. A tenant with its own token (`--core-token-env`) keeps using it.
 
+- **Editor Mode: publishing credentials from the dashboard.** The owner
+  of a tenant enters the WordPress application password, the webhook key
+  or the Telegram bot token when adding a target (page Pubblicazioni, or
+  `PUT /api/secrets/{name}`); it is stored encrypted with AES-256-GCM in
+  `editor.secrets`, bound to its tenant and name, and never shown again,
+  only replaced or deleted. The key is `EDITOR_SECRET_KEY` (`editor
+  secret-key` prints one); the local installation creates its own key
+  file next to the database. A credential in the database comes before the
+  `EDITOR_SECRET_<TENANT>__<NAME>` variable, which keeps working.
+- The dashboard asks for the WordPress user of a target, which it did not
+  before, so a WordPress target added from the dashboard could not
+  publish.
+
 ### Changed
 
 - **Editor Mode: durable job queue, fair between tenants.** Site analyses,
@@ -51,12 +64,17 @@ tenant to give it its limit in the Core. Usage counted before under the
 shared `editor` tenant stays there; each tenant starts counting as
 `editor/<tenant>`.
 
-Run `editor migrate` (PostgreSQL revision 0011, SQLite file
-`0002_job_queue`), then restart the dashboard and the worker. The
+Run `editor migrate` (PostgreSQL revisions 0011 and 0012, SQLite files
+`0002_job_queue` and `0003_secrets`), then restart the dashboard and the worker. The
 `procrastinate_*` tables left by earlier versions are no longer used and
 can be dropped. The dashboard now only queues work: keep `editor worker`
 running next to it (the local installation and `deploy/server` already
 do).
+
+For credentials from the dashboard on a server, add `EDITOR_SECRET_KEY`
+to `.env` (`openssl rand -base64 32`) and keep a copy with the backups.
+Without it everything works as before, with credentials in the
+environment.
 
 ## 0.4.0
 

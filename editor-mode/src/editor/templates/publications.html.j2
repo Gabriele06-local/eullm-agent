@@ -69,8 +69,14 @@
   {% for t in targets %}
   <div class="list-row">
     <span><strong>{{ t.name }}</strong> <span class="chip">{{ kinds.get(t.kind, t.kind) }}</span></span>
-    <span class="hint num">{{ (t.config or {}).get('url') or (t.config or {}).get('chat_id') or '' }}{% if t.secret_env %} · credenziali in {{ secret_var(t.secret_env) }}{% endif %}{% if t.enabled is sameas false %} · disattivata{% endif %}</span>
+    <span class="hint num">{{ (t.config or {}).get('url') or (t.config or {}).get('chat_id') or '' }}{% if (t.config or {}).get('user') %} · utente {{ t.config.user }}{% endif %}{% if t.secret_env %} · {% if t.secret_env in stored %}credenziale {{ t.secret_env }} salvata cifrata{% else %}credenziale in {{ secret_var(t.secret_env) }}{% endif %}{% endif %}{% if t.enabled is sameas false %} · disattivata{% endif %}</span>
   </div>
+  {% if t.secret_env and caller.can('owner') %}
+  <form method="post" action="/ui/secrets/{{ t.secret_env }}" class="form-grid">
+    <label class="field">Nuova credenziale {{ t.secret_env }}<input name="value" type="password" autocomplete="new-password" required></label>
+    <div><button class="btn" type="submit">Sostituisci</button></div>
+  </form>
+  {% endif %}
   {% else %}
   <p class="hint">Nessuna destinazione: le bozze approvate restano qui finché non ne aggiungi una.</p>
   {% endfor %}
@@ -80,10 +86,12 @@
     <label class="field">Tipo<select name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select></label>
     <label class="field">Nome<input name="name" required placeholder="Blog principale"></label>
     <label class="field">Indirizzo<input name="address" placeholder="https://… oppure @canale"></label>
-    <label class="field">Nome del segreto<input name="secret_env" placeholder="WP_SITO"></label>
+    <label class="field">Utente (WordPress)<input name="user" autocomplete="off" placeholder="redazione"></label>
+    <label class="field">Nome della credenziale<input name="secret_env" placeholder="WP_SITO"></label>
+    <label class="field">Credenziale<input name="secret" type="password" autocomplete="new-password" placeholder="password applicativa, chiave o token"></label>
     <div><button class="btn" type="submit">Aggiungi</button></div>
   </form>
-  <p class="hint">Le password non passano mai dall'interfaccia: indica un nome breve per il segreto. Sul server va impostata la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;, che ti mostriamo dopo il salvataggio.</p>
+  <p class="hint">La credenziale (password applicativa di WordPress, chiave del webhook, token del bot Telegram) viene salvata cifrata e non viene più mostrata: puoi solo sostituirla. In alternativa lasciala vuota e l'amministratore del server imposta la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;.</p>
   {% endif %}
 </section>
 {% endif %}

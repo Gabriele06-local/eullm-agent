@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas
+from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, vault
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -521,7 +521,7 @@ def register(app, ctx) -> None:
                           history=[{**r._mapping, "uncertain": r.status == "sending" and r.decided_at is not None
                                     and r.decided_at < datetime.now(UTC) - timedelta(minutes=10)}
                                    for r in rows if r.status != "pending_approval"],
-                          targets=targets, kinds=TARGET_KINDS,
+                          targets=targets, kinds=TARGET_KINDS, stored=vault.stored(s),
                           secret_var=lambda name: _secret_var(c.tenant_id, name))
 
     @app.post("/ui/publications/{pub_id}/decision")
@@ -548,25 +548,41 @@ def register(app, ctx) -> None:
 
     @app.post("/ui/targets")
     def ui_add_target(site_id: int = Form(...), kind: str = Form(...), name: str = Form(...),
-                      address: str = Form(""), secret_env: str = Form(""),
-                      c: auth.Caller = Depends(ctx.need("owner"))):
+                      address: str = Form(""), user: str = Form(""), secret_env: str = Form(""),
+                      secret: str = Form(""), c: auth.Caller = Depends(ctx.need("owner"))):
         if kind not in TARGET_KINDS:
             raise HTTPException(400, "unknown kind")
         config = {"chat_id": address.strip()} if kind == "telegram_channel" else {"url": address.strip()}
+        if kind == "wordpress":
+            config["user"] = user.strip()
         env_name = secret_env.strip() or None
         if env_name is not None and (len(env_name) > 40 or not publishing.SECRET_NAME.match(env_name)):
             return done("/publications", "Il nome del segreto va scritto in MAIUSCOLO, es. WP_SITO.")
+        if secret and env_name is None:
+            return done("/publications", "Dai un nome alla credenziale, es. WP_SITO.")
         try:
             with db.tenant(c.tenant_id) as s:
                 if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
                     raise HTTPException(404, "site not found")
+            if secret:
+                vault.put(db, c.tenant_id, env_name, secret)
             publishing.add_target(db, c.tenant_id, site_id, kind, name.strip()[:100], config, env_name)
-        except publishing.PublishError as e:
+        except (publishing.PublishError, vault.VaultError) as e:
             return done("/publications", f"Destinazione non aggiunta: {e}.")
         added = f"Destinazione {name.strip()[:100]} aggiunta."
-        if env_name:
+        if env_name and secret:
+            added += " La credenziale è salvata cifrata e non verrà più mostrata."
+        elif env_name:
             added += f" Sul server la credenziale va nella variabile {publishing.secret_variable(c.tenant_id, env_name)}."
         return done("/publications", added)
+
+    @app.post("/ui/secrets/{name}")
+    def ui_put_secret(name: str, value: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            vault.put(db, c.tenant_id, name, value)
+        except vault.VaultError as e:
+            return done("/publications", f"Credenziale non salvata: {e}.")
+        return done("/publications", f"Credenziale {name} aggiornata: è salvata cifrata e non verrà più mostrata.")
 
     # --- Impostazioni ---------------------------------------------------------------
 

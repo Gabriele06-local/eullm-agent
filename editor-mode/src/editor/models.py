@@ -446,3 +446,13 @@ access_tokens = Table(
     Column("created_at", _ts()),
     Column("revoked_at", _ts()),
 )
+
+secrets = Table(
+    "secrets",
+    metadata,
+    _tenant(),
+    Column("name", Text, primary_key=True),
+    Column("ciphertext", Text, nullable=False),
+    Column("key_id", Text, nullable=False),
+    Column("updated_at", _ts()),
+)

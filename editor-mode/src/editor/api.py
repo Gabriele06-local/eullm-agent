@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui
+from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 DOMAIN = re.compile(r"^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
@@ -49,8 +49,15 @@ class TargetIn(BaseModel):
     kind: str = Field(..., pattern="^(wordpress|webhook|telegram_channel)$")
     name: str = Field(..., max_length=100)
     config: dict = {}
-    # Only the secret's short name: the server reads EDITOR_SECRET_<TENANT>__<NAME>.
+    # The secret's short name. Its value is either given here (stored
+    # encrypted, never returned) or set by the operator in the environment
+    # variable EDITOR_SECRET_<TENANT>__<NAME>.
     secret_env: str | None = Field(None, pattern="^[A-Z0-9]+(_[A-Z0-9]+)*$", max_length=40)
+    secret: str | None = Field(None, min_length=1, max_length=4096)
+
+
+class SecretIn(BaseModel):
+    value: str = Field(..., min_length=1, max_length=4096)
 
 
 class PublicationIn(BaseModel):
@@ -276,11 +283,35 @@ def create_app(db, core=None) -> FastAPI:
     def add_target(body: TargetIn, c: auth.Caller = Depends(need("owner"))):
         with db.tenant(c.tenant_id) as s:
             site_or_404(s, body.site_id)
+        if body.secret is not None and body.secret_env is None:
+            raise HTTPException(400, "a secret needs a name (secret_env)")
         try:
+            if body.secret is not None:
+                vault.put(db, c.tenant_id, body.secret_env, body.secret)
             tid = publishing.add_target(db, c.tenant_id, body.site_id, body.kind, body.name, body.config, body.secret_env)
-        except publishing.PublishError as e:
+        except (publishing.PublishError, vault.VaultError) as e:
             raise HTTPException(400, str(e)) from None
         return {"id": tid}
+
+    @app.get("/api/secrets")
+    def list_secrets(c: auth.Caller = Depends(need("owner"))):
+        """Names of the stored secrets; values are never returned."""
+        with db.tenant(c.tenant_id) as s:
+            return {"secrets": sorted(vault.stored(s))}
+
+    @app.put("/api/secrets/{name}")
+    def put_secret(name: str, body: SecretIn, c: auth.Caller = Depends(need("owner"))):
+        try:
+            vault.put(db, c.tenant_id, name, body.value)
+        except vault.VaultError as e:
+            raise HTTPException(400, str(e)) from None
+        return {"stored": name}
+
+    @app.delete("/api/secrets/{name}")
+    def delete_secret(name: str, c: auth.Caller = Depends(need("owner"))):
+        if not vault.remove(db, c.tenant_id, name):
+            raise HTTPException(404, "no such secret")
+        return {"deleted": name}
 
     @app.post("/api/drafts/{draft_id}/publications", status_code=201)
     def request_publication(draft_id: int, body: PublicationIn, c: auth.Caller = Depends(need("editor"))):

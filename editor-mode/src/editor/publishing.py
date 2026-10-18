@@ -139,14 +139,30 @@ def secret_variable(tenant_id: str, name: str) -> str:
     return f"{SECRET_PREFIX}{tenant_id.upper().replace('-', '_')}__{name}"
 
 
-def _secret(target) -> str:
+def resolve_secret(db, target) -> str:
+    """A target's credential: stored encrypted in the database (entered from
+    the dashboard) or, failing that, the environment variable."""
+    from . import vault
+
     if not target.secret_env:
         raise PublishError(f"target {target.name} has no secret")
+    try:
+        value = vault.get(db, target.tenant_id, target.secret_env)
+    except vault.VaultError as e:
+        raise PublishError(str(e)) from None
+    if value:
+        return value
     var = secret_variable(target.tenant_id, target.secret_env)
     value = os.environ.get(var)
     if not value:
-        raise PublishError(f"environment variable {var} is not set")
+        raise PublishError(f"secret {target.secret_env} is not stored and environment variable {var} is not set")
     return value
+
+
+def _need(secret: str | None, target) -> str:
+    if not secret:
+        raise PublishError(f"target {target.name} has no secret")
+    return secret
 
 
 def add_target(db, tenant_id: str, site_id: int, kind: str, name: str, config: dict, secret_env: str | None) -> int:
@@ -155,7 +171,9 @@ def add_target(db, tenant_id: str, site_id: int, kind: str, name: str, config: d
     if kind == "telegram_channel" and not str(config.get("chat_id", "")).strip():
         raise PublishError("a Telegram channel needs chat_id")
     if any(k in config for k in ("password", "token", "secret", "api_key")):
-        raise PublishError("secrets go in an environment variable (secret_env), not in config")
+        raise PublishError("secrets are stored apart (secret_env and the vault), not in config")
+    if kind == "wordpress" and not str(config.get("user", "")).strip():
+        raise PublishError("a WordPress target needs the user of its application password")
     if secret_env is not None:
         secret_variable(tenant_id, secret_env)
     with db.tenant(tenant_id) as s:
@@ -233,14 +251,12 @@ class Publisher:
             cms_url = s.execute(select(m.publications.c.external_url).where(
                 m.publications.c.draft_id == pub.draft_id, m.publications.c.status == "published",
                 m.publications.c.external_url.is_not(None)).limit(1)).scalar()
+        secret = None
         try:
-            ext_id, ext_url = getattr(self, f"_{target.kind}")(target, pub, cms_url)
+            secret = resolve_secret(db, target) if target.secret_env else None
+            ext_id, ext_url = getattr(self, f"_{target.kind}")(target, pub, cms_url, secret)
         except (PublishError, httpx.HTTPError, KeyError, ValueError) as e:
             msg = f"{type(e).__name__}: {e}"
-            try:
-                secret = os.environ.get(secret_variable(target.tenant_id, target.secret_env), "") if target.secret_env else ""
-            except PublishError:
-                secret = ""
             if secret:  # a token can sit in the request URL (Telegram)
                 msg = msg.replace(secret, "***")
             with db.tenant(tenant_id) as s:
@@ -252,12 +268,12 @@ class Publisher:
                 status="published", published_at=datetime.now(UTC), external_id=ext_id, external_url=ext_url, error=None))
         return {"status": "published", "url": ext_url}
 
-    def _wordpress(self, target, pub, cms_url):
+    def _wordpress(self, target, pub, cms_url, secret):
         base = target.config["url"].rstrip("/")
         check_public_url(base, self.resolver)
         r = self.http.post(
             f"{base}/wp-json/wp/v2/posts",
-            auth=(target.config["user"], _secret(target)),
+            auth=(target.config["user"], _need(secret, target)),
             json={"title": pub.payload["title"], "content": pub.payload["html"], "excerpt": pub.payload["subtitle"],
                   "status": "publish" if pub.mode == "publish" else "draft"},
         )
@@ -266,26 +282,26 @@ class Publisher:
         body = r.json()
         return str(body["id"]), body.get("link")
 
-    def _webhook(self, target, pub, cms_url):
+    def _webhook(self, target, pub, cms_url, secret):
         url = target.config["url"]
         check_public_url(url, self.resolver)
         data = json.dumps({"event": "publication", "mode": pub.mode, "publication_id": pub.id,
                            "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")}},
                           ensure_ascii=False).encode()
-        sig = hmac.new(_secret(target).encode(), data, hashlib.sha256).hexdigest()
+        sig = hmac.new(_need(secret, target).encode(), data, hashlib.sha256).hexdigest()
         r = self.http.post(url, content=data, headers={"Content-Type": "application/json", "X-Editor-Signature": f"sha256={sig}"})
         _ensure_no_redirect(r, url, self.resolver)
         r.raise_for_status()
         return None, None
 
-    def _telegram_channel(self, target, pub, cms_url):
+    def _telegram_channel(self, target, pub, cms_url, secret):
         import html as h
         text = f"<b>{h.escape(pub.payload['title'])}</b>"
         if pub.payload.get("subtitle"):
             text += f"\n{h.escape(pub.payload['subtitle'])}"
         if cms_url:
             text += f'\n\n<a href="{h.escape(cms_url, quote=True)}">{h.escape(cms_url)}</a>'
-        endpoint = f"{self.telegram_api}/bot{_secret(target)}/sendMessage"
+        endpoint = f"{self.telegram_api}/bot{_need(secret, target)}/sendMessage"
         r = self.http.post(endpoint,
                            json={"chat_id": target.config["chat_id"], "text": text, "parse_mode": "HTML"})
         _ensure_no_redirect(r, endpoint, self.resolver)

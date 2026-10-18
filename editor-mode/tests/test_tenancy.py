@@ -37,6 +37,9 @@ def populate(db, tenant, monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     target = publishing.add_target(db, tenant, site_id, "webhook", "h", {"url": "https://hooks.example/in"}, "X")
     publishing.request(db, tenant, did, target, "draft", "redazione")
+    from editor import vault
+    monkeypatch.setenv(vault.KEY_ENV, vault.new_key())
+    vault.put(db, tenant, "X", "signing-key")
     auth.create_token(db, tenant, "owner", "owner")
     with db.tenant(tenant) as s:
         s.execute(text("INSERT INTO editor.recipients (tenant_id, channel, address) VALUES (:t, 'email', 'a@b.it')"), {"t": tenant})
