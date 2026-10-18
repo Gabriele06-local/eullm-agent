@@ -81,3 +81,9 @@ usage, audit and limits, through the delegating `editor-mode` token of
 `core.yaml`: `tenant-plan --max-cost-month` also sets the tenant's limit in
 the Core, and `delegate_limits` covers a tenant whose plan has no budget.
 Adding a tenant needs no change to `core.yaml` and no restart.
+
+Publishing credentials (WordPress application password, webhook key,
+Telegram bot token) are entered by the tenant's owner in the dashboard,
+page Pubblicazioni, and stored encrypted with `EDITOR_SECRET_KEY`. Keep a
+copy of that key with the backups: a dump without it holds credentials
+nobody can read.

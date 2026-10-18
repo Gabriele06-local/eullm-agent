@@ -61,7 +61,7 @@ def test_targets_must_be_public_and_secret_free(db, tenant, monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     with pytest.raises(pub.PublishError, match="https"):
         pub.add_target(db, tenant, site_id, "webhook", "hook", {"url": "http://hooks.example/x"}, "HOOK")
-    with pytest.raises(pub.PublishError, match="environment variable"):
+    with pytest.raises(pub.PublishError, match="stored apart"):
         pub.add_target(db, tenant, site_id, "wordpress", "wp", {"url": "https://blog.example", "user": "a", "password": "x"}, None)
 
 

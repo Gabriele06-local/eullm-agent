@@ -103,7 +103,8 @@ Two installations, same code:
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
    | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | briefing by email (STARTTLS) |
    | `EDITOR_TELEGRAM_TOKEN` | briefing by Telegram |
-   | `EDITOR_SECRET_<TENANT>__<NAME>` | credentials of a publishing target (WordPress application password, webhook signing key, Telegram channel bot token). The tenant names the target's secret `<NAME>`; the tenant id is upper-cased with `-` as `_`, e.g. `EDITOR_SECRET_RAG_ENTERPRISE__WP` |
+   | `EDITOR_SECRET_KEY` | key (32 bytes in base64, `editor secret-key` prints one) of the publishing credentials that owners enter in the dashboard: they are stored encrypted (AES-256-GCM) in `editor.secrets` and never shown again. Without it a server stores none; the local installation keeps its key in `editor-secret.key` next to the database |
+   | `EDITOR_SECRET_<TENANT>__<NAME>` | alternative to the dashboard: credentials of a publishing target (WordPress application password, webhook signing key, Telegram channel bot token) set by the operator. The tenant names the target's secret `<NAME>`; the tenant id is upper-cased with `-` as `_`, e.g. `EDITOR_SECRET_RAG_ENTERPRISE__WP`. A credential stored in the database comes first |
    | (Core) `api.fetch.credentials` | optional: a GitHub token for `api.github.com`, set in the Core's config, raises the GitHub API rate limit for source discovery |
 
 4. **First tenant and site.**
