@@ -139,6 +139,7 @@ fn setup_openai() -> Result<ProviderConfig> {
         } else {
             Some(base_url_raw)
         },
+        max_tokens: None,
     })
 }
 
