@@ -2,7 +2,10 @@
 # (dashboard, worker) for several tenants. Guide: deploy/server/README.md.
 #
 #   cp .env.example .env && cp core.example.yaml core.yaml   # then edit both
-#   docker compose up -d --build
+#   docker compose pull && docker compose up -d
+#
+# The images come from the release (EULLM_VERSION in .env); with --build
+# they are compiled from this checkout instead, to try a branch.
 
 name: eullm-agent
 
@@ -42,6 +45,7 @@ services:
       retries: 20
 
   core:
+    image: ghcr.io/eullm/eullm-agent:${EULLM_VERSION:-latest}
     build: ../..
     restart: unless-stopped
     depends_on:
@@ -61,6 +65,7 @@ services:
       - ${BIND:-127.0.0.1}:${CORE_PORT:-8088}:8088
 
   editor-migrate:
+    image: ghcr.io/eullm/eullm-agent-editor:${EULLM_VERSION:-latest}
     build: ../../editor-mode
     depends_on:
       postgres: {condition: service_healthy}
@@ -69,6 +74,7 @@ services:
     restart: "no"
 
   editor-web:
+    image: ghcr.io/eullm/eullm-agent-editor:${EULLM_VERSION:-latest}
     build: ../../editor-mode
     restart: unless-stopped
     depends_on:
@@ -79,6 +85,7 @@ services:
       - ${BIND:-127.0.0.1}:${EDITOR_PORT:-8090}:8090
 
   editor-worker:
+    image: ghcr.io/eullm/eullm-agent-editor:${EULLM_VERSION:-latest}
     build: ../../editor-mode
     restart: unless-stopped
     depends_on:
