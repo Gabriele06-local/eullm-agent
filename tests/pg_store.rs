@@ -248,3 +248,9 @@ async fn usage_counts_one_tenant_since_a_time() {
     let Some(s) = store().await else { return };
     store_suite::usage_counts_one_tenant_since_a_time(Arc::new(s)).await;
 }
+
+#[tokio::test]
+async fn tenant_limits_are_stored_and_replaced() {
+    let Some(s) = store().await else { return };
+    store_suite::tenant_limits_are_stored_and_replaced(Arc::new(s)).await;
+}

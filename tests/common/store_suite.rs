@@ -290,3 +290,24 @@ pub async fn usage_counts_one_tenant_since_a_time(s: Arc<dyn Store>) {
     let later = since + 3_600_000;
     assert_eq!(s.usage(&t, later).await.unwrap(), Usage::default());
 }
+
+pub async fn tenant_limits_are_stored_and_replaced(s: Arc<dyn Store>) {
+    use eullm_agent::config::TenantLimits;
+
+    let tenant = format!("editor/{}", uuid::Uuid::new_v4().simple());
+    assert!(s.tenant_limits(&tenant).await.unwrap().is_none());
+    let first = TenantLimits {
+        max_cost_per_month: Some(5.0),
+        max_runs_per_day: Some(10),
+        ..Default::default()
+    };
+    s.set_tenant_limits(&tenant, &first, "test").await.unwrap();
+    assert_eq!(s.tenant_limits(&tenant).await.unwrap(), Some(first));
+    let second = TenantLimits {
+        max_fetches_per_day: Some(100),
+        ..Default::default()
+    };
+    s.set_tenant_limits(&tenant, &second, "test").await.unwrap();
+    assert_eq!(s.tenant_limits(&tenant).await.unwrap(), Some(second));
+    assert!(s.tenant_limits("editor/nobody").await.unwrap().is_none());
+}

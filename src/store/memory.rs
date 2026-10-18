@@ -20,6 +20,7 @@ struct Inner {
     /// Single LLM calls outside a run, kept for completeness.
     loose_llm_calls: Vec<(String, LlmCallRecord)>,
     fetches: Vec<(String, FetchRecord)>,
+    tenant_limits: HashMap<String, TenantLimits>,
     /// (tenant, at_ms, call) for every model call, for usage.
     llm_log: Vec<(String, i64, LlmCallRecord)>,
     fetch_log: Vec<(String, i64)>,
@@ -249,6 +250,30 @@ impl Store for MemoryStore {
     async fn recover_interrupted(&self, _source_prefix: &str) -> Result<u64> {
         // Nothing survives a restart in memory.
         Ok(0)
+    }
+
+    async fn tenant_limits(&self, tenant: &str) -> Result<Option<TenantLimits>> {
+        Ok(self
+            .inner
+            .lock()
+            .unwrap()
+            .tenant_limits
+            .get(tenant)
+            .cloned())
+    }
+
+    async fn set_tenant_limits(
+        &self,
+        tenant: &str,
+        limits: &TenantLimits,
+        _by: &str,
+    ) -> Result<()> {
+        self.inner
+            .lock()
+            .unwrap()
+            .tenant_limits
+            .insert(tenant.to_string(), limits.clone());
+        Ok(())
     }
 
     async fn list_approvals(

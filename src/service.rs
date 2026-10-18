@@ -37,6 +37,8 @@ pub struct Core {
     in_flight: InFlight,
     /// Serialises "check, then reserve" within this process.
     limit_gate: Arc<Mutex<()>>,
+    /// `delegate_limits` of the delegating tokens, by their tenant.
+    delegate_defaults: HashMap<String, TenantLimits>,
 }
 
 type InFlight = Arc<std::sync::Mutex<HashMap<(String, Consume), u64>>>;
@@ -354,6 +356,13 @@ impl Core {
                 }),
             in_flight: Arc::default(),
             limit_gate: Arc::new(Mutex::new(())),
+            delegate_defaults: config
+                .api
+                .iter()
+                .flat_map(|a| &a.tokens)
+                .filter(|t| t.delegate)
+                .filter_map(|t| Some((t.tenant.clone(), t.delegate_limits.clone()?)))
+                .collect(),
             config,
         })
     }
@@ -387,8 +396,26 @@ impl Core {
         Ok(id)
     }
 
-    fn limits(&self, tenant: &str) -> Option<&TenantLimits> {
-        self.config.api.as_ref().and_then(|a| a.tenants.get(tenant))
+    /// A tenant's limits: `api.tenants` in the configuration first, then
+    /// the limits set through the API, then, for a sub-tenant
+    /// (`parent/name`), the `delegate_limits` of its parent's token.
+    pub async fn limits(&self, tenant: &str) -> Result<Option<TenantLimits>> {
+        if let Some(l) = self.config.api.as_ref().and_then(|a| a.tenants.get(tenant)) {
+            return Ok(Some(l.clone()));
+        }
+        if let Some(l) = self.store.tenant_limits(tenant).await? {
+            return Ok(Some(l));
+        }
+        Ok(tenant
+            .split_once('/')
+            .and_then(|(parent, _)| self.delegate_defaults.get(parent))
+            .cloned())
+    }
+
+    /// Set the limits of a tenant through the API. Limits written in
+    /// `api.tenants` still take precedence.
+    pub async fn set_limits(&self, tenant: &str, limits: &TenantLimits, by: &str) -> Result<()> {
+        self.store.set_tenant_limits(tenant, limits, by).await
     }
 
     /// Usage of a tenant today and this month (UTC), with its limits.
@@ -397,17 +424,18 @@ impl Core {
         Ok(TenantUsage {
             day: self.store.usage(tenant, day).await?,
             month: self.store.usage(tenant, month).await?,
-            limits: self.limits(tenant).cloned().unwrap_or_default(),
+            limits: self.limits(tenant).await?.unwrap_or_default(),
         })
     }
 
     /// Check the limits and hold a slot until the work is recorded.
     pub async fn reserve(&self, tenant: &str, what: Consume) -> Result<Reservation> {
+        let limits = self.limits(tenant).await?;
         reserve_slot(
             self.store.as_ref(),
             &self.in_flight,
             &self.limit_gate,
-            self.limits(tenant),
+            limits.as_ref(),
             tenant,
             what,
         )
@@ -447,19 +475,29 @@ impl Core {
         req: &StartRun,
         profile: &crate::config::ProfileConfig,
     ) -> Result<String> {
-        let Some(model) = self.router.get(&profile.model).cloned() else {
-            let err = format!("unknown model '{}'", profile.model);
-            let _ = self
-                .store
-                .finish_run(
-                    run_id,
-                    &RunEnd {
-                        error: Some(err.clone()),
-                        ..Default::default()
-                    },
-                )
-                .await;
-            bail!(err);
+        let ready = match (
+            self.router.get(&profile.model).cloned(),
+            self.limits(&req.tenant).await,
+        ) {
+            (Some(model), Ok(limits)) => Ok((model, limits)),
+            (None, _) => Err(format!("unknown model '{}'", profile.model)),
+            (_, Err(e)) => Err(format!("cannot read the tenant's limits: {e}")),
+        };
+        let (model, limits) = match ready {
+            Ok(r) => r,
+            Err(err) => {
+                let _ = self
+                    .store
+                    .finish_run(
+                        run_id,
+                        &RunEnd {
+                            error: Some(err.clone()),
+                            ..Default::default()
+                        },
+                    )
+                    .await;
+                bail!(err);
+            }
         };
         let mut recorders: Vec<Arc<dyn Recorder>> = vec![Arc::new(StoreRecorder {
             store: Arc::clone(&self.store),
@@ -486,13 +524,13 @@ impl Core {
         .with_policy(Arc::clone(&self.policy))
         .with_approver(approver)
         .with_recorder(Some(Arc::new(Recorders(recorders))))
-        .with_budget(self.limits(&req.tenant).map(|l| {
+        .with_budget(limits.map(|l| {
             Arc::new(TenantBudget {
                 store: Arc::clone(&self.store),
                 in_flight: Arc::clone(&self.in_flight),
                 gate: Arc::clone(&self.limit_gate),
                 tenant: req.tenant.clone(),
-                limits: l.clone(),
+                limits: l,
             }) as Arc<dyn crate::agent::BudgetGuard>
         }))
         .with_identity(&req.tenant, &req.source);

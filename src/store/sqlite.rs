@@ -629,6 +629,39 @@ impl Store for SqliteStore {
         Ok(runs.len() as u64)
     }
 
+    async fn tenant_limits(&self, tenant: &str) -> Result<Option<TenantLimits>> {
+        let row = sqlx::query("SELECT limits FROM tenant_limits WHERE tenant = $1")
+            .bind(tenant)
+            .fetch_optional(&self.pool)
+            .await?;
+        row.map(|r| Ok(serde_json::from_str(&r.try_get::<String, _>("limits")?)?))
+            .transpose()
+    }
+
+    async fn set_tenant_limits(&self, tenant: &str, limits: &TenantLimits, by: &str) -> Result<()> {
+        let value = serde_json::to_value(limits)?;
+        let mut tx = self.pool.begin().await?;
+        sqlx::query(
+            "INSERT INTO tenant_limits (tenant, limits, updated_at) VALUES ($1, $2, $3) \
+             ON CONFLICT (tenant) DO UPDATE SET limits = excluded.limits, updated_at = excluded.updated_at",
+        )
+        .bind(tenant)
+        .bind(value.to_string())
+        .bind(now_ms())
+        .execute(&mut *tx)
+        .await?;
+        self.audit(
+            &mut tx,
+            tenant,
+            None,
+            "tenant_limits",
+            json!({ "limits": value, "by": by }),
+        )
+        .await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
     async fn list_approvals(
         &self,
         tenant: &str,

@@ -619,6 +619,38 @@ impl Store for PgStore {
         Ok(runs.len() as u64)
     }
 
+    async fn tenant_limits(&self, tenant: &str) -> Result<Option<TenantLimits>> {
+        let row = sqlx::query("SELECT limits FROM core.tenant_limits WHERE tenant = $1")
+            .bind(tenant)
+            .fetch_optional(&self.pool)
+            .await?;
+        row.map(|r| Ok(serde_json::from_value(r.try_get("limits")?)?))
+            .transpose()
+    }
+
+    async fn set_tenant_limits(&self, tenant: &str, limits: &TenantLimits, by: &str) -> Result<()> {
+        let value = serde_json::to_value(limits)?;
+        let mut tx = self.pool.begin().await?;
+        sqlx::query(
+            "INSERT INTO core.tenant_limits (tenant, limits) VALUES ($1, $2) \
+             ON CONFLICT (tenant) DO UPDATE SET limits = EXCLUDED.limits, updated_at = now()",
+        )
+        .bind(tenant)
+        .bind(&value)
+        .execute(&mut *tx)
+        .await?;
+        self.audit(
+            &mut tx,
+            tenant,
+            None,
+            "tenant_limits",
+            json!({ "limits": value, "by": by }),
+        )
+        .await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
     async fn list_approvals(
         &self,
         tenant: &str,

@@ -169,6 +169,8 @@ async fn main() -> Result<()> {
                 token_sha256: Some(api::sha256_hex(&secret)),
                 token_env: None,
                 profiles: Vec::new(),
+                delegate: false,
+                delegate_limits: None,
             })?);
             // Editor Mode, when the local installation put it next to the
             // config: it reads the web through the Core and gets its own
@@ -188,6 +190,8 @@ async fn main() -> Result<()> {
                     token_sha256: Some(api::sha256_hex(&editor_secret)),
                     token_env: None,
                     profiles: Vec::new(),
+                    delegate: false,
+                    delegate_limits: None,
                 })?);
             }
             let core = setup::build_core(Arc::new(config), Arc::clone(&module_registry)).await?;

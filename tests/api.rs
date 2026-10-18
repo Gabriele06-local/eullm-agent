@@ -56,6 +56,8 @@ fn token(name: &str, tenant: &str, secret: &str, profiles: &[&str]) -> ApiToken 
         token_sha256: Some(api::sha256_hex(secret)),
         token_env: None,
         profiles: profiles.iter().map(|s| s.to_string()).collect(),
+        delegate: false,
+        delegate_limits: None,
     })
     .unwrap()
 }
@@ -66,6 +68,12 @@ fn harness(script: Vec<eullm_agent::llm::ChatResponse>) -> Harness {
 
 fn harness_with(config: &str, script: Vec<eullm_agent::llm::ChatResponse>) -> Harness {
     let config = Arc::new(Config::from_yaml(config).unwrap());
+    let from_config: Vec<ApiToken> = config
+        .api
+        .iter()
+        .flat_map(|a| &a.tokens)
+        .map(|t| ApiToken::resolve(t).unwrap())
+        .collect();
     let llm = Arc::new(Scripted::new(script));
     let router = ModelRouter::single("default", llm.clone());
     let tools = ToolRegistry::new();
@@ -86,11 +94,16 @@ fn harness_with(config: &str, script: Vec<eullm_agent::llm::ChatResponse>) -> Ha
     );
     let app = api::router(AppState {
         core,
-        tokens: Arc::new(vec![
-            token("a", "tenant-a", TOKEN_A, &[]),
-            token("b", "tenant-b", TOKEN_B, &[]),
-            token("limited", "tenant-a", TOKEN_LIMITED, &["writer"]),
-        ]),
+        tokens: Arc::new(
+            vec![
+                token("a", "tenant-a", TOKEN_A, &[]),
+                token("b", "tenant-b", TOKEN_B, &[]),
+                token("limited", "tenant-a", TOKEN_LIMITED, &["writer"]),
+            ]
+            .into_iter()
+            .chain(from_config)
+            .collect(),
+        ),
     });
     Harness {
         app,
@@ -107,9 +120,24 @@ async fn call(
     token: Option<&str>,
     body: Option<Value>,
 ) -> (StatusCode, Value) {
+    call_for(app, method, path, token, None, body).await
+}
+
+/// `call` with `X-EuLLM-Tenant: <sub>`.
+async fn call_for(
+    app: &axum::Router,
+    method: &str,
+    path: &str,
+    token: Option<&str>,
+    sub: Option<&str>,
+    body: Option<Value>,
+) -> (StatusCode, Value) {
     let mut req = Request::builder().method(method).uri(path);
     if let Some(t) = token {
         req = req.header("authorization", format!("Bearer {t}"));
+    }
+    if let Some(sub) = sub {
+        req = req.header(api::TENANT_HEADER, sub);
     }
     let req = match body {
         Some(b) => req
@@ -1121,4 +1149,213 @@ async fn the_web_interface_is_served_with_a_strict_policy() {
     // The page itself holds no data: everything else still needs a token.
     let (s, _) = call(&h.app, "GET", "/v1/runs", None, None).await;
     assert_eq!(s, StatusCode::UNAUTHORIZED);
+}
+
+// --- sub-tenants of a delegating token ---------------------------------------
+
+const TOKEN_DELEGATE: &str = "token-d-0123456789abcdef0123456789abcdef";
+
+fn delegate_config(extra: &str) -> String {
+    format!(
+        "provider:\n  type: eullm\n  model: test\napi:\n  tokens:\n    - name: editor\n      tenant: editor\n      \
+         token_sha256: {}\n      delegate: true\n{extra}",
+        api::sha256_hex(TOKEN_DELEGATE)
+    )
+}
+
+#[tokio::test]
+async fn a_delegating_token_acts_for_separate_sub_tenants() {
+    let h = harness_with(&delegate_config(""), vec![]);
+    let run = json!({"input": "go"});
+    let (s, v) = call_for(
+        &h.app,
+        "POST",
+        "/v1/runs",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        Some(run.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::ACCEPTED, "{v}");
+    let id = v["id"].as_str().unwrap().to_string();
+    // The run belongs to editor/acme only: not to the parent, not to another sub-tenant.
+    let (s, _) = call_for(
+        &h.app,
+        "GET",
+        &format!("/v1/runs/{id}"),
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        None,
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK);
+    for sub in [None, Some("other")] {
+        let (s, _) = call_for(
+            &h.app,
+            "GET",
+            &format!("/v1/runs/{id}"),
+            Some(TOKEN_DELEGATE),
+            sub,
+            None,
+        )
+        .await;
+        assert_eq!(s, StatusCode::NOT_FOUND);
+    }
+    let (_, u) = call_for(
+        &h.app,
+        "GET",
+        "/v1/usage",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        None,
+    )
+    .await;
+    assert_eq!(u["tenant"], "editor/acme");
+    assert_eq!(u["day"]["runs"], 1);
+    let (_, u) = call(&h.app, "GET", "/v1/usage", Some(TOKEN_DELEGATE), None).await;
+    assert_eq!(u["tenant"], "editor");
+    assert_eq!(u["day"]["runs"], 0);
+
+    // Any other token is refused with the header, and names are checked.
+    let (s, _) = call_for(
+        &h.app,
+        "GET",
+        "/v1/usage",
+        Some(TOKEN_A),
+        Some("acme"),
+        None,
+    )
+    .await;
+    assert_eq!(s, StatusCode::FORBIDDEN);
+    for bad in ["", "Acme", "a/b", "-x", "../x", &"x".repeat(65)] {
+        let (s, _) = call_for(
+            &h.app,
+            "GET",
+            "/v1/usage",
+            Some(TOKEN_DELEGATE),
+            Some(bad),
+            None,
+        )
+        .await;
+        assert_eq!(s, StatusCode::BAD_REQUEST, "{bad:?}");
+    }
+}
+
+#[tokio::test]
+async fn sub_tenant_limits_are_set_through_the_api() {
+    let h = harness_with(
+        &delegate_config("      delegate_limits:\n        max_runs_per_day: 2\n"),
+        vec![],
+    );
+    let run = json!({"input": "go"});
+    let limits = json!({"max_runs_per_day": 1, "max_cost_per_month": 5.0});
+    // Only the delegating token itself, for its own sub-tenants.
+    let (s, _) = call(
+        &h.app,
+        "PUT",
+        "/v1/tenants/acme/limits",
+        Some(TOKEN_A),
+        Some(limits.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::FORBIDDEN);
+    let (s, _) = call_for(
+        &h.app,
+        "PUT",
+        "/v1/tenants/acme/limits",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        Some(limits.clone()),
+    )
+    .await;
+    assert_eq!(
+        s,
+        StatusCode::FORBIDDEN,
+        "a sub-tenant cannot raise its own limits"
+    );
+    let (s, _) = call(
+        &h.app,
+        "PUT",
+        "/v1/tenants/Bad/limits",
+        Some(TOKEN_DELEGATE),
+        Some(limits.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::BAD_REQUEST);
+    let (s, _) = call(
+        &h.app,
+        "PUT",
+        "/v1/tenants/acme/limits",
+        Some(TOKEN_DELEGATE),
+        Some(json!({"max_cost_per_month": -1.0})),
+    )
+    .await;
+    assert_eq!(s, StatusCode::BAD_REQUEST);
+    let (s, v) = call(
+        &h.app,
+        "PUT",
+        "/v1/tenants/acme/limits",
+        Some(TOKEN_DELEGATE),
+        Some(limits),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert_eq!(v["tenant"], "editor/acme");
+    assert_eq!(v["effective"]["max_runs_per_day"], 1);
+
+    // acme stops at its own limit, without a restart.
+    let (s, _) = call_for(
+        &h.app,
+        "POST",
+        "/v1/runs",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        Some(run.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::ACCEPTED);
+    let (s, v) = call_for(
+        &h.app,
+        "POST",
+        "/v1/runs",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        Some(run.clone()),
+    )
+    .await;
+    assert_eq!(s, StatusCode::TOO_MANY_REQUESTS, "{v}");
+    let (_, u) = call_for(
+        &h.app,
+        "GET",
+        "/v1/usage",
+        Some(TOKEN_DELEGATE),
+        Some("acme"),
+        None,
+    )
+    .await;
+    assert_eq!(u["limits"]["max_cost_per_month"], 5.0);
+
+    // A sub-tenant without limits of its own gets delegate_limits, never "unlimited" by omission.
+    for expected in [
+        StatusCode::ACCEPTED,
+        StatusCode::ACCEPTED,
+        StatusCode::TOO_MANY_REQUESTS,
+    ] {
+        let (s, _) = call_for(
+            &h.app,
+            "POST",
+            "/v1/runs",
+            Some(TOKEN_DELEGATE),
+            Some("beta"),
+            Some(run.clone()),
+        )
+        .await;
+        assert_eq!(s, expected);
+    }
+    assert!(h
+        .store
+        .tenant_limits("editor/beta")
+        .await
+        .unwrap()
+        .is_none());
 }

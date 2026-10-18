@@ -3,7 +3,7 @@
   "info": {
     "title": "EuLLM Agent Core API",
     "version": "0.3.6",
-    "description": "Runs, single model calls, approvals and checked HTTP fetches, usage per tenant. Every endpoint except health and this document needs `Authorization: Bearer <token>`. Data is scoped to the tenant of the token."
+    "description": "Runs, single model calls, approvals and checked HTTP fetches, usage per tenant. Every endpoint except health and this document needs `Authorization: Bearer <token>`. Data is scoped to the tenant of the token. A token with `delegate: true` may add `X-EuLLM-Tenant: <name>` to any request to act for its sub-tenant `<tenant>/<name>`, with separate runs, usage, audit and limits; any other token gets 403 with that header."
   },
   "servers": [
     {
@@ -724,6 +724,25 @@
             }
           }
         }
+      },
+      "TenantLimitsSet": {
+        "type": "object",
+        "required": [
+          "tenant",
+          "limits",
+          "effective"
+        ],
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/TenantLimits"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/TenantLimits"
+          }
+        }
       }
     }
   },
@@ -1233,6 +1252,74 @@
           },
           "401": {
             "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{name}/limits": {
+      "put": {
+        "summary": "Set the limits of the sub-tenant `<tenant>/<name>` of a delegating token (replaces the previous ones; a limit that is absent does not apply). `effective` shows what applies, since limits in `api.tenants` of the configuration take precedence.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantLimits"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Limits stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantLimitsSet"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid name or limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The token is not a delegating token",
             "content": {
               "application/json": {
                 "schema": {

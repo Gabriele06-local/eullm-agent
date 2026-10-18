@@ -249,3 +249,8 @@ async fn fetches_are_recorded_with_an_audit_event() {
             .unwrap();
     assert_eq!(events, ["fetch"]);
 }
+
+#[tokio::test]
+async fn tenant_limits_are_stored_and_replaced() {
+    store_suite::tenant_limits_are_stored_and_replaced(Arc::new(store("limits").await)).await;
+}
