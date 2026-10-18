@@ -1,9 +1,12 @@
 """A trace of background work: what ran, when, and how it ended.
 
-Analyses, discoveries and drafts started from the API, and every scheduled
-step, run inside `track`: a failure is recorded with its error instead of
-leaving the user with "started" forever, and the scheduler reads the last
-successful run of a step to know whether it is due.
+Queued jobs (queue.py) live in the same table. Every step of a tenant's
+tick, and work started from the command line, runs inside `track`: a
+failure is recorded with its error instead of leaving the user with
+"started" forever, and the scheduler reads the last successful run of a
+step to know whether it is due. A queued job that loses its worker is put
+back in the queue by queue.requeue_stale, so only tracked steps are
+reported as interrupted here.
 """
 
 from __future__ import annotations
@@ -58,7 +61,7 @@ def recent(s, limit: int = 20, now: datetime | None = None) -> list[dict]:
     out = []
     for r in s.execute(select(m.jobs).order_by(m.jobs.c.id.desc()).limit(limit)).all():
         status, error = r.status, r.error
-        if status == "running" and r.started_at < now - STALE_AFTER:
+        if status == "running" and r.heartbeat_at is None and r.started_at < now - STALE_AFTER:
             status, error = "failed", "interrupted: no result after two hours"
         out.append({"id": r.id, "kind": r.kind, "subject": r.subject, "status": status, "error": error,
                     "started_at": r.started_at, "finished_at": r.finished_at})

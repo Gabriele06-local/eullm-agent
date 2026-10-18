@@ -11,7 +11,7 @@ from editor.db import Database
 @pytest.fixture
 def local(tmp_path):
     url = f"sqlite:///{tmp_path}/editor.db"
-    assert migrate.upgrade_sqlite(url) == ["0001_schema"]
+    assert migrate.upgrade_sqlite(url) == ["0001_schema", "0002_job_queue"]
     database = Database.from_url(url)
     yield url, database
     database.engine.dispose()

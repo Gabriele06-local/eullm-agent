@@ -27,7 +27,7 @@
 </header>
 
 {% if jobs %}
-<div class="dashed"><strong>Lavori in corso o non riusciti</strong>{% for j in jobs %}<span class="hint">{{ {'analysis': 'Analisi', 'discovery': 'Ricerca fonti', 'draft': 'Bozza', 'maintain': 'Manutenzione fonti', 'review': 'Revisione settimanale', 'collect': 'Raccolta', 'briefing': 'Briefing'}.get(j.kind, j.kind) }}{% if j.subject %} ({{ j.subject }}){% endif %}: {% if j.status == 'running' %}in corso{% else %}non riuscito, {{ j.error }}{% endif %}</span>{% endfor %}</div>
+<div class="dashed"><strong>Lavori in coda, in corso o non riusciti</strong>{% for j in jobs %}<span class="hint">{{ {'analysis': 'Analisi', 'discovery': 'Ricerca fonti', 'draft': 'Bozza', 'maintain': 'Manutenzione fonti', 'review': 'Revisione settimanale', 'collect': 'Raccolta', 'briefing': 'Briefing', 'publish': 'Pubblicazione', 'tick': 'Giro orario'}.get(j.kind, j.kind) }}{% if j.subject %} ({{ j.subject }}){% endif %}: {% if j.status == 'running' %}in corso{% elif j.status == 'queued' %}in coda{% else %}non riuscito, {{ j.error }}{% endif %}</span>{% endfor %}</div>
 {% endif %}
 
 {% if analysis and analysis.problems %}

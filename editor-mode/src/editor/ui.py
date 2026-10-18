@@ -13,7 +13,7 @@ from datetime import UTC, datetime, time, timedelta
 from urllib.parse import quote, unquote
 from zoneinfo import ZoneInfo
 
-from fastapi import BackgroundTasks, Depends, Form, HTTPException, Request
+from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
@@ -88,7 +88,8 @@ def score100(value) -> str:
 
 def register(app, ctx) -> None:
     """Add the dashboard routes. `ctx` carries db, pages, need, and the
-    background jobs (run_analysis, run_discovery, run_draft) and publisher."""
+    functions that queue background work (run_analysis, run_discovery,
+    run_draft, run_publication) and the core."""
     db, pages = ctx.db, ctx.pages
     env = pages.env
     env.filters["num"] = number
@@ -294,29 +295,28 @@ def register(app, ctx) -> None:
             return site_page(request, c, s, sites, site, editing=bool(edit) and c.can("owner"))
 
     @app.post("/ui/sites")
-    def ui_add_site(request: Request, background: BackgroundTasks, domain: str = Form(...),
+    def ui_add_site(request: Request, domain: str = Form(...),
                     c: auth.Caller = Depends(ctx.need("owner"))):
         from .api import normalise_domain
         d = normalise_domain(domain)
-        background.add_task(ctx.run_analysis, c.tenant_id, d)
+        ctx.run_analysis(c.tenant_id, d)
         return done("/site", f"Analisi di {d} avviata: il profilo arriva in bozza, da approvare.")
 
     @app.post("/ui/sites/{site_id}/review")
-    def ui_review(site_id: int, background: BackgroundTasks, c: auth.Caller = Depends(ctx.need("owner"))):
+    def ui_review(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             domain = s.execute(select(m.sites.c.domain).where(m.sites.c.id == site_id)).scalar()
         if domain is None:
             raise HTTPException(404, "site not found")
-        background.add_task(ctx.run_analysis, c.tenant_id, domain)
+        ctx.run_analysis(c.tenant_id, domain)
         return done("/site", f"Rianalisi di {domain} avviata.")
 
     @app.post("/ui/sites/{site_id}/approve/{version}")
-    def ui_approve(site_id: int, version: int, background: BackgroundTasks,
-                   c: auth.Caller = Depends(ctx.need("owner"))):
+    def ui_approve(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             if not prof.approve(s, site_id, version, c.name):
                 raise HTTPException(404, "version not found")
-        background.add_task(ctx.run_discovery, c.tenant_id, site_id)
+        ctx.run_discovery(c.tenant_id, site_id)
         return done("/site", f"Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.")
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
@@ -383,11 +383,11 @@ def register(app, ctx) -> None:
         return done(safe_path(back, "/sources"), f"{name} {label}.")
 
     @app.post("/ui/sites/{site_id}/discover")
-    def ui_discover(site_id: int, background: BackgroundTasks, c: auth.Caller = Depends(ctx.need("owner"))):
+    def ui_discover(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
                 raise HTTPException(404, "site not found")
-        background.add_task(ctx.run_discovery, c.tenant_id, site_id)
+        ctx.run_discovery(c.tenant_id, site_id)
         return done("/sources?status=candidate", "Ricerca di nuove fonti avviata: le trovate entrano come candidate.")
 
     # --- Trend e piano --------------------------------------------------------------
@@ -407,24 +407,24 @@ def register(app, ctx) -> None:
                           dots=dots, plan=plan, briefing_hour=hour, can_draft=ctx.core is not None)
 
     @app.post("/ui/proposals/{proposal_id}")
-    def ui_decide(proposal_id: int, background: BackgroundTasks, accept: str = Form(...), back: str = Form("/trends"),
+    def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),
                   c: auth.Caller = Depends(ctx.need("editor"))):
         if not props.decide(db, c.tenant_id, proposal_id, accept == "1", c.name):
             return done(safe_path(back, "/trends"), "Questa proposta era già stata decisa.")
         if accept == "1" and ctx.core is not None:
-            background.add_task(ctx.run_draft, c.tenant_id, proposal_id)
+            ctx.run_draft(c.tenant_id, proposal_id)
             return done(safe_path(back, "/trends"), "Proposta accettata: la bozza è in scrittura.")
         return done(safe_path(back, "/trends"), "Proposta accettata." if accept == "1" else "Proposta scartata.")
 
     @app.post("/ui/proposals/{proposal_id}/draft")
-    def ui_draft(proposal_id: int, background: BackgroundTasks, c: auth.Caller = Depends(ctx.need("editor"))):
+    def ui_draft(proposal_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
         if ctx.core is None:
             return done("/trends", "Nessun Core configurato: per scrivere le bozze serve un modello.")
         with db.tenant(c.tenant_id) as s:
             st = s.execute(select(m.proposals.c.status).where(m.proposals.c.id == proposal_id)).scalar()
         if st not in ("accepted", "drafted"):
             return done("/trends", "Accetta prima la proposta.")
-        background.add_task(ctx.run_draft, c.tenant_id, proposal_id)
+        ctx.run_draft(c.tenant_id, proposal_id)
         return done("/drafts", "Bozza in scrittura: compare qui quando è pronta.")
 
     # --- Bozze ----------------------------------------------------------------------
@@ -525,14 +525,14 @@ def register(app, ctx) -> None:
                           secret_var=lambda name: _secret_var(c.tenant_id, name))
 
     @app.post("/ui/publications/{pub_id}/decision")
-    def ui_pub_decision(pub_id: int, background: BackgroundTasks, accept: str = Form(...),
+    def ui_pub_decision(pub_id: int, accept: str = Form(...),
                         c: auth.Caller = Depends(ctx.need("owner"))):
         ok = accept == "1"
         if not publishing.decide(db, c.tenant_id, pub_id, ok, c.name):
             return done("/publications", "Questa pubblicazione era già stata decisa.")
-        if ok and ctx.publisher is not None:
-            background.add_task(ctx.publisher.run, db, c.tenant_id, pub_id)
-        return done("/publications", "Approvata: l'invio parte adesso." if ok else "Pubblicazione rifiutata.")
+        if ok:
+            ctx.run_publication(c.tenant_id, pub_id)
+        return done("/publications", "Approvata: l'invio parte a breve." if ok else "Pubblicazione rifiutata.")
 
     @app.post("/ui/publications/{pub_id}/uncertain")
     def ui_pub_uncertain(pub_id: int, c: auth.Caller = Depends(ctx.need("owner"))):

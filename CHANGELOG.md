@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Editor Mode: durable job queue, fair between tenants.** Site analyses,
+  source discoveries, drafts and publications asked from the dashboard or
+  the API are written to `editor.jobs` as `queued` and run by `editor
+  worker`, no longer inside the dashboard process: a restart of either
+  loses nothing. Every hour the worker queues one tick per tenant instead
+  of running all tenants one after the other. A tenant runs one job at a
+  time, the tenant served least recently goes first and, within a tenant,
+  work a person asked for comes before the hourly tick, so one tenant's
+  queue cannot hold up the others. A job whose worker dies (no heartbeat
+  for five minutes) is queued again, up to three attempts; an error raised
+  by the work itself is recorded and not retried, so a failed draft is not
+  paid for twice. `editor worker --concurrency N` (or
+  `EDITOR_WORKER_CONCURRENCY`, default 2) runs up to N tenants at the same
+  time on PostgreSQL; on SQLite it runs one job at a time. On SIGTERM the
+  worker stops claiming and waits for the running jobs.
+- The queue is the same on PostgreSQL and SQLite: Editor Mode no longer
+  depends on procrastinate. `editor tick` queues every tenant's tick and
+  runs the waiting work in the foreground.
+
+### Upgrading from 0.4.0
+
+Run `editor migrate` (PostgreSQL revision 0011, SQLite file
+`0002_job_queue`), then restart the dashboard and the worker. The
+`procrastinate_*` tables left by earlier versions are no longer used and
+can be dropped. The dashboard now only queues work: keep `editor worker`
+running next to it (the local installation and `deploy/server` already
+do).
+
 ## 0.4.0
 
 Two installations, both with a web interface. On your computer: one

@@ -3,7 +3,7 @@ import socket
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from editor import auth, publishing
+from editor import auth
 from editor.api import create_app
 from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
@@ -59,7 +59,7 @@ def test_publish_flow_from_the_pages(db, tenant, monkeypatch):
     did, site_id = approved_draft(db, tenant)
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     token = auth.create_token(db, tenant, "boss", "owner")
-    c = TestClient(create_app(db, publisher=publishing.Publisher(resolver=public_resolver)))
+    c = TestClient(create_app(db))
     c.post("/login", data={"token": token})
     r = c.post("/ui/targets", data={"site_id": site_id, "kind": "webhook", "name": "Hook",
                                     "address": "https://hooks.example/in", "secret_env": "lower"})

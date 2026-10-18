@@ -14,16 +14,15 @@ import re
 from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, repo, sources, ui
+from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
-from .site import SiteCrawler
 
 DOMAIN = re.compile(r"^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 COOKIE = "editor_token"
@@ -71,7 +70,7 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
+def create_app(db, core=None) -> FastAPI:
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
     pages = Jinja2Templates(env=_BRIEF_TEMPLATES)
 
@@ -98,13 +97,19 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
             raise HTTPException(404, "site not found")
         return row
 
+    # Background work is queued, never run in this process: the worker runs
+    # it (work.py), and a restart of the dashboard loses nothing.
     def run_analysis(tenant: str, domain: str):
-        if http_factory is None:
-            return
-        with jobs.track(db, tenant, "analysis", domain), http_factory() as client:
-            res = prof.analyse_site(db, tenant, domain, SiteCrawler(client), core_for(tenant))
-            if res["status"] != "failed":
-                sources.discover(db, tenant, res["site_id"], client, core_for(tenant))
+        queue.enqueue(db, tenant, "analysis", domain)
+
+    def run_discovery(tenant: str, site_id: int):
+        queue.enqueue(db, tenant, "discovery", f"site {site_id}", {"site_id": site_id})
+
+    def run_draft(tenant: str, proposal_id: int):
+        queue.enqueue(db, tenant, "draft", f"proposal {proposal_id}", {"proposal_id": proposal_id})
+
+    def run_publication(tenant: str, pub_id: int):
+        queue.enqueue(db, tenant, "publish", f"publication {pub_id}", {"publication_id": pub_id})
 
     # --- JSON -------------------------------------------------------------
 
@@ -134,16 +139,16 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
         return {"sites": out}
 
     @app.post("/api/sites", status_code=202)
-    def add_site(body: SiteIn, background: BackgroundTasks, c: auth.Caller = Depends(need("owner"))):
+    def add_site(body: SiteIn, c: auth.Caller = Depends(need("owner"))):
         domain = normalise_domain(body.domain)
-        background.add_task(run_analysis, c.tenant_id, domain)
+        run_analysis(c.tenant_id, domain)
         return {"domain": domain, "status": "analysis started"}
 
     @app.post("/api/sites/{site_id}/review", status_code=202)
-    def review_site(site_id: int, background: BackgroundTasks, c: auth.Caller = Depends(need("owner"))):
+    def review_site(site_id: int, c: auth.Caller = Depends(need("owner"))):
         with db.tenant(c.tenant_id) as s:
             site = site_or_404(s, site_id)
-        background.add_task(run_analysis, c.tenant_id, site.domain)
+        run_analysis(c.tenant_id, site.domain)
         return {"domain": site.domain, "status": "review started"}
 
     @app.get("/api/sites/{site_id}/profiles")
@@ -155,13 +160,13 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
         return {"profiles": [{k: v for k, v in r._mapping.items() if k != "tenant_id"} for r in rows]}
 
     @app.post("/api/sites/{site_id}/profiles/{version}/approve")
-    def approve(site_id: int, version: int, background: BackgroundTasks, c: auth.Caller = Depends(need("owner"))):
+    def approve(site_id: int, version: int, c: auth.Caller = Depends(need("owner"))):
         with db.tenant(c.tenant_id) as s:
             site_or_404(s, site_id)
             if not prof.approve(s, site_id, version, c.name):
                 raise HTTPException(404, "version not found")
         # Sources follow the approved line only, so look for them now.
-        background.add_task(run_discovery, c.tenant_id, site_id)
+        run_discovery(c.tenant_id, site_id)
         return {"approved": version}
 
     @app.put("/api/sites/{site_id}/profile")
@@ -214,28 +219,15 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
             raise HTTPException(409, "proposal not found or already decided")
         return {"status": "accepted" if body.accept else "rejected"}
 
-    def core_for(tenant: str):
-        return core.for_tenant(db, tenant) if core is not None else None
-
-    def run_draft(tenant: str, proposal_id: int):
-        if core is None:
-            return
-        with jobs.track(db, tenant, "draft", f"proposal {proposal_id}"):
-            if http_factory is None:
-                drafts.write_draft(db, tenant, proposal_id, core_for(tenant), None)
-                return
-            with http_factory() as client:
-                drafts.write_draft(db, tenant, proposal_id, core_for(tenant), client)
-
     @app.post("/api/proposals/{proposal_id}/draft", status_code=202)
-    def request_draft(proposal_id: int, background: BackgroundTasks, c: auth.Caller = Depends(need("editor"))):
+    def request_draft(proposal_id: int, c: auth.Caller = Depends(need("editor"))):
         if core is None:
             raise HTTPException(503, "no Core configured: drafts need a model")
         with db.tenant(c.tenant_id) as s:
             st = s.execute(select(m.proposals.c.status).where(m.proposals.c.id == proposal_id)).scalar()
         if st not in ("accepted", "drafted"):
             raise HTTPException(409, "accept the proposal first")
-        background.add_task(run_draft, c.tenant_id, proposal_id)
+        run_draft(c.tenant_id, proposal_id)
         return {"status": "writing"}
 
     @app.get("/api/drafts")
@@ -311,11 +303,11 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
             return {"publications": [dict(r._mapping) for r in s.execute(q).all()]}
 
     @app.post("/api/publications/{pub_id}/decision")
-    def decide_publication(pub_id: int, body: DecisionIn, background: BackgroundTasks, c: auth.Caller = Depends(need("owner"))):
+    def decide_publication(pub_id: int, body: DecisionIn, c: auth.Caller = Depends(need("owner"))):
         if not publishing.decide(db, c.tenant_id, pub_id, body.accept, c.name, body.note):
             raise HTTPException(409, "publication not found or already decided")
-        if body.accept and publisher is not None:
-            background.add_task(publisher.run, db, c.tenant_id, pub_id)
+        if body.accept:
+            run_publication(c.tenant_id, pub_id)
         return {"status": "approved" if body.accept else "rejected"}
 
     @app.post("/api/feedback", status_code=201)
@@ -350,14 +342,9 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
 
     # --- HTML -------------------------------------------------------------
 
-    def run_discovery(tenant: str, site_id: int):
-        if http_factory is None:
-            return
-        with jobs.track(db, tenant, "discovery", f"site {site_id}"), http_factory() as client:
-            sources.discover(db, tenant, site_id, client, core_for(tenant))
-
-    ui.register(app, SimpleNamespace(db=db, pages=pages, need=need, core=core, publisher=publisher,
-                                     run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft))
+    ui.register(app, SimpleNamespace(db=db, pages=pages, need=need, core=core,
+                                     run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
+                                     run_publication=run_publication))
 
     @app.exception_handler(HTTPException)
     def errors(request: Request, exc: HTTPException):
@@ -374,4 +361,4 @@ def create_app(db, http_factory=None, core=None, publisher=None) -> FastAPI:
 def default_app() -> FastAPI:
     from . import runtime
 
-    return create_app(runtime.database(), runtime.http, runtime.core(), publishing.Publisher())
+    return create_app(runtime.database(), runtime.core())
