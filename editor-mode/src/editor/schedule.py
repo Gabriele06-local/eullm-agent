@@ -1,7 +1,7 @@
-"""What runs when. The worker calls `Runner.tick` once an hour (procrastinate
-periodic task, see tasks.py); every decision about local time is taken here
-with zoneinfo, so 08:00 Europe/Rome stays 08:00 across daylight saving
-changes whatever the timezone of the server."""
+"""What runs when. Every hour the worker queues one tick job per tenant
+(queue.py) that calls `Runner.tenant_tick`; every decision about local time
+is taken here with zoneinfo, so 08:00 Europe/Rome stays 08:00 across
+daylight saving changes whatever the timezone of the server."""
 
 from __future__ import annotations
 

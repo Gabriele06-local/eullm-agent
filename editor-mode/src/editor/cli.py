@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import UTC, date, datetime
 
@@ -17,23 +18,9 @@ def _db():
 
 def cmd_migrate(a):
     from . import migrate
-    from .db import make_engine, sqlite_path
     from .runtime import settings
-    url = settings().admin_database_url
-    migrate.upgrade(url)
+    migrate.upgrade(settings().admin_database_url)
     print("editor schema up to date")
-    if sqlite_path(url) is None:  # the job queue of `editor worker`
-        engine = make_engine(url)
-        try:
-            with engine.connect() as conn:
-                queue = conn.execute(text("SELECT to_regclass('procrastinate_jobs')")).scalar()
-        finally:
-            engine.dispose()
-        if queue is None:
-            from .tasks import app
-            with app.open():
-                app.schema_manager.apply_schema()
-            print("job queue schema created")
 
 
 def cmd_tenant_add(a):
@@ -162,9 +149,12 @@ def cmd_sources(a):
 
 
 def cmd_tick(a):
-    from .runtime import runner
-    rep = runner().tick()
-    print(json.dumps({"tenants": rep.tenants, "errors": rep.errors}, indent=2))
+    """Queue every tenant's tick and run, here, everything that is waiting."""
+    from . import queue
+    from .runtime import handlers
+    db = _db()
+    queue.enqueue_ticks(db)
+    print(json.dumps({"jobs_run": queue.drain(db, handlers())}))
 
 
 def cmd_briefing(a):
@@ -183,35 +173,15 @@ def cmd_serve(a):
 
 
 def cmd_worker(a):
-    from .db import sqlite_path
-    from .runtime import settings
-    if sqlite_path(settings().database_url) is not None:
-        return _local_worker()
-    from .tasks import app
-    with app.open():
-        if a.apply_schema:
-            app.schema_manager.apply_schema()
-        app.run_worker()
-
-
-def _local_worker():
-    """SQLite has no job queue: one process ticks at start and at every hour."""
     import logging
-    import time
-    from datetime import timedelta
 
-    from .runtime import runner
-
+    from . import queue
+    from .runtime import database, handlers
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    log = logging.getLogger("editor.worker")
-    while True:
-        try:
-            report = runner().tick()
-            log.info("tick: %s", {"tenants": report.tenants, "errors": report.errors})
-        except Exception:
-            log.exception("tick failed")
-        now = datetime.now(UTC)
-        time.sleep(((now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)) - now).total_seconds())
+    db = database()
+    # SQLite has one tenant, so one job at a time anyway.
+    slots = 1 if db.sqlite else a.concurrency
+    queue.Worker(db, handlers(), concurrency=slots).run()
 
 
 def main(argv=None):
@@ -249,11 +219,13 @@ def main(argv=None):
     sp = add("profile-edit", cmd_profile_edit, "save an edited profile (JSON file) as a new draft")
     sp.add_argument("domain"); sp.add_argument("file"); sp.add_argument("--tenant", required=True)
     sp = add("sources", cmd_sources, "list the sources of a site"); sp.add_argument("domain"); sp.add_argument("--tenant", required=True)
-    add("tick", cmd_tick, "run one scheduler tick now")
+    add("tick", cmd_tick, "queue every tenant's tick and run the waiting work now")
     sp = add("briefing", cmd_briefing, "build (and with --send, also propose and send) a briefing")
     sp.add_argument("--tenant", required=True); sp.add_argument("--date"); sp.add_argument("--send", action="store_true")
     sp = add("serve", cmd_serve, "dashboard and API"); sp.add_argument("--host", default="127.0.0.1"); sp.add_argument("--port", type=int, default=8090)
-    sp = add("worker", cmd_worker, "hourly tick: procrastinate on PostgreSQL, a plain loop on SQLite"); sp.add_argument("--apply-schema", action="store_true")
+    sp = add("worker", cmd_worker, "run queued work and every tenant's hourly tick")
+    sp.add_argument("--concurrency", type=int, default=int(os.environ.get("EDITOR_WORKER_CONCURRENCY", "2")),
+                    help="jobs run at the same time, each for a different tenant (PostgreSQL only)")
     a = p.parse_args(argv)
     a.fn(a)
 

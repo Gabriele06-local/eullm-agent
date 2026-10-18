@@ -4,15 +4,15 @@ import respx
 from fastapi.testclient import TestClient
 
 import fakesite
-from editor import auth, repo
+from editor import auth, queue, repo, work
 from editor.api import create_app
 from test_proposals import setup_site
 from editor import opportunity as opp, proposals as props
 
 
-def client_for(db, tenant, role="owner", http_factory=None):
+def client_for(db, tenant, role="owner"):
     token = auth.create_token(db, tenant, f"{role}-user", role)
-    app = create_app(db, http_factory=http_factory)
+    app = create_app(db)
     return TestClient(app), {"Authorization": f"Bearer {token}"}, token
 
 
@@ -52,10 +52,14 @@ def test_add_site_analyses_and_discovers(db, tenant):
     with respx.mock(assert_all_called=False) as router:
         fakesite.mount(router)
         router.get(url__regex=r"https://(?!blog\.example).*").mock(return_value=httpx.Response(404))
-        c, h, _ = client_for(db, tenant, http_factory=httpx.Client)
+        c, h, _ = client_for(db, tenant)
         assert c.post("/api/sites", json={"domain": "not a domain"}, headers=h).status_code == 400
         r = c.post("/api/sites", json={"domain": "https://www.Blog.Example/path"}, headers=h)
         assert r.status_code == 202 and r.json()["domain"] == "blog.example"
+        # Queued, not run by the dashboard: the worker runs it.
+        assert c.get("/api/sites", headers=h).json()["sites"] == []
+        assert [j["status"] for j in c.get("/api/jobs", headers=h).json()["jobs"]] == ["queued"]
+        assert queue.drain(db, work.handlers(db, http_factory=httpx.Client), tenant) == 1
     sites = c.get("/api/sites", headers=h).json()["sites"]
     assert sites[0]["last_analysis"]["status"] == "partial"
     assert sites[0]["profiles"] == [{"version": 1, "status": "draft", "origin": "analysis"}]
@@ -105,8 +109,10 @@ def test_draft_routes(db, tenant):
     h = {"Authorization": f"Bearer {token}"}
     with respx.mock(assert_all_called=False) as router:
         router.post("http://core.test/v1/llm/chat").mock(return_value=chat(answer))
-        c = TestClient(create_app(db, http_factory=None, core=CoreClient("http://core.test", "tok")))
+        core = CoreClient("http://core.test", "tok")
+        c = TestClient(create_app(db, core=core))
         assert c.post(f"/api/proposals/{pid}/draft", headers=h).status_code == 202
+        assert queue.drain(db, work.handlers(db, core=core), tenant) == 1
     listed = c.get("/api/drafts", headers=h).json()["drafts"]
     assert len(listed) == 1
     d = c.get(f"/api/drafts/{listed[0]['id']}", headers=h).json()
@@ -125,7 +131,8 @@ def test_publication_routes_need_an_owner_decision(db, tenant, monkeypatch):
     owner = auth.create_token(db, tenant, "owner", "owner")
     editor = auth.create_token(db, tenant, "ed", "editor")
     ho, he = {"Authorization": f"Bearer {owner}"}, {"Authorization": f"Bearer {editor}"}
-    c = TestClient(create_app(db, publisher=publishing.Publisher(resolver=public_resolver)))
+    c = TestClient(create_app(db))
+    worker = work.handlers(db, publisher=publishing.Publisher(resolver=public_resolver))
     assert c.post("/api/targets", json={"site_id": site_id, "kind": "webhook", "name": "h",
                                         "config": {"url": "https://hooks.example/in"}, "secret_env": "HOOK_SECRET"}, headers=he).status_code == 403
     tid = c.post("/api/targets", json={"site_id": site_id, "kind": "webhook", "name": "h",
@@ -136,6 +143,8 @@ def test_publication_routes_need_an_owner_decision(db, tenant, monkeypatch):
     with respx.mock() as router:
         hook = router.post("https://hooks.example/in").mock(return_value=httpx.Response(200))
         assert c.post(f"/api/publications/{pid}/decision", json={"accept": True}, headers=ho).status_code == 200
+        assert not hook.called
+        assert queue.drain(db, worker, tenant) == 1
         assert hook.called
     pubs = c.get("/api/publications", headers=he).json()["publications"]
     assert pubs[0]["status"] == "published" and pubs[0]["decided_by"] == "owner"

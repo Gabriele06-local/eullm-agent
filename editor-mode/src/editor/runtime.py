@@ -9,6 +9,7 @@ from .config import Settings
 from .core_client import CoreClient
 from .core_fetch import core_http_client
 from .db import Database
+from .publishing import Publisher
 from .schedule import Runner
 
 
@@ -36,3 +37,10 @@ def http():
 
 def runner() -> Runner:
     return Runner(database(), settings(), http, core(), Sender(settings()))
+
+
+def handlers():
+    """What the worker runs for each kind of queued job."""
+    from . import work
+
+    return work.handlers(database(), http, core(), Publisher(), runner())

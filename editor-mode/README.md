@@ -59,10 +59,10 @@ Two installations, same code:
 
 - **Local, one user:** `EDITOR_DATABASE_URL=sqlite:///editor.db`. One file,
   created by `editor migrate`, nothing to install; the file holds one tenant
-  (a second is refused) and `editor worker` is a plain hourly loop. Steps 2
+  (a second is refused) and `editor worker` runs one job at a time. Steps 2
   and the `tenant-plan` limits are optional there.
 - **Server, several tenants:** PostgreSQL, with row-level security between
-  tenants and procrastinate for the hourly tick. All the steps below apply.
+  tenants; the worker runs several tenants at once. All the steps below apply.
 
 1. **Core.** Enable fetch and give Editor Mode a token per tenant in the
    Core configuration (`eullm-agent token new` prints the token and its
@@ -115,11 +115,15 @@ Two installations, same code:
 
 5. **Run.**
 
-       uv run editor worker --apply-schema   # hourly tick: collection, briefing at 08:00 local, maintenance, reviews
+       uv run editor worker                  # queued work and the hourly tick: collection, briefing at 08:00 local, maintenance, reviews
        uv run editor serve --port 8090       # dashboard and API
 
 Drafts and publications are started from the dashboard or the API; every
-publication waits for an owner's approval.
+publication waits for an owner's approval. The dashboard only queues work
+in `editor.jobs`; the worker runs it, so nothing is lost when either
+restarts. A tenant runs one job at a time and tenants are served in turn;
+`--concurrency N` (default 2, `EDITOR_WORKER_CONCURRENCY`) sets how many
+tenants run at the same time.
 
 ## Development
 

@@ -13,7 +13,7 @@ one person on one computer use the local installation instead
 | `core` | `eullm-agent api`: model calls, runs, approvals, web fetches, web interface | 8088 |
 | `editor-migrate` | `editor migrate` at every start, then exits | none |
 | `editor-web` | Editor Mode dashboard and API | 8090 |
-| `editor-worker` | hourly tick: collection, briefing, maintenance, reviews | none |
+| `editor-worker` | queued work (analyses, drafts, publications) and every tenant's hourly tick, a few tenants at a time (`EDITOR_WORKER_CONCURRENCY`, default 2) | none |
 
 The ports listen on 127.0.0.1: put a reverse proxy with HTTPS in front
 (below) rather than exposing them.

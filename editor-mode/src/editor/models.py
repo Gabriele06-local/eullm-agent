@@ -426,6 +426,13 @@ jobs = Table(
     Column("error", Text),
     Column("started_at", _ts()),
     Column("finished_at", _ts()),
+    Column("args", JSONB),
+    Column("priority", Integer),
+    Column("run_after", _ts()),
+    Column("attempts", Integer),
+    Column("max_attempts", Integer),
+    Column("heartbeat_at", _ts()),
+    Column("worker", Text),
 )
 
 access_tokens = Table(
