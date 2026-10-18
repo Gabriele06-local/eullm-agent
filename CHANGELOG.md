@@ -32,6 +32,15 @@
   before, so a WordPress target added from the dashboard could not
   publish.
 
+- **Editor Mode: a tenant's data, whole.** `editor tenant-export` writes
+  every row of a tenant as JSON, credentials left out; the owner downloads
+  the same file from Impostazioni (`GET /api/export`). `editor
+  tenant-delete <tenant> --confirm <tenant>` deletes a tenant and all its
+  data in one transaction. The daily maintenance deletes collected items,
+  their observations and finished jobs older than `EDITOR_RETENTION_DAYS`
+  (default 365, `0` keeps everything); items cited by a proposal or a
+  draft and model usage are kept.
+
 ### Changed
 
 - **Editor Mode: durable job queue, fair between tenants.** Site analyses,

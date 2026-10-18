@@ -75,6 +75,8 @@ A reverse proxy on the same machine, for example Caddy
 | Backup | `docker compose exec postgres pg_dump -U postgres -Fc eullm > eullm-$(date +%F).dump` |
 | Restore | `docker compose exec -T postgres pg_restore -U postgres -d eullm --clean < file.dump` |
 | Stop | `docker compose down` (data stays in the `pgdata` volume) |
+| A tenant's data | `docker compose exec editor-web editor tenant-export acme > acme.json` |
+| Delete a tenant | `docker compose exec editor-web editor tenant-delete acme --confirm acme` (for good) |
 
 Each tenant is a Core tenant of its own (`editor/acme`), with its own
 usage, audit and limits, through the delegating `editor-mode` token of

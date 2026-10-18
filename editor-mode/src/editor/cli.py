@@ -208,6 +208,33 @@ def cmd_worker(a):
     queue.Worker(db, handlers(), concurrency=slots).run()
 
 
+def cmd_tenant_export(a):
+    from . import tenant_data
+    data = tenant_data.export_json(_db(), a.tenant)
+    if a.out:
+        fd = os.open(a.out, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(data)
+        print(f"tenant {a.tenant} exported to {a.out}")
+    else:
+        print(data)
+
+
+def cmd_tenant_delete(a):
+    """Irreversible: asks for the tenant id twice."""
+    from . import tenant_data
+    from .db import Database
+    from .runtime import settings
+    if a.confirm != a.tenant:
+        sys.exit(f"this deletes every row of {a.tenant} for good: repeat it with --confirm {a.tenant}")
+    try:
+        counts = tenant_data.delete_tenant(Database.from_url(settings().admin_database_url), a.tenant)
+    except LookupError as e:
+        sys.exit(str(e))
+    print(f"tenant {a.tenant} deleted: {sum(counts.values())} rows")
+    print("its usage and audit in the Core (tenant editor/<id>) are kept there")
+
+
 def cmd_secret_key(a):
     from . import vault
     print(vault.new_key())
@@ -255,6 +282,10 @@ def main(argv=None):
     sp = add("worker", cmd_worker, "run queued work and every tenant's hourly tick")
     sp.add_argument("--concurrency", type=int, default=int(os.environ.get("EDITOR_WORKER_CONCURRENCY", "2")),
                     help="jobs run at the same time, each for a different tenant (PostgreSQL only)")
+    sp = add("tenant-export", cmd_tenant_export, "every row of a tenant as JSON, credentials left out")
+    sp.add_argument("tenant"); sp.add_argument("--out", help="file to create (default: print)")
+    sp = add("tenant-delete", cmd_tenant_delete, "delete a tenant and all its data, for good (owner connection)")
+    sp.add_argument("tenant"); sp.add_argument("--confirm", required=True, help="the tenant id again")
     add("secret-key", cmd_secret_key, "print a new EDITOR_SECRET_KEY (key of the credentials stored in the database)")
     a = p.parse_args(argv)
     a.fn(a)
