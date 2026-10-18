@@ -176,3 +176,46 @@ def test_the_worker_runs_queued_work_and_stops_cleanly(db, tenant):
         t.join(10)
     assert status(db, tenant, j).status == "done"
     assert not any(t.is_alive() for t in threads)
+
+
+def test_the_worker_log_says_what_runs(db, tenant, caplog):
+    import logging
+
+    queue.enqueue(db, tenant, "analysis", "blog.example")
+    with caplog.at_level(logging.INFO, logger="editor.queue"):
+        queue.drain(db, recorder([]), tenant)
+    text_ = caplog.text
+    assert f"analysis started for tenant {tenant} (blog.example), attempt 1" in text_
+    assert f"analysis done for tenant {tenant} (blog.example)" in text_
+
+
+@pytest.mark.postgres
+def test_the_queue_works_with_an_owner_that_is_not_a_superuser(db, pg_urls, tenant):
+    # Tests migrate as a superuser, which row level security never applies
+    # to; on a server the owner is an ordinary role. Run the queue functions
+    # as such an owner.
+    import psycopg
+
+    j = queue.enqueue(db, tenant, "analysis", "owner.example")
+    role = "editor_queue_owner_test"
+    with psycopg.connect(pg_urls[0], autocommit=True) as conn:
+        conn.execute(f"DROP ROLE IF EXISTS {role}")
+        conn.execute(f"CREATE ROLE {role} NOSUPERUSER NOBYPASSRLS")
+        conn.execute(f"GRANT USAGE ON SCHEMA editor TO {role}")
+        conn.execute(f"GRANT ALL ON ALL TABLES IN SCHEMA editor TO {role}")
+        for fn in ("claim_job(text, integer, text)", "requeue_stale(integer)"):
+            conn.execute(f"ALTER FUNCTION editor.{fn} OWNER TO {role}")
+        for table in ("jobs", "tenants"):
+            conn.execute(f"ALTER TABLE editor.{table} OWNER TO {role}")
+        try:
+            job = queue.claim(db, "w", tenant)
+            assert job is not None and job.id == j
+            queue.finish(db, job)
+        finally:
+            for fn in ("claim_job(text, integer, text)", "requeue_stale(integer)"):
+                conn.execute(f"ALTER FUNCTION editor.{fn} OWNER TO CURRENT_USER")
+            for table in ("jobs", "tenants"):
+                conn.execute(f"ALTER TABLE editor.{table} OWNER TO CURRENT_USER")
+            conn.execute(f"REVOKE ALL ON ALL TABLES IN SCHEMA editor FROM {role}")
+            conn.execute(f"REVOKE USAGE ON SCHEMA editor FROM {role}")
+            conn.execute(f"DROP ROLE {role}")

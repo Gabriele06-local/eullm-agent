@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.1
+
+### Fixed
+
+- **Editor Mode on a server: queued work never started.** The queue
+  functions run as the schema owner, and row level security on
+  `editor.jobs` applied to the owner too: where the owner is not a
+  superuser, as in `deploy/server`, the worker found no work and site
+  analyses stayed "in coda". Migration 0013 lifts it for the owner only;
+  the application role is still filtered. The local installation
+  (SQLite) was not affected.
+- The worker logs every job it starts and finishes, with its duration.
+
+### Upgrading from 0.5.0
+
+`git pull && docker compose up -d --build`: the migration runs at start
+and the work already queued starts by itself.
+
 ## 0.5.0
 
 Editor Mode ready for many newsrooms on one server: durable queued work

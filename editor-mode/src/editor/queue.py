@@ -24,6 +24,7 @@ import os
 import signal
 import socket
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -150,6 +151,8 @@ def run(db, job: Job, handlers: Handlers) -> bool:
 
     beater = threading.Thread(target=beat, name=f"heartbeat-{job.id}", daemon=True)
     beater.start()
+    log.info("%s started for tenant %s (%s), attempt %d", job.kind, job.tenant_id, job.subject, job.attempts)
+    started = time.monotonic()
     try:
         with acting_for(job.tenant_id):
             fn(job.tenant_id, job.subject, job.args)
@@ -161,6 +164,7 @@ def run(db, job: Job, handlers: Handlers) -> bool:
         stop.set()
         beater.join()
     finish(db, job)
+    log.info("%s done for tenant %s (%s) in %.0fs", job.kind, job.tenant_id, job.subject, time.monotonic() - started)
     return True
 
 
