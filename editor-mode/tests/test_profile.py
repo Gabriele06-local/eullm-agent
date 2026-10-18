@@ -67,6 +67,27 @@ def test_model_statements_need_evidence_from_the_site():
     assert body["style"]["tone"] == "divulgativo"
 
 
+def test_each_article_counts_once_and_words_on_every_article_weigh_nothing():
+    from types import SimpleNamespace as P
+
+    posts = [
+        P(url="u1", title="EuLLM: RAG on-premise per documenti", categories=[]),
+        P(url="u2", title="EuLLM e la sovranità digitale europea", categories=[]),
+        P(url="u3", title="EuLLM: modelli decisionali locali", categories=[]),
+        P(url="u4", title="Infrastruttura sovranità digitale EuLLM", categories=[]),
+    ]
+    subs = [
+        {"name": "RAG", "keywords": ["eullm", "rag", "documenti"]},
+        {"name": "Sovranità", "keywords": ["eullm", "sovranità", "digitale"]},
+        {"name": "Decisioni", "keywords": ["eullm", "decisionali"]},
+        {"name": "Solo marchio", "keywords": ["eullm"]},
+    ]
+    out = prof.assign_shares(subs, posts)
+    assert [h for _, h in out] == [["u1"], ["u2", "u4"], ["u3"], []]
+    assert [sh for sh, _ in out] == [0.25, 0.5, 0.25, 0.0]
+    assert prof.assign_shares(subs, []) == [(0.0, [])] * 4
+
+
 def test_insufficient_site_gets_no_model_call():
     snap = snapshot()
     snap.status, snap.posts, snap.categories = "insufficient", snap.posts[:2], {}
@@ -130,6 +151,23 @@ def test_site_analysis_and_review_lifecycle(db, tenant):
         assert prof.approve(s, first["site_id"], 2, "francesco")
         statuses = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
     assert [tuple(r) for r in statuses] == [(1, "retired"), (2, "approved")]
+
+
+def test_approving_a_draft_retires_the_older_drafts(db, tenant):
+    class C:
+        def analyse(self, domain):
+            return snapshot()
+
+    first = prof.analyse_site(db, tenant, "blog.example", C())
+    site_id = first["site_id"]
+    with db.tenant(tenant) as s:
+        body = s.execute(select(m.editorial_profiles.c.body)).scalar()
+        prof.save_draft(s, tenant, site_id, body, "analysis")
+        prof.save_draft(s, tenant, site_id, body, "analysis")
+        assert prof.approve(s, site_id, 2, "francesco")
+        statuses = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+    # The newer draft still asks for a decision.
+    assert [tuple(r) for r in statuses] == [(1, "retired"), (2, "approved"), (3, "draft")]
 
 
 def test_manual_edit_keeps_owner_settings(db, tenant):

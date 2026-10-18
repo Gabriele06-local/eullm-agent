@@ -15,6 +15,7 @@ person approves the version that drives proposals.
 from __future__ import annotations
 
 import logging
+import math
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Annotated
@@ -106,6 +107,26 @@ def share_of(keywords: list[str], posts) -> tuple[float, list[str]]:
         return 0.0, []
     hits = [p.url for p in posts if _post_terms(p) & kw]
     return round(len(hits) / len(posts), 3), hits
+
+
+def assign_shares(subtopics: list[dict], posts) -> list[tuple[float, list[str]]]:
+    """Each post goes to the subtopic its title and categories match best, so
+    the shares add up to at most 1. A word found in every post (the site's
+    own name, its main theme) tells the subtopics apart from nothing and
+    weighs nothing; rarer words weigh more."""
+    if not posts:
+        return [(0.0, []) for _ in subtopics]
+    terms = [_post_terms(p) for p in posts]
+    df = Counter(t for ts in terms for t in ts)
+    weight = {t: math.log(len(posts) / c) for t, c in df.items()}
+    kws = [{t for k in s["keywords"] for t in tokens(k)} for s in subtopics]
+    hits: list[list[str]] = [[] for _ in subtopics]
+    for post, ts in zip(posts, terms):
+        scores = [sum(weight[t] for t in ts & kw) for kw in kws]
+        best = max(range(len(scores)), key=lambda i: scores[i], default=None)
+        if best is not None and scores[best] > 0:
+            hits[best].append(post.url)
+    return [(round(len(h) / len(posts), 3), h) for h in hits]
 
 
 def baseline_subtopics(snap: SiteSnapshot, limit: int = 8) -> list[dict]:
@@ -240,8 +261,8 @@ def enrich(body: dict, snap: SiteSnapshot, core: CoreClient) -> tuple[dict, list
         body[key] = {**value[key], "by": "model" if value[key]["value"] else None}
     body["style"] = {**body["style"], **value["style"]}
     model_subs = []
-    for s in value["subtopics"]:
-        share, hits = share_of(s["keywords"], snap.posts)  # measured, not claimed
+    measured = assign_shares(value["subtopics"], snap.posts)  # measured, not claimed
+    for s, (share, hits) in zip(value["subtopics"], measured):
         model_subs.append({**s, "share": share, "evidence": list(dict.fromkeys(s["evidence"] + hits))[:5], "by": "model"})
     if model_subs:
         body["subtopics"] = sorted(model_subs, key=lambda s: -s["share"])
@@ -330,14 +351,18 @@ def save_draft(s, tenant_id: str, site_id: int, body: dict, origin: str, analysi
 
 
 def approve(s, site_id: int, version: int, by: str) -> bool:
-    """Make one version the approved profile of its site; the previous one is retired."""
+    """Make one version the approved profile of its site; the previous one and older drafts are retired."""
     p = m.editorial_profiles
     row = s.execute(select(p.c.id, p.c.status).where(p.c.site_id == site_id, p.c.version == version)).first()
     if row is None:
         return False
     if row.status == "approved":
         return True
+    # The approved version replaces the previous one and the older drafts
+    # still waiting: they no longer ask for a decision.
     s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "approved").values(status="retired"))
+    s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "draft", p.c.version < version)
+              .values(status="retired"))
     s.execute(update(p).where(p.c.id == row.id).values(status="approved", approved_by=by, approved_at=datetime.now(UTC)))
     return True
 
