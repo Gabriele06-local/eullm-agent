@@ -176,3 +176,14 @@ def test_the_worker_runs_queued_work_and_stops_cleanly(db, tenant):
         t.join(10)
     assert status(db, tenant, j).status == "done"
     assert not any(t.is_alive() for t in threads)
+
+
+def test_the_worker_log_says_what_runs(db, tenant, caplog):
+    import logging
+
+    queue.enqueue(db, tenant, "analysis", "blog.example")
+    with caplog.at_level(logging.INFO, logger="editor.queue"):
+        queue.drain(db, recorder([]), tenant)
+    text_ = caplog.text
+    assert f"analysis started for tenant {tenant} (blog.example), attempt 1" in text_
+    assert f"analysis done for tenant {tenant} (blog.example)" in text_
