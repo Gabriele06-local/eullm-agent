@@ -28,9 +28,11 @@ def test_every_tenant_table_forces_rls(pg_urls):
         ).fetchall()
     assert len(rows) >= 15
     assert all(r[1] for r in rows), rows
-    # editor.tenants is not forced so the owner's editor.active_tenants() can list ids;
-    # editor_app is still filtered (see test_tenants_are_isolated).
-    assert sorted(r[0] for r in rows if not r[2]) == ["access_tokens", "tenants"]
+    # Not forced on the owner, whose SECURITY DEFINER functions read across
+    # tenants: editor.active_tenants() (tenants), resolve_token (access_tokens),
+    # claim_job and requeue_stale (jobs). editor_app is still filtered
+    # (see test_tenants_are_isolated).
+    assert sorted(r[0] for r in rows if not r[2]) == ["access_tokens", "jobs", "tenants"]
 
 
 def test_scheduler_lists_tenant_ids_only(db: Database):
