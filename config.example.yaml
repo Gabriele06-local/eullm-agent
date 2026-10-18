@@ -1,4 +1,4 @@
-# EuLLM Agent 0.5.1 — example configuration
+# EuLLM Agent 0.5.2 — example configuration
 # Copy this file to config.yaml and fill in your values.
 #
 # Everything that can touch the machine or the network is OFF unless this
@@ -35,6 +35,9 @@ provider:
 #   api_key_env: OPENAI_API_KEY
 #   model: gpt-4o
 #   # base_url: https://api.openai.com/v1
+#   # max_tokens: 16384   # output tokens per answer; set it for reasoning
+#   #                     # models, whose service default can be used up by
+#   #                     # the reasoning and leave the answer empty
 
 # Price per million tokens of the provider above (the `default` model). Cost
 # budgets (profiles `max_cost`, tenants `max_cost_per_month`) count only

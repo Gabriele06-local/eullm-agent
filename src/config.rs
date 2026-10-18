@@ -311,6 +311,11 @@ pub enum ProviderConfig {
         model: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         base_url: Option<String>,
+        /// Output tokens per answer. Without it the service decides, and
+        /// for a reasoning model its default can be used up by the
+        /// reasoning, leaving an empty answer.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        max_tokens: Option<u32>,
     },
 }
 

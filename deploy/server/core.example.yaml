@@ -11,6 +11,13 @@ provider:
 #   base_url: https://api.groq.com/openai/v1
 #   model: openai/gpt-oss-120b
 #   api_key_env: LLM_API_KEY
+# Or NVIDIA Build (free for trials, a reasoning model):
+# provider:
+#   type: openai
+#   base_url: https://integrate.api.nvidia.com/v1
+#   model: nvidia/nemotron-3.5-super-vl-120b-a12b
+#   api_key_env: LLM_API_KEY
+#   max_tokens: 16384   # the reasoning counts too: without it the answer can be empty
 
 workspace: /var/lib/eullm-agent/workspace
 

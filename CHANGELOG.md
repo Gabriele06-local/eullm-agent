@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2
+
+### Added
+
+- `provider.max_tokens` for `type: openai`: the output tokens per answer
+  sent to the service. Reasoning models (for example on NVIDIA Build)
+  count their reasoning in it, and with the service default the answer
+  can come back empty. Without it nothing is sent, as before.
+
 ## 0.5.1
 
 ### Fixed
