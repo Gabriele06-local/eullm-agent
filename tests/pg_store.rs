@@ -254,3 +254,40 @@ async fn tenant_limits_are_stored_and_replaced() {
     let Some(s) = store().await else { return };
     store_suite::tenant_limits_are_stored_and_replaced(Arc::new(s)).await;
 }
+
+/// The server installation's Core logs in as a role named `core`, the name
+/// of its schema too: after the first start "$user" in the search path is
+/// that schema, and the migration history must still be found.
+#[tokio::test]
+async fn a_role_named_like_its_schema_starts_twice() {
+    let Ok(url) = std::env::var("DATABASE_URL") else {
+        return;
+    };
+    let admin = PgStore::connect(&url, 1).await.expect("connect");
+    let pool = admin.pool();
+    let db = format!("eullm_role_{}", uuid::Uuid::new_v4().simple());
+    for q in [
+        "DO $$ BEGIN CREATE ROLE core LOGIN PASSWORD 'core'; EXCEPTION WHEN duplicate_object THEN NULL; END $$".to_string(),
+        format!("CREATE DATABASE {db}"),
+        format!("GRANT CONNECT, CREATE ON DATABASE {db} TO core"),
+    ] {
+        sqlx::query(sqlx::AssertSqlSafe(q.clone())).execute(pool).await.expect(&q);
+    }
+    let mut owner_url = reqwest::Url::parse(&url).unwrap();
+    owner_url.set_path(&db);
+    let owner = sqlx::PgPool::connect(owner_url.as_str()).await.unwrap();
+    sqlx::query("GRANT CREATE ON SCHEMA public TO core")
+        .execute(&owner)
+        .await
+        .unwrap();
+    owner.close().await;
+    let mut core_url = owner_url.clone();
+    core_url.set_username("core").unwrap();
+    core_url.set_password(Some("core")).unwrap();
+    for _ in 0..2 {
+        let s = PgStore::connect(core_url.as_str(), 1)
+            .await
+            .expect("start as core");
+        drop(s);
+    }
+}
