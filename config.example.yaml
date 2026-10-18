@@ -1,4 +1,4 @@
-# EuLLM Agent 0.4.0 — example configuration
+# EuLLM Agent 0.5.0 — example configuration
 # Copy this file to config.yaml and fill in your values.
 #
 # Everything that can touch the machine or the network is OFF unless this

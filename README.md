@@ -4,7 +4,13 @@ Autonomous ReAct agent with multi-provider LLM support (EuLLM Engine, Ollama,
 OpenAI-compatible APIs, Anthropic), a small set of sandboxed tools, optional
 modules and a Telegram interface.
 
-**New in 0.4.0: two installations, both with a web interface.**
+**New in 0.5.0: Editor Mode for many newsrooms on one server.** Work is
+queued and survives restarts, newsrooms are served in turn, each one is a
+Core tenant with its own budget, owners enter publishing credentials in
+the dashboard (stored encrypted) and can download or delete their data.
+See the [CHANGELOG](CHANGELOG.md).
+
+**Since 0.4.0: two installations, both with a web interface.**
 
 - **On your computer:** one command installs everything; `eullm-local`
   opens the browser on a chat with the agent, the tasks with every step,
