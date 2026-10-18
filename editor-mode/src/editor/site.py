@@ -186,7 +186,7 @@ class SiteCrawler:
         try:
             r = self.client.get(base + "/robots.txt", headers={"Accept": "text/plain"})
         except httpx.HTTPError as e:
-            snap.problems.append(f"robots.txt unreachable ({type(e).__name__}): not crawling")
+            snap.problems.append(f"robots.txt unreachable ({type(e).__name__}: {str(e)[:300]}): not crawling")
             return False
         rp = RobotFileParser()
         if r.status_code >= 500:
