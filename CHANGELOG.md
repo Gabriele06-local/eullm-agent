@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Editor Mode: when robots.txt cannot be read, the site page now shows why
+  (for example the Core's answer), not only the error type.
+
 ## 0.5.2
 
 ### Added

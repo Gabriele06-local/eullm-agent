@@ -76,6 +76,14 @@ def test_robots_server_error_means_no_crawl():
     assert snap.status == "failed" and "503" in snap.problems[0]
 
 
+def test_an_unreachable_robots_says_why():
+    with respx.mock(assert_all_called=False) as router:
+        router.get("https://blog.example/robots.txt").mock(
+            side_effect=httpx.ConnectError("Core fetch failed (502): dns error"))
+        snap = crawl(router)
+    assert snap.status == "failed" and "Core fetch failed (502): dns error" in snap.problems[0]
+
+
 def test_disallowed_paths_are_skipped():
     robots = "User-agent: *\nDisallow: /wifi-7-router/\nSitemap: https://blog.example/sitemap_index.xml\n"
     with respx.mock(assert_all_called=False) as router:
