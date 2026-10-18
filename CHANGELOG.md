@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
+
+Editor Mode ready for many newsrooms on one server: durable queued work
+served in turn, every newsroom a Core tenant of its own with its own
+budget, publishing credentials entered from the dashboard and stored
+encrypted, and a newsroom's data exported or deleted whole.
 
 ### Added
 

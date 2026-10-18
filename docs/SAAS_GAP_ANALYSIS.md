@@ -2,10 +2,10 @@
 
 What Editor Mode already does, and what is missing, to run as a service where
 anyone signs up, enters a domain and gets an AI newsroom of their own. Read
-from the code, not from the README. Base: 0.4.0, then the "Unreleased"
-section of the [CHANGELOG](../CHANGELOG.md).
+from the code, not from the README. Base: 0.5.0 (see the
+[CHANGELOG](../CHANGELOG.md)).
 
-**Present**, **partial**, **missing**; *fixed* marks what changed after 0.4.0.
+**Present**, **partial**, **missing**; *fixed* marks what changed in 0.5.0.
 
 ## Newsroom
 
