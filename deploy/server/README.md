@@ -18,7 +18,31 @@ one person on one computer use the local installation instead
 The ports listen on 127.0.0.1: put a reverse proxy with HTTPS in front
 (below) rather than exposing them.
 
-## Install
+## Install in one command
+
+Requirements: Docker with the compose plugin, and the `eullm-agent`
+binary of the release (Linux x86-64), nothing else:
+
+    curl -LO https://github.com/eullm/eullm-agent/releases/latest/download/eullm-agent-linux-x64
+    chmod +x eullm-agent-linux-x64
+    ./eullm-agent-linux-x64 server-init
+
+It asks the model (NVIDIA Build, Groq, EuLLM Engine on this machine or
+another OpenAI-compatible service) and its key, then:
+
+- writes in `eullm-server/` the compose file, `core.yaml` and `.env` with
+  every password and token generated (`.env` readable only by you);
+- downloads the images of the same release and starts everything;
+- creates the first newsroom and prints its owner's login token, once.
+
+Keep a copy of `.env`: `EDITOR_SECRET_KEY` in it encrypts the publishing
+credentials. Running `server-init` again changes no file that exists: it
+only starts the stack, and creates the first newsroom if there is still
+none. In a checkout of the sources, `--dir deploy/server` uses this
+folder. Without questions: `--provider nvidia --model <name> --tenant
+<id>` and the key in `LLM_API_KEY`.
+
+## Install by hand
 
 Requirements: Docker with the compose plugin, and this repository.
 

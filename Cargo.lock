@@ -633,6 +633,7 @@ dependencies = [
  "axum",
  "base64 0.23.1",
  "clap",
+ "getrandom 0.4.3",
  "http-body-util",
  "libc",
  "reqwest 0.12.28",
