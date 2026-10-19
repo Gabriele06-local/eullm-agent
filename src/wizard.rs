@@ -192,7 +192,7 @@ fn secret(label: &str, default_env: &str) -> Result<(Option<String>, Option<Stri
 }
 
 /// Write the config readable only by its owner: it may hold secrets.
-fn write_private(path: &std::path::Path, text: &str) -> Result<()> {
+pub(crate) fn write_private(path: &std::path::Path, text: &str) -> Result<()> {
     let mut opts = std::fs::OpenOptions::new();
     opts.write(true).create(true).truncate(true);
     #[cfg(unix)]
@@ -205,7 +205,7 @@ fn write_private(path: &std::path::Path, text: &str) -> Result<()> {
     Ok(())
 }
 
-fn prompt(label: &str, default: &str) -> Result<String> {
+pub(crate) fn prompt(label: &str, default: &str) -> Result<String> {
     if default.is_empty() {
         print!("{}: ", label);
     } else {
@@ -222,7 +222,7 @@ fn prompt(label: &str, default: &str) -> Result<String> {
     })
 }
 
-fn prompt_required(label: &str) -> Result<String> {
+pub(crate) fn prompt_required(label: &str) -> Result<String> {
     loop {
         print!("{}: ", label);
         io::stdout().flush()?;

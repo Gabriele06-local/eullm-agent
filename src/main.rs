@@ -56,6 +56,29 @@ enum Commands {
         #[command(subcommand)]
         action: TokenAction,
     },
+    /// First start of the server installation: writes what is missing in the
+    /// folder (compose file, .env with generated passwords, core.yaml), starts
+    /// it with Docker and creates the first newsroom with its login
+    ServerInit {
+        /// Folder of the installation; deploy/server in a checkout of the sources
+        #[arg(long, default_value = "eullm-server")]
+        dir: PathBuf,
+        /// nvidia, groq, eullm or openai (asked when missing)
+        #[arg(long)]
+        provider: Option<String>,
+        /// Model name (asked when missing)
+        #[arg(long)]
+        model: Option<String>,
+        /// Base URL, for --provider openai
+        #[arg(long)]
+        base_url: Option<String>,
+        /// Id of the first newsroom (asked when missing)
+        #[arg(long)]
+        tenant: Option<String>,
+        /// Write the files only, do not start
+        #[arg(long)]
+        no_start: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -99,6 +122,25 @@ async fn main() -> Result<()> {
         println!("token_sha256: {}", api::sha256_hex(&token));
         println!("\nGive the token to the client; put only token_sha256 in api.tokens.");
         return Ok(());
+    }
+
+    if let Commands::ServerInit {
+        dir,
+        provider,
+        model,
+        base_url,
+        tenant,
+        no_start,
+    } = cli.command
+    {
+        return eullm_agent::server_init::server_init(eullm_agent::server_init::Options {
+            dir,
+            provider,
+            model,
+            base_url,
+            tenant,
+            no_start,
+        });
     }
 
     let mut config = if cli.config.exists() {
@@ -255,7 +297,9 @@ async fn main() -> Result<()> {
                 .await?;
             println!("{result}");
         }
-        Commands::Module { .. } | Commands::Token { .. } => unreachable!(),
+        Commands::Module { .. } | Commands::Token { .. } | Commands::ServerInit { .. } => {
+            unreachable!()
+        }
     }
 
     Ok(())

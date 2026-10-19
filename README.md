@@ -58,7 +58,8 @@ Two installations, both with a web interface:
   From a checkout: `sh install/local.sh --source .` (builds with cargo).
 
 - **On a server** (several tenants): PostgreSQL, the Core and Editor Mode
-  with `docker compose`; see [deploy/server](deploy/server/README.md).
+  with `docker compose`, set up and started by `eullm-agent server-init`;
+  see [deploy/server](deploy/server/README.md).
 
 ## From source
 

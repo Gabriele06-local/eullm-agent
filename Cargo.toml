@@ -38,6 +38,7 @@ axum = { version = "0.8.9", default-features = false, features = ["http1", "json
 sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "tls-rustls-ring-webpki", "postgres", "sqlite-bundled", "macros", "migrate", "json", "uuid"] }
 sha2 = "0.11.0"
 base64 = "0.23.1"
+getrandom = "0.4.3"
 uuid = { version = "1.27.0", features = ["v4", "serde"] }
 
 # Logging

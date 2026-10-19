@@ -13,6 +13,7 @@ pub mod llm;
 pub mod modules;
 pub mod policy;
 pub mod router;
+pub mod server_init;
 pub mod service;
 pub mod setup;
 pub mod store;
