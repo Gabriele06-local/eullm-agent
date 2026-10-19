@@ -43,10 +43,19 @@ impl PgStore {
             .connect(url)
             .await
             .context("cannot connect to PostgreSQL")?;
+        // The migration history lives in schema public. Unqualified, it would
+        // follow the search path: for a role named `core`, "$user" is schema
+        // `core` once the first migration has created it, and the next start
+        // would find no history there and apply everything again.
+        let mut conn = pool.acquire().await?;
+        sqlx::query("SET search_path TO public")
+            .execute(&mut *conn)
+            .await?;
         MIGRATOR
-            .run(&pool)
+            .run(&mut *conn)
             .await
             .context("database migration failed")?;
+        drop(conn.detach());
         // A connection of its own holds the lock for the life of the
         // process; when the process dies the lock goes with it.
         let mut conn = pool.acquire().await?.detach();
