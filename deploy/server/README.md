@@ -35,9 +35,11 @@ Requirements: Docker with the compose plugin, and this repository.
        cp core.example.yaml core.yaml
        nano core.yaml
 
-3. Start. The first build compiles the Core and takes a few minutes.
+3. Start. The images of the release come from GitHub (`ghcr.io/eullm`);
+   `EULLM_VERSION` in `.env` picks the release, `latest` when empty.
 
-       docker compose up -d --build
+       docker compose pull
+       docker compose up -d
        docker compose ps                 # editor-migrate: exited (0), the rest running
 
 4. The first tenant and its owner's login for the dashboard:
@@ -71,7 +73,8 @@ A reverse proxy on the same machine, for example Caddy
 | What | Command |
 |---|---|
 | Logs | `docker compose logs -f core editor-worker` |
-| Update | `git pull && docker compose up -d --build` (migrations run at start) |
+| Update | set `EULLM_VERSION` in `.env`, then `git pull && docker compose pull && docker compose up -d` (migrations run at start) |
+| Try a branch | `git checkout <branch> && docker compose up -d --build`: compiles the Core and Editor Mode from the checkout |
 | Backup | `docker compose exec postgres pg_dump -U postgres -Fc eullm > eullm-$(date +%F).dump` |
 | Restore | `docker compose exec -T postgres pg_restore -U postgres -d eullm --clean < file.dump` |
 | Stop | `docker compose down` (data stays in the `pgdata` volume) |
