@@ -7,6 +7,11 @@
 - A domain that redirects to another host (rag-pro.eu to rag.i3k.eu) is
   read where it lands: before, its sitemap, links and articles were all
   discarded as another site's, and the analysis found nothing.
+- A site analysed again before its profile was approved showed two
+  profiles to approve on the home page: the newer analysis now replaces
+  the draft still waiting.
+- Work in progress names the site by its domain ("Ricerca fonti
+  (i3k.eu)"), not by its number.
 
 ### Changed
 

@@ -133,7 +133,9 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> Fa
         queue.enqueue(db, tenant, "analysis", domain)
 
     def run_discovery(tenant: str, site_id: int):
-        queue.enqueue(db, tenant, "discovery", f"site {site_id}", {"site_id": site_id})
+        with db.tenant(tenant) as s:  # named by its domain on the pages that list the work
+            domain = s.execute(select(m.sites.c.domain).where(m.sites.c.id == site_id)).scalar()
+        queue.enqueue(db, tenant, "discovery", domain or f"site {site_id}", {"site_id": site_id})
 
     def run_draft(tenant: str, proposal_id: int):
         queue.enqueue(db, tenant, "draft", f"proposal {proposal_id}", {"proposal_id": proposal_id})

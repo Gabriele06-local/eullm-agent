@@ -429,6 +429,11 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
                   "profile_id": None, "changes": [], "significant": False}
         if current is None:
             if snap.status != "failed":
+                # The newer analysis replaces the drafts of the older ones
+                # still waiting: one profile per site asks for a decision.
+                p = m.editorial_profiles
+                s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "draft", p.c.origin == "analysis")
+                          .values(status="retired"))
                 result["profile_id"] = save_draft(s, tenant_id, site_id, body, "analysis", analysis_id)
             return result
         changes = drift(current.body, body) if snap.status in ("complete", "partial") else []
