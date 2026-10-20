@@ -139,11 +139,13 @@ def baseline_subtopics(snap: SiteSnapshot, limit: int = 8) -> list[dict]:
         keywords = list(dict.fromkeys(tokens(cat) + [t for t, c in terms.most_common(6) if c >= 2]))
         if not keywords:
             continue
-        share, evidence = share_of(keywords, snap.posts)
-        out.append({"name": cat, "keywords": keywords, "share": share, "evidence": evidence[:5], "by": "categories"})
+        out.append({"name": cat, "keywords": keywords, "by": "categories"})
         if len(out) >= limit:
             break
-    return out
+    # Each article counts for one subtopic only, as for the model's.
+    for sub, (share, evidence) in zip(out, assign_shares(out, snap.posts)):
+        sub["share"], sub["evidence"] = share, evidence[:5]
+    return sorted(out, key=lambda s: -s["share"])
 
 
 def baseline(snap: SiteSnapshot) -> dict:
@@ -152,9 +154,12 @@ def baseline(snap: SiteSnapshot) -> dict:
         "domain": snap.domain,
         "name": snap.site_name or snap.title or snap.domain,
         "language": snap.language,
+        "languages": snap.languages,
+        "site_keywords": snap.site_keywords,
         "analysis": {
             "status": snap.status,
             "posts_read": len(snap.posts),
+            "translations": snap.translations,
             "posts_per_week": snap.posts_per_week,
             "median_words": snap.median_words,
             "feeds": snap.feeds,
@@ -197,6 +202,8 @@ def _evidence_prompt(snap: SiteSnapshot, max_posts: int = 40) -> str:
         f"Title: {snap.title}",
         f"Description: {snap.description}",
         f"Language: {snap.language or 'unknown'}",
+        f"Articles read per language: {', '.join(f'{k} ({v})' for k, v in snap.languages.items()) or 'unknown'}",
+        f"Site-wide keywords (on every page): {', '.join(snap.site_keywords) or 'none'}",
         f"Categories (count): {', '.join(f'{k} ({v})' for k, v in snap.categories.items()) or 'none'}",
         f"Articles per week: {snap.posts_per_week}",
         f"Median article length (words): {snap.median_words}",
@@ -204,7 +211,8 @@ def _evidence_prompt(snap: SiteSnapshot, max_posts: int = 40) -> str:
     ]
     for p in snap.posts[:max_posts]:
         cats = f" [{', '.join(p.categories)}]" if p.categories else ""
-        lines.append(f"- {p.url} | {p.title}{cats}")
+        lang = f" ({p.language})" if p.language else ""
+        lines.append(f"- {p.url} | {p.title}{lang}{cats}")
     return "\n".join(lines)
 
 
@@ -283,7 +291,7 @@ def build_profile(snap: SiteSnapshot, core: CoreClient | None = None) -> tuple[d
         return enrich(body, snap, core)
     except CoreError as e:
         log.warning("profile enrichment failed for %s: %s", snap.domain, e)
-        body["gaps"].append("model analysis failed: sector, audience and style left undetermined")
+        body["gaps"].append(f"model analysis failed ({str(e)[:200]}): sector, audience and style left undetermined")
         return body, []
 
 

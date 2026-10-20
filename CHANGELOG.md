@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.7.2
+
+### Fixed
+
+- Site analysis: keywords found on every page (a site-wide meta keywords,
+  or a tag put on everything) are no longer taken for subtopics, which all
+  showed 100%. They are kept as the site's keywords and given to the model.
+  Each article now counts for one subtopic only, in the analysis without
+  the model too.
+- The analysis reads up to 25 articles (was 10, fewer than the 15 it asks
+  for to call itself complete) within 60 pages (was 40).
+- When the model's part fails, the profile says why.
+
+### Added
+
+- Languages: each article's language is read, the profile shows the
+  articles per language ("Lingue: it (12), en (11)") and how many are
+  translations of each other (hreflang), and the main language is the one
+  most articles are in.
+
 ## 0.7.1
 
 ### Changed

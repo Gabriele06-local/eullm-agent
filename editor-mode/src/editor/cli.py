@@ -362,7 +362,7 @@ def main(argv=None):
     sp.add_argument("--tenant", required=True); sp.add_argument("--channel", choices=["email", "telegram"], required=True)
     sp.add_argument("--address", required=True)
     sp = add("site-add", cmd_site_add, "analyse a domain, write a draft profile, discover sources")
-    sp.add_argument("domain"); sp.add_argument("--tenant", required=True); sp.add_argument("--max-pages", type=int, default=40)
+    sp.add_argument("domain"); sp.add_argument("--tenant", required=True); sp.add_argument("--max-pages", type=int, default=60)
     sp.add_argument("--no-discovery", action="store_true")
     sp = add("profile-show", cmd_profile_show, "print a profile version")
     sp.add_argument("domain"); sp.add_argument("--tenant", required=True); sp.add_argument("--version", type=int)
