@@ -1,11 +1,52 @@
 # Changelog
 
-## Unreleased
+## 0.5.4
+
+### Added
+
+- `eullm-agent server-init`: the server installation set up and started in
+  one command, with no checkout of the sources. It writes what is missing
+  in its folder (compose file, `core.yaml` for the model chosen, `.env`
+  with every password, token and key generated and readable only by its
+  owner), starts the stack with Docker and creates the first newsroom,
+  printing its owner's login once. Run again, it changes no existing file.
+- Every release publishes the images of the Core
+  (`ghcr.io/eullm/eullm-agent`) and of Editor Mode
+  (`ghcr.io/eullm/eullm-agent-editor`), Linux x86-64. `deploy/server`
+  pulls them (`EULLM_VERSION` in `.env`, `latest` when empty) instead of
+  compiling; `docker compose up -d --build` still builds from the checkout.
 
 ### Fixed
 
+- Editor Mode: subtopic shares count each article once, for the subtopic
+  it matches best, and words found in every article (the site's own name)
+  weigh nothing: shares no longer read 100% for several subtopics.
+- Editor Mode: approving a profile retires the older drafts still
+  waiting, which no longer ask for a decision.
+
+### Upgrading from 0.5.3
+
+`git pull`, then in `.env` add `EULLM_VERSION=0.5.4` and run
+`docker compose pull && docker compose up -d`. The first time, the two
+images must be made public on GitHub (organisation eullm → Packages →
+each image → Package settings → Change visibility); until then
+`docker compose up -d --build` keeps building them on the server.
+
+## 0.5.3
+
+### Fixed
+
+- **Core on a server: it stopped starting after the first restart.** Its
+  database role is named `core` like its schema, so once the schema
+  existed the migration history was looked for there, not found, and every
+  migration applied again ("relation runs already exists"). The history is
+  now always read from schema `public`. A server already stuck needs, once:
+  `docker compose exec postgres psql -U postgres eullm -c "ALTER ROLE core
+  SET search_path = public"`, or this version.
 - Editor Mode: when robots.txt cannot be read, the site page now shows why
   (for example the Core's answer), not only the error type.
+
+The v0.5.3 tag still reports version 0.5.2.
 
 ## 0.5.2
 
@@ -28,13 +69,6 @@
   the application role is still filtered. The local installation
   (SQLite) was not affected.
 - The worker logs every job it starts and finishes, with its duration.
-
-### Added
-
-- `provider.max_tokens` for `type: openai`: the output tokens per answer
-  sent to the service. Reasoning models (for example on NVIDIA Build)
-  count their reasoning in it, and with the service default the answer
-  can come back empty. Without it nothing is sent, as before.
 
 ### Upgrading from 0.5.0
 

@@ -4,7 +4,13 @@ Autonomous ReAct agent with multi-provider LLM support (EuLLM Engine, Ollama,
 OpenAI-compatible APIs, Anthropic), a small set of sandboxed tools, optional
 modules and a Telegram interface.
 
-**New in 0.5.0: Editor Mode for many newsrooms on one server.** Work is
+**New in 0.5.4: the server installation in one command.** Download the
+binary and run `eullm-agent server-init`: it generates every password,
+writes the configuration for the model you pick, starts PostgreSQL, the
+Core and Editor Mode from the images of the release and prints the login
+of the first newsroom. See [deploy/server](deploy/server/README.md).
+
+**Since 0.5.0: Editor Mode for many newsrooms on one server.** Work is
 queued and survives restarts, newsrooms are served in turn, each one is a
 Core tenant with its own budget, owners enter publishing credentials in
 the dashboard (stored encrypted) and can download or delete their data.
