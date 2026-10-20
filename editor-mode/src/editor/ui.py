@@ -306,7 +306,7 @@ def register(app, ctx) -> None:
         from .api import normalise_domain
         d = normalise_domain(domain)
         ctx.run_analysis(c.tenant_id, d)
-        return done("/site", f"Analisi di {d} avviata: il profilo arriva in bozza, da approvare.")
+        return done("/site", f"Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.")
 
     @app.post("/ui/sites/{site_id}/review")
     def ui_review(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):

@@ -52,13 +52,18 @@ def test_add_site_analyses_and_discovers(db, tenant):
     with respx.mock(assert_all_called=False) as router:
         fakesite.mount(router)
         router.get(url__regex=r"https://(?!blog\.example).*").mock(return_value=httpx.Response(404))
-        c, h, _ = client_for(db, tenant)
+        c, h, token = client_for(db, tenant)
         assert c.post("/api/sites", json={"domain": "not a domain"}, headers=h).status_code == 400
         r = c.post("/api/sites", json={"domain": "https://www.Blog.Example/path"}, headers=h)
         assert r.status_code == 202 and r.json()["domain"] == "blog.example"
         # Queued, not run by the dashboard: the worker runs it.
         assert c.get("/api/sites", headers=h).json()["sites"] == []
         assert [j["status"] for j in c.get("/api/jobs", headers=h).json()["jobs"]] == ["queued"]
+        # Until the worker has run, the page says the analysis is waiting
+        # instead of looking as if the domain was lost.
+        c.post("/login", data={"token": token})
+        page = c.get("/site").text
+        assert "Nessun sito" in page and "Analisi (blog.example): in coda" in page
         assert queue.drain(db, work.handlers(db, http_factory=httpx.Client), tenant) == 1
     sites = c.get("/api/sites", headers=h).json()["sites"]
     assert sites[0]["last_analysis"]["status"] == "partial"
