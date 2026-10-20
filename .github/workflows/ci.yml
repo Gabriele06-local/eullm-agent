@@ -1,10 +1,17 @@
 name: CI
 
 on:
+  # Every push, on any branch: a branch is checked before its pull request
+  # is opened, so it is green by the time it is merged.
   push:
-    branches: [main, dev, 'feat/**', 'fix/**']
+    branches: ['**']
   pull_request:
     branches: [main]
+
+# A newer push to the same branch replaces the run still going.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
