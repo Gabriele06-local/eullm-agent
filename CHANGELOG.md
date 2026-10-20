@@ -40,11 +40,16 @@
 
 ### Upgrading from 0.5.4
 
-In `~/eullm-server` set `EULLM_VERSION=0.6.0` in `.env` (or leave it empty
-for latest), then `docker compose pull && docker compose up -d`: the
-migration adds the account tables. Create your account, operator and owner
-of your newsroom (the password is printed once):
+In the installation folder (`~/eullm-server`):
 
+    sed -i 's/^EULLM_VERSION=.*/EULLM_VERSION=0.6.0/' .env
+    docker compose pull && docker compose up -d
+
+The migration adds the account tables. Then create your account, operator
+of the service and owner of your newsroom (the password is printed once);
+the first command shows the newsroom's id:
+
+    docker compose exec -T postgres psql -U postgres -d eullm -Atc "SELECT tenant_id, name FROM editor.tenants"
     docker compose exec editor-web editor user-add you@example.com --operator --tenant <id> --role owner
 
 and sign in with email and password. Existing tokens keep working. For

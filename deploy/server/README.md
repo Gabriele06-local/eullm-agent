@@ -132,12 +132,40 @@ A reverse proxy on the same machine, for example Caddy
         reverse_proxy 127.0.0.1:8088
     }
 
+## Updating
+
+The release to run is `EULLM_VERSION` in `.env`: `server-init` writes the
+version of its binary there, so it does not move on its own. When a new
+release is out (its job on GitHub Actions has published the images), in
+the installation folder:
+
+    cd ~/eullm-server
+    sed -i 's/^EULLM_VERSION=.*/EULLM_VERSION=X.Y.Z/' .env    # or empty: always the latest
+    docker compose pull && docker compose up -d
+    docker compose ps                                          # editor-migrate: exited (0)
+
+Migrations run at start; data stays in the volumes. Read the release's
+"Upgrading" notes in [CHANGELOG.md](../../CHANGELOG.md) first: a release may
+ask for one more step (a new setting, an account to create). Updating the
+binary in the folder is only needed to run `server-init` again:
+
+    curl -L -o eullm-agent-linux-x64 https://github.com/eullm/eullm-agent/releases/download/vX.Y.Z/eullm-agent-linux-x64
+    chmod +x eullm-agent-linux-x64
+
+`compose.yaml` is never rewritten by `server-init`. If a release changes it
+(its notes say so), take it from `deploy/server/compose.yaml` of that
+release, or delete it and run `./eullm-agent-linux-x64 server-init --dir .`
+again, which writes only the missing files and changes nothing else.
+
+In a checkout of the sources (`deploy/server`) it is the same, with
+`git pull` first.
+
 ## Day to day
 
 | What | Command |
 |---|---|
 | Logs | `docker compose logs -f core editor-worker` |
-| Update | set `EULLM_VERSION` in `.env`, then `git pull && docker compose pull && docker compose up -d` (migrations run at start) |
+| Update | see [Updating](#updating) |
 | Try a branch | `git checkout <branch> && docker compose up -d --build`: compiles the Core and Editor Mode from the checkout |
 | Backup | `docker compose exec postgres pg_dump -U postgres -Fc eullm > eullm-$(date +%F).dump` |
 | Restore | `docker compose exec -T postgres pg_restore -U postgres -d eullm --clean < file.dump` |
