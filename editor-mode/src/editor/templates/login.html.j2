@@ -10,6 +10,13 @@
 <body>
 <main class="solo">
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
+  {% if setup %}
+  <section class="card pad" style="border-color: var(--accent);">
+    <h2>Prima configurazione</h2>
+    <p class="lead">Non c'è ancora un amministratore. Sul server, nella cartella dell'installazione, lancia
+    <code>docker compose exec editor-web editor setup-link</code> e apri il link che stampa: lì crei il tuo account.</p>
+  </section>
+  {% endif %}
   <section class="card pad">
     <h1 style="font-size: 22px;">Accedi</h1>
     {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}

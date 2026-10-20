@@ -128,8 +128,6 @@ pub struct Options {
     pub provider: Option<String>,
     pub model: Option<String>,
     pub base_url: Option<String>,
-    pub tenant: Option<String>,
-    pub email: Option<String>,
     pub no_start: bool,
 }
 
@@ -173,61 +171,6 @@ fn pick_provider(opts: &Options) -> Result<Provider> {
         },
         other => bail!("unknown provider '{other}': use nvidia, groq, eullm or openai"),
     })
-}
-
-/// Tenant ids as Editor Mode accepts them.
-pub fn valid_tenant(id: &str) -> bool {
-    !id.is_empty()
-        && id.len() <= 40
-        && id.split('-').all(|w| {
-            !w.is_empty()
-                && w.chars()
-                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
-        })
-}
-
-/// The id of a newsroom from its name: "EuLLM Redazione Web" -> "eullm-redazione-web".
-pub fn tenant_id_from(name: &str) -> Option<String> {
-    let mut id = String::new();
-    for c in name.chars().flat_map(char::to_lowercase) {
-        let c = match c {
-            'à' | 'á' | 'â' | 'ä' | 'ã' | 'å' => 'a',
-            'è' | 'é' | 'ê' | 'ë' => 'e',
-            'ì' | 'í' | 'î' | 'ï' => 'i',
-            'ò' | 'ó' | 'ô' | 'ö' | 'õ' => 'o',
-            'ù' | 'ú' | 'û' | 'ü' => 'u',
-            'ç' => 'c',
-            'ñ' => 'n',
-            c => c,
-        };
-        if c.is_ascii_lowercase() || c.is_ascii_digit() {
-            id.push(c);
-        } else if !id.is_empty() && !id.ends_with('-') {
-            id.push('-');
-        }
-    }
-    let mut id = id.trim_end_matches('-').to_string();
-    if id.len() > 40 {
-        id.truncate(40);
-        id = id.trim_end_matches('-').to_string();
-    }
-    valid_tenant(&id).then_some(id)
-}
-
-/// Ask for a secret without showing it on the screen (when the input is a
-/// terminal).
-fn valid_email(e: &str) -> bool {
-    let e = e.trim();
-    match e.split_once('@') {
-        Some((user, host)) => {
-            !user.is_empty()
-                && host.contains('.')
-                && !host.starts_with('.')
-                && !host.ends_with('.')
-                && !e.contains(char::is_whitespace)
-        }
-        None => false,
-    }
 }
 
 fn prompt_secret(label: &str) -> Result<String> {
@@ -343,124 +286,28 @@ pub fn server_init(opts: Options) -> Result<()> {
         bail!("docker compose up failed: see the messages above");
     }
     // The editor schema is created by editor-migrate at start: wait for it,
-    // then create the first newsroom only if there is none (a run that
-    // stopped halfway is completed by the next one).
-    let mut newsrooms = None;
+    // then ask Editor Mode for the first-start link, while no administrator
+    // exists (a run that stopped halfway gets a fresh link).
+    let mut out = None;
     let mut last = String::new();
     for _ in 0..60 {
         match run(
-            compose(
-                dir,
-                &[
-                    "exec",
-                    "-T",
-                    "postgres",
-                    "psql",
-                    "-U",
-                    "postgres",
-                    "-d",
-                    "eullm",
-                    "-Atc",
-                    "SELECT count(*) FROM editor.tenants",
-                ],
-            ),
-            "reading the newsrooms",
+            compose(dir, &["exec", "-T", "editor-web", "editor", "setup-link"]),
+            "asking for the first-start link",
         ) {
-            Ok(n) => {
-                newsrooms = n.trim().parse::<u64>().ok();
-                if newsrooms.is_some() {
-                    break;
-                }
+            Ok(o) => {
+                out = Some(o);
+                break;
             }
             Err(e) => last = e.to_string(),
         }
         std::thread::sleep(std::time::Duration::from_secs(3));
     }
-    match newsrooms {
-        None => bail!(
-            "{last}\nThe database is not ready: see `docker compose logs postgres editor-migrate`"
-        ),
-        Some(n) if n > 0 => {
-            if first_run {
-                println!("\nStarted.");
-            } else {
-                println!("\nStarted. The files that already existed were left as they were.");
-            }
-            return Ok(());
-        }
-        Some(_) => {}
-    }
-
-    let (tenant, name) = match &opts.tenant {
-        Some(t) if valid_tenant(t) => (t.clone(), t.clone()),
-        Some(t) => match tenant_id_from(t) {
-            Some(id) => (id, t.clone()),
-            None => bail!("'{t}' gives no usable id: use letters or digits"),
-        },
-        None => loop {
-            let name = prompt("Name of the first newsroom", "Redazione")?;
-            match tenant_id_from(&name) {
-                Some(id) => {
-                    println!("  id: {id}");
-                    break (id, name);
-                }
-                None => println!("  (use at least a letter or a digit)"),
-            }
-        },
+    let Some(out) = out else {
+        bail!(
+            "{last}\nEditor Mode is not ready: see `docker compose logs editor-migrate editor-web`"
+        );
     };
-    run(
-        compose(
-            dir,
-            &[
-                "exec",
-                "-T",
-                "editor-web",
-                "editor",
-                "tenant-add",
-                &tenant,
-                "--name",
-                &name,
-            ],
-        ),
-        "creating the newsroom",
-    )?;
-    let email = match &opts.email {
-        Some(e) if valid_email(e) => e.trim().to_lowercase(),
-        Some(e) => bail!("'{e}' is not an email address"),
-        None => loop {
-            let e = prompt_required("Your email (you sign in with it, as operator and owner)")?;
-            if valid_email(&e) {
-                break e.trim().to_lowercase();
-            }
-            println!("  (an email address, like name@example.com)");
-        },
-    };
-    let out = run(
-        compose(
-            dir,
-            &[
-                "exec",
-                "-T",
-                "editor-web",
-                "editor",
-                "user-add",
-                &email,
-                "--operator",
-                "--tenant",
-                &tenant,
-                "--role",
-                "owner",
-            ],
-        ),
-        "creating your account",
-    )?;
-    let password = out
-        .lines()
-        .find_map(|l| l.strip_prefix("password: "))
-        .map(str::to_string)
-        .context("the account was created but no password came back")?;
-
-    println!("\nReady.");
     // The port docker compose used: the shell's, else the one in .env.
     let port = std::env::var("EDITOR_PORT")
         .ok()
@@ -473,15 +320,26 @@ pub fn server_init(opts: Options) -> Result<()> {
             })
         });
     let port = port.unwrap_or_else(|| "8090".into());
-    println!("  Dashboard:   http://127.0.0.1:{port}  (put a reverse proxy with HTTPS in front to reach it from outside)");
-    println!("  Newsroom:    {name} (id {tenant})");
-    println!("  Sign in:     {email}");
-    println!("  Password:    {password}");
-    println!("               shown only now: keep it in a password manager.");
-    println!("  From the operator console (/operator) you create the other newsrooms, give them");
+    let base = format!("http://127.0.0.1:{port}");
     println!(
-        "  plans and limits, invite their owners and make the API key for the billing system."
+        "\n{}",
+        if first_run {
+            "Started."
+        } else {
+            "Started. The files that already existed were left as they were."
+        }
     );
+    match out.split_once("/setup/") {
+        Some((_, rest)) => {
+            let token = rest.split_whitespace().next().unwrap_or_default();
+            println!("\nCreate your administrator account: open this link (it works once)");
+            println!("  {base}/setup/{token}");
+            println!("From there (/admin) you create the newsrooms, give them plans and limits");
+            println!("and invite their owners; /editor opens a newsroom.");
+        }
+        None => println!("\nSign in at {base} (administration: {base}/admin)."),
+    }
+    println!("  Put a reverse proxy with HTTPS in front to reach it from outside.");
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
     println!("  EDITOR_SECRET_KEY in it encrypts the publishing credentials; without it they must be entered again.");
     Ok(())
@@ -566,42 +424,5 @@ mod tests {
                 .count(),
             3
         );
-    }
-
-    #[test]
-    fn emails() {
-        assert!(valid_email("francesco@i3k.eu"));
-        assert!(valid_email(" a@b.it "));
-        assert!(!valid_email("francesco"));
-        assert!(!valid_email("@i3k.eu"));
-        assert!(!valid_email("a@localhost"));
-        assert!(!valid_email("a b@c.it"));
-    }
-
-    #[test]
-    fn tenant_ids_from_names() {
-        let id = |n: &str| tenant_id_from(n);
-        assert_eq!(
-            id("EuLLM Redazione Web").as_deref(),
-            Some("eullm-redazione-web")
-        );
-        assert_eq!(id("  Città & Società  ").as_deref(), Some("citta-societa"));
-        assert_eq!(id("i3k").as_deref(), Some("i3k"));
-        assert_eq!(id("--- !!! ---"), None);
-        assert!(id(&"a".repeat(60)).unwrap().len() <= 40);
-        assert_eq!(
-            id(&format!("{} b", "a".repeat(39))).as_deref(),
-            Some("a".repeat(39).as_str())
-        );
-    }
-
-    #[test]
-    fn tenant_ids() {
-        for ok in ["i3k", "rag-enterprise", "a1"] {
-            assert!(valid_tenant(ok), "{ok}");
-        }
-        for bad in ["", "I3k", "a--b", "-a", "a_b", "a b"] {
-            assert!(!valid_tenant(bad), "{bad}");
-        }
     }
 }

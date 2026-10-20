@@ -113,7 +113,7 @@ def register(app, ctx) -> None:
     def to_login(request: Request, exc: LoginRequired):
         # An operator signed in outside any newsroom works from the console.
         s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
-        return RedirectResponse("/operator" if s is not None and s.operator else "/login", status_code=303)
+        return RedirectResponse("/admin" if s is not None and s.operator else "/login", status_code=303)
 
     def zone(s) -> ZoneInfo:
         tz = s.execute(select(m.tenants.c.timezone)).scalar()
@@ -156,7 +156,8 @@ def register(app, ctx) -> None:
 
     def login_form(request: Request, error: str | None = None, status_code: int = 200, email: str = ""):
         return pages.TemplateResponse(request, "login.html.j2", {"error": error, "email": email,
-                                                                 "can_reset": ctx_mail() is not None},
+                                                                 "can_reset": ctx_mail() is not None,
+                                                                 "setup": accounts.needs_setup(admin)},
                                       status_code=status_code)
 
     def ctx_mail():
@@ -172,18 +173,52 @@ def register(app, ctx) -> None:
 
     def session_for(request: Request, s: accounts.Session) -> RedirectResponse:
         """Sign in to the newsroom the session names, or the first one the
-        person belongs to; an operator with none goes to the console."""
+        person belongs to; an operator goes to the administration (/admin),
+        from where /editor or "Entra" opens a newsroom."""
         tenant = s.tenant_id
-        if tenant is None:
+        if tenant is None and not s.operator:
             tenant = next((x.tenant_id for x in accounts.memberships(admin, s.user_id) if x.active), None)
         if tenant is None and not s.operator:
             return login_form(request, "Il tuo account non è in nessuna redazione attiva: chiedi un invito.", 403)
         token = accounts.start_session(admin, s.user_id, tenant)
-        return signed_in(request, token, "/" if tenant else "/operator")
+        return signed_in(request, token, "/" if tenant else "/admin")
 
     @app.get("/login", response_class=HTMLResponse)
     def login_page(request: Request):
         return login_form(request)
+
+    @app.get("/editor")
+    def editor_home(request: Request):
+        """The newsroom side: the person's newsroom (an operator's first one)."""
+        s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
+        if s is None:
+            return RedirectResponse("/" if auth.resolve(db, request.cookies.get(COOKIE)) else "/login", status_code=303)
+        if s.tenant_id is not None:
+            return RedirectResponse("/", status_code=303)
+        tenant = next((x.tenant_id for x in accounts.memberships(admin, s.user_id) if x.active), None)
+        if tenant is None:
+            return RedirectResponse("/admin", status_code=303)
+        return signed_in(request, accounts.start_session(admin, s.user_id, tenant))
+
+    def setup_form(request: Request, token: str, error: str | None = None, status_code: int = 200):
+        return pages.TemplateResponse(request, "setup.html.j2", {
+            "token": token, "valid": accounts.setup_valid(admin, token), "error": error,
+            "min": accounts.MIN_PASSWORD}, status_code=status_code)
+
+    @app.get("/setup/{token}", response_class=HTMLResponse)
+    def setup_page(request: Request, token: str):
+        return setup_form(request, token)
+
+    @app.post("/setup/{token}")
+    def setup(request: Request, token: str, email: str = Form(...), name: str = Form(""),
+              password: str = Form(...), again: str = Form(...)):
+        if password != again:
+            return setup_form(request, token, "Le due password non coincidono.", 400)
+        try:
+            s = accounts.complete_setup(admin, token, email, name, password)
+        except accounts.AccountError as e:
+            return setup_form(request, token, f"{str(e)[:1].upper()}{str(e)[1:]}.", 400)
+        return signed_in(request, accounts.start_session(admin, s.user_id, None), "/admin")
 
     @app.post("/login")
     def login(request: Request, email: str = Form(""), password: str = Form(""), token: str = Form("")):

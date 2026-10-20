@@ -156,24 +156,24 @@ def test_operator_console_and_entering_a_newsroom(db, tenant, admin):
     accounts.create_user(admin, "anna@example.com", password="password di anna")
     other = TestClient(c.app)
     other.post("/login", data={"email": "anna@example.com", "password": "password di anna"})
-    assert other.get("/operator", follow_redirects=False).headers["location"] == "/login"
+    assert other.get("/admin", follow_redirects=False).headers["location"] == "/login"
     r = c.post("/login", data={"email": "op@example.com", "password": "password operatore"}, follow_redirects=False)
-    assert r.headers["location"] == "/operator"
-    page = c.get("/operator")
+    assert r.headers["location"] == "/admin"
+    page = c.get("/admin")
     assert page.status_code == 200 and tenant in page.text and "Chiavi API" in page.text
-    key = c.post("/operator/keys", data={"name": "pagamenti"})
+    key = c.post("/admin/keys", data={"name": "pagamenti"})
     assert "edo_" in key.text
     assert tenant in {t["tenant_id"] for t in c.get("/api/operator/tenants").json()["tenants"]}
-    r = c.get(f"/operator/enter/{tenant}", follow_redirects=False)
+    r = c.get(f"/admin/enter/{tenant}", follow_redirects=False)
     assert r.headers["location"] == "/"
     home = c.get("/")
-    assert "op@example.com · owner" in home.text and "Console operatore" in home.text
-    reset = c.post("/operator/reset", data={"email": "anna@example.com"})
+    assert "op@example.com · owner" in home.text and "Amministrazione" in home.text
+    reset = c.post("/admin/reset", data={"email": "anna@example.com"})
     url = reset.text.split('<div class="token">')[1].split("<")[0]
     TestClient(c.app).post(f"/invite/{token_of(url)}", data={"password": "nuova password", "again": "nuova password"})
     assert accounts.authenticate(admin, "anna@example.com", "nuova password") is not None
     # A form from another site is refused.
-    evil = c.post("/operator/keys", data={"name": "x"}, headers={"Origin": "https://evil.example"})
+    evil = c.post("/admin/keys", data={"name": "x"}, headers={"Origin": "https://evil.example"})
     assert evil.status_code == 403
 
 
@@ -249,3 +249,34 @@ def test_user_add_refuses_an_unknown_newsroom(db, tenant, admin, monkeypatch, ca
     password = capsys.readouterr().out.split("password: ")[1].strip()
     assert accounts.authenticate(admin, "boss@example.com", password).operator
     assert [x.role for x in accounts.memberships(admin, accounts.authenticate(admin, "boss@example.com", password).id)] == ["owner"]
+
+
+def test_the_first_administrator_is_made_from_the_browser(db, admin, capsys, monkeypatch):
+    from editor import cli, runtime
+
+    if not db.sqlite:
+        pytest.skip("needs a database with no administrator: the PostgreSQL one is shared by the tests")
+    monkeypatch.setattr(runtime, "admin_database", lambda: admin)
+    c, _ = app_for(db)
+    assert "Prima configurazione" in c.get("/login").text
+    cli.main(["setup-link"])
+    first = capsys.readouterr().out.rsplit("/setup/", 1)[1].split()[0]
+    cli.main(["setup-link"])
+    link = capsys.readouterr().out.rsplit("/setup/", 1)[1].split()[0]
+    # A new link replaces the old one; the link is no invite.
+    assert "Link non valido" in c.get(f"/setup/{first}").text
+    assert "Link non valido" in c.get(f"/invite/{link}").text
+    assert "Crea l'amministratore" in c.get(f"/setup/{link}").text
+    bad = c.post(f"/setup/{link}", data={"email": "boss@example.com", "password": "password boss", "again": "altra"})
+    assert bad.status_code == 400
+    r = c.post(f"/setup/{link}", data={"email": "Boss@Example.com", "name": "Boss", "password": "password boss",
+                                       "again": "password boss"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/admin"
+    assert "Redazioni" in c.get("/admin").text
+    # Once there is an administrator, no more links and no more setup.
+    assert c.post(f"/setup/{link}", data={"email": "x@example.com", "password": "password xxxx",
+                                          "again": "password xxxx"}).status_code == 400
+    cli.main(["setup-link"])
+    assert "exists already" in capsys.readouterr().out
+    assert "Prima configurazione" not in TestClient(c.app).get("/login").text
+    assert accounts.pending_invites(admin, None) == []

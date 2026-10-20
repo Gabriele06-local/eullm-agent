@@ -72,12 +72,6 @@ enum Commands {
         /// Base URL, for --provider openai
         #[arg(long)]
         base_url: Option<String>,
-        /// Id of the first newsroom (asked when missing)
-        #[arg(long)]
-        tenant: Option<String>,
-        /// Your email: the operator account, owner of the first newsroom (asked when missing)
-        #[arg(long)]
-        email: Option<String>,
         /// Write the files only, do not start
         #[arg(long)]
         no_start: bool,
@@ -132,8 +126,6 @@ async fn main() -> Result<()> {
         provider,
         model,
         base_url,
-        tenant,
-        email,
         no_start,
     } = cli.command
     {
@@ -142,8 +134,6 @@ async fn main() -> Result<()> {
             provider,
             model,
             base_url,
-            tenant,
-            email,
             no_start,
         });
     }

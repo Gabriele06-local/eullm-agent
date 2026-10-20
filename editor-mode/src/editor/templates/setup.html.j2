@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prima configurazione · EuLLM Editor</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+{% include "_style.html.j2" %}
+</head>
+<body>
+<main class="solo">
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
+  <section class="card pad">
+  {% if not valid %}
+    <h1 style="font-size: 22px;">Link non valido</h1>
+    <p class="lead">Il link è scaduto, è già stato usato o l'amministratore esiste già. Per un link nuovo, sul server: <code>docker compose exec editor-web editor setup-link</code>.</p>
+    <a class="btn" href="/login">Vai all'accesso</a>
+  {% else %}
+    <h1 style="font-size: 22px;">Crea l'amministratore</h1>
+    <p class="lead">È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.</p>
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="/setup/{{ token }}" style="display: flex; flex-direction: column; gap: 12px;">
+      <label class="field">Nome<input name="name" autocomplete="name" maxlength="100"></label>
+      <label class="field">Email<input name="email" type="email" autocomplete="username" required autofocus></label>
+      <label class="field">Password (almeno {{ min }} caratteri)<input name="password" type="password" autocomplete="new-password" minlength="{{ min }}" required></label>
+      <label class="field">Ripeti la password<input name="again" type="password" autocomplete="new-password" minlength="{{ min }}" required></label>
+      <button class="btn pri" type="submit">Crea ed entra</button>
+    </form>
+  {% endif %}
+  </section>
+</main>
+</body>
+</html>

@@ -29,23 +29,38 @@ binary of the release (Linux x86-64), nothing else:
     ./eullm-agent-linux-x64 server-init --dir .
 
 Everything stays in that one folder: the binary, the compose file,
-`core.yaml` and `.env`; the data lives in Docker volumes. It asks the
+`core.yaml` and `.env`; the data lives in Docker volumes. It asks only the
 model (NVIDIA Build, Groq, EuLLM Engine on this machine or another
-OpenAI-compatible service) and its key, the name of the first newsroom and
-your email, then:
+OpenAI-compatible service) and its key, then:
 
 - writes the compose file, `core.yaml` and `.env` with every password and
   token generated (`.env` readable only by you);
 - downloads the images of the same release and starts everything;
-- creates the first newsroom and your account (operator of the service,
-  owner of the newsroom) and prints its password, once.
+- prints the **first-start link**: open it in the browser and create your
+  administrator account (email and password). From `/admin` you then
+  create the newsrooms and invite their owners.
 
 Keep a copy of `.env`: `EDITOR_SECRET_KEY` in it encrypts the publishing
 credentials. Running `server-init` again changes no file that exists: it
-only starts the stack, and creates the first newsroom if there is still
-none. In a checkout of the sources, `--dir deploy/server` uses this
-folder. Without questions: `--provider nvidia --model <name> --tenant
-<id>` and the key in `LLM_API_KEY`.
+only starts the stack (and prints a new first-start link while there is
+no administrator). In a checkout of the sources, `--dir deploy/server`
+uses this folder. Without questions: `--provider nvidia --model <name>`
+and the key in `LLM_API_KEY`.
+
+## Who sees what
+
+One address, one login; what opens depends on the account:
+
+| Address | Who | What |
+|---|---|---|
+| `/admin` | administrator (operator): you | every newsroom with plan, limits and usage; create, suspend, delete; invite owners; API keys for the billing system |
+| `/editor` (or `/`) | the people of a newsroom: your customers and their staff | the newsroom: site and profile, sources, trends, drafts, publications; the owner also invites the staff in Impostazioni |
+| `/login` | everyone | email and password; an administrator lands on `/admin`, everyone else in their newsroom |
+
+Roles inside a newsroom: **owner** (the customer's manager: approves
+profiles, sources and publications, manages the people), **editor**
+(decides proposals and drafts), **lettura** (reads). An administrator can
+enter any newsroom as owner, to help.
 
 ## Install by hand
 
@@ -71,24 +86,20 @@ Requirements: Docker with the compose plugin, and this repository.
        docker compose up -d
        docker compose ps                 # editor-migrate: exited (0), the rest running
 
-4. The first newsroom and your account (operator of the service, owner
-   of the newsroom):
+4. Your administrator account, from the browser. The first-start link is
+   in the log of the start, or printed anew with:
 
-       docker compose exec editor-web editor tenant-add acme --name "ACME"
-       docker compose exec editor-web editor tenant-plan acme --plan pro --max-sites 4 --max-cost-month 40
-       docker compose exec editor-web editor user-add you@example.com --operator --tenant acme --role owner
+       docker compose logs editor-migrate | grep setup
+       docker compose exec editor-web editor setup-link
 
-   The last command prints the password (once): sign in at
-   http://127.0.0.1:8090 with your email. The Core's web interface at
+   Open it, choose email and password, and from `/admin` create the
+   newsrooms. (From the command line instead: `editor user-add
+   you@example.com --operator`.) The Core's web interface at
    http://127.0.0.1:8088 opens with `CORE_ADMIN_TOKEN` from `.env`.
-
-5. A site: from the dashboard, or
-
-       docker compose exec editor-web editor site-add example.com --tenant acme
 
 ## Newsrooms, people and the billing system
 
-- **Operator console** (`/operator`, for operator accounts): every
+- **Administration** (`/admin`, for operator accounts): every
   newsroom with its plan, limits and usage; create one (its owner gets an
   invite), change plan and limits, suspend or reactivate, invite people,
   delete; invite other operators, make a password-reset link, and create

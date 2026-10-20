@@ -293,8 +293,9 @@ def create_invite(admin, email: str, created_by: str, tenant_id: str | None = No
     return token
 
 
-def invite(admin, token: str | None, now: datetime | None = None):
-    """The invite (with `newsroom` and `has_password`), if it can still be used."""
+def invite(admin, token: str | None, now: datetime | None = None, setup: bool = False):
+    """The invite (with `newsroom` and `has_password`), if it can still be
+    used. The first-start link is not an invite (see complete_setup)."""
     if not token or not token.startswith("edi_"):
         return None
     i, t = m.invites, m.tenants
@@ -302,7 +303,7 @@ def invite(admin, token: str | None, now: datetime | None = None):
         row = conn.execute(select(i, t.c.name.label("newsroom")).outerjoin(t, t.c.tenant_id == i.c.tenant_id)
                            .where(i.c.token_sha256 == digest(token), i.c.used_at.is_(None),
                                   i.c.expires_at > _now(now))).first()
-        if row is None:
+        if row is None or (row.email == SETUP_EMAIL) != setup:
             return None
         u = find_user(conn, row.email)
     return {**row._mapping, "has_password": bool(u is not None and u.password_hash), "user_name": u.name if u else ""}
@@ -346,7 +347,8 @@ def accept(admin, token: str, password: str, name: str = "", now: datetime | Non
 
 def pending_invites(admin, tenant_id: str | None, now: datetime | None = None) -> list:
     i = m.invites
-    q = select(i).where(i.c.used_at.is_(None), i.c.expires_at > _now(now), i.c.kind == "invite")
+    q = select(i).where(i.c.used_at.is_(None), i.c.expires_at > _now(now), i.c.kind == "invite",
+                        i.c.email != SETUP_EMAIL)
     q = q.where(i.c.tenant_id == tenant_id) if tenant_id is not None else q.where(i.c.operator)
     with _read(admin) as conn:
         return conn.execute(q.order_by(i.c.created_at.desc())).all()
@@ -358,6 +360,62 @@ def revoke_invite(admin, tenant_id: str | None, token_sha256: str) -> bool:
     q = q.where(i.c.tenant_id == tenant_id) if tenant_id is not None else q
     with admin.engine.begin() as conn:
         return bool(conn.execute(q).rowcount)
+
+
+# --- first start ---------------------------------------------------------------------
+
+# The first administrator is created from the browser, with a link printed
+# when the service starts (editor migrate) and as long as there is none:
+# whoever can read the server's logs or run its commands, nobody else.
+SETUP_EMAIL = "setup@eullm.invalid"
+SETUP_DAYS = 30
+
+
+def needs_setup(admin) -> bool:
+    """No operator can sign in yet."""
+    u = m.users
+    with _read(admin) as conn:
+        return conn.execute(select(u.c.id).where(u.c.operator, u.c.password_hash.is_not(None),
+                                                 u.c.disabled_at.is_(None)).limit(1)).first() is None
+
+
+def setup_token(admin, now: datetime | None = None) -> str | None:
+    """A new first-start link token (the older ones stop working), or None
+    when an operator exists already."""
+    if not needs_setup(admin):
+        return None
+    now = _now(now)
+    token = "edi_" + secrets.token_urlsafe(32)
+    i = m.invites
+    with admin.engine.begin() as conn:
+        conn.execute(delete(i).where(i.c.email == SETUP_EMAIL))
+        conn.execute(insert(i).values(token_sha256=digest(token), kind="invite", email=SETUP_EMAIL, operator=True,
+                                      created_by="first start", created_at=now,
+                                      expires_at=now + timedelta(days=SETUP_DAYS)))
+    return token
+
+
+def setup_valid(admin, token: str | None, now: datetime | None = None) -> bool:
+    return invite(admin, token, now, setup=True) is not None and needs_setup(admin)
+
+
+def complete_setup(admin, token: str, email: str, name: str, password: str, now: datetime | None = None) -> Session:
+    """Create the first administrator (operator) with the first-start link."""
+    now = _now(now)
+    if not setup_valid(admin, token, now):
+        raise AccountError("il link non è valido, è scaduto o l'amministratore esiste già")
+    email = normalise_email(email)
+    check_password(password)
+    with admin.engine.begin() as conn:
+        n = conn.execute(update(m.invites).where(m.invites.c.token_sha256 == digest(token), m.invites.c.used_at.is_(None))
+                         .values(used_at=now)).rowcount
+        if not n:
+            raise AccountError("il link è già stato usato")
+        uid = ensure_user(conn, email, name, operator=True)
+        conn.execute(update(m.users).where(m.users.c.id == uid).values(
+            password_hash=hash_password(password), failed_logins=0, locked_until=None, disabled_at=None))
+        u = conn.execute(select(m.users).where(m.users.c.id == uid)).first()
+    return Session(uid, u.email, u.name, True, None, None)
 
 
 # --- operator API keys ---------------------------------------------------------------

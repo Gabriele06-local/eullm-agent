@@ -33,7 +33,7 @@ profiles, sources and publications.
 | **Impostazioni** | Plan meters, briefing recipients, people of the newsroom (invited by email, with a role), tokens for integrations. |
 
 People sign in with email and password and may belong to several
-newsrooms. Operator accounts also get the **console** (`/operator`): every
+newsrooms. Operator accounts also get the **console** (`/admin`): every
 newsroom with plan, limits and usage; create, suspend, delete, invite
 owners; API keys for the billing system, which creates a newsroom with
 `POST /api/operator/tenants` when a payment goes through (see
@@ -122,7 +122,7 @@ Two installations, same code:
        uv run editor tenant-add editor-acme --name "ACME"
        uv run editor tenant-plan editor-acme --plan pro --max-sites 4 \
            --max-cost-month 40 --core-token-env EDITOR_CORE_TOKEN_ACME
-       uv run editor user-add me@example.com --operator --tenant editor-acme   # dashboard login, prints the password
+       uv run editor user-add me@example.com --operator --tenant editor-acme   # dashboard login, prints the password (or: editor setup-link, from the browser)
        uv run editor recipient-add --tenant editor-acme --channel email --address me@example.com
        uv run editor site-add example.com --tenant editor-acme
        uv run editor profile-show example.com --tenant editor-acme
