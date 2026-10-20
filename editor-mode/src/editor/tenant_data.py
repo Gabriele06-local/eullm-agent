@@ -35,6 +35,10 @@ DELETE_ORDER = [
     "tenants",
 ]
 
+# Who belongs to the tenant, their sessions and invites: owner connection
+# only (accounts.py), never exported, deleted with the tenant row.
+ACCOUNT_TABLES = ("memberships", "sessions", "invites")
+
 # Never exported: what would let someone act as the tenant.
 WITHHELD = {"access_tokens": {"token_sha256"}, "secrets": {"ciphertext", "key_id"}}
 
@@ -69,6 +73,11 @@ def delete_tenant(admin_db, tenant_id: str) -> dict[str, int]:
     the application role cannot delete tenants."""
     counts = {}
     with admin_db.engine.begin() as conn:
+        if conn.dialect.name != "sqlite":
+            # Row level security is forced on the owner too (a server's owner
+            # is not a superuser): without the tenant in scope every DELETE
+            # would match nothing.
+            conn.execute(text("SELECT set_config('app.tenant_id', :t, true)"), {"t": tenant_id})
         if not conn.execute(text("SELECT 1 FROM editor.tenants WHERE tenant_id = :t"), {"t": tenant_id}).first():
             raise LookupError(f"no tenant {tenant_id}")
         for name in DELETE_ORDER:

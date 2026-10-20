@@ -1,4 +1,6 @@
-"""Tokens for the dashboard and the API. Only the SHA-256 is stored."""
+"""Who is calling: an access token of a newsroom (`edt_`, for the API and
+integrations) or a session of a person signed in with email and password
+(`eds_`, see accounts.py). Only the SHA-256 of a token is stored."""
 
 from __future__ import annotations
 
@@ -16,6 +18,8 @@ class Caller:
     tenant_id: str
     name: str
     role: str
+    user_id: int | None = None
+    operator: bool = False
 
     def can(self, role: str) -> bool:
         return ROLES.index(self.role) >= ROLES.index(role)
@@ -41,9 +45,16 @@ def create_token(db, tenant_id: str, name: str, role: str) -> str:
     return token
 
 
-def resolve(db, token: str | None) -> Caller | None:
+def resolve(db, token: str | None, admin=None) -> Caller | None:
+    """`admin` (the owner connection) is needed for sessions of people."""
     if not token:
         return None
+    if token.startswith("eds_"):
+        from .accounts import resolve_session
+        s = resolve_session(admin, token) if admin is not None else None
+        if s is None or s.tenant_id is None:
+            return None
+        return Caller(s.tenant_id, s.email, s.role, s.user_id, s.operator)
     # On PostgreSQL only this function reads tokens across tenants.
     q = ("SELECT a.tenant_id, a.name, a.role FROM editor.access_tokens a "
          "JOIN editor.tenants t ON t.tenant_id = a.tenant_id "

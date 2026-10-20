@@ -17,12 +17,12 @@ from test_tenancy import populate, tenant_tables
 
 def test_every_tenant_table_is_covered():
     tables = {t.name for t in m.metadata.sorted_tables if "tenant_id" in t.c}
-    assert set(tenant_data.DELETE_ORDER) == tables
+    assert set(tenant_data.DELETE_ORDER) | set(tenant_data.ACCOUNT_TABLES) == tables
 
 
 @pytest.mark.postgres
 def test_every_table_in_the_database_is_covered(pg_urls):
-    assert set(tenant_data.DELETE_ORDER) == set(tenant_tables(pg_urls[0]))
+    assert set(tenant_data.DELETE_ORDER) | set(tenant_data.ACCOUNT_TABLES) == set(tenant_tables(pg_urls[0]))
 
 
 def test_the_export_has_everything_but_credentials(db, tenant, monkeypatch):

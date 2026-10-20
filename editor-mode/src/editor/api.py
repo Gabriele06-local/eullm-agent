@@ -11,18 +11,23 @@ the JSON routes.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
+from . import accounts, auth, console, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
+
+_STATIC_DIR = Path(__file__).parent / "static"
+_STATIC = {name: (kind, (_STATIC_DIR / name).read_bytes())
+           for name, kind in (("logo.webp", "image/webp"), ("favicon.png", "image/png"))}
 
 DOMAIN = re.compile(r"^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 COOKIE = "editor_token"
@@ -77,14 +82,32 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, core=None) -> FastAPI:
+def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> FastAPI:
+    """admin: the owner connection, for accounts and the operator (by
+    default the database's own `admin_url`, else `db`); mail: (to,
+    subject, text) -> None, for invites (None: links are shown instead);
+    public_url: the address people open, for the links in invites."""
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
+    if admin is None:
+        from .db import Database
+        admin = getattr(db, "_admin", None)
+        if admin is None:
+            url = getattr(db, "admin_url", None)
+            admin = db._admin = Database.from_url(url) if url else db
+
+    @app.get("/static/{name}", include_in_schema=False)
+    def static(name: str):
+        # Only the files shipped with the package, never a path.
+        if name not in _STATIC:
+            raise HTTPException(404)
+        return Response(_STATIC[name][1], media_type=_STATIC[name][0],
+                        headers={"Cache-Control": "public, max-age=86400"})
     pages = Jinja2Templates(env=_BRIEF_TEMPLATES)
 
     def caller(request: Request) -> auth.Caller:
         header = request.headers.get("authorization", "")
         token = header.removeprefix("Bearer ").strip() if header.startswith("Bearer ") else request.cookies.get(COOKIE)
-        c = auth.resolve(db, token)
+        c = auth.resolve(db, token, admin)
         if c is None:
             raise HTTPException(401, "missing or invalid token")
         if request.method == "POST" and not header and request.headers.get("origin") not in (None, str(request.base_url).rstrip("/")):
@@ -378,9 +401,12 @@ def create_app(db, core=None) -> FastAPI:
 
     # --- HTML -------------------------------------------------------------
 
-    ui.register(app, SimpleNamespace(db=db, pages=pages, need=need, core=core,
+    ui.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, need=need, core=core, mail=mail,
+                                     public_url=public_url,
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_publication=run_publication))
+    console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
+                                          public_url=public_url))
 
     @app.exception_handler(HTTPException)
     def errors(request: Request, exc: HTTPException):
@@ -397,4 +423,6 @@ def create_app(db, core=None) -> FastAPI:
 def default_app() -> FastAPI:
     from . import runtime
 
-    return create_app(runtime.database(), runtime.core())
+    st = runtime.settings()
+    return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
+                      accounts.smtp_mailer(st), st.public_url)

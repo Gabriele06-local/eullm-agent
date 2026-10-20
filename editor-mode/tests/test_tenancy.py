@@ -63,7 +63,9 @@ def test_two_tenants_are_fully_isolated(db, pg_urls, tenant, monkeypatch):
     other = f"{tenant}-b"
     with db.tenant(other) as s:
         repo.ensure_tenant(s, other, "B")
-    tables = tenant_tables(pg_urls[0])
+    from editor.tenant_data import ACCOUNT_TABLES
+    # Accounts are read by the owner connection only (test_accounts.py).
+    tables = [t for t in tenant_tables(pg_urls[0]) if t not in ACCOUNT_TABLES]
     assert len(tables) >= 25
     filled = []
     for table in tables:

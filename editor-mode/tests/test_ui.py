@@ -30,7 +30,8 @@ def test_every_page_renders_for_every_role(db, tenant):
         draft = c.get(f"/drafts/{did}").text
         assert 'href="#src-1"' in draft and 'id="src-1"' in draft
         settings = c.get("/settings").text
-        assert ("Crea accesso" in settings) == (role == "owner")
+        assert ("Crea token" in settings) == (role == "owner")
+        assert ("Persone della redazione" in settings) == (role == "owner")
 
 
 def test_forms_check_the_role_and_leave_a_notice(db, tenant):

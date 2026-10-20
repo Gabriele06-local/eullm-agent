@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
+from . import accounts, auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -97,20 +97,23 @@ def register(app, ctx) -> None:
     functions that queue background work (run_analysis, run_discovery,
     run_draft, run_publication) and the core."""
     db, pages = ctx.db, ctx.pages
+    admin = getattr(ctx, "admin", None) or db
     env = pages.env
     env.filters["num"] = number
     env.filters["s100"] = score100
     env.filters["plural"] = plural
 
     def viewer(request: Request) -> auth.Caller:
-        c = auth.resolve(db, request.cookies.get(COOKIE))
+        c = auth.resolve(db, request.cookies.get(COOKIE), admin)
         if c is None:
             raise LoginRequired()
         return c
 
     @app.exception_handler(LoginRequired)
     def to_login(request: Request, exc: LoginRequired):
-        return RedirectResponse("/login", status_code=303)
+        # An operator signed in outside any newsroom works from the console.
+        s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
+        return RedirectResponse("/operator" if s is not None and s.operator else "/login", status_code=303)
 
     def zone(s) -> ZoneInfo:
         tz = s.execute(select(m.tenants.c.timezone)).scalar()
@@ -140,8 +143,9 @@ def register(app, ctx) -> None:
             return f"{day} {value:%H:%M}" if part == "full" and isinstance(value, datetime) else day
 
         notice = request.cookies.get(NOTICE_COOKIE)
+        rooms = [x for x in accounts.memberships(admin, c.user_id) if x.active] if c.user_id else []
         resp = pages.TemplateResponse(request, name, {
-            "caller": c, "sites": sites, "site": site, "active": active,
+            "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": DAYS, "months": MONTHS, **data,
         }, status_code=status_code)
         if notice:
@@ -150,26 +154,113 @@ def register(app, ctx) -> None:
 
     # --- session --------------------------------------------------------------
 
-    @app.get("/login", response_class=HTMLResponse)
-    def login_page(request: Request):
-        return pages.TemplateResponse(request, "login.html.j2", {"error": None})
+    def login_form(request: Request, error: str | None = None, status_code: int = 200, email: str = ""):
+        return pages.TemplateResponse(request, "login.html.j2", {"error": error, "email": email,
+                                                                 "can_reset": ctx_mail() is not None},
+                                      status_code=status_code)
 
-    @app.post("/login")
-    def login(request: Request, token: str = Form(...)):
-        c = auth.resolve(db, token)
-        if c is None:
-            return pages.TemplateResponse(request, "login.html.j2", {"error": "Token non valido"}, status_code=401)
-        resp = RedirectResponse("/", status_code=303)
+    def ctx_mail():
+        return getattr(ctx, "mail", None)
+
+    def signed_in(request: Request, token: str, to: str = "/") -> RedirectResponse:
+        accounts.end_session(admin, request.cookies.get(COOKIE))
+        resp = RedirectResponse(to, status_code=303)
         resp.set_cookie(COOKIE, token, httponly=True, samesite="strict", secure=request.url.scheme == "https",
                         max_age=30 * 86400)
+        resp.delete_cookie(SITE_COOKIE)
         return resp
 
+    def session_for(request: Request, s: accounts.Session) -> RedirectResponse:
+        """Sign in to the newsroom the session names, or the first one the
+        person belongs to; an operator with none goes to the console."""
+        tenant = s.tenant_id
+        if tenant is None:
+            tenant = next((x.tenant_id for x in accounts.memberships(admin, s.user_id) if x.active), None)
+        if tenant is None and not s.operator:
+            return login_form(request, "Il tuo account non è in nessuna redazione attiva: chiedi un invito.", 403)
+        token = accounts.start_session(admin, s.user_id, tenant)
+        return signed_in(request, token, "/" if tenant else "/operator")
+
+    @app.get("/login", response_class=HTMLResponse)
+    def login_page(request: Request):
+        return login_form(request)
+
+    @app.post("/login")
+    def login(request: Request, email: str = Form(""), password: str = Form(""), token: str = Form("")):
+        if token.strip():
+            c = auth.resolve(db, token.strip())
+            if c is None or token.strip().startswith("eds_"):
+                return login_form(request, "Token non valido", 401)
+            return signed_in(request, token.strip())
+        try:
+            u = accounts.authenticate(admin, email, password)
+        except accounts.AccountError as e:
+            return login_form(request, f"{str(e)[:1].upper()}{str(e)[1:]}.", 429, email)
+        if u is None:
+            return login_form(request, "Email o password sbagliate", 401, email)
+        return session_for(request, accounts.Session(u.id, u.email, u.name, bool(u.operator), None, None))
+
     @app.post("/logout")
-    def logout():
+    def logout(request: Request):
+        accounts.end_session(admin, request.cookies.get(COOKIE))
         resp = RedirectResponse("/login", status_code=303)
         resp.delete_cookie(COOKIE)
         resp.delete_cookie(SITE_COOKIE)
         return resp
+
+    @app.get("/newsroom")
+    def switch_newsroom(request: Request, t: str):
+        """Move to another newsroom of the same person."""
+        s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
+        if s is None:
+            return RedirectResponse("/login", status_code=303)
+        if not s.operator and t not in {x.tenant_id for x in accounts.memberships(admin, s.user_id) if x.active}:
+            raise HTTPException(404, "newsroom not found")
+        return signed_in(request, accounts.start_session(admin, s.user_id, t))
+
+    def invite_form(request: Request, token: str, info, error: str | None = None, status_code: int = 200):
+        return pages.TemplateResponse(request, "invite.html.j2", {"info": info, "token": token, "error": error,
+                                                                  "min": accounts.MIN_PASSWORD},
+                                      status_code=status_code)
+
+    @app.get("/invite/{token}", response_class=HTMLResponse)
+    def invite_page(request: Request, token: str):
+        return invite_form(request, token, accounts.invite(admin, token), status_code=200)
+
+    @app.post("/invite/{token}")
+    def invite_accept(request: Request, token: str, password: str = Form(...), again: str = Form(""),
+                      name: str = Form("")):
+        info = accounts.invite(admin, token)
+        if info is None:
+            return invite_form(request, token, None, status_code=410)
+        if not (info["kind"] == "invite" and info["has_password"]) and password != again:
+            return invite_form(request, token, info, "Le due password non coincidono.", 400)
+        try:
+            s = accounts.accept(admin, token, password, name)
+        except accounts.AccountError as e:
+            return invite_form(request, token, info, f"{str(e)[:1].upper()}{str(e)[1:]}.", 400)
+        return session_for(request, s)
+
+    @app.get("/forgot", response_class=HTMLResponse)
+    def forgot_page(request: Request):
+        return pages.TemplateResponse(request, "forgot.html.j2", {"sent": False, "can_reset": ctx_mail() is not None})
+
+    @app.post("/forgot", response_class=HTMLResponse)
+    def forgot(request: Request, email: str = Form(...)):
+        """The same answer whether the account exists or not."""
+        mail = ctx_mail()
+        if mail is not None:
+            try:
+                e = accounts.normalise_email(email)
+                with accounts._read(admin) as conn:
+                    u = accounts.find_user(conn, e)
+                if u is not None and u.disabled_at is None:
+                    token = accounts.create_invite(admin, e, "password dimenticata", kind="reset")
+                    base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
+                    mail(e, *accounts.link_text("reset", f"{base}/invite/{token}", None, ""))
+            except Exception:
+                pass
+        return pages.TemplateResponse(request, "forgot.html.j2", {"sent": True, "can_reset": mail is not None})
 
     @app.get("/switch")
     def switch(request: Request, site: int, back: str | None = None, c: auth.Caller = Depends(viewer)):
@@ -306,7 +397,7 @@ def register(app, ctx) -> None:
         from .api import normalise_domain
         d = normalise_domain(domain)
         ctx.run_analysis(c.tenant_id, d)
-        return done("/site", f"Analisi di {d} avviata: il profilo arriva in bozza, da approvare.")
+        return done("/site", f"Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.")
 
     @app.post("/ui/sites/{site_id}/review")
     def ui_review(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -592,7 +683,8 @@ def register(app, ctx) -> None:
 
     # --- Impostazioni ---------------------------------------------------------------
 
-    def settings_page(request, c, s, new_token: str | None = None):
+    def settings_page(request, c, s, new_token: str | None = None, new_link: dict | None = None,
+                      error: str | None = None, status_code: int = 200):
         usage = quotas.usage(s)
         meters = []
         if usage is not None:
@@ -604,8 +696,11 @@ def register(app, ctx) -> None:
         t = m.access_tokens
         tokens = s.execute(select(t.c.id, t.c.name, t.c.role, t.c.created_at, t.c.revoked_at)
                            .order_by(t.c.revoked_at.is_not(None), t.c.created_at)).all() if c.can("owner") else []
-        return render(request, "settings.html.j2", c, s, "settings", usage=usage, meters=meters,
-                      recipients=recipients, tokens=tokens, new_token=new_token)
+        owner = c.can("owner")
+        return render(request, "settings.html.j2", c, s, "settings", status_code=status_code, usage=usage,
+                      meters=meters, recipients=recipients, tokens=tokens, new_token=new_token, new_link=new_link,
+                      error=error, people=accounts.members(admin, c.tenant_id) if owner else [],
+                      invited=accounts.pending_invites(admin, c.tenant_id) if owner else [])
 
     @app.get("/settings", response_class=HTMLResponse)
     def settings_view(request: Request, c: auth.Caller = Depends(viewer)):
@@ -654,3 +749,48 @@ def register(app, ctx) -> None:
             n = s.execute(update(t).where(t.c.id == tid, t.c.revoked_at.is_(None))
                           .values(revoked_at=datetime.now(UTC))).rowcount
         return done("/settings", "Accesso revocato." if n else "Accesso già revocato.")
+
+    # --- Persone della redazione ----------------------------------------------------
+
+    @app.post("/ui/people/invite", response_class=HTMLResponse)
+    def ui_invite(request: Request, email: str = Form(...), role: str = Form("editor"),
+                  c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            token = accounts.create_invite(admin, email, c.name, tenant_id=c.tenant_id, role=role)
+        except accounts.AccountError as e:
+            with db.tenant(c.tenant_id) as s:
+                return settings_page(request, c, s, error=f"Invito non creato: {e}.", status_code=400)
+        to = accounts.normalise_email(email)
+        base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
+        url, sent = f"{base}/invite/{token}", False
+        with db.tenant(c.tenant_id) as s:
+            room = s.execute(select(m.tenants.c.name)).scalar()
+            mail = ctx_mail()
+            if mail is not None:
+                try:
+                    mail(to, *accounts.link_text("invite", url, room, c.name))
+                    sent = True
+                except Exception:
+                    sent = False
+            return settings_page(request, c, s, new_link={"email": to, "url": url, "sent": sent})
+
+    @app.post("/ui/people/{uid}/role")
+    def ui_role(uid: int, role: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            accounts.change_role(admin, c.tenant_id, uid, role)
+        except accounts.AccountError as e:
+            return done("/settings", f"Ruolo non cambiato: {e}.")
+        return done("/settings", "Ruolo aggiornato.")
+
+    @app.post("/ui/people/{uid}/remove")
+    def ui_remove(uid: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            accounts.remove_member(admin, c.tenant_id, uid)
+        except accounts.AccountError as e:
+            return done("/settings", f"Persona non rimossa: {e}.")
+        return done("/settings", "Persona rimossa dalla redazione: non entra più.")
+
+    @app.post("/ui/invites/{sha}/revoke")
+    def ui_revoke_invite(sha: str, c: auth.Caller = Depends(ctx.need("owner"))):
+        n = accounts.revoke_invite(admin, c.tenant_id, sha)
+        return done("/settings", "Invito annullato." if n else "Invito già usato o scaduto.")

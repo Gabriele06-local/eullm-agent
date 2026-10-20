@@ -34,6 +34,9 @@ class Settings:
     smtp_password: str = ""
     mail_from: str = ""
     telegram_token: str = ""
+    # The address people open the dashboard at (https://editor.example.com),
+    # for the links of invites and password resets.
+    public_url: str = ""
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -55,4 +58,5 @@ class Settings:
             smtp_password=env.get("EDITOR_SMTP_PASSWORD", ""),
             mail_from=env.get("EDITOR_MAIL_FROM", ""),
             telegram_token=env.get("EDITOR_TELEGRAM_TOKEN", ""),
+            public_url=env.get("EDITOR_PUBLIC_URL", "").strip().rstrip("/"),
         )

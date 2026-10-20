@@ -30,7 +30,14 @@ profiles, sources and publications.
 | **Trend e piano** | Hype against Opportunity on one map, and the plan to accept or discard. |
 | **Bozze** | The draft with numbered sources per sentence and the automatic checks. |
 | **Pubblicazioni** | Requests waiting for an owner, history, WordPress / webhook / Telegram targets. |
-| **Impostazioni** | Plan meters, briefing recipients, access tokens. |
+| **Impostazioni** | Plan meters, briefing recipients, people of the newsroom (invited by email, with a role), tokens for integrations. |
+
+People sign in with email and password and may belong to several
+newsrooms. Operator accounts also get the **console** (`/operator`): every
+newsroom with plan, limits and usage; create, suspend, delete, invite
+owners; API keys for the billing system, which creates a newsroom with
+`POST /api/operator/tenants` when a payment goes through (see
+[deploy/server](../deploy/server/README.md#newsrooms-people-and-the-billing-system)).
 
 <table>
 <tr>
@@ -102,8 +109,9 @@ Two installations, same code:
    | `EDITOR_WORKER_CONCURRENCY` | tenants the worker runs at the same time (default 2, PostgreSQL) |
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
    | `EDITOR_RETENTION_DAYS` | collected items and finished jobs older than this are deleted at the daily maintenance (default 365, `0` keeps everything); items cited by a proposal or a draft and model usage are kept |
-   | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | briefing by email (STARTTLS) |
+   | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | email (STARTTLS): briefing, invites, password resets |
    | `EDITOR_TELEGRAM_TOKEN` | briefing by Telegram |
+   | `EDITOR_PUBLIC_URL` | the address people open the dashboard at (https://editor.example.com): links of invites and password resets point there |
    | `EDITOR_SECRET_KEY` | key (32 bytes in base64, `editor secret-key` prints one) of the publishing credentials that owners enter in the dashboard: they are stored encrypted (AES-256-GCM) in `editor.secrets` and never shown again. Without it a server stores none; the local installation keeps its key in `editor-secret.key` next to the database |
    | `EDITOR_SECRET_<TENANT>__<NAME>` | alternative to the dashboard: credentials of a publishing target (WordPress application password, webhook signing key, Telegram channel bot token) set by the operator. The tenant names the target's secret `<NAME>`; the tenant id is upper-cased with `-` as `_`, e.g. `EDITOR_SECRET_RAG_ENTERPRISE__WP`. A credential stored in the database comes first |
    | (Core) `api.fetch.credentials` | optional: a GitHub token for `api.github.com`, set in the Core's config, raises the GitHub API rate limit for source discovery |
@@ -114,7 +122,7 @@ Two installations, same code:
        uv run editor tenant-add editor-acme --name "ACME"
        uv run editor tenant-plan editor-acme --plan pro --max-sites 4 \
            --max-cost-month 40 --core-token-env EDITOR_CORE_TOKEN_ACME
-       uv run editor token-new --tenant editor-acme --name francesco   # dashboard login
+       uv run editor user-add me@example.com --operator --tenant editor-acme   # dashboard login, prints the password
        uv run editor recipient-add --tenant editor-acme --channel email --address me@example.com
        uv run editor site-add example.com --tenant editor-acme
        uv run editor profile-show example.com --tenant editor-acme
