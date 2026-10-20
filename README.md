@@ -1,51 +1,69 @@
+<div align="center">
+
 # EuLLM Agent
 
-Autonomous ReAct agent with multi-provider LLM support (EuLLM Engine, Ollama,
-OpenAI-compatible APIs, Anthropic), a small set of sandboxed tools, optional
-modules and a Telegram interface.
+**A complete AI newsroom at your disposal, on your own server.**
 
-**New in 0.5.4: the server installation in one command.** Download the
-binary and run `eullm-agent server-init`: it generates every password,
-writes the configuration for the model you pick, starts PostgreSQL, the
-Core and Editor Mode from the images of the release and prints the login
-of the first newsroom. See [deploy/server](deploy/server/README.md).
+Self-hosted AI agent platform written in Rust: give it a domain and Editor
+Mode reads the site, learns its editorial line, finds its own sources,
+spots the trends worth covering and drafts articles where every sentence
+cites a source. Nothing is published without a person's yes.
 
-**Since 0.5.0: Editor Mode for many newsrooms on one server.** Work is
-queued and survives restarts, newsrooms are served in turn, each one is a
-Core tenant with its own budget, owners enter publishing credentials in
-the dashboard (stored encrypted) and can download or delete their data.
-See the [CHANGELOG](CHANGELOG.md).
+[![CI](https://github.com/eullm/eullm-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/eullm/eullm-agent/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/eullm/eullm-agent)](https://github.com/eullm/eullm-agent/releases)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
-**Since 0.4.0: two installations, both with a web interface.**
+[Install](#install) · [Editor Mode](editor-mode/) · [Server](deploy/server/README.md) · [Changelog](CHANGELOG.md)
 
-- **On your computer:** one command installs everything; `eullm-local`
-  opens the browser on a chat with the agent, the tasks with every step,
-  the approvals waiting for you and the usage. Data stays in SQLite files,
-  the first start finds a local EuLLM Engine by itself, and Editor Mode
-  runs alongside. No database, Python or configuration to set up by hand.
-- **On a server:** `docker compose` with PostgreSQL, the Core and Editor
-  Mode, for several tenants isolated by row-level security.
+</div>
 
-Since 0.3.0 the agent is a platform: `eullm-agent api` is a multi-tenant
-Core that other applications build on.
+![Editor Mode dashboard built on the EuLLM Agent Core](editor-mode/docs/screenshots/hero.png)
 
+## A newsroom in a box
+
+[Editor Mode](editor-mode/) does the work of an editorial team for any
+site, and keeps the editor in charge:
+
+- **Learns the site.** From a domain alone it reads the pages, sitemap and
+  feeds and proposes an editorial profile: sector, audience, style,
+  subtopics, each with the pages it is based on. What it cannot
+  determine, it says so.
+- **Finds its own sources.** No fixed list: it starts from the
+  publications the site cites and from searches built on its subtopics,
+  rates each candidate on what it actually publishes and lets you activate
+  or reject it.
+- **Hype is not opportunity.** Trends get two separate scores, how loud
+  they are and how much they fit your site, and a daily briefing with the
+  topics worth covering.
+- **Drafts with citations.** Every claim in a draft points to a stored
+  source, and numbers are checked against them.
+- **Publishes only with approval.** WordPress, webhooks and Telegram,
+  after a person says yes; credentials are stored encrypted.
+- **Many newsrooms, one server.** Each newsroom is a tenant isolated by
+  PostgreSQL row-level security, with its own budget, queue and data
+  export.
+
+## Why EuLLM Agent
+
+- **Your data, your models.** Runs on your hardware with a local model
+  ([EuLLM Engine](https://github.com/eullm), Ollama) or any
+  OpenAI-compatible or Anthropic API. Built in Europe for European
+  sovereignty and GDPR-minded deployments.
+- **One binary.** The Core is a single Rust executable: `eullm-agent start`
+  on a laptop, `eullm-agent server-init` on a server, which generates every
+  password and starts PostgreSQL, the Core and Editor Mode with Docker.
 - **The model proposes, the policy decides, a person approves.** Every
   sensitive action stops in an approval queue (web interface, API,
   Telegram or terminal).
-- **Everything is on record.** Runs, model calls, tools and fetches land in
-  the database (SQLite or PostgreSQL) with an append-only audit trail.
-- **Safe web access for apps.** `POST /v1/fetch` crawls with SSRF checks on
-  every redirect, size limits and a per-host pace.
+- **Everything is on record.** Runs, model calls, tools and web fetches
+  land in the database with an append-only audit trail.
+- **Safe web access.** `POST /v1/fetch` crawls with SSRF checks on every
+  redirect, size limits and a per-host pace.
 - **Costs under control.** Model router with fallback and pricing, budgets
-  per run, and monthly and daily limits per tenant (`429` when reached).
-
-[Editor Mode](editor-mode/), the first vertical built on the Core, uses it to run editorial
-work for any domain: it reads the site, proposes an editorial line with
-evidence, finds its own sources, separates hype from real opportunity and
-drafts articles where every sentence cites a source. Nothing goes out
-without a person's yes.
-
-![Editor Mode dashboard built on the EuLLM Agent Core](editor-mode/docs/screenshots/hero.png)
+  per run, monthly and daily limits per tenant, cost reserved before every
+  model call.
+- **A platform, not a single app.** `eullm-agent api` is a multi-tenant
+  Core with an HTTP API; Editor Mode is the first vertical built on it.
 
 ## Install
 
