@@ -235,3 +235,17 @@ def test_on_a_server_the_owner_role_runs_it_all(pg_urls):
         with psycopg.connect(plain, autocommit=True) as conn:
             conn.execute(f'DROP DATABASE "{name}" WITH (FORCE)')
             conn.execute(f"DROP ROLE {role}")
+
+
+def test_user_add_refuses_an_unknown_newsroom(db, tenant, admin, monkeypatch, capsys):
+    from editor import cli, runtime
+
+    monkeypatch.setattr(runtime, "admin_database", lambda: admin)
+    with pytest.raises(SystemExit, match=f"no newsroom ID .*{tenant}"):
+        cli.main(["user-add", "boss@example.com", "--operator", "--tenant", "ID"])
+    with admin.engine.connect() as conn:
+        assert accounts.find_user(conn, "boss@example.com") is None
+    cli.main(["user-add", "boss@example.com", "--operator", "--tenant", tenant])
+    password = capsys.readouterr().out.split("password: ")[1].strip()
+    assert accounts.authenticate(admin, "boss@example.com", password).operator
+    assert [x.role for x in accounts.memberships(admin, accounts.authenticate(admin, "boss@example.com", password).id)] == ["owner"]

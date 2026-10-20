@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+### Fixed
+
+- `editor user-add --tenant` with an id that does not exist stops with
+  "no newsroom …" and the list of the newsrooms, instead of a database
+  error after creating the account halfway (its password never shown).
+  Account, password and membership are now written together.
+
 ## 0.6.0
 
 ### Added
