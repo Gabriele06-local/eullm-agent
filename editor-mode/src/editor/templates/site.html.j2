@@ -19,7 +19,9 @@
       {% set st = {'complete': ('green', 'Analisi completa'), 'partial': ('amber', 'Analisi parziale'), 'insufficient': ('red', 'Dati insufficienti'), 'failed': ('red', 'Analisi fallita')}[analysis.status] %}
       <span class="chip {{ st[0] }}">{{ st[1] }}</span>
       <span class="chip">{{ analysis.pages_fetched or 0 }} pagine lette · {{ when(analysis.started_at) }}</span>
-      {% if site.language %}<span class="chip">Lingua: {{ site.language }}</span>{% endif %}
+      {% set langs = (shown.body.get('languages') if shown else None) or {} %}
+      {% if langs|length > 1 %}<span class="chip">Lingue: {% for k, v in langs.items() %}{{ k }} ({{ v }}){{ ', ' if not loop.last }}{% endfor %}</span>
+      {% elif site.language %}<span class="chip">Lingua: {{ site.language }}</span>{% endif %}
       <span class="chip">robots.txt rispettato</span>
     </div>
     {% endif %}

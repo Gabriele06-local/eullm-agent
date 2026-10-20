@@ -171,3 +171,31 @@ def test_robots_rules_for_the_core_user_agent_are_obeyed():
         assert robots.allowed("https://open.example/news/1")
         assert not robots.allowed("https://down.example/news/1")
         assert robots.allowed("https://open.example/news/2") and router.calls.call_count == 3  # read once per host
+
+
+def test_site_wide_keywords_are_not_subtopics_and_languages_are_counted():
+    from editor.profile import baseline
+    from editor.site import Post, SiteSnapshot, _languages, _site_wide_labels
+
+    wide = ["EU AI infrastructure", "AI sovrana"]
+    posts = [Post(f"https://x.eu/blog/{i}/", f"Titolo {i}", categories=wide + (["RAG"] if i < 3 else ["Edge"]),
+                  language="it", alternates=[f"https://x.eu/en/blog/{i}/"]) for i in range(5)]
+    posts += [Post(f"https://x.eu/en/blog/{i}/", f"Title {i}", categories=wide + ["RAG"], language="en",
+                   alternates=[f"https://x.eu/blog/{i}/"]) for i in range(2)]
+    snap = SiteSnapshot(domain="x.eu", posts=posts, categories={c: 7 for c in wide}, status="partial")
+    _site_wide_labels(snap)
+    _languages(snap)
+    assert snap.site_keywords == wide and "EU AI infrastructure" not in snap.categories
+    assert snap.languages == {"it": 5, "en": 2} and snap.language == "it" and snap.translations == 2
+    for p in snap.posts:
+        for c in p.categories:
+            snap.categories[c] = snap.categories.get(c, 0) + 1
+    subs = baseline(snap)["subtopics"]
+    assert {s["name"] for s in subs} == {"RAG", "Edge"}
+    assert sum(s["share"] for s in subs) <= 1
+
+
+def test_hreflang_alternates_are_read():
+    page = parse_html('<html lang="it"><head><link rel="alternate" hreflang="en" href="/en/a/">'
+                      '<link rel="alternate" hreflang="x-default" href="/a/"></head></html>', "https://x.eu/a/")
+    assert page.alternates == {"en": "https://x.eu/en/a/"}

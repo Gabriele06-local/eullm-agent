@@ -63,6 +63,8 @@ class Post:
     published_at: str | None = None  # ISO 8601
     categories: list[str] = field(default_factory=list)
     words: int = 0
+    language: str | None = None
+    alternates: list[str] = field(default_factory=list)  # the same article in other languages
 
 
 @dataclass
@@ -74,6 +76,9 @@ class SiteSnapshot:
     site_name: str = ""
     language: str | None = None
     language_evidence: list[str] = field(default_factory=list)
+    languages: dict[str, int] = field(default_factory=dict)  # articles read per language
+    translations: int = 0  # articles read in more than one language
+    site_keywords: list[str] = field(default_factory=list)  # labels on every page: the site's, not a subtopic's
     feeds: list[str] = field(default_factory=list)
     sitemaps: list[str] = field(default_factory=list)
     sitemap_urls: int = 0
@@ -144,7 +149,7 @@ class RobotsCache:
 
 
 class SiteCrawler:
-    def __init__(self, client: httpx.Client, max_pages: int = 40, article_samples: int = 10, max_delay: float = 10):
+    def __init__(self, client: httpx.Client, max_pages: int = 60, article_samples: int = 25, max_delay: float = 10):
         self.client = client
         self.max_pages = max_pages
         self.article_samples = article_samples
@@ -152,6 +157,7 @@ class SiteCrawler:
         self.robots: RobotFileParser | None = None
         self.delay = 0.0
         self.snap: SiteSnapshot | None = None
+        self.home_tags: set[str] = set()
 
     # --- fetching ---------------------------------------------------------
 
@@ -215,6 +221,9 @@ class SiteCrawler:
         snap.home_url = self._final_url(r)
         page = parse_html(r.text, snap.home_url)
         snap.title, snap.description, snap.site_name = page.title, page.description, page.site_name
+        # Keywords the home page has too are the site's own (a site-wide
+        # meta keywords): on an article they say nothing about its subject.
+        self.home_tags = {t.lower() for t in page.tags}
         if page.lang:
             snap.language = page.lang
             snap.language_evidence.append(f"html lang={page.lang}")
@@ -248,8 +257,6 @@ class SiteCrawler:
                 if not link or not title or not same_site(link, snap.domain):
                     continue
                 cats = [t.get("term") for t in e.get("tags", []) if t.get("term")]
-                for c in cats:
-                    snap.categories[c] = snap.categories.get(c, 0) + 1
                 dt = from_struct_time(e.get("published_parsed") or e.get("updated_parsed"))
                 posts.append(Post(link, title, clean_text(e.get("summary"))[:600], dt.isoformat() if dt else None, cats))
         if not snap.feeds:
@@ -308,10 +315,13 @@ class SiteCrawler:
         title = page.h1 or page.title
         if not title:
             return None
-        cats = ([page.section] if page.section else []) + page.tags[:5]
+        tags = [t for t in page.tags if t.lower() not in self.home_tags]
+        cats = ([page.section] if page.section else []) + tags[:5]
         dt = from_iso(page.published)
         text = page.text
-        post = Post(url, title, page.description[:600], dt.isoformat() if dt else None, cats, len(text.split()))
+        post = Post(url, title, page.description[:600], dt.isoformat() if dt else None, cats, len(text.split()),
+                    language=page.lang or guess_language(text),
+                    alternates=[u for lang, u in page.alternates.items() if lang != page.lang])
         return page, post
 
     # --- the whole analysis ------------------------------------------------
@@ -352,10 +362,9 @@ class SiteCrawler:
                 known.words = post.words
                 known.categories = known.categories or post.categories
                 known.published_at = known.published_at or post.published_at
+                known.language, known.alternates = post.language, post.alternates
             else:
                 posts[key] = post
-            for c in post.categories:
-                snap.categories[c] = snap.categories.get(c, 0) + 1
             words.append(post.words)
             texts.append(page.text[:5000])
             for link in page.links:
@@ -368,6 +377,11 @@ class SiteCrawler:
         # Titles from the sitemap alone are unknown; URLs without a fetched
         # page are not counted as posts.
         snap.posts = sorted(posts.values(), key=lambda p: p.published_at or "", reverse=True)
+        _site_wide_labels(snap)
+        for p in snap.posts:
+            for c in p.categories:
+                snap.categories[c] = snap.categories.get(c, 0) + 1
+        _languages(snap)
         snap.outbound_domains = dict(outbound.most_common(40))
         snap.top_terms = _top_terms([p.title for p in snap.posts] + list(snap.categories))
         if words:
@@ -381,7 +395,7 @@ class SiteCrawler:
         else:
             snap.problems.append("no publication dates found")
         guessed = guess_language(" ".join(texts))
-        if guessed:
+        if guessed and not snap.languages:
             snap.language_evidence.append(f"text looks {guessed}")
             snap.language = snap.language or guessed
         if not snap.language:
@@ -399,6 +413,40 @@ class SiteCrawler:
         else:
             snap.status = "complete"
         return snap
+
+
+def _site_wide_labels(snap: SiteSnapshot, min_posts: int = 5, share: float = 0.8) -> None:
+    """A label found on (nearly) every article is the site's own: a site-wide
+    meta keywords or a tag put on everything. As a subtopic it would cover
+    100% of the site and tell nothing apart; it is kept as a site keyword."""
+    if len(snap.posts) < min_posts:
+        return
+    counts = Counter(c for p in snap.posts for c in set(p.categories))
+    wide = {c for c, n in counts.items() if n >= share * len(snap.posts)}
+    if not wide:
+        return
+    snap.site_keywords = sorted(wide, key=lambda c: -counts[c])
+    for p in snap.posts:
+        p.categories = [c for c in p.categories if c not in wide]
+    for c in wide:
+        snap.categories.pop(c, None)
+
+
+def _languages(snap: SiteSnapshot) -> None:
+    """Articles read per language, and how many are translations of each
+    other (an article and its hreflang alternate both read count once)."""
+    langs = Counter(p.language for p in snap.posts if p.language)
+    if not langs:
+        return
+    snap.languages = dict(langs.most_common())
+    main = langs.most_common(1)[0][0]
+    if snap.language != main:
+        snap.language_evidence.append(f"most articles are in {main}")
+        snap.language = main
+    read = {canonical_url(p.url) for p in snap.posts}
+    pairs = {frozenset((canonical_url(p.url), canonical_url(u))) for p in snap.posts for u in p.alternates
+             if canonical_url(u) in read}
+    snap.translations = len(pairs)
 
 
 def _top_terms(texts: list[str], n: int = 25) -> list[str]:

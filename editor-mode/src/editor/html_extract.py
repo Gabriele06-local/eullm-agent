@@ -32,6 +32,7 @@ class Page:
     tags: list[str] = field(default_factory=list)
     feeds: list[str] = field(default_factory=list)
     canonical: str | None = None
+    alternates: dict[str, str] = field(default_factory=dict)  # hreflang -> URL of the same page in that language
     links: list[Link] = field(default_factory=list)
     paragraphs: list[str] = field(default_factory=list)
     article_paragraphs: list[str] = field(default_factory=list)
@@ -82,6 +83,8 @@ class _Parser(HTMLParser):
             href = a.get("href")
             if href and "alternate" in rel and a.get("type", "").lower() in FEED_TYPES:
                 self.page.feeds.append(urljoin(self.base, href))
+            elif href and "alternate" in rel and a.get("hreflang") and a["hreflang"].lower() != "x-default":
+                self.page.alternates[a["hreflang"].split("-")[0].lower()] = urljoin(self.base, href)
             elif href and rel == "canonical":
                 self.page.canonical = urljoin(self.base, href)
         elif tag == "a" and a.get("href"):
