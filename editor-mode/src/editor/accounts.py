@@ -418,6 +418,23 @@ def complete_setup(admin, token: str, email: str, name: str, password: str, now:
     return Session(uid, u.email, u.name, True, None, None)
 
 
+def create_first_admin(admin, email: str, password: str, name: str = "") -> int | None:
+    """The first administrator (operator) at install time, without the
+    first-start link. None when an administrator exists already: running the
+    installation again changes nothing."""
+    email = normalise_email(email)
+    check_password(password)
+    if not needs_setup(admin):
+        return None
+    with admin.engine.begin() as conn:
+        uid = ensure_user(conn, email, name, operator=True)
+        conn.execute(update(m.users).where(m.users.c.id == uid).values(
+            password_hash=hash_password(password), failed_logins=0, locked_until=None, disabled_at=None))
+        # The first-start link, if one was printed, stops working.
+        conn.execute(delete(m.invites).where(m.invites.c.email == SETUP_EMAIL))
+    return uid
+
+
 # --- operator API keys ---------------------------------------------------------------
 
 def create_operator_token(admin, name: str) -> str:

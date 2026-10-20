@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.1
+
+### Changed
+
+- **The administrator is created at installation.** `server-init` asks
+  for your email and password (typed twice, not shown, written nowhere)
+  and the name of a first newsroom, and once the stack is up creates the
+  administrator account and the newsroom, owned by it: you sign in at
+  `/login` and land on `/admin`; `/editor` opens the newsroom. Without
+  questions: `--admin-email`, `--newsroom` and `EDITOR_ADMIN_PASSWORD`.
+- With `docker compose up -d` alone, `EDITOR_ADMIN_EMAIL`,
+  `EDITOR_ADMIN_PASSWORD` and optionally `EDITOR_FIRST_NEWSROOM` in `.env`
+  do the same at the first start. They are used only while no
+  administrator exists; empty, the first-start link of 0.7.0 is printed.
+- New `editor admin-init <email> [--newsroom NAME] [--password-stdin]`,
+  which `server-init` runs. With an administrator already there it
+  changes nothing.
+
 ## 0.7.0
 
 ### Changed

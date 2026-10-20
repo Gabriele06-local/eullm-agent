@@ -70,7 +70,13 @@ services:
     build: ../../editor-mode
     depends_on:
       postgres: {condition: service_healthy}
-    environment: *editor-env
+    environment:
+      <<: *editor-env
+      # Optional: the administrator created at the first start (only while
+      # none exists); without them the logs print a link to create it.
+      EDITOR_ADMIN_EMAIL: ${EDITOR_ADMIN_EMAIL:-}
+      EDITOR_ADMIN_PASSWORD: ${EDITOR_ADMIN_PASSWORD:-}
+      EDITOR_FIRST_NEWSROOM: ${EDITOR_FIRST_NEWSROOM:-}
     command: ["editor", "migrate"]
     restart: "no"
 
