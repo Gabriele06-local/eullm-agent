@@ -156,6 +156,8 @@ def baseline(snap: SiteSnapshot) -> dict:
         "language": snap.language,
         "languages": snap.languages,
         "site_keywords": snap.site_keywords,
+        "read_at": snap.read_at,
+        "summary": None,
         "analysis": {
             "status": snap.status,
             "posts_read": len(snap.posts),
@@ -188,7 +190,8 @@ SYSTEM = (
     "the site's own title, description, categories and the articles that were read. Every statement must "
     "cite article URLs from the list as evidence. If the evidence does not support a statement, use null "
     "and add a line to gaps. Never invent a sector, audience or source. Reply with JSON only:\n"
-    '{"sector": {"value": "<sector or null>", "evidence": ["<url>"]},\n'
+    '{"summary": {"value": "<two or three sentences, in the site language, on what the site publishes, for whom and how; or null>", "evidence": ["<url>"]},\n'
+    ' "sector": {"value": "<sector or null>", "evidence": ["<url>"]},\n'
     ' "subtopics": [{"name": "<subtopic>", "keywords": ["<3-8 lowercase keywords in the site language>"], "evidence": ["<url>"]}],\n'
     ' "audience": {"value": "<who reads it, or null>", "evidence": ["<url>"]},\n'
     ' "style": {"tone": "<tone, or null>", "formats": ["news|guide|review|analysis|opinion|tutorial|interview|data"], "evidence": ["<url>"]},\n'
@@ -226,13 +229,15 @@ def make_validator(allowed_urls: set[str]):
         if not isinstance(value, dict):
             raise ValueError("expected a JSON object")
         out = {"gaps": [g for g in value.get("gaps", []) if isinstance(g, str)][:10]}
-        for key in ("sector", "audience"):
+        for key in ("summary", "sector", "audience"):
             item = value.get(key) or {}
             if not isinstance(item, dict):
                 raise ValueError(f"{key} must be an object")
             val, ev = item.get("value"), ok_evidence(item.get("evidence"))
             if val is not None and not isinstance(val, str):
                 raise ValueError(f"{key}.value must be a string or null")
+            if key == "summary" and val:
+                val = val.strip()[:800]
             out[key] = {"value": val if (val and ev) else None, "evidence": ev}
             if val and not ev:
                 out["gaps"].append(f"{key} proposed without valid evidence: dropped")
@@ -267,6 +272,7 @@ def enrich(body: dict, snap: SiteSnapshot, core: CoreClient) -> tuple[dict, list
     body = dict(body)
     for key in ("sector", "audience"):
         body[key] = {**value[key], "by": "model" if value[key]["value"] else None}
+    body["summary"] = value["summary"]["value"]
     body["style"] = {**body["style"], **value["style"]}
     model_subs = []
     measured = assign_shares(value["subtopics"], snap.posts)  # measured, not claimed
@@ -423,6 +429,11 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
                   "profile_id": None, "changes": [], "significant": False}
         if current is None:
             if snap.status != "failed":
+                # The newer analysis replaces the drafts of the older ones
+                # still waiting: one profile per site asks for a decision.
+                p = m.editorial_profiles
+                s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "draft", p.c.origin == "analysis")
+                          .values(status="retired"))
                 result["profile_id"] = save_draft(s, tenant_id, site_id, body, "analysis", analysis_id)
             return result
         changes = drift(current.body, body) if snap.status in ("complete", "partial") else []

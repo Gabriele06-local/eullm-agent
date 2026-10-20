@@ -214,3 +214,16 @@ def test_validate_edit_keeps_unknown_parts_and_unset_settings():
     assert "settings" not in out  # so the owner's approved settings are kept
     with pytest.raises(ValueError, match="subtopics"):
         prof.validate_edit({"subtopics": "fibra"})
+
+
+def test_a_newer_analysis_replaces_the_draft_still_waiting(db, tenant):
+    class C:
+        def analyse(self, domain):
+            return snapshot(fakesite.ARTICLES)
+
+    prof.analyse_site(db, tenant, "blog.example", C())
+    prof.analyse_site(db, tenant, "blog.example", C())
+    with db.tenant(tenant) as s:
+        rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+    # One profile of the site waits for a decision, not two.
+    assert [tuple(r) for r in rows] == [(1, "retired"), (2, "draft")]

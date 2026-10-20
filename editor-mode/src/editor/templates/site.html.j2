@@ -74,6 +74,28 @@
     {% endif %}
   </div>
 
+  {% set b = shown.body %}
+  {% set subs = (b.get('subtopics') or [])[:4] %}
+  {% set st = b.get('settings') or {} %}
+  {% set sty = b.get('style') or {} %}
+  {% set incomplete = not (b.get('sector') or {}).get('value') %}
+  <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-what">
+    <h3 id="h-what">Cosa approvi</h3>
+    {% if b.get('summary') %}<p class="lead" style="margin: 0;">{{ b.get('summary') }}</p>{% endif %}
+    {% if incomplete %}
+    <p class="error" style="margin: 0;">L'analisi non è completa: settore, pubblico e stile non sono stati determinati (il motivo è in "Non determinato"). Approvando ora l'agente lavora solo con i temi qui sotto: meglio rianalizzare, o completare il profilo con "Modifica".</p>
+    {% endif %}
+    <p class="hint" style="margin: 0;">Il profilo è la linea editoriale del sito: tutto il resto parte da qui. Approvato, l'agente:</p>
+    <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
+      <li><strong>cerca le fonti</strong> che scrivono di {% if subs %}{% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% else %}questi temi{% endif %}: le testate che il sito già cita, ricerche su Hacker News, GitHub, Hugging Face e arXiv con le parole chiave dei temi, e i domini suggeriti dal modello; ognuna è valutata su cosa pubblica davvero prima di essere usata, e la attivi tu in Fonti;</li>
+      <li><strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {{ ((st.get('min_relevance', 0.15)) * 100)|round|int }}%){% if st.get('exclude') %}, scartando {{ st.get('exclude')|join(', ') }}{% endif %};</li>
+      <li><strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;</li>
+      <li><strong>propone {{ st.get('proposals_per_day', 3) }} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;</li>
+      <li><strong>scrive le bozze</strong> in {{ b.get('language') or 'lingua del sito' }}{% if sty.get('tone') %}, tono {{ sty.get('tone') }}{% endif %}{% if sty.get('typical_words') %}, circa {{ sty.get('typical_words') }} parole{% endif %}, con le fonti citate. Nulla si pubblica senza il tuo sì.</li>
+    </ul>
+    {% if b.get('read_at') %}<p class="hint" style="margin: 0;">{{ site.domain }} porta a {{ b.get('read_at') }}: è stato letto quel sito.</p>{% endif %}
+  </div>
+
   <div class="pad" style="flex-direction: row; flex-wrap: wrap; gap: 32px;">
     <div style="flex: 3 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
       <div style="display: flex; flex-direction: column; gap: 6px;">

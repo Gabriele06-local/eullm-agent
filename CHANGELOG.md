@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.3
+
+### Fixed
+
+- A domain that redirects to another host (rag-pro.eu to rag.i3k.eu) is
+  read where it lands: before, its sitemap, links and articles were all
+  discarded as another site's, and the analysis found nothing.
+- A site analysed again before its profile was approved showed two
+  profiles to approve on the home page: the newer analysis now replaces
+  the draft still waiting.
+- Work in progress names the site by its domain ("Ricerca fonti
+  (i3k.eu)"), not by its number.
+
+### Changed
+
+- The profile page says what you approve: a summary of the editorial line
+  written by the model from the pages read, and what the agent will do
+  with it (which sources it looks for, which news it keeps, how trends are
+  scored, how many proposals a day, in which language and tone the drafts
+  are written). An incomplete analysis says so before you approve it.
+
 ## 0.7.2
 
 ### Fixed

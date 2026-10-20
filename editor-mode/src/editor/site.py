@@ -79,6 +79,7 @@ class SiteSnapshot:
     languages: dict[str, int] = field(default_factory=dict)  # articles read per language
     translations: int = 0  # articles read in more than one language
     site_keywords: list[str] = field(default_factory=list)  # labels on every page: the site's, not a subtopic's
+    read_at: str | None = None  # the host actually read, when the domain redirects elsewhere
     feeds: list[str] = field(default_factory=list)
     sitemaps: list[str] = field(default_factory=list)
     sitemap_urls: int = 0
@@ -158,6 +159,7 @@ class SiteCrawler:
         self.delay = 0.0
         self.snap: SiteSnapshot | None = None
         self.home_tags: set[str] = set()
+        self.host = ""  # the host the site is read at: the domain, or where it redirects
 
     # --- fetching ---------------------------------------------------------
 
@@ -182,6 +184,9 @@ class SiteCrawler:
 
     def _final_url(self, r: httpx.Response) -> str:
         return r.headers.get("x-final-url") or str(r.url)
+
+    def _ours(self, url: str) -> bool:
+        return same_site(url, self.snap.domain) or bool(self.host and same_site(url, self.host))
 
     # --- steps ------------------------------------------------------------
 
@@ -219,6 +224,12 @@ class SiteCrawler:
             return None
         snap = self.snap
         snap.home_url = self._final_url(r)
+        # A domain that redirects to another host (rag-pro.eu -> rag.i3k.eu)
+        # is read there: its sitemap, links and articles live on that host.
+        final = (urlsplit(snap.home_url).hostname or "").lower()
+        if final and not same_site(snap.home_url, snap.domain):
+            self.host = final.removeprefix("www.")
+            snap.read_at = final
         page = parse_html(r.text, snap.home_url)
         snap.title, snap.description, snap.site_name = page.title, page.description, page.site_name
         # Keywords the home page has too are the site's own (a site-wide
@@ -229,7 +240,7 @@ class SiteCrawler:
             snap.language_evidence.append(f"html lang={page.lang}")
         snap.feeds += [f for f in page.feeds if f not in snap.feeds]
         for link in page.links:
-            if same_site(link.url, snap.domain) and any(h in urlsplit(link.url).path.lower() for h in CATEGORY_HINTS):
+            if self._ours(link.url) and any(h in urlsplit(link.url).path.lower() for h in CATEGORY_HINTS):
                 name = link.text.strip() or urlsplit(link.url).path.rstrip("/").rsplit("/", 1)[-1]
                 if name and len(name) <= 60:
                     snap.categories[name] = snap.categories.get(name, 0) + 1
@@ -254,7 +265,7 @@ class SiteCrawler:
                 snap.language_evidence.append(f"feed language={snap.language}")
             for e in parsed.entries:
                 link, title = e.get("link"), clean_text(e.get("title"))
-                if not link or not title or not same_site(link, snap.domain):
+                if not link or not title or not self._ours(link):
                     continue
                 cats = [t.get("term") for t in e.get("tags", []) if t.get("term")]
                 dt = from_struct_time(e.get("published_parsed") or e.get("updated_parsed"))
@@ -300,7 +311,7 @@ class SiteCrawler:
             else:
                 for u in root.findall(f"{ns}url"):
                     loc = (u.findtext(f"{ns}loc") or "").strip()
-                    if loc and same_site(loc, snap.domain):
+                    if loc and self._ours(loc):
                         entries.append((loc, from_iso(u.findtext(f"{ns}lastmod"))))
         snap.sitemap_urls = len(entries)
         if not entries:
@@ -329,6 +340,7 @@ class SiteCrawler:
     def analyse(self, domain: str) -> SiteSnapshot:
         domain = domain.strip().lower().removeprefix("https://").removeprefix("http://").split("/")[0]
         self.snap = snap = SiteSnapshot(domain=domain)
+        self.host = ""
         base = f"https://{domain}"
         if not self._robots(base):
             snap.status = "failed"
@@ -346,7 +358,7 @@ class SiteCrawler:
         # Article samples: feed posts first, then the newest sitemap URLs.
         candidates = [p.url for p in posts.values()] + [u for u, _ in recent if canonical_url(u) not in posts]
         if not candidates:  # fall back to links on the home page that look like articles
-            candidates = [l.url for l in home.links if same_site(l.url, domain) and not l.in_nav
+            candidates = [l.url for l in home.links if self._ours(l.url) and not l.in_nav
                           and urlsplit(l.url).path.count("/") >= 2 and len(l.text) > 25]
         outbound: Counter = Counter()
         texts = [home.description, home.title]
@@ -369,7 +381,7 @@ class SiteCrawler:
             texts.append(page.text[:5000])
             for link in page.links:
                 host = (urlsplit(link.url).hostname or "").lower().removeprefix("www.")
-                if link.in_nav or not host or same_site(link.url, domain):
+                if link.in_nav or not host or self._ours(link.url):
                     continue
                 if any(host == d or host.endswith("." + d) for d in NOT_SOURCES):
                     continue
