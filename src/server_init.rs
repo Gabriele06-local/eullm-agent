@@ -1,8 +1,8 @@
 //! `eullm-agent server-init`: the first start of the server installation
 //! (deploy/server) in one command. It writes what is missing in the folder
 //! — compose file, `.env` with every password and token generated, `core.yaml`
-//! with the provider chosen — starts the stack and creates the first
-//! newsroom with its owner's login. What exists already is never changed, so
+//! with the provider chosen — starts the stack and creates the administrator
+//! (you) with a first newsroom. What exists already is never changed, so
 //! running it again only starts the stack.
 
 use anyhow::{bail, Context, Result};
@@ -128,7 +128,82 @@ pub struct Options {
     pub provider: Option<String>,
     pub model: Option<String>,
     pub base_url: Option<String>,
+    pub admin_email: Option<String>,
+    pub newsroom: Option<String>,
     pub no_start: bool,
+}
+
+/// The administrator created at the first start.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Admin {
+    pub email: String,
+    pub password: String,
+    pub newsroom: String,
+}
+
+/// Same rule as Editor Mode's accounts.
+pub const MIN_PASSWORD: usize = 10;
+
+pub fn valid_email(e: &str) -> bool {
+    match e.split_once('@') {
+        Some((user, host)) => {
+            !user.is_empty()
+                && host.contains('.')
+                && !host.starts_with('.')
+                && !host.ends_with('.')
+                && !e.chars().any(char::is_whitespace)
+                && e.len() <= 254
+        }
+        None => false,
+    }
+}
+
+fn pick_admin(opts: &Options) -> Result<Admin> {
+    let email = loop {
+        let e = match &opts.admin_email {
+            Some(e) => e.trim().to_lowercase(),
+            None => prompt_required("Your email (the administrator's sign-in)")?
+                .trim()
+                .to_lowercase(),
+        };
+        if valid_email(&e) {
+            break e;
+        }
+        if opts.admin_email.is_some() {
+            bail!("--admin-email {e} is not an email address");
+        }
+        println!("  (not an email address)");
+    };
+    let password = match std::env::var("EDITOR_ADMIN_PASSWORD") {
+        Ok(p) if !p.is_empty() => {
+            if p.chars().count() < MIN_PASSWORD {
+                bail!("EDITOR_ADMIN_PASSWORD needs at least {MIN_PASSWORD} characters");
+            }
+            p
+        }
+        _ => loop {
+            let p = prompt_secret(&format!(
+                "Password (at least {MIN_PASSWORD} characters, not shown)"
+            ))?;
+            if p.chars().count() < MIN_PASSWORD {
+                println!("  (at least {MIN_PASSWORD} characters)");
+                continue;
+            }
+            if prompt_secret("Password again")? == p {
+                break p;
+            }
+            println!("  (the two passwords differ: once more)");
+        },
+    };
+    let newsroom = match &opts.newsroom {
+        Some(n) => n.trim().to_string(),
+        None => prompt("Name of the first newsroom (empty: none)", "Redazione")?,
+    };
+    Ok(Admin {
+        email,
+        password,
+        newsroom,
+    })
 }
 
 fn pick_provider(opts: &Options) -> Result<Provider> {
@@ -226,6 +301,43 @@ fn run(mut c: Command, what: &str) -> Result<String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
+/// `editor admin-init` in the running dashboard, the password on stdin.
+fn admin_init(dir: &Path, a: &Admin) -> Result<String> {
+    use std::io::Write;
+    use std::process::Stdio;
+    let mut args = vec![
+        "exec",
+        "-T",
+        "editor-web",
+        "editor",
+        "admin-init",
+        a.email.as_str(),
+        "--password-stdin",
+    ];
+    if !a.newsroom.is_empty() {
+        args.extend(["--newsroom", a.newsroom.as_str()]);
+    }
+    let mut child = compose(dir, &args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("cannot run docker (creating the administrator)")?;
+    if let Some(mut stdin) = child.stdin.take() {
+        writeln!(stdin, "{}", a.password)?;
+    }
+    let out = child.wait_with_output()?;
+    let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if !out.status.success() {
+        bail!(
+            "creating the administrator failed: {} {}",
+            text,
+            String::from_utf8_lossy(&out.stderr).trim()
+        );
+    }
+    Ok(text)
+}
+
 pub fn server_init(opts: Options) -> Result<()> {
     let dir = &opts.dir;
     std::fs::create_dir_all(dir).with_context(|| format!("cannot create {}", dir.display()))?;
@@ -270,6 +382,14 @@ pub fn server_init(opts: Options) -> Result<()> {
         println!("written: .env (passwords and tokens generated, readable only by you)");
         first_run = true;
     }
+    // The administrator is asked on the first start only; the password is
+    // handed to Editor Mode and written nowhere.
+    let admin = if first_run && !opts.no_start {
+        println!("\nThe administrator (you): signs in at /admin, creates the newsrooms and invites their people.");
+        Some(pick_admin(&opts)?)
+    } else {
+        None
+    };
 
     if opts.no_start {
         println!("\nStart with: cd {} && docker compose up -d", dir.display());
@@ -286,15 +406,19 @@ pub fn server_init(opts: Options) -> Result<()> {
         bail!("docker compose up failed: see the messages above");
     }
     // The editor schema is created by editor-migrate at start: wait for it,
-    // then ask Editor Mode for the first-start link, while no administrator
-    // exists (a run that stopped halfway gets a fresh link).
+    // then create the administrator; on a later run, while none exists yet,
+    // ask for the first-start link instead (it creates one from the browser).
     let mut out = None;
     let mut last = String::new();
     for _ in 0..60 {
-        match run(
-            compose(dir, &["exec", "-T", "editor-web", "editor", "setup-link"]),
-            "asking for the first-start link",
-        ) {
+        let done = match &admin {
+            Some(a) => admin_init(dir, a),
+            None => run(
+                compose(dir, &["exec", "-T", "editor-web", "editor", "setup-link"]),
+                "asking for the first-start link",
+            ),
+        };
+        match done {
             Ok(o) => {
                 out = Some(o);
                 break;
@@ -329,15 +453,23 @@ pub fn server_init(opts: Options) -> Result<()> {
             "Started. The files that already existed were left as they were."
         }
     );
-    match out.split_once("/setup/") {
-        Some((_, rest)) => {
+    match (&admin, out.split_once("/setup/")) {
+        (Some(a), _) => {
+            println!("\nSign in at {base}/login as {}:", a.email);
+            println!("  {base}/admin   administration: newsrooms, plans and limits, invites");
+            println!("  {base}/editor  your newsroom");
+            for line in out.lines().filter(|l| l.starts_with("newsroom ")) {
+                println!("  {line}");
+            }
+        }
+        (None, Some((_, rest))) => {
             let token = rest.split_whitespace().next().unwrap_or_default();
             println!("\nCreate your administrator account: open this link (it works once)");
             println!("  {base}/setup/{token}");
             println!("From there (/admin) you create the newsrooms, give them plans and limits");
             println!("and invite their owners; /editor opens a newsroom.");
         }
-        None => println!("\nSign in at {base} (administration: {base}/admin)."),
+        (None, None) => println!("\nSign in at {base} (administration: {base}/admin)."),
     }
     println!("  Put a reverse proxy with HTTPS in front to reach it from outside.");
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
@@ -413,6 +545,15 @@ mod tests {
         assert_eq!(get("EULLM_VERSION"), "0.5.4");
         assert_eq!(get("LLM_API_KEY"), "nvapi-x");
         assert_eq!(get("BIND"), "127.0.0.1");
+    }
+
+    #[test]
+    fn emails_are_checked() {
+        assert!(valid_email("info@i3k.eu"));
+        assert!(!valid_email("info"));
+        assert!(!valid_email("@i3k.eu"));
+        assert!(!valid_email("info@i3k"));
+        assert!(!valid_email("in fo@i3k.eu"));
     }
 
     #[test]

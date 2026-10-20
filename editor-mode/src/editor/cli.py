@@ -21,7 +21,40 @@ def cmd_migrate(a):
     from .runtime import settings
     migrate.upgrade(settings().admin_database_url)
     print("editor schema up to date")
+    # docker compose up -d with the administrator in .env: created here, once.
+    email, password = os.environ.get("EDITOR_ADMIN_EMAIL", "").strip(), os.environ.get("EDITOR_ADMIN_PASSWORD", "")
+    if email and password:
+        try:
+            _first_admin(email, password, "", os.environ.get("EDITOR_FIRST_NEWSROOM", "").strip())
+        except SystemExit as e:  # the schema is fine: let the dashboard start, with the first-start link
+            print(f"administrator not created: {e}")
     _setup_link(quiet=True)
+
+
+def _first_admin(email: str, password: str, name: str, newsroom: str) -> bool:
+    from . import accounts, newsrooms
+    admin = _admin()
+    try:
+        uid = accounts.create_first_admin(admin, email, password, name)
+        if uid is None:
+            print("an administrator exists already: nothing changed")
+            return False
+        print(f"administrator {accounts.normalise_email(email)} ready: sign in, /admin is the administration")
+        if newsroom:
+            r = newsrooms.create(admin, {"name": newsroom, "owner_email": email}, by=email)
+            print(f"newsroom {r['tenant_id']} ready, owned by the administrator: /editor opens it")
+    except (accounts.AccountError, newsrooms.NewsroomError) as e:
+        sys.exit(str(e))
+    return True
+
+
+def cmd_admin_init(a):
+    """The administrator at install time (server-init runs it); with
+    --password-stdin the password is read, otherwise generated and printed."""
+    from . import accounts
+    password = sys.stdin.readline().rstrip("\n") if a.password_stdin else accounts.random_password()
+    if _first_admin(a.email, password, a.name or "", (a.newsroom or "").strip()) and not a.password_stdin:
+        print(f"password: {password}")
 
 
 def _setup_link(quiet: bool = False) -> None:
@@ -319,6 +352,9 @@ def main(argv=None):
     sp = add("user-add", cmd_user_add, "create an account (email and password), optionally operator or member of a tenant")
     sp.add_argument("email"); sp.add_argument("--name"); sp.add_argument("--operator", action="store_true")
     sp.add_argument("--tenant"); sp.add_argument("--role", choices=["owner", "editor", "viewer"], default="owner")
+    sp.add_argument("--password-stdin", action="store_true", help="read the password from stdin instead of generating one")
+    sp = add("admin-init", cmd_admin_init, "create the administrator (operator) at install time, and optionally the first newsroom")
+    sp.add_argument("email"); sp.add_argument("--name"); sp.add_argument("--newsroom", help="name of a first newsroom, owned by the administrator")
     sp.add_argument("--password-stdin", action="store_true", help="read the password from stdin instead of generating one")
     sp = add("operator-key", cmd_operator_key, "create an operator API key for /api/operator (printed once)")
     sp.add_argument("--name", required=True)

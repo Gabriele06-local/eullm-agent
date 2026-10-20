@@ -29,23 +29,28 @@ binary of the release (Linux x86-64), nothing else:
     ./eullm-agent-linux-x64 server-init --dir .
 
 Everything stays in that one folder: the binary, the compose file,
-`core.yaml` and `.env`; the data lives in Docker volumes. It asks only the
+`core.yaml` and `.env`; the data lives in Docker volumes. It asks the
 model (NVIDIA Build, Groq, EuLLM Engine on this machine or another
-OpenAI-compatible service) and its key, then:
+OpenAI-compatible service) and its key, then **your administrator
+account** (email and password, typed twice and not shown) and the name of
+a first newsroom, then:
 
 - writes the compose file, `core.yaml` and `.env` with every password and
-  token generated (`.env` readable only by you);
+  token generated (`.env` readable only by you; your password is not
+  written anywhere);
 - downloads the images of the same release and starts everything;
-- prints the **first-start link**: open it in the browser and create your
-  administrator account (email and password). From `/admin` you then
-  create the newsrooms and invite their owners.
+- creates your administrator account and the first newsroom, owned by it,
+  and prints where to sign in: `/admin` for the administration, `/editor`
+  for the newsroom.
 
 Keep a copy of `.env`: `EDITOR_SECRET_KEY` in it encrypts the publishing
-credentials. Running `server-init` again changes no file that exists: it
-only starts the stack (and prints a new first-start link while there is
-no administrator). In a checkout of the sources, `--dir deploy/server`
-uses this folder. Without questions: `--provider nvidia --model <name>`
-and the key in `LLM_API_KEY`.
+credentials. Running `server-init` again changes no file that exists and
+asks nothing: it only starts the stack (and prints a first-start link if
+there is still no administrator). In a checkout of the sources,
+`--dir deploy/server` uses this folder. Without questions:
+`--provider nvidia --model <name> --admin-email you@example.com
+--newsroom "Redazione"`, the model key in `LLM_API_KEY` and the password
+in `EDITOR_ADMIN_PASSWORD`.
 
 ## Who sees what
 
@@ -86,16 +91,23 @@ Requirements: Docker with the compose plugin, and this repository.
        docker compose up -d
        docker compose ps                 # editor-migrate: exited (0), the rest running
 
-4. Your administrator account, from the browser. The first-start link is
-   in the log of the start, or printed anew with:
+4. Your administrator account. Either put it in `.env` before step 3 and
+   it is created at the first start, with a first newsroom owned by it:
+
+       EDITOR_ADMIN_EMAIL=you@example.com
+       EDITOR_ADMIN_PASSWORD=at least 10 characters
+       EDITOR_FIRST_NEWSROOM=Redazione
+
+   (once you have signed in, empty `EDITOR_ADMIN_PASSWORD`: it is used
+   only while no administrator exists); or leave them empty and open the
+   first-start link the start prints, to create it from the browser:
 
        docker compose logs editor-migrate | grep setup
        docker compose exec editor-web editor setup-link
 
-   Open it, choose email and password, and from `/admin` create the
-   newsrooms. (From the command line instead: `editor user-add
-   you@example.com --operator`.) The Core's web interface at
-   http://127.0.0.1:8088 opens with `CORE_ADMIN_TOKEN` from `.env`.
+   Then sign in: `/admin` is the administration, `/editor` the newsroom.
+   The Core's web interface at http://127.0.0.1:8088 opens with
+   `CORE_ADMIN_TOKEN` from `.env`.
 
 ## Newsrooms, people and the billing system
 

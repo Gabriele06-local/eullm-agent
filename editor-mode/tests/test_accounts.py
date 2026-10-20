@@ -3,6 +3,7 @@ by the billing system, people invited by email, roles, suspension."""
 
 from datetime import UTC, datetime, timedelta
 
+import io
 import pytest
 from fastapi.testclient import TestClient
 
@@ -280,3 +281,56 @@ def test_the_first_administrator_is_made_from_the_browser(db, admin, capsys, mon
     assert "exists already" in capsys.readouterr().out
     assert "Prima configurazione" not in TestClient(c.app).get("/login").text
     assert accounts.pending_invites(admin, None) == []
+
+
+def test_the_administrator_is_made_at_install_time(db, admin, capsys, monkeypatch):
+    from editor import cli, runtime
+
+    if not db.sqlite:
+        pytest.skip("needs a database with no administrator: the PostgreSQL one is shared by the tests")
+    monkeypatch.setattr(runtime, "admin_database", lambda: admin)
+    cli.main(["setup-link"])
+    link = capsys.readouterr().out.rsplit("/setup/", 1)[1].split()[0]
+    monkeypatch.setattr("sys.stdin", io.StringIO("corta\n"))
+    with pytest.raises(SystemExit, match="almeno"):
+        cli.main(["admin-init", "boss@example.com", "--password-stdin"])
+    monkeypatch.setattr("sys.stdin", io.StringIO("password boss\n"))
+    cli.main(["admin-init", "Boss@Example.com", "--newsroom", "Redazione i3k", "--password-stdin"])
+    out = capsys.readouterr().out
+    assert "administrator boss@example.com ready" in out and "newsroom redazione-i3k ready" in out
+    assert "password boss" not in out
+    # The first-start link printed before stops working.
+    assert not accounts.setup_valid(admin, link)
+    u = accounts.authenticate(admin, "boss@example.com", "password boss")
+    assert u.operator and [(x.tenant_id, x.role) for x in accounts.memberships(admin, u.id)] == [("redazione-i3k", "owner")]
+    c, _ = app_for(db)
+    r = c.post("/login", data={"email": "boss@example.com", "password": "password boss"}, follow_redirects=False)
+    assert r.headers["location"] == "/admin"
+    assert "Redazioni" in c.get("/admin").text
+    assert c.get("/editor", follow_redirects=False).headers["location"] == "/"
+    # Running the installation again changes nothing.
+    monkeypatch.setattr("sys.stdin", io.StringIO("altra password\n"))
+    cli.main(["admin-init", "other@example.com", "--password-stdin"])
+    assert "exists already" in capsys.readouterr().out
+    assert accounts.authenticate(admin, "other@example.com", "altra password") is None
+
+
+def test_migrate_makes_the_administrator_from_the_environment(db, admin, capsys, monkeypatch):
+    from editor import cli, migrate, runtime
+
+    if not db.sqlite:
+        pytest.skip("needs a database with no administrator: the PostgreSQL one is shared by the tests")
+    monkeypatch.setattr(runtime, "admin_database", lambda: admin)
+    monkeypatch.setattr(migrate, "upgrade", lambda url: None)
+    monkeypatch.setenv("EDITOR_ADMIN_EMAIL", "boss@example.com")
+    monkeypatch.setenv("EDITOR_ADMIN_PASSWORD", "corta")
+    cli.main(["migrate"])  # a bad password does not stop the start: the link is printed instead
+    out = capsys.readouterr().out
+    assert "administrator not created" in out and "/setup/" in out
+    monkeypatch.setenv("EDITOR_ADMIN_PASSWORD", "password boss")
+    cli.main(["migrate"])
+    out = capsys.readouterr().out
+    assert "administrator boss@example.com ready" in out and "/setup/" not in out
+    assert accounts.authenticate(admin, "boss@example.com", "password boss").operator
+    cli.main(["migrate"])
+    assert "exists already" in capsys.readouterr().out
