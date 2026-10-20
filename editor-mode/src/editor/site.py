@@ -421,11 +421,12 @@ def _site_wide_labels(snap: SiteSnapshot, min_posts: int = 5, share: float = 0.8
     100% of the site and tell nothing apart; it is kept as a site keyword."""
     if len(snap.posts) < min_posts:
         return
-    counts = Counter(c for p in snap.posts for c in set(p.categories))
+    # dict.fromkeys, not set: equal counts keep the order the site gives them.
+    counts = Counter(c for p in snap.posts for c in dict.fromkeys(p.categories))
     wide = {c for c, n in counts.items() if n >= share * len(snap.posts)}
     if not wide:
         return
-    snap.site_keywords = sorted(wide, key=lambda c: -counts[c])
+    snap.site_keywords = [c for c, _ in counts.most_common() if c in wide]
     for p in snap.posts:
         p.categories = [c for c in p.categories if c not in wide]
     for c in wide:
