@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.4
+
+### Fixed
+
+- Analysing a site again now proposes an updated profile when the analysis
+  method has improved or the new reading finds what the old one missed
+  (the sector), even if a profile is already approved. Before, an approved
+  profile stayed as it was until the site itself changed.
+- Source discovery keeps only the feeds published on the source's own
+  domain (euractiv.com no longer brought in another site's feed).
+
+### Changed
+
+- The profile page explains the editorial line in plain words: languages,
+  pace, length, topics with their keywords and two example articles each,
+  and what approving means step by step. When the analysis is incomplete
+  the main button is "Rianalizza", and approving stays possible.
+- The sources page says how each source was found (cited by the site's
+  articles, found by searching a term on Hacker News, GitHub, arXiv or
+  Hugging Face, or suggested by the model and verified), shows its latest
+  news, the reason a source was rejected and how its score is made up.
+- More sources per site: one search per topic as well as the model's
+  terms (up to 8), and up to 15 domains suggested by the model, also in
+  the site's languages.
+
 ## 0.7.3
 
 ### Fixed

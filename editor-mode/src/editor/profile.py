@@ -35,6 +35,9 @@ from .text import tokens
 log = logging.getLogger(__name__)
 
 DEFAULT_SETTINGS = {"proposals_per_day": 3, "min_relevance": 0.15, "exclude": []}
+# Raised when the analysis itself improves: a profile approved under an
+# older method is offered again, rebuilt, even if the site did not change.
+METHOD = "profile-v2"
 
 
 # --- manual edits ---------------------------------------------------------------
@@ -152,6 +155,7 @@ def baseline(snap: SiteSnapshot) -> dict:
     gaps = list(snap.problems)
     return {
         "domain": snap.domain,
+        "method": METHOD,
         "name": snap.site_name or snap.title or snap.domain,
         "language": snap.language,
         "languages": snap.languages,
@@ -437,6 +441,10 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
                 result["profile_id"] = save_draft(s, tenant_id, site_id, body, "analysis", analysis_id)
             return result
         changes = drift(current.body, body) if snap.status in ("complete", "partial") else []
+        if not changes and snap.status in ("complete", "partial") and (
+                current.body.get("method") != METHOD
+                or (not (current.body.get("sector") or {}).get("value") and (body.get("sector") or {}).get("value"))):
+            changes = [{"kind": "method"}]  # same site, better reading of it
         result["changes"], result["significant"] = changes, bool(changes)
         proposed = None
         if changes:

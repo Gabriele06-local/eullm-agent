@@ -25,7 +25,7 @@ from . import quotas, repo
 from .collectors import COLLECTORS, Item, SourceSpec
 from .core_client import CoreClient, CoreError
 from .dedup import minhash, similarity
-from .html_extract import parse_html
+from .html_extract import parse_html, same_site
 from .site import FEED_PATHS, NOT_SOURCES, RobotsCache
 from .text import tokens
 
@@ -137,7 +137,7 @@ def rate(
 
 
 class Discoverer:
-    def __init__(self, client: httpx.Client, max_domains: int = 15):
+    def __init__(self, client: httpx.Client, max_domains: int = 20):
         self.client = client
         self.max_domains = max_domains
         self._robots = RobotsCache(client)
@@ -162,7 +162,9 @@ class Discoverer:
         if home is not None:
             page = parse_html(home.text, f"https://{domain}/")
             name = page.site_name or page.title or domain
-            feeds = page.feeds
+            # A feed on another site (a partner's, a network's) is not this
+            # publication's: only the domain's own feeds are taken.
+            feeds = [f for f in page.feeds if same_site(f, domain)]
         for url in feeds[:2] + [f"https://{domain}{p}" for p in FEED_PATHS]:
             r = self._get(url, "application/rss+xml, application/atom+xml, application/xml")
             if r is not None and feedparser.parse(r.content).entries:
@@ -195,10 +197,12 @@ class Discoverer:
 
 def api_candidates(body: dict) -> list[Candidate]:
     """Searches on public APIs built from the profile's subtopics."""
-    subs = [s for s in body.get("subtopics", []) if s.get("share", 0) >= 0.1][:4] or body.get("subtopics", [])[:2]
-    queries = body.get("search_terms") or [" ".join(s["keywords"][:2]) for s in subs if s.get("keywords")]
+    subs = [s for s in body.get("subtopics", []) if s.get("share", 0) >= 0.05][:6] or body.get("subtopics", [])[:3]
+    own = [" ".join(s["keywords"][:2]) for s in subs if s.get("keywords")]
+    # The model's search terms first, then one per topic of the profile.
+    queries = list(dict.fromkeys((body.get("search_terms") or []) + own))
     out = []
-    for q in queries[:4]:
+    for q in queries[:8]:
         out.append(Candidate("hackernews", f"Hacker News: {q}", "https://hn.algolia.com/api/v1/search",
                              {"query": q, "min_points": 20}, "api_query", {"query": q}))
         topic = "-".join(q.lower().split()[:2])
@@ -218,9 +222,10 @@ def api_candidates(body: dict) -> list[Candidate]:
 
 SUGGEST_SYSTEM = (
     "You help an editor find sources. Given the editorial profile of a site, reply with JSON only: "
-    '{"search_terms": ["<up to 4 short English search queries for the site\'s main subtopics>"], '
-    '"domains": ["<up to 10 domains of established publications, institutions or projects that regularly '
-    'publish on these subtopics>"]}. Domains are checked by reading their feeds; do not include the site itself.'
+    '{"search_terms": ["<up to 6 short English search queries for the site\'s main subtopics>"], '
+    '"domains": ["<up to 15 domains of established publications, institutions or projects that regularly '
+    'publish on these subtopics, including publications in the site\'s languages>"]}. Domains are checked by '
+    'reading their feeds; do not include the site itself.'
 )
 
 
@@ -229,7 +234,7 @@ def _validate_suggestions(v) -> dict:
         raise ValueError("expected an object")
     terms = [t.strip() for t in v.get("search_terms", []) if isinstance(t, str) and 2 <= len(t.strip()) <= 60]
     domains = [d.strip() for d in v.get("domains", []) if isinstance(d, str) and "." in d and len(d) <= 100]
-    return {"search_terms": terms[:4], "domains": domains[:10]}
+    return {"search_terms": terms[:6], "domains": domains[:15]}
 
 
 # --- registry ------------------------------------------------------------------
@@ -281,7 +286,9 @@ def discover(db, tenant_id: str, site_id: int, client: httpx.Client, core: CoreC
         try:
             prompt = "Profile:\n" + "\n".join(
                 f"- {x['name']}: {', '.join(x.get('keywords', []))}" for x in body["subtopics"]
-            ) + f"\nSector: {body.get('sector', {}).get('value')}\nLanguage: {body.get('language')}\nSite: {domain}"
+            ) + (f"\nSector: {body.get('sector', {}).get('value')}\nLanguage: {body.get('language')}"
+                 f"\nLanguages of the site: {', '.join(body.get('languages') or {}) or body.get('language')}"
+                 f"\nSummary: {body.get('summary') or '-'}\nSite: {domain}")
             suggestions, calls = core.chat_json(SUGGEST_SYSTEM, prompt, _validate_suggestions)
             with db.tenant(tenant_id) as s:
                 for c in calls:
@@ -310,6 +317,8 @@ def discover(db, tenant_id: str, site_id: int, client: httpx.Client, core: CoreC
             continue
         ev = rate(result.items, keywords, known=known, cited_by_site=cand.evidence.get("cited_by_site", 0),
                   https=cand.url.startswith("https://") or not cand.url)
+        # What it was judged on, shown next to the source.
+        ev["examples"] = [{"title": i.title[:200], "url": i.url} for i in result.items[:3] if i.title]
         known += [minhash(f"{i.title} {i.summary}") for i in result.items[:20]]
         with db.tenant(tenant_id) as s:
             if ev["status"] == "active" and quotas.remaining(s, "sources") == 0:
