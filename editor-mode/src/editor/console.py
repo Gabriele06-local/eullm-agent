@@ -215,7 +215,7 @@ def register(app, ctx) -> None:
 
     def back(notice: str) -> RedirectResponse:
         from urllib.parse import quote
-        resp = RedirectResponse("/operator", status_code=303)
+        resp = RedirectResponse("/admin", status_code=303)
         resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
         return resp
 
@@ -226,14 +226,18 @@ def register(app, ctx) -> None:
         same_site(request)
         return s
 
-    @app.get("/operator", response_class=HTMLResponse)
+    @app.get("/operator")
+    def old_console():
+        return RedirectResponse("/admin", status_code=301)
+
+    @app.get("/admin", response_class=HTMLResponse)
     def console(request: Request):
         s = console_user(request)
         if s is None:
             return RedirectResponse("/login", status_code=303)
         return page(request, s)
 
-    @app.post("/operator/newsrooms", response_class=HTMLResponse)
+    @app.post("/admin/newsrooms", response_class=HTMLResponse)
     def ui_create(request: Request, name: str = Form(...), owner_email: str = Form(...), plan: str = Form(""),
                   max_sites: str = Form(""), max_active_sources: str = Form(""), max_items_per_day: str = Form(""),
                   max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), s=Depends(need_console)):
@@ -256,7 +260,7 @@ def register(app, ctx) -> None:
             new["note"] = f"{res['owner_email']} ha già un account: la trova fra le sue redazioni."
         return page(request, s, new=new)
 
-    @app.post("/operator/newsrooms/{tenant_id}")
+    @app.post("/admin/newsrooms/{tenant_id}")
     def ui_update(tenant_id: str, plan: str = Form(""), max_sites: str = Form(""), max_active_sources: str = Form(""),
                   max_items_per_day: str = Form(""), max_llm_cost_month: str = Form(""),
                   max_drafts_month: str = Form(""), s=Depends(need_console)):
@@ -273,7 +277,7 @@ def register(app, ctx) -> None:
             return back("Redazione non trovata.")
         return back(f"Piano di {tenant_id} aggiornato." + (f" Attenzione: {res['warning']}" if res["warning"] else ""))
 
-    @app.post("/operator/newsrooms/{tenant_id}/active")
+    @app.post("/admin/newsrooms/{tenant_id}/active")
     def ui_active(tenant_id: str, active: str = Form(...), s=Depends(need_console)):
         on = active == "1"
         try:
@@ -283,7 +287,7 @@ def register(app, ctx) -> None:
         return back(f"Redazione {tenant_id} riattivata." if on else
                     f"Redazione {tenant_id} sospesa: le persone non entrano e il lavoro programmato si ferma, i dati restano.")
 
-    @app.post("/operator/newsrooms/{tenant_id}/invite", response_class=HTMLResponse)
+    @app.post("/admin/newsrooms/{tenant_id}/invite", response_class=HTMLResponse)
     def ui_invite(request: Request, tenant_id: str, email: str = Form(...), role: str = Form("owner"),
                   s=Depends(need_console)):
         rows = newsrooms.listing(admin, db, tenant_id)
@@ -296,7 +300,7 @@ def register(app, ctx) -> None:
         return page(request, s, new={"what": f"Invito a {rows[0]['name']} per {email.strip().lower()}",
                                      "link": send(request, token, "invite", email.strip().lower(), rows[0]["name"], s.email)})
 
-    @app.post("/operator/newsrooms/{tenant_id}/delete")
+    @app.post("/admin/newsrooms/{tenant_id}/delete")
     def ui_delete(tenant_id: str, confirm: str = Form(""), s=Depends(need_console)):
         if confirm.strip() != tenant_id:
             return back(f"Per cancellare scrivi l'id della redazione ({tenant_id}): niente è stato cancellato.")
@@ -306,7 +310,7 @@ def register(app, ctx) -> None:
             return back("Redazione non trovata.")
         return back(f"Redazione {tenant_id} cancellata con tutti i suoi dati.")
 
-    @app.get("/operator/enter/{tenant_id}")
+    @app.get("/admin/enter/{tenant_id}")
     def ui_enter(request: Request, tenant_id: str):
         s = console_user(request)
         if s is None:
@@ -320,7 +324,7 @@ def register(app, ctx) -> None:
         resp.delete_cookie(SITE_COOKIE)
         return resp
 
-    @app.post("/operator/operators", response_class=HTMLResponse)
+    @app.post("/admin/operators", response_class=HTMLResponse)
     def ui_add_operator(request: Request, email: str = Form(...), s=Depends(need_console)):
         try:
             token = accounts.create_invite(admin, email, s.email, operator=True)
@@ -329,7 +333,7 @@ def register(app, ctx) -> None:
         return page(request, s, new={"what": f"Invito come operatore per {email.strip().lower()}",
                                      "link": send(request, token, "invite", email.strip().lower(), None, s.email)})
 
-    @app.post("/operator/reset", response_class=HTMLResponse)
+    @app.post("/admin/reset", response_class=HTMLResponse)
     def ui_reset(request: Request, email: str = Form(...), s=Depends(need_console)):
         try:
             e = accounts.normalise_email(email)
@@ -342,7 +346,7 @@ def register(app, ctx) -> None:
         return page(request, s, new={"what": f"Link per reimpostare la password di {e}",
                                      "link": send(request, token, "reset", e, None, s.email)})
 
-    @app.post("/operator/keys", response_class=HTMLResponse)
+    @app.post("/admin/keys", response_class=HTMLResponse)
     def ui_new_key(request: Request, name: str = Form(...), s=Depends(need_console)):
         try:
             key = accounts.create_operator_token(admin, name)
@@ -350,7 +354,7 @@ def register(app, ctx) -> None:
             return page(request, s, 400, error=f"{e}.")
         return page(request, s, new={"what": f"Chiave API «{name.strip()}» creata", "key": key})
 
-    @app.post("/operator/keys/{key_id}/revoke")
+    @app.post("/admin/keys/{key_id}/revoke")
     def ui_revoke_key(key_id: int, s=Depends(need_console)):
         return back("Chiave revocata." if accounts.revoke_operator_token(admin, key_id) else "Chiave già revocata.")
 

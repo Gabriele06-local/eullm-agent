@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "EuLLM Agent Core API",
-    "version": "0.6.1",
+    "version": "0.7.0",
     "description": "Runs, single model calls, approvals and checked HTTP fetches, usage per tenant. Every endpoint except health and this document needs `Authorization: Bearer <token>`. Data is scoped to the tenant of the token. A token with `delegate: true` may add `X-EuLLM-Tenant: <name>` to any request to act for its sub-tenant `<tenant>/<name>`, with separate runs, usage, audit and limits; any other token gets 403 with that header."
   },
   "servers": [

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.0
+
+### Changed
+
+- **First start from the browser.** `docker compose up -d` starts
+  everything; while there is no administrator, the start prints a
+  single-use link (`docker compose logs editor-migrate | grep setup`, or
+  `editor setup-link` for a new one) where you choose the email and
+  password of the administrator. The login page says how to find it.
+- **`/admin` and `/editor`.** The administration (formerly `/operator`,
+  which now redirects) is at `/admin`: an administrator lands there after
+  signing in. `/editor` opens the newsroom (an administrator's first one;
+  "Entra" in `/admin` opens any other).
+- `server-init` asks only for the model and its key: it no longer creates
+  a newsroom or an account, it prints the first-start link. The options
+  `--tenant` and `--email` are gone; newsrooms are created from `/admin`.
+
+### Upgrading from 0.6.x
+
+Nothing to do if you already have an administrator account: sign in and
+you land on `/admin`. Without one, after updating run
+`docker compose exec editor-web editor setup-link` and open the link.
+
 ## 0.6.1
 
 ### Fixed

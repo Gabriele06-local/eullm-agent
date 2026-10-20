@@ -39,7 +39,7 @@
   <a href="/publications" {% if active == 'publications' %}class="on" aria-current="page"{% endif %}>Pubblicazioni</a>
   <span class="grow"></span>
   <a href="/settings" {% if active == 'settings' %}class="on" aria-current="page"{% endif %}>Impostazioni</a>
-  {% if caller.operator %}<a href="/operator">Console operatore</a>{% endif %}
+  {% if caller.operator %}<a href="/admin">Amministrazione</a>{% endif %}
   <div class="who">
     <span>{{ caller.name }} · {{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}[caller.role] }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">Esci</button></form>

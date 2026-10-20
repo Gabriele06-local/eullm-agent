@@ -21,6 +21,24 @@ def cmd_migrate(a):
     from .runtime import settings
     migrate.upgrade(settings().admin_database_url)
     print("editor schema up to date")
+    _setup_link(quiet=True)
+
+
+def _setup_link(quiet: bool = False) -> None:
+    """While no administrator exists, print the first-start link."""
+    from . import accounts
+    from .runtime import settings
+    token = accounts.setup_token(_admin())
+    if token is None:
+        if not quiet:
+            print("an administrator exists already: sign in, or ask an operator for a password-reset link")
+        return
+    base = settings().public_url or f"http://127.0.0.1:{os.environ.get('EDITOR_PORT', '8090')}"
+    print(f"no administrator yet: open {base}/setup/{token} to create yours (the link works once)")
+
+
+def cmd_setup_link(a):
+    _setup_link()
 
 
 def cmd_tenant_add(a):
@@ -285,7 +303,8 @@ def main(argv=None):
         sp.set_defaults(fn=fn)
         return sp
 
-    add("migrate", cmd_migrate, "create or update the editor schema")
+    add("migrate", cmd_migrate, "create or update the editor schema (prints the first-start link while there is no administrator)")
+    add("setup-link", cmd_setup_link, "print a new first-start link, to create the first administrator from the browser")
     sp = add("tenant-add", cmd_tenant_add, "create a tenant"); sp.add_argument("tenant"); sp.add_argument("--name")
     sp = add("tenant-plan", cmd_tenant_plan, "set a tenant's plan, limits and settings (owner connection)")
     sp.add_argument("tenant"); sp.add_argument("--plan"); sp.add_argument("--max-sites", type=int)
