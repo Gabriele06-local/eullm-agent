@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.5
+
+### Added
+
+- Topics can be taken out of a site's line ("Togli il tema"): they are no
+  longer followed and later analyses do not propose them again. "Rimetti"
+  brings one back. On a draft the change is made in place; on an approved
+  profile it becomes a new approved version.
+- Profile versions that are not in use can be deleted from the Versions
+  table. The approved one cannot, nor one that already produced proposals
+  and scores.
+
+### Fixed
+
+- A site without an RSS or Atom feed, or without a sitemap, is no longer
+  called partial for that alone: the articles are found anyway. These are
+  shown as notes.
+- The reasons of an incomplete analysis are shown in Italian.
+
 ## 0.7.4
 
 ### Fixed

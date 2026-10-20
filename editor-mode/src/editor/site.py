@@ -34,6 +34,12 @@ log = logging.getLogger(__name__)
 AGENT = "eullm-agent"
 MIN_POSTS = 5
 GOOD_POSTS = 15
+# Worth saying, but the site was read anyway: they do not make it partial.
+NOTES = ("no RSS or Atom feed found", "no usable sitemap", "page budget reached", "sitemap ")
+
+
+def is_note(problem: str) -> bool:
+    return problem.startswith(NOTES)
 MAX_SITEMAP_BYTES = 10_000_000
 FEED_PATHS = ("/feed", "/rss", "/feed.xml", "/rss.xml", "/atom.xml", "/index.xml", "/feed/")
 SITEMAP_PATHS = ("/sitemap.xml", "/sitemap_index.xml", "/wp-sitemap.xml")
@@ -418,7 +424,7 @@ class SiteCrawler:
         if n < MIN_POSTS and not snap.categories:
             snap.status = "insufficient"
             snap.problems.append(f"only {n} articles readable and no categories: not enough to describe the site")
-        elif n < GOOD_POSTS or snap.problems:
+        elif n < GOOD_POSTS or any(not is_note(p) for p in snap.problems):
             snap.status = "partial"
             if n < GOOD_POSTS:
                 snap.problems.append(f"{n} articles read (at least {GOOD_POSTS} wanted)")

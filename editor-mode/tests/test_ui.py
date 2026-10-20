@@ -96,3 +96,24 @@ def test_safe_path_rejects_crlf():
     assert safe_path("/\r\nX") == "/"
     assert safe_path("https://evil.example") == "/"
     assert safe_path(None) == "/"
+
+
+def test_owner_removes_a_topic_and_deletes_a_version_from_the_page(db, tenant):
+    _, site_id = approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        name = s.execute(text("SELECT body->'subtopics'->0->>'name' FROM editor.editorial_profiles "
+                              "WHERE status = 'approved'")).scalar()
+    owner = logged_in(db, tenant, "owner")
+    assert "Togli il tema" in owner.get("/site").text
+    r = owner.post(f"/ui/sites/{site_id}/topics/remove", data={"name": name}, follow_redirects=False)
+    assert r.status_code == 303
+    page = owner.get("/site").text
+    assert "tolto" in page and "Temi tolti" in page and "Rimetti" in page
+    with db.tenant(tenant) as s:
+        old = s.execute(text("SELECT min(version) FROM editor.editorial_profiles")).scalar()
+    r = owner.post(f"/ui/sites/{site_id}/versions/{old}/delete", follow_redirects=False)
+    assert r.status_code == 303
+    page = owner.get("/site").text
+    assert "eliminata" in page or "storico" in page
+    viewer = logged_in(db, tenant, "viewer")
+    assert viewer.post(f"/ui/sites/{site_id}/topics/restore", data={"name": name}).status_code == 403

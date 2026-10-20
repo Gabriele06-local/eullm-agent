@@ -9,6 +9,7 @@ role the action needs. Forms answer with a redirect and a one-shot notice.
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime, time, timedelta
 from urllib.parse import quote, unquote
 from zoneinfo import ZoneInfo
@@ -71,6 +72,30 @@ def done(path: str, notice: str | None = None) -> RedirectResponse:
     return resp
 
 
+PROBLEMS = [
+    (r"no RSS or Atom feed found", "Il sito non ha un feed RSS o Atom: gli articoli sono stati trovati da sitemap e pagine."),
+    (r"no usable sitemap", "Nessuna sitemap utilizzabile: gli articoli sono stati trovati seguendo i link."),
+    (r"page budget reached", "Raggiunto il limite di pagine da leggere per un'analisi."),
+    (r"no publication dates found", "Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare."),
+    (r"language not determined", "Lingua non determinata."),
+    (r"home page unreachable", "La home page non risponde."),
+    (r"(\d+) articles read \(at least (\d+) wanted\)", r"Letti \1 articoli (ne servono almeno \2 per un'analisi completa)."),
+    (r"only (\d+) articles readable and no categories.*", r"Solo \1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito."),
+    (r"model analysis failed \((.*)\): .*", r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare."),
+    (r"model analysis not run.*", "Analisi del modello non eseguita: settore, pubblico e stile restano da determinare."),
+    (r"not enough material.*", "Materiale insufficiente: settore, pubblico e stile restano da determinare."),
+]
+
+
+def problem(text) -> str:
+    """The crawler's and profile's notes, in the dashboard's language."""
+    text = str(text)
+    for pattern, it in PROBLEMS:
+        if re.fullmatch(pattern, text, flags=re.S):
+            return re.sub(pattern, it, text, flags=re.S)
+    return text
+
+
 def number(value, digits: int = 2) -> str:
     if value is None:
         return "–"
@@ -100,6 +125,7 @@ def register(app, ctx) -> None:
     admin = getattr(ctx, "admin", None) or db
     env = pages.env
     env.filters["num"] = number
+    env.filters["problem"] = problem
     env.filters["s100"] = score100
     env.filters["plural"] = plural
 
@@ -405,7 +431,7 @@ def register(app, ctx) -> None:
                 rows.append({"name": n, "old": old, "new": new or 0.0, "examples": examples,
                              "keywords": now_by.get(n, {}).get("keywords", [])[:6],
                              "delta": None if old is None or new is None else round((new - old) * 100),
-                             "fresh": bool(draft and approved and old is None)})
+                             "fresh": bool(draft and approved and old is None), "current": n in now_by})
         evidence = []
         if shown is not None:
             for key in ("sector", "audience"):
@@ -465,6 +491,34 @@ def register(app, ctx) -> None:
         if not n:
             raise HTTPException(409, "not a draft version")
         return done("/site", f"Proposta v{version} scartata: la linea resta quella approvata.")
+
+    @app.post("/ui/sites/{site_id}/topics/remove")
+    def ui_remove_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            version = prof.remove_topic(s, c.tenant_id, site_id, name, c.name)
+        if version is None:
+            raise HTTPException(404, "topic not found")
+        return done("/site", f"Tema «{name}» tolto (v{version}): non viene più seguito, anche nelle prossime analisi.")
+
+    @app.post("/ui/sites/{site_id}/topics/restore")
+    def ui_restore_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            version = prof.restore_topic(s, c.tenant_id, site_id, name, c.name)
+        if version is None:
+            raise HTTPException(404, "topic not found")
+        return done("/site", f"Tema «{name}» rimesso (v{version}).")
+
+    @app.post("/ui/sites/{site_id}/versions/{version}/delete")
+    def ui_delete_version(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            why = prof.delete_version(s, site_id, version)
+        if why == "not found":
+            raise HTTPException(404, "version not found")
+        if why == "approved":
+            return done("/site", f"La v{version} è la linea in uso: approvane un'altra prima di eliminarla.")
+        if why == "used":
+            return done("/site", f"La v{version} ha già prodotto proposte e punteggi: resta nello storico.")
+        return done("/site", f"Versione v{version} eliminata.")
 
     @app.post("/ui/sites/{site_id}/profile")
     def ui_edit_profile(request: Request, site_id: int, body: str = Form(...),

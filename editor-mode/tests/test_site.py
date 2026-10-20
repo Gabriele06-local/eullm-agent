@@ -7,7 +7,7 @@ import respx
 import fakesite
 from editor.core_fetch import CoreTransport, FetchRefused
 from editor.html_extract import parse_html, same_site
-from editor.site import SiteCrawler
+from editor.site import GOOD_POSTS, SiteCrawler, is_note
 
 
 def crawl(router, **kw):
@@ -211,3 +211,9 @@ def test_a_domain_that_redirects_is_read_where_it_lands():
             snap = SiteCrawler(c).analyse("alias.example")
     assert snap.domain == "alias.example" and snap.read_at == "blog.example"
     assert len(snap.posts) == 8 and snap.sitemap_urls == 8
+
+
+def test_a_missing_feed_or_sitemap_is_a_note_not_a_gap():
+    # The articles are found through sitemap and links anyway.
+    assert is_note("no RSS or Atom feed found") and is_note("no usable sitemap") and is_note("page budget reached")
+    assert not is_note("no publication dates found") and not is_note(f"8 articles read (at least {GOOD_POSTS} wanted)")

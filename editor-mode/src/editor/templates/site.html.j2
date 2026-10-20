@@ -37,7 +37,7 @@
 {{ job_panel() }}
 
 {% if analysis and analysis.problems %}
-<div class="dashed"><strong>Cosa non è andato nell'ultima analisi</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p }}</span>{% endfor %}</div>
+<div class="dashed"><strong>{{ 'Note sull\'ultima analisi' if analysis.status == 'complete' else 'Perché l\'ultima analisi non è completa' }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}
 
 {% if editing %}
@@ -127,6 +127,7 @@
           <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">nuova</span>{% endif %}
             {% if r.keywords %}<small class="hint" style="display: block;">parole chiave: {{ r.keywords|join(', ') }}</small>{% endif %}
             {% for e in r.examples %}<small style="display: block;"><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a></small>{% endfor %}
+            {% if r.current and caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/remove"><input type="hidden" name="name" value="{{ r.name }}"><button class="btn" type="submit" style="margin-top: 4px; padding: 2px 10px; font-size: 12px;" title="Non seguire più questo tema, anche nelle prossime analisi">Togli il tema</button></form>{% endif %}
           </span>
           <span class="num">{% if r.old is not none %}{{ (100 * r.old)|round|int }}%{% endif %}</span>
           <span class="num">{{ (100 * r.new)|round|int }}%</span>
@@ -137,6 +138,14 @@
         </div>
         {% endfor %}
       </div>
+
+      {% set removed = (shown.body.get('settings') or {}).get('removed') or [] %}
+      {% if removed %}
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span class="label-up">Temi tolti · non vengono seguiti, anche se l'analisi li ritrova</span>
+        <div class="row">{% for x in removed %}<span class="chip">{{ x.name }}</span>{% if caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/restore"><input type="hidden" name="name" value="{{ x.name }}"><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">Rimetti</button></form>{% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
 
       <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start;">
         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -163,7 +172,7 @@
       {% if shown.body.get('gaps') %}
       <div class="dashed">
         <strong>Non determinato</strong>
-        {% for g in shown.body.get('gaps')[:6] %}<span class="hint">{{ g }}</span>{% endfor %}
+        {% for g in shown.body.get('gaps')[:6] %}<span class="hint">{{ g|problem }}</span>{% endfor %}
       </div>
       {% endif %}
     </aside>
@@ -178,7 +187,7 @@
   <h2 id="h-ver">Versioni</h2>
   <div class="scroll">
     <table style="min-width: 560px;">
-      <thead><tr><th>Versione</th><th>Origine</th><th>Stato</th><th>Decisione</th></tr></thead>
+      <thead><tr><th>Versione</th><th>Origine</th><th>Stato</th><th>Decisione</th>{% if caller.can('owner') %}<th></th>{% endif %}</tr></thead>
       <tbody>
       {% for p in profiles %}
       <tr>
@@ -186,6 +195,7 @@
         <td>{{ {'analysis': 'Prima analisi', 'reanalysis': 'Rianalisi periodica', 'manual': 'Modifica manuale'}.get(p.origin, p.origin) }}</td>
         <td>{% if p.status == 'approved' %}<span class="chip green">Approvata</span>{% elif p.status == 'draft' %}<span class="chip amber">In attesa</span>{% else %}<span class="chip">Ritirata</span>{% endif %}</td>
         <td>{% if p.approved_by %}{{ p.approved_by }} · {{ when(p.approved_at, 'day') }}{% else %}<span class="flat">–</span>{% endif %}</td>
+        {% if caller.can('owner') %}<td>{% if p.status != 'approved' %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/versions/{{ p.version }}/delete" onsubmit="return confirm('Eliminare la v{{ p.version }}? Non si può annullare.')"><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">Elimina</button></form>{% endif %}</td>{% endif %}
       </tr>
       {% endfor %}
       </tbody>
