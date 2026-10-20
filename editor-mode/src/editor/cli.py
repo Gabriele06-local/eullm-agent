@@ -106,11 +106,19 @@ def cmd_user_add(a):
     """An account that signs in with email and password. Without
     --password-stdin a password is generated and printed once."""
     from . import accounts
+    from . import models as m
     password = sys.stdin.readline().rstrip("\n") if a.password_stdin else accounts.random_password()
     try:
-        uid = accounts.create_user(_admin(), a.email, a.name or "", password, operator=a.operator)
-        if a.tenant:
-            with _admin().engine.begin() as conn:
+        accounts.check_password(password)
+        # One transaction: an unknown newsroom leaves no half-made account.
+        with _admin().engine.begin() as conn:
+            if a.tenant and conn.execute(select(m.tenants.c.tenant_id).where(m.tenants.c.tenant_id == a.tenant)).first() is None:
+                known = ", ".join(conn.execute(select(m.tenants.c.tenant_id).order_by(m.tenants.c.tenant_id)).scalars())
+                sys.exit(f"no newsroom {a.tenant}" + (f" (newsrooms: {known})" if known else ""))
+            uid = accounts.ensure_user(conn, a.email, a.name or "", a.operator)
+            conn.execute(m.users.update().where(m.users.c.id == uid).values(
+                password_hash=accounts.hash_password(password), failed_logins=0, locked_until=None))
+            if a.tenant:
                 accounts.set_member(conn, uid, a.tenant, a.role)
     except accounts.AccountError as e:
         sys.exit(str(e))
