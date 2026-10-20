@@ -185,6 +185,70 @@ pub fn valid_tenant(id: &str) -> bool {
         })
 }
 
+/// The id of a newsroom from its name: "EuLLM Redazione Web" -> "eullm-redazione-web".
+pub fn tenant_id_from(name: &str) -> Option<String> {
+    let mut id = String::new();
+    for c in name.chars().flat_map(char::to_lowercase) {
+        let c = match c {
+            'à' | 'á' | 'â' | 'ä' | 'ã' | 'å' => 'a',
+            'è' | 'é' | 'ê' | 'ë' => 'e',
+            'ì' | 'í' | 'î' | 'ï' => 'i',
+            'ò' | 'ó' | 'ô' | 'ö' | 'õ' => 'o',
+            'ù' | 'ú' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            'ñ' => 'n',
+            c => c,
+        };
+        if c.is_ascii_lowercase() || c.is_ascii_digit() {
+            id.push(c);
+        } else if !id.is_empty() && !id.ends_with('-') {
+            id.push('-');
+        }
+    }
+    let mut id = id.trim_end_matches('-').to_string();
+    if id.len() > 40 {
+        id.truncate(40);
+        id = id.trim_end_matches('-').to_string();
+    }
+    valid_tenant(&id).then_some(id)
+}
+
+/// Ask for a secret without showing it on the screen (when the input is a
+/// terminal).
+fn prompt_secret(label: &str) -> Result<String> {
+    use std::io::Write;
+    loop {
+        print!("{label}: ");
+        std::io::stdout().flush()?;
+        #[cfg(unix)]
+        let saved = {
+            let mut t: libc::termios = unsafe { std::mem::zeroed() };
+            // SAFETY: tcgetattr/tcsetattr on stdin with a termios we own.
+            if unsafe { libc::tcgetattr(0, &mut t) } == 0 {
+                let mut quiet = t;
+                quiet.c_lflag &= !libc::ECHO;
+                unsafe { libc::tcsetattr(0, libc::TCSANOW, &quiet) };
+                Some(t)
+            } else {
+                None
+            }
+        };
+        let mut buf = String::new();
+        let read = std::io::stdin().read_line(&mut buf);
+        #[cfg(unix)]
+        if let Some(t) = saved {
+            unsafe { libc::tcsetattr(0, libc::TCSANOW, &t) };
+            println!();
+        }
+        read?;
+        let v = buf.trim().to_string();
+        if !v.is_empty() {
+            return Ok(v);
+        }
+        println!("  (required \u{2014} please enter a value)");
+    }
+}
+
 fn compose(dir: &Path, args: &[&str]) -> Command {
     let mut c = Command::new("docker");
     c.arg("compose").args(args).current_dir(dir);
@@ -241,7 +305,7 @@ pub fn server_init(opts: Options) -> Result<()> {
         let needs_key = provider.as_ref().map(Provider::needs_key).unwrap_or(true);
         let key = match std::env::var("LLM_API_KEY") {
             Ok(k) if !k.is_empty() => k,
-            _ if needs_key => prompt_required("API key of the model (LLM_API_KEY)")?,
+            _ if needs_key => prompt_secret("API key of the model (LLM_API_KEY, not shown)")?,
             _ => String::new(),
         };
         write_private(&env_path, &env_file(version, &key)?)?;
@@ -312,20 +376,36 @@ pub fn server_init(opts: Options) -> Result<()> {
         Some(_) => {}
     }
 
-    let tenant = match &opts.tenant {
-        Some(t) => t.clone(),
-        None => prompt(
-            "Id of the first newsroom (lowercase letters, digits, dashes)",
-            "redazione",
-        )?,
+    let (tenant, name) = match &opts.tenant {
+        Some(t) if valid_tenant(t) => (t.clone(), t.clone()),
+        Some(t) => match tenant_id_from(t) {
+            Some(id) => (id, t.clone()),
+            None => bail!("'{t}' gives no usable id: use letters or digits"),
+        },
+        None => loop {
+            let name = prompt("Name of the first newsroom", "Redazione")?;
+            match tenant_id_from(&name) {
+                Some(id) => {
+                    println!("  id: {id}");
+                    break (id, name);
+                }
+                None => println!("  (use at least a letter or a digit)"),
+            }
+        },
     };
-    if !valid_tenant(&tenant) {
-        bail!("'{tenant}' is not a valid id: lowercase letters and digits, words joined by single dashes");
-    }
     run(
         compose(
             dir,
-            &["exec", "-T", "editor-web", "editor", "tenant-add", &tenant],
+            &[
+                "exec",
+                "-T",
+                "editor-web",
+                "editor",
+                "tenant-add",
+                &tenant,
+                "--name",
+                &name,
+            ],
         ),
         "creating the newsroom",
     )?;
@@ -348,8 +428,20 @@ pub fn server_init(opts: Options) -> Result<()> {
     )?;
 
     println!("\nReady.");
-    println!("  Dashboard:   http://127.0.0.1:8090  (put a reverse proxy with HTTPS in front to reach it from outside)");
-    println!("  Newsroom:    {tenant}");
+    // The port docker compose used: the shell's, else the one in .env.
+    let port = std::env::var("EDITOR_PORT")
+        .ok()
+        .filter(|p| !p.is_empty())
+        .or_else(|| {
+            std::fs::read_to_string(&env_path).ok().and_then(|t| {
+                t.lines()
+                    .find_map(|l| l.strip_prefix("EDITOR_PORT=").map(|v| v.trim().to_string()))
+                    .filter(|p| !p.is_empty())
+            })
+        });
+    let port = port.unwrap_or_else(|| "8090".into());
+    println!("  Dashboard:   http://127.0.0.1:{port}  (put a reverse proxy with HTTPS in front to reach it from outside)");
+    println!("  Newsroom:    {name} (id {tenant})");
     println!("  Login token: {token}");
     println!("               shown only now: keep it in a password manager.");
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
@@ -435,6 +527,23 @@ mod tests {
             c.matches("image: ghcr.io/eullm/eullm-agent-editor:")
                 .count(),
             3
+        );
+    }
+
+    #[test]
+    fn tenant_ids_from_names() {
+        let id = |n: &str| tenant_id_from(n);
+        assert_eq!(
+            id("EuLLM Redazione Web").as_deref(),
+            Some("eullm-redazione-web")
+        );
+        assert_eq!(id("  Città & Società  ").as_deref(), Some("citta-societa"));
+        assert_eq!(id("i3k").as_deref(), Some("i3k"));
+        assert_eq!(id("--- !!! ---"), None);
+        assert!(id(&"a".repeat(60)).unwrap().len() <= 40);
+        assert_eq!(
+            id(&format!("{} b", "a".repeat(39))).as_deref(),
+            Some("a".repeat(39).as_str())
         );
     }
 
