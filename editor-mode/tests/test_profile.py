@@ -227,3 +227,24 @@ def test_a_newer_analysis_replaces_the_draft_still_waiting(db, tenant):
         rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
     # One profile of the site waits for a decision, not two.
     assert [tuple(r) for r in rows] == [(1, "retired"), (2, "draft")]
+
+
+def test_a_better_method_proposes_a_new_profile_even_when_approved(db, tenant):
+    class C:
+        def analyse(self, domain):
+            return snapshot(fakesite.ARTICLES)
+
+    first = prof.analyse_site(db, tenant, "blog.example", C())
+    with db.tenant(tenant) as s:
+        assert prof.approve(s, first["site_id"], 1, "francesco")
+        # A profile approved before the current way of reading the site.
+        p = m.editorial_profiles
+        body = s.execute(select(p.c.body)).scalar()
+        body.pop("method", None)
+        s.execute(update(p).values(body=body))
+    again = prof.analyse_site(db, tenant, "blog.example", C())
+    assert again["significant"] and again["profile_id"]
+    with db.tenant(tenant) as s:
+        rows = s.execute(select(m.editorial_profiles.c.status, m.editorial_profiles.c.changes)
+                         .order_by(m.editorial_profiles.c.version)).all()
+    assert [r.status for r in rows] == ["approved", "draft"] and rows[1].changes == [{"kind": "method"}]

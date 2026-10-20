@@ -51,6 +51,7 @@
   </form>
 </section>
 {% elif shown %}
+{% set incomplete = not (shown.body.get('sector') or {}).get('value') %}
 <section class="card {% if draft %}drift{% endif %}" aria-labelledby="h-profile">
   <div class="card-head">
     <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -69,7 +70,12 @@
     <div class="row">
       {% if approved %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/discard/{{ draft.version }}"><button class="btn" type="submit">Mantieni la v{{ approved.version }}</button></form>{% endif %}
       <a class="btn" href="/site?edit=1">Modifica</a>
+      {% if incomplete %}
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn pri" type="submit">Rianalizza</button></form>
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn" type="submit">Approva comunque</button></form>
+      {% else %}
       <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn pri" type="submit">Approva la v{{ draft.version }}</button></form>
+      {% endif %}
     </div>
     {% endif %}
   </div>
@@ -78,16 +84,21 @@
   {% set subs = (b.get('subtopics') or [])[:4] %}
   {% set st = b.get('settings') or {} %}
   {% set sty = b.get('style') or {} %}
-  {% set incomplete = not (b.get('sector') or {}).get('value') %}
+  {% set an = b.get('analysis') or {} %}
+  {% set langs = b.get('languages') or {} %}
   <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-what">
-    <h3 id="h-what">Cosa approvi</h3>
-    {% if b.get('summary') %}<p class="lead" style="margin: 0;">{{ b.get('summary') }}</p>{% endif %}
-    {% if incomplete %}
-    <p class="error" style="margin: 0;">L'analisi non è completa: settore, pubblico e stile non sono stati determinati (il motivo è in "Non determinato"). Approvando ora l'agente lavora solo con i temi qui sotto: meglio rianalizzare, o completare il profilo con "Modifica".</p>
+    <h3 id="h-what">La linea editoriale di {{ site.domain }}</h3>
+    {% if b.get('summary') %}
+    <p class="lead" style="margin: 0;">{{ b.get('summary') }}</p>
+    {% else %}
+    <p class="lead" style="margin: 0;">{{ b.get('name') or site.domain }} pubblica {% if langs|length > 1 %}in {{ langs.keys()|join(' e ') }}{% elif b.get('language') %}in {{ b.get('language') }}{% endif %}{% if an.get('posts_per_week') %}, circa {{ an.get('posts_per_week')|num }} articoli a settimana{% endif %}{% if sty.get('typical_words') %} di circa {{ sty.get('typical_words') }} parole{% endif %}{% if subs %}, soprattutto su {% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}.{% if b.get('site_keywords') %} Si presenta con le parole chiave {{ b.get('site_keywords')|join(', ') }}.{% endif %}</p>
     {% endif %}
-    <p class="hint" style="margin: 0;">Il profilo è la linea editoriale del sito: tutto il resto parte da qui. Approvato, l'agente:</p>
+    {% if incomplete %}
+    <p class="error" style="margin: 0;">Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in "Non determinato"). Rianalizza, oppure completali tu con "Modifica" prima di approvare.</p>
+    {% endif %}
+    <p class="hint" style="margin: 0;">Approvare vuol dire: "questa è la mia linea". Da qui l'agente:</p>
     <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-      <li><strong>cerca le fonti</strong> che scrivono di {% if subs %}{% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% else %}questi temi{% endif %}: le testate che il sito già cita, ricerche su Hacker News, GitHub, Hugging Face e arXiv con le parole chiave dei temi, e i domini suggeriti dal modello; ognuna è valutata su cosa pubblica davvero prima di essere usata, e la attivi tu in Fonti;</li>
+      <li><strong>cerca le fonti</strong> che scrivono di {% if subs %}{% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% else %}questi temi{% endif %}, in tre modi: le testate che gli articoli del sito già citano, ricerche con le parole chiave dei temi (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per questi temi. Ogni fonte è letta e valutata prima di essere usata; in Fonti vedi da dove arriva ciascuna;</li>
       <li><strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {{ ((st.get('min_relevance', 0.15)) * 100)|round|int }}%){% if st.get('exclude') %}, scartando {{ st.get('exclude')|join(', ') }}{% endif %};</li>
       <li><strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;</li>
       <li><strong>propone {{ st.get('proposals_per_day', 3) }} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;</li>
@@ -109,11 +120,14 @@
       </div>
 
       <div style="display: flex; flex-direction: column;">
-        <span class="label-up" style="padding-bottom: 6px;">Sotto-tematiche · quota misurata sugli articoli letti</span>
+        <span class="label-up" style="padding-bottom: 6px;">Temi · quota degli articoli letti che ne parlano, con articoli d'esempio</span>
         <div class="share head-row"><span>Tema</span><span>{% if draft and approved %}v{{ approved.version }}{% endif %}</span><span>{% if draft and approved %}v{{ draft.version }}{% else %}Quota{% endif %}</span><span>{% if draft and approved %}Andamento{% endif %}</span></div>
         {% for r in rows %}
         <div class="share">
-          <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">nuova</span>{% endif %}</span>
+          <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">nuova</span>{% endif %}
+            {% if r.keywords %}<small class="hint" style="display: block;">parole chiave: {{ r.keywords|join(', ') }}</small>{% endif %}
+            {% for e in r.examples %}<small style="display: block;"><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a></small>{% endfor %}
+          </span>
           <span class="num">{% if r.old is not none %}{{ (100 * r.old)|round|int }}%{% endif %}</span>
           <span class="num">{{ (100 * r.new)|round|int }}%</span>
           <div class="row" style="flex-wrap: nowrap;">

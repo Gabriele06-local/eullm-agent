@@ -14,7 +14,7 @@
 
 **{{ t.line_change }}** (v{{ s.line_change.version }})
 {% for c in s.line_change.changes %}
-- {% if c.kind == "sector" or c.kind == "language" %}{{ t[c.kind] }}: {{ c["from"] }} → {{ c.to }}{% else %}{{ c.subtopic }}: {{ t[c.kind] }}{% if c.share is defined %} ({{ (c.share * 100) | round | int }}%){% elif c.to is defined %} ({{ (c["from"] * 100) | round | int }}% → {{ (c.to * 100) | round | int }}%){% endif %}{% endif %}
+- {% if c.kind == "method" %}{{ t.method }}{% elif c.kind == "sector" or c.kind == "language" %}{{ t[c.kind] }}: {{ c["from"] }} → {{ c.to }}{% else %}{{ c.subtopic }}: {{ t[c.kind] }}{% if c.share is defined %} ({{ (c.share * 100) | round | int }}%){% elif c.to is defined %} ({{ (c["from"] * 100) | round | int }}% → {{ (c.to * 100) | round | int }}%){% endif %}{% endif %}
 
 {% endfor %}
 {% endif %}

@@ -389,6 +389,8 @@ def register(app, ctx) -> None:
         analysis = s.execute(select(m.site_analyses).where(m.site_analyses.c.site_id == site.id)
                              .order_by(m.site_analyses.c.id.desc()).limit(1)).first() if site else None
         shown = draft or approved
+        # Titles of the articles read, to show which ones stand for each topic.
+        titles = {x.get("url"): x.get("title") for x in ((analysis.snapshot or {}).get("posts", []) if analysis else [])}
         rows = []
         if shown is not None:
             before = {x["name"]: x.get("share") for x in (approved.body.get("subtopics", []) if approved and draft else [])}
@@ -398,7 +400,10 @@ def register(app, ctx) -> None:
             for n in names:
                 new = now_by.get(n, {}).get("share")
                 old = before.get(n)
-                rows.append({"name": n, "old": old, "new": new or 0.0,
+                examples = [{"url": u, "title": titles.get(u) or u} for u in now_by.get(n, {}).get("evidence", [])[:2]
+                            if isinstance(u, str)]
+                rows.append({"name": n, "old": old, "new": new or 0.0, "examples": examples,
+                             "keywords": now_by.get(n, {}).get("keywords", [])[:6],
                              "delta": None if old is None or new is None else round((new - old) * 100),
                              "fresh": bool(draft and approved and old is None)})
         evidence = []
@@ -494,9 +499,18 @@ def register(app, ctx) -> None:
                 if status != "all":
                     q = q.where(src.c.status == status)
                 rows = s.execute(q.limit(500)).all()
+            # The latest news of each source shown: what it actually brings.
+            latest: dict[int, list] = {}
+            if rows:
+                it = m.source_items
+                for r in s.execute(select(it.c.source_id, it.c.title, it.c.url)
+                                   .where(it.c.source_id.in_([r.id for r in rows]))
+                                   .order_by(it.c.published_at.desc().nulls_last()).limit(3000)):
+                    if len(latest.setdefault(r.source_id, [])) < 3:
+                        latest[r.source_id].append({"title": r.title, "url": r.url})
             return render(request, "sources.html.j2", c, s, "sources", _sites=(sites, site), rows=rows,
                           counts=counts, total=sum(counts.values()), status=status, origins=ORIGINS, kinds=KINDS,
-                          usage=quotas.usage(s))
+                          usage=quotas.usage(s), latest=latest)
 
     @app.post("/ui/sources/{source_id}/status")
     def ui_source_status(source_id: int, status: str = Form(...), back: str = Form("/sources"),

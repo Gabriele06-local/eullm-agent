@@ -11,7 +11,7 @@
 {% endif %}
 {% if s.line_change %}
 <p style="background:#e8f1ff; padding:8px;"><strong>{{ t.line_change }}</strong> (v{{ s.line_change.version }})</p>
-<ul>{% for c in s.line_change.changes %}<li>{% if c.kind == "sector" or c.kind == "language" %}{{ t[c.kind] }}: {{ c["from"] }} → {{ c.to }}{% else %}{{ c.subtopic }}: {{ t[c.kind] }}{% endif %}</li>{% endfor %}</ul>
+<ul>{% for c in s.line_change.changes %}<li>{% if c.kind == "method" %}{{ t.method }}{% elif c.kind == "sector" or c.kind == "language" %}{{ t[c.kind] }}: {{ c["from"] }} → {{ c.to }}{% else %}{{ c.subtopic }}: {{ t[c.kind] }}{% endif %}</li>{% endfor %}</ul>
 {% endif %}
 <h3 style="font-size: 16px;">{{ t.proposals }}</h3>
 {% for p in s.proposals %}

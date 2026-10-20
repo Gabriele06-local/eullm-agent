@@ -34,7 +34,7 @@ LABELS = {
         "line_change": "Proposta di aggiornamento della linea editoriale", "suspended": "Fonti sospese",
         "gaps": "Analisi incompleta", "opportunity": "Opportunità", "hype": "Hype",
         "emerging": "tema emergente", "growing": "in crescita", "declining": "in calo", "sector": "settore",
-        "language": "lingua",
+        "language": "lingua", "method": "analisi del sito rifatta con un metodo migliore",
     },
     "en": {
         "title": "Editorial briefing", "proposals": "Today's proposals", "none": "No proposals today.",
@@ -43,7 +43,7 @@ LABELS = {
         "line_change": "Proposed update of the editorial line", "suspended": "Suspended sources",
         "gaps": "Incomplete analysis", "opportunity": "Opportunity", "hype": "Hype",
         "emerging": "emerging topic", "growing": "growing", "declining": "declining", "sector": "sector",
-        "language": "language",
+        "language": "language", "method": "site analysis redone with a better method",
     },
 }
 

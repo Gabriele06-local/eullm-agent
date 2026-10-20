@@ -5,7 +5,7 @@
   <div>
     <span class="kicker">Fonti{% if site %} · {{ site.domain }}{% endif %}</span>
     <h1>Fonti scoperte dall'agente</h1>
-    <p class="lead">Nessuna lista fissa: le fonti arrivano dal sito, dai feed che cita e dalle ricerche sul profilo, e ogni settimana vengono rivalutate.</p>
+    <p class="lead">Nessuna lista fissa. L'agente trova le fonti in tre modi: le testate che gli articoli del sito citano, le ricerche fatte con le parole chiave dei temi del profilo (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per quei temi. Ogni fonte viene letta e giudicata su cosa pubblica; da 0,50 entra attiva, tra 0,35 e 0,50 resta candidata. Ogni lunedì vengono rivalutate.</p>
   </div>
   {% if site and caller.can('owner') %}
   <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn pri" type="submit">Cerca nuove fonti</button></form>
@@ -40,7 +40,19 @@
       {% set comp = (r.evaluation or {}).get('components') or {} %}
       <tr {% if r.status in ('suspended', 'rejected') %}class="off"{% endif %}>
         <td style="max-width: 280px; overflow-wrap: anywhere;"><strong>{{ r.name }}</strong> <span class="chip">{{ kinds.get(r.kind, r.kind) }}</span><small>{{ r.url|replace('https://', '')|replace('http://', '') }}</small></td>
-        <td>{{ origins.get(r.origin, r.origin or '–') }}{% if r.evidence and r.evidence.get('cited_by_site') %}<small>citata {{ r.evidence.get('cited_by_site') }} volte dal sito</small>{% endif %}</td>
+        {% set evd = r.evidence or {} %}
+        <td style="max-width: 300px;">{{ origins.get(r.origin, r.origin or '–') }}
+          <small>{% if r.origin == 'site_outbound' %}citata {{ evd.get('cited_by_site', 0) }} {{ 'volta' if evd.get('cited_by_site') == 1 else 'volte' }} negli articoli del sito
+          {% elif r.origin == 'api_query' and evd.get('query') %}trovata cercando «{{ evd.get('query') }}» su {{ kinds.get(r.kind, r.kind) }}
+          {% elif r.origin == 'api_query' and evd.get('categories') %}categorie arXiv dei temi: {{ evd.get('categories')|join(', ') }}
+          {% elif r.origin == 'api_query' and evd.get('matched') %}i temi parlano di {{ evd.get('matched')|join(', ') }}
+          {% elif r.origin == 'model_suggestion' %}indicata dal modello per i temi del sito{% if evd.get('domain') %} ({{ evd.get('domain') }}){% endif %}, feed letto e verificato
+          {% endif %}</small>
+          {% set ex = latest.get(r.id) or (r.evaluation or {}).get('examples') or [] %}
+          {% if ex %}<details><summary class="hint">{{ 'Ultime notizie' if latest.get(r.id) else 'Cosa pubblicava alla valutazione' }}</summary>
+            {% for e in ex %}<small style="display: block;"><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a></small>{% endfor %}
+          </details>{% endif %}
+        </td>
         <td>
           {% if r.score is not none %}
           <div class="row" style="flex-wrap: nowrap;"><div class="bar" style="width: 72px;"><i style="width: {{ (100 * r.score)|round|int }}%"></i></div><span class="num">{{ r.score|num }}</span></div>
@@ -51,7 +63,12 @@
         <td>
           {% set st = {'active': ('green', 'Attiva'), 'candidate': ('blue', 'Candidata'), 'suspended': ('red', 'Sospesa'), 'rejected': ('', 'Scartata')}.get(r.status, ('', r.status)) %}
           <span class="chip {{ st[0] }}">{{ st[1] }}</span>
-          {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason }}</small>{% endif %}
+          {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason }}</small>
+          {% elif r.status == 'rejected' and comp.get('relevance') is not none and comp.get('relevance') < 0.1 %}<small>parla poco dei temi del sito</small>
+          {% elif r.status == 'rejected' %}<small>punteggio sotto 0,35</small>{% endif %}
+          {% if comp %}<details><summary class="hint">Perché questo punteggio</summary>
+            <small style="display: block;">pertinenza {{ comp.get('relevance', 0)|num }} · frequenza {{ comp.get('frequency', 0)|num }} · freschezza {{ comp.get('freshness', 0)|num }} · originalità {{ comp.get('originality', 0)|num }} · qualità {{ comp.get('quality', 0)|num }} · affidabilità {{ comp.get('reliability', 0)|num }}</small>
+          </details>{% endif %}
         </td>
         {% if caller.can('owner') %}
         <td>
@@ -77,6 +94,6 @@
   <p class="empty">Nessuna fonte in questo stato.</p>
   {% endif %}
 </section>
-<p class="hint">Il punteggio pesa pertinenza al profilo, frequenza, freschezza, originalità, qualità e affidabilità. Da 0,50 la fonte entra attiva, tra 0,35 e 0,50 resta candidata.</p>
+<p class="hint">Il punteggio pesa pertinenza ai temi del profilo (35%), frequenza (15%), freschezza (15%), qualità (15%), originalità (10%) e affidabilità (10%). Pertinenza: quante notizie della fonte contengono le parole chiave dei temi.</p>
 {% endif %}
 {% endblock %}
