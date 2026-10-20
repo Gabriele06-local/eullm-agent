@@ -23,17 +23,22 @@ The ports listen on 127.0.0.1: put a reverse proxy with HTTPS in front
 Requirements: Docker with the compose plugin, and the `eullm-agent`
 binary of the release (Linux x86-64), nothing else:
 
+    mkdir -p ~/eullm-server && cd ~/eullm-server
     curl -LO https://github.com/eullm/eullm-agent/releases/latest/download/eullm-agent-linux-x64
     chmod +x eullm-agent-linux-x64
-    ./eullm-agent-linux-x64 server-init
+    ./eullm-agent-linux-x64 server-init --dir .
 
-It asks the model (NVIDIA Build, Groq, EuLLM Engine on this machine or
-another OpenAI-compatible service) and its key, then:
+Everything stays in that one folder: the binary, the compose file,
+`core.yaml` and `.env`; the data lives in Docker volumes. It asks the
+model (NVIDIA Build, Groq, EuLLM Engine on this machine or another
+OpenAI-compatible service) and its key, the name of the first newsroom and
+your email, then:
 
-- writes in `eullm-server/` the compose file, `core.yaml` and `.env` with
-  every password and token generated (`.env` readable only by you);
+- writes the compose file, `core.yaml` and `.env` with every password and
+  token generated (`.env` readable only by you);
 - downloads the images of the same release and starts everything;
-- creates the first newsroom and prints its owner's login token, once.
+- creates the first newsroom and your account (operator of the service,
+  owner of the newsroom) and prints its password, once.
 
 Keep a copy of `.env`: `EDITOR_SECRET_KEY` in it encrypts the publishing
 credentials. Running `server-init` again changes no file that exists: it
