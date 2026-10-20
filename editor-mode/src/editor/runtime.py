@@ -23,6 +23,15 @@ def database() -> Database:
     return Database.from_url(settings().database_url)
 
 
+@lru_cache(maxsize=1)
+def admin_database() -> Database:
+    """The owner connection: plans, accounts, the operator's work."""
+    st = settings()
+    if not st.admin_database_url or st.admin_database_url == st.database_url:
+        return database()
+    return Database.from_url(st.admin_database_url)
+
+
 def core() -> CoreClient | None:
     st = settings()
     return CoreClient(st.core_url, st.core_token, st.core_model, delegate=st.core_delegate) if st.core_token else None

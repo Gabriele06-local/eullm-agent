@@ -12,14 +12,22 @@
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
   <section class="card pad">
     <h1 style="font-size: 22px;">Accedi</h1>
-    <p class="lead">Usa il token di accesso che ti ha dato l'owner del tuo account.</p>
     {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="/login" style="display: flex; flex-direction: column; gap: 12px;">
-      <label class="field">Token<input name="token" type="password" autocomplete="current-password" required autofocus></label>
+      <label class="field">Email<input name="email" type="email" autocomplete="username" value="{{ email or '' }}" required autofocus></label>
+      <label class="field">Password<input name="password" type="password" autocomplete="current-password" required></label>
       <button class="btn pri" type="submit">Entra</button>
     </form>
+    {% if can_reset %}<a class="hint" href="/forgot">Password dimenticata?</a>{% else %}<p class="hint">Password dimenticata? Chiedi un nuovo link a chi gestisce il servizio.</p>{% endif %}
   </section>
-  <p class="hint">Il token resta in un cookie di sessione su questo browser per 30 giorni.</p>
+  <details class="card pad">
+    <summary class="hint">Entra con un token di accesso</summary>
+    <form method="post" action="/login" style="display: flex; flex-direction: column; gap: 12px;">
+      <label class="field">Token<input name="token" type="password" autocomplete="off" required></label>
+      <button class="btn" type="submit">Entra con il token</button>
+    </form>
+  </details>
+  <p class="hint">Resti collegato su questo browser per 30 giorni, finché non esci.</p>
 </main>
 </body>
 </html>

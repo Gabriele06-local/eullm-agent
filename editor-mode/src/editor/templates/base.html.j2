@@ -11,6 +11,16 @@
 <div class="shell">
 <nav class="nav" aria-label="Sezioni">
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
+  {% if newsrooms|length > 1 %}
+  <form method="get" action="/newsroom" class="switch">
+    <label for="room-pick">Redazione</label>
+    <select id="room-pick" name="t" onchange="this.form.submit()">
+      {% for x in newsrooms %}<option value="{{ x.tenant_id }}" {% if x.tenant_id == caller.tenant_id %}selected{% endif %}>{{ x.name }}</option>{% endfor %}
+      {% if caller.tenant_id not in newsrooms|map(attribute='tenant_id') %}<option value="{{ caller.tenant_id }}" selected>{{ caller.tenant_id }}</option>{% endif %}
+    </select>
+    <noscript><button class="btn sm" type="submit">Vai</button></noscript>
+  </form>
+  {% endif %}
   {% if sites %}
   <form method="get" action="/switch" class="switch">
     <label for="site-pick">Sito</label>
@@ -29,6 +39,7 @@
   <a href="/publications" {% if active == 'publications' %}class="on" aria-current="page"{% endif %}>Pubblicazioni</a>
   <span class="grow"></span>
   <a href="/settings" {% if active == 'settings' %}class="on" aria-current="page"{% endif %}>Impostazioni</a>
+  {% if caller.operator %}<a href="/operator">Console operatore</a>{% endif %}
   <div class="who">
     <span>{{ caller.name }} · {{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}[caller.role] }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">Esci</button></form>

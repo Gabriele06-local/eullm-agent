@@ -1,5 +1,58 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- Editor Mode: **accounts**. People sign in with email and password
+  (stored as scrypt hashes; five wrong passwords lock the account for 15
+  minutes) and may belong to several newsrooms, each with its role. An
+  owner invites people from Impostazioni (lettura, editor, owner), changes
+  their role or removes them: a removed person is out at once. Invites and
+  password resets are single-use links, sent by email when SMTP is set and
+  shown otherwise. Tokens remain for integrations.
+- Editor Mode: **operator console** (`/operator`, for operator accounts):
+  every newsroom with plan, limits and usage; create one and invite its
+  owner, change plan and limits, suspend and reactivate, delete; enter a
+  newsroom as owner; invite other operators; password-reset links; API
+  keys for the billing system.
+- Editor Mode: **provisioning API** (`/api/operator/tenants`, with an
+  operator key `edo_...`): create a newsroom when a payment goes through
+  (its owner gets the invite), read them with their usage, change plan and
+  limits, suspend (payment failed), invite, delete. An `external_ref` (the
+  subscription) makes a repeated notice return the same newsroom.
+- `editor user-add` (account, optionally operator and member of a
+  newsroom; prints a generated password) and `editor operator-key`.
+- `server-init` asks for your email and creates your account, operator of
+  the service and owner of the first newsroom, instead of a login token.
+  It asks the newsroom's name (the id is derived from it) and does not
+  show the model's key while it is typed.
+- Editor Mode: the EuLLM logo in the dashboard.
+
+### Fixed
+
+- Editor Mode on a server: `editor tenant-delete` deleted nothing and
+  failed, because row-level security applies to the schema owner too
+  (it is not a superuser there). It now deletes in the tenant's scope.
+- Editor Mode: the site page said "Nessun sito" while the first analysis
+  was still queued or running, or had failed: it now shows the work and
+  its error before the site exists.
+
+### Upgrading from 0.5.4
+
+In `~/eullm-server` set `EULLM_VERSION=0.6.0` in `.env` (or leave it empty
+for latest), then `docker compose pull && docker compose up -d`: the
+migration adds the account tables. Create your account, operator and owner
+of your newsroom (the password is printed once):
+
+    docker compose exec editor-web editor user-add you@example.com --operator --tenant <id> --role owner
+
+and sign in with email and password. Existing tokens keep working. For
+invite links that point to the public address of the dashboard, add
+`EDITOR_PUBLIC_URL: ${EDITOR_PUBLIC_URL:-}` under `x-editor-env` in
+`compose.yaml` (server-init does not rewrite an existing file) and set
+`EDITOR_PUBLIC_URL` in `.env`; set SMTP to send them by email.
+
 ## 0.5.4
 
 ### Added

@@ -41,7 +41,7 @@
     <div class="list-row"><span>Ora del briefing</span><span class="num">{% if usage.plan.get('briefing_hour') is not none %}{{ '%02d'|format(usage.plan.get('briefing_hour')) }}:00{% else %}–{% endif %}</span></div>
     <div class="list-row"><span>Lingua</span><span class="num">{{ usage.plan.get('language') or '–' }}</span></div>
     {% endif %}
-    <p class="hint">Si cambiano dal server con il comando <code>editor tenant-plan</code>.</p>
+    <p class="hint">Le cambia chi gestisce il servizio.</p>
   </section>
 </div>
 
@@ -65,9 +65,59 @@
 </section>
 
 {% if caller.can('owner') %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if new_link %}
+<section class="card pad" aria-labelledby="h-link" style="border-color: var(--accent);">
+  <h2 id="h-link">Invito per {{ new_link.email }}</h2>
+  {% if new_link.sent %}<p class="lead">L'invito è partito per email. Il link vale 7 giorni.</p>
+  {% else %}<p class="lead">Mandagli questo link: vale 7 giorni e si usa una volta.</p>
+  <div class="token">{{ new_link.url }}</div>{% endif %}
+</section>
+{% endif %}
+<section class="card pad" aria-labelledby="h-people">
+  <h2 id="h-people">Persone della redazione</h2>
+  <p class="hint">Ognuno entra con la sua email e la sua password. Lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni e gestisce le persone.</p>
+  <div class="scroll">
+    <table style="min-width: 560px;">
+      <thead><tr><th>Persona</th><th>Ruolo</th><th>Da</th><th><span class="sr">Azioni</span></th></tr></thead>
+      <tbody>
+      {% for p in people %}
+      <tr>
+        <td>{{ p.name or p.email }}{% if p.name %} <span class="hint">{{ p.email }}</span>{% endif %}{% if not p.active %} <span class="chip amber">Invito non ancora accettato</span>{% endif %}</td>
+        <td>
+          <form class="inline" method="post" action="/ui/people/{{ p.id }}/role">
+            <select name="role" onchange="this.form.submit()" aria-label="Ruolo di {{ p.email }}">
+              {% for r, label in [('viewer', 'Lettura'), ('editor', 'Editor'), ('owner', 'Owner')] %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+            <noscript><button class="btn sm" type="submit">Cambia</button></noscript>
+          </form>
+        </td>
+        <td>{{ when(p.created_at, 'day') }}</td>
+        <td style="text-align: right;">{% if p.id != caller.user_id %}<form class="inline" method="post" action="/ui/people/{{ p.id }}/remove"><button class="btn sm" type="submit">Rimuovi</button></form>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="hint">Nessuna persona con un account: invita qualcuno qui sotto.</td></tr>
+      {% endfor %}
+      {% for i in invited %}
+      <tr>
+        <td>{{ i.email }} <span class="chip">Invitato</span></td>
+        <td>{{ {'owner': 'Owner', 'editor': 'Editor', 'viewer': 'Lettura'}.get(i.role, i.role) }}</td>
+        <td>scade {{ when(i.expires_at, 'day') }}</td>
+        <td style="text-align: right;"><form class="inline" method="post" action="/ui/invites/{{ i.token_sha256 }}/revoke"><button class="btn sm" type="submit">Annulla</button></form></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="/ui/people/invite" class="form-grid" style="margin-top: 8px;">
+    <label class="field">Email<input name="email" type="email" required placeholder="giulia@esempio.it"></label>
+    <label class="field">Ruolo<select name="role"><option value="viewer">Lettura</option><option value="editor" selected>Editor</option><option value="owner">Owner</option></select></label>
+    <div><button class="btn" type="submit">Invita</button></div>
+  </form>
+</section>
 <section class="card pad" aria-labelledby="h-tok">
-  <h2 id="h-tok">Accessi</h2>
-  <p class="hint">Ogni persona o integrazione ha il suo accesso: lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni.</p>
+  <h2 id="h-tok">Token per integrazioni</h2>
+  <p class="hint">Per programmi e integrazioni che usano l'API: ogni token ha il suo ruolo e si revoca da qui.</p>
   <div class="scroll">
     <table style="min-width: 520px;">
       <thead><tr><th>Nome</th><th>Ruolo</th><th>Creato</th><th>Stato</th><th><span class="sr">Azioni</span></th></tr></thead>
@@ -85,9 +135,9 @@
     </table>
   </div>
   <form method="post" action="/ui/tokens" class="form-grid" style="margin-top: 8px;">
-    <label class="field">Nome<input name="name" required placeholder="Giulia, redazione"></label>
+    <label class="field">Nome<input name="name" required placeholder="WordPress, automazioni"></label>
     <label class="field">Ruolo<select name="role"><option value="viewer">Lettura</option><option value="editor" selected>Editor</option><option value="owner">Owner</option></select></label>
-    <div><button class="btn" type="submit">Crea accesso</button></div>
+    <div><button class="btn" type="submit">Crea token</button></div>
   </form>
 </section>
 <section class="card pad" aria-labelledby="h-data">

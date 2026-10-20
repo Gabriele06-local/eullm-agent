@@ -66,19 +66,54 @@ Requirements: Docker with the compose plugin, and this repository.
        docker compose up -d
        docker compose ps                 # editor-migrate: exited (0), the rest running
 
-4. The first tenant and its owner's login for the dashboard:
+4. The first newsroom and your account (operator of the service, owner
+   of the newsroom):
 
        docker compose exec editor-web editor tenant-add acme --name "ACME"
        docker compose exec editor-web editor tenant-plan acme --plan pro --max-sites 4 --max-cost-month 40
-       docker compose exec editor-web editor token-new --tenant acme --name francesco
+       docker compose exec editor-web editor user-add you@example.com --operator --tenant acme --role owner
 
-   The last command prints the token (once): it opens the dashboard at
-   http://127.0.0.1:8090. The Core's web interface at
+   The last command prints the password (once): sign in at
+   http://127.0.0.1:8090 with your email. The Core's web interface at
    http://127.0.0.1:8088 opens with `CORE_ADMIN_TOKEN` from `.env`.
 
 5. A site: from the dashboard, or
 
        docker compose exec editor-web editor site-add example.com --tenant acme
+
+## Newsrooms, people and the billing system
+
+- **Operator console** (`/operator`, for operator accounts): every
+  newsroom with its plan, limits and usage; create one (its owner gets an
+  invite), change plan and limits, suspend or reactivate, invite people,
+  delete; invite other operators, make a password-reset link, and create
+  the API keys of the billing system. "Entra" opens a newsroom as owner.
+- **People of a newsroom** (Impostazioni, for owners): invite by email
+  with a role (lettura, editor, owner), change roles, remove. Each person
+  signs in with email and password and can belong to several newsrooms.
+  Tokens remain for integrations.
+- **Provisioning API**, for the billing system (key from the console or
+  `editor operator-key --name billing`, sent as `Authorization: Bearer edo_...`):
+
+  | Call | What |
+  |---|---|
+  | `POST /api/operator/tenants` | create a newsroom: `name`, `owner_email`, optional `external_ref`, `plan`, `limits`, `timezone`, `language`; 201 with the owner's invite (emailed when SMTP is set, its `url` returned either way). The same `external_ref` again answers 200 with the same newsroom, so a payment notice delivered twice makes one |
+  | `GET /api/operator/tenants[?external_ref=...]` | newsrooms with plan, usage and people |
+  | `GET /api/operator/tenants/{id}` | one, with its people |
+  | `PATCH /api/operator/tenants/{id}` | `plan`, `limits` (null removes a limit), `active: false` to suspend (payment failed), `name`, `timezone`, `language` |
+  | `POST /api/operator/tenants/{id}/invites` | invite `email` with a `role` |
+  | `DELETE /api/operator/tenants/{id}?confirm={id}` | delete it with all its data |
+
+  Example, when a subscription starts:
+
+      curl -X POST https://editor.example.com/api/operator/tenants \
+        -H "Authorization: Bearer edo_..." -H "Content-Type: application/json" \
+        -d '{"name": "Redazione Rossi", "owner_email": "rossi@example.com", "external_ref": "sub_123",
+             "plan": "pro", "limits": {"max_sites": 3, "max_llm_cost_month": 30}}'
+
+  `limits` takes `max_sites`, `max_active_sources`, `max_items_per_day`,
+  `max_drafts_month` and `max_llm_cost_month` (euro; it is also the
+  newsroom's budget in the Core).
 
 ## HTTPS
 

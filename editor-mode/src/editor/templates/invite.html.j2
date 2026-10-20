@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invito · EuLLM Editor</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+{% include "_style.html.j2" %}
+</head>
+<body>
+<main class="solo">
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
+  <section class="card pad">
+  {% if not info %}
+    <h1 style="font-size: 22px;">Link non valido</h1>
+    <p class="lead">Il link è scaduto o è già stato usato. Chiedine uno nuovo a chi te l'ha mandato.</p>
+    <a class="btn" href="/login">Vai all'accesso</a>
+  {% else %}
+    {% if info.kind == 'reset' %}
+    <h1 style="font-size: 22px;">Nuova password</h1>
+    <p class="lead">Scegli la nuova password di {{ info.email }}.</p>
+    {% else %}
+    <h1 style="font-size: 22px;">{% if info.newsroom %}Entra in {{ info.newsroom }}{% else %}Console del servizio{% endif %}</h1>
+    <p class="lead">{{ info.created_by }} ha invitato {{ info.email }}{% if info.role %} come {{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}[info.role] }}{% endif %}{% if info.operator %} come operatore del servizio{% endif %}.</p>
+    {% endif %}
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="/invite/{{ token }}" style="display: flex; flex-direction: column; gap: 12px;">
+      <input type="hidden" name="email" value="{{ info.email }}" autocomplete="username">
+      {% if info.kind == 'invite' and info.has_password %}
+      <label class="field">La password del tuo account<input name="password" type="password" autocomplete="current-password" required autofocus></label>
+      <button class="btn pri" type="submit">Accetta l'invito</button>
+      {% else %}
+      {% if info.kind == 'invite' %}<label class="field">Nome<input name="name" autocomplete="name" value="{{ info.user_name }}" maxlength="100"></label>{% endif %}
+      <label class="field">Password (almeno {{ min }} caratteri)<input name="password" type="password" autocomplete="new-password" minlength="{{ min }}" required autofocus></label>
+      <label class="field">Ripeti la password<input name="again" type="password" autocomplete="new-password" minlength="{{ min }}" required></label>
+      <button class="btn pri" type="submit">{% if info.kind == 'reset' %}Salva ed entra{% else %}Crea l'account ed entra{% endif %}</button>
+      {% endif %}
+    </form>
+  {% endif %}
+  </section>
+</main>
+</body>
+</html>

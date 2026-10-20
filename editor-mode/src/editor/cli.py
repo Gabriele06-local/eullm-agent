@@ -97,6 +97,34 @@ def cmd_token_new(a):
     print(create_token(_db(), a.tenant, a.name, a.role))
 
 
+def _admin():
+    from .runtime import admin_database
+    return admin_database()
+
+
+def cmd_user_add(a):
+    """An account that signs in with email and password. Without
+    --password-stdin a password is generated and printed once."""
+    from . import accounts
+    password = sys.stdin.readline().rstrip("\n") if a.password_stdin else accounts.random_password()
+    try:
+        uid = accounts.create_user(_admin(), a.email, a.name or "", password, operator=a.operator)
+        if a.tenant:
+            with _admin().engine.begin() as conn:
+                accounts.set_member(conn, uid, a.tenant, a.role)
+    except accounts.AccountError as e:
+        sys.exit(str(e))
+    print(f"account {accounts.normalise_email(a.email)} ready" + (" (operator)" if a.operator else "")
+          + (f", {a.role} of {a.tenant}" if a.tenant else ""))
+    if not a.password_stdin:
+        print(f"password: {password}")
+
+
+def cmd_operator_key(a):
+    from . import accounts
+    print(accounts.create_operator_token(_admin(), a.name))
+
+
 def cmd_recipient_add(a):
     with _db().tenant(a.tenant) as s:
         s.execute(text("INSERT INTO editor.recipients (tenant_id, channel, address) VALUES (:t, :c, :a) "
@@ -261,6 +289,12 @@ def main(argv=None):
     sp = add("token-new", cmd_token_new, "create a dashboard/API token (printed once)")
     sp.add_argument("--tenant", required=True); sp.add_argument("--name", required=True)
     sp.add_argument("--role", choices=["owner", "editor", "viewer"], default="owner")
+    sp = add("user-add", cmd_user_add, "create an account (email and password), optionally operator or member of a tenant")
+    sp.add_argument("email"); sp.add_argument("--name"); sp.add_argument("--operator", action="store_true")
+    sp.add_argument("--tenant"); sp.add_argument("--role", choices=["owner", "editor", "viewer"], default="owner")
+    sp.add_argument("--password-stdin", action="store_true", help="read the password from stdin instead of generating one")
+    sp = add("operator-key", cmd_operator_key, "create an operator API key for /api/operator (printed once)")
+    sp.add_argument("--name", required=True)
     sp = add("recipient-add", cmd_recipient_add, "send the briefing to an address")
     sp.add_argument("--tenant", required=True); sp.add_argument("--channel", choices=["email", "telegram"], required=True)
     sp.add_argument("--address", required=True)

@@ -62,7 +62,9 @@ def _sqlite_engine(path: Path, **kwargs) -> Engine:
 
     @event.listens_for(engine, "begin")
     def _begin(conn):
-        conn.exec_driver_sql("BEGIN IMMEDIATE")
+        # A connection marked read_only reads beside a transaction that
+        # holds the write lock (WAL), instead of waiting for it.
+        conn.exec_driver_sql("BEGIN" if conn.get_execution_options().get("read_only") else "BEGIN IMMEDIATE")
 
     return engine
 

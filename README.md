@@ -42,6 +42,10 @@ site, and keeps the editor in charge:
 - **Many newsrooms, one server.** Each newsroom is a tenant isolated by
   PostgreSQL row-level security, with its own budget, queue and data
   export.
+- **Ready to sell as a service.** People sign in with email and password
+  and are invited with a role; an operator console creates newsrooms,
+  sets plans and limits and suspends them; a provisioning API lets your
+  billing system open a newsroom when a payment goes through.
 
 ## Why EuLLM Agent
 

@@ -129,6 +129,7 @@ pub struct Options {
     pub model: Option<String>,
     pub base_url: Option<String>,
     pub tenant: Option<String>,
+    pub email: Option<String>,
     pub no_start: bool,
 }
 
@@ -215,6 +216,20 @@ pub fn tenant_id_from(name: &str) -> Option<String> {
 
 /// Ask for a secret without showing it on the screen (when the input is a
 /// terminal).
+fn valid_email(e: &str) -> bool {
+    let e = e.trim();
+    match e.split_once('@') {
+        Some((user, host)) => {
+            !user.is_empty()
+                && host.contains('.')
+                && !host.starts_with('.')
+                && !host.ends_with('.')
+                && !e.contains(char::is_whitespace)
+        }
+        None => false,
+    }
+}
+
 fn prompt_secret(label: &str) -> Result<String> {
     use std::io::Write;
     loop {
@@ -409,7 +424,18 @@ pub fn server_init(opts: Options) -> Result<()> {
         ),
         "creating the newsroom",
     )?;
-    let token = run(
+    let email = match &opts.email {
+        Some(e) if valid_email(e) => e.trim().to_lowercase(),
+        Some(e) => bail!("'{e}' is not an email address"),
+        None => loop {
+            let e = prompt_required("Your email (you sign in with it, as operator and owner)")?;
+            if valid_email(&e) {
+                break e.trim().to_lowercase();
+            }
+            println!("  (an email address, like name@example.com)");
+        },
+    };
+    let out = run(
         compose(
             dir,
             &[
@@ -417,15 +443,22 @@ pub fn server_init(opts: Options) -> Result<()> {
                 "-T",
                 "editor-web",
                 "editor",
-                "token-new",
+                "user-add",
+                &email,
+                "--operator",
                 "--tenant",
                 &tenant,
-                "--name",
+                "--role",
                 "owner",
             ],
         ),
-        "creating the login",
+        "creating your account",
     )?;
+    let password = out
+        .lines()
+        .find_map(|l| l.strip_prefix("password: "))
+        .map(str::to_string)
+        .context("the account was created but no password came back")?;
 
     println!("\nReady.");
     // The port docker compose used: the shell's, else the one in .env.
@@ -442,8 +475,13 @@ pub fn server_init(opts: Options) -> Result<()> {
     let port = port.unwrap_or_else(|| "8090".into());
     println!("  Dashboard:   http://127.0.0.1:{port}  (put a reverse proxy with HTTPS in front to reach it from outside)");
     println!("  Newsroom:    {name} (id {tenant})");
-    println!("  Login token: {token}");
+    println!("  Sign in:     {email}");
+    println!("  Password:    {password}");
     println!("               shown only now: keep it in a password manager.");
+    println!("  From the operator console (/operator) you create the other newsrooms, give them");
+    println!(
+        "  plans and limits, invite their owners and make the API key for the billing system."
+    );
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
     println!("  EDITOR_SECRET_KEY in it encrypts the publishing credentials; without it they must be entered again.");
     Ok(())
@@ -528,6 +566,16 @@ mod tests {
                 .count(),
             3
         );
+    }
+
+    #[test]
+    fn emails() {
+        assert!(valid_email("francesco@i3k.eu"));
+        assert!(valid_email(" a@b.it "));
+        assert!(!valid_email("francesco"));
+        assert!(!valid_email("@i3k.eu"));
+        assert!(!valid_email("a@localhost"));
+        assert!(!valid_email("a b@c.it"));
     }
 
     #[test]

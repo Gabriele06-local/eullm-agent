@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console operatore · EuLLM Editor</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+{% include "_style.html.j2" %}
+</head>
+<body>
+{% set labels = {'sites': 'Siti', 'sources': 'Fonti attive', 'items': 'Notizie oggi', 'drafts': 'Bozze nel mese', 'llm_cost': 'Costo modello nel mese'} %}
+<div class="shell">
+<nav class="nav" aria-label="Sezioni">
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Console operatore</small></div>
+  <a href="#redazioni" class="on">Redazioni</a>
+  <a href="#nuova">Nuova redazione</a>
+  <a href="#operatori">Operatori</a>
+  <a href="#api">Chiavi API</a>
+  {% if mine %}<span class="hint" style="padding: 12px 12px 4px;">Le tue redazioni</span>
+  {% for x in mine %}<a href="/operator/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
+  <span class="grow"></span>
+  <div class="who">
+    <span>{{ me.email }} · operatore</span>
+    <form method="post" action="/logout"><button class="link" type="submit">Esci</button></form>
+  </div>
+</nav>
+<main class="main">
+  {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if new %}
+  <section class="card pad" style="border-color: var(--accent);" aria-labelledby="h-new">
+    <h2 id="h-new">{{ new.what }}</h2>
+    {% if new.link %}
+      {% if new.link.sent %}<p class="lead">Il link è partito per email a {{ new.link.email }}.</p>
+      {% else %}<p class="lead">Questo server non manda email: manda tu questo link a {{ new.link.email }}. Si usa una volta.</p>
+      <div class="token">{{ new.link.url }}</div>{% endif %}
+    {% endif %}
+    {% if new.key %}<p class="lead">Copiala adesso: non verrà più mostrata. Va nell'intestazione <code>Authorization: Bearer …</code> delle chiamate a <code>/api/operator/</code>.</p><div class="token">{{ new.key }}</div>{% endif %}
+    {% if new.note %}<p class="lead">{{ new.note }}</p>{% endif %}
+    {% if new.warning %}<p class="error">{{ new.warning }}</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <header class="head" id="redazioni">
+    <div><span class="kicker">Console operatore</span><h1>Redazioni</h1></div>
+    <span class="chip dark">{{ rooms|length }} {{ 'redazione' if rooms|length == 1 else 'redazioni' }}</span>
+  </header>
+
+  {% for r in rooms %}
+  <section class="card" aria-labelledby="h-{{ r.tenant_id }}">
+    <div class="card-head">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h2 id="h-{{ r.tenant_id }}">{{ r.name }}</h2>
+        <span class="hint"><span class="num">{{ r.tenant_id }}</span> · piano {{ r.plan or '–' }} · {{ r.members }} {{ 'persona' if r.members == 1 else 'persone' }}{% if r.external_ref %} · rif. <span class="num">{{ r.external_ref }}</span>{% endif %} · dal {{ r.created_at.strftime('%d/%m/%Y') if r.created_at else '–' }}</span>
+      </div>
+      <div class="row">
+        {% if r.active is sameas false %}<span class="chip red">Sospesa</span>{% else %}<span class="chip green">Attiva</span>{% endif %}
+        <a class="btn sm" href="/operator/enter/{{ r.tenant_id }}">Entra</a>
+        <form class="inline" method="post" action="/operator/newsrooms/{{ r.tenant_id }}/active">
+          <input type="hidden" name="active" value="{{ '1' if r.active is sameas false else '0' }}">
+          <button class="btn sm" type="submit">{{ 'Riattiva' if r.active is sameas false else 'Sospendi' }}</button>
+        </form>
+      </div>
+    </div>
+    <div class="pad">
+      {% for what, u in r.usage.items() %}
+      {% set pct = (100 * (u.used or 0) / u.limit)|round|int if u.limit else 0 %}
+      <div class="meter">
+        <span>{{ labels[what] }}</span>
+        {% if u.limit %}<div class="bar" role="img" aria-label="{{ pct }}%"><i {% if pct >= 90 %}class="hype"{% endif %} style="width: {{ [pct, 100]|min }}%"></i></div>
+        {% else %}<span class="hint">senza limite</span>{% endif %}
+        <span class="num" style="text-align: right;">{% if what == 'llm_cost' %}€ {{ (u.used or 0)|num }}{% if u.limit is not none %} / {{ u.limit|num(0) }}{% endif %}{% else %}{{ (u.used or 0)|int }}{% if u.limit is not none %} / {{ u.limit|int }}{% endif %}{% endif %}</span>
+      </div>
+      {% endfor %}
+      <details>
+        <summary class="hint">Piano e limiti</summary>
+        <form method="post" action="/operator/newsrooms/{{ r.tenant_id }}" class="form-grid" style="margin-top: 8px;">
+          <label class="field">Piano<input name="plan" value="{{ r.plan or '' }}" maxlength="60"></label>
+          <label class="field">Siti<input name="max_sites" inputmode="numeric" value="{{ r.max_sites if r.max_sites is not none else '' }}"></label>
+          <label class="field">Fonti attive<input name="max_active_sources" inputmode="numeric" value="{{ r.max_active_sources if r.max_active_sources is not none else '' }}"></label>
+          <label class="field">Notizie al giorno<input name="max_items_per_day" inputmode="numeric" value="{{ r.max_items_per_day if r.max_items_per_day is not none else '' }}"></label>
+          <label class="field">Bozze al mese<input name="max_drafts_month" inputmode="numeric" value="{{ r.max_drafts_month if r.max_drafts_month is not none else '' }}"></label>
+          <label class="field">Costo modello al mese (€)<input name="max_llm_cost_month" inputmode="decimal" value="{{ r.max_llm_cost_month if r.max_llm_cost_month is not none else '' }}"></label>
+          <div><button class="btn" type="submit">Salva</button></div>
+        </form>
+        <p class="hint">Vuoto vuol dire senza limite. Il costo del modello diventa anche il limite della redazione nel Core.</p>
+      </details>
+      <details>
+        <summary class="hint">Invita una persona</summary>
+        <form method="post" action="/operator/newsrooms/{{ r.tenant_id }}/invite" class="form-grid" style="margin-top: 8px;">
+          <label class="field">Email<input name="email" type="email" required></label>
+          <label class="field">Ruolo<select name="role"><option value="owner" selected>Owner</option><option value="editor">Editor</option><option value="viewer">Lettura</option></select></label>
+          <div><button class="btn" type="submit">Crea l'invito</button></div>
+        </form>
+      </details>
+      <details>
+        <summary class="hint">Cancella la redazione</summary>
+        <form method="post" action="/operator/newsrooms/{{ r.tenant_id }}/delete" class="form-grid" style="margin-top: 8px;">
+          <label class="field">Scrivi <span class="num">{{ r.tenant_id }}</span> per confermare<input name="confirm" autocomplete="off" required></label>
+          <div><button class="btn" type="submit">Cancella tutto</button></div>
+        </form>
+        <p class="hint">Cancella siti, profili, fonti, articoli, bozze, pubblicazioni e persone della redazione. Non si torna indietro: prima scarica i dati da Impostazioni della redazione.</p>
+      </details>
+    </div>
+  </section>
+  {% else %}
+  <p class="empty card">Nessuna redazione: creane una qui sotto, oppure lasciala creare al sistema di pagamento con l'API.</p>
+  {% endfor %}
+
+  <section class="card pad" id="nuova" aria-labelledby="h-create">
+    <h2 id="h-create">Nuova redazione</h2>
+    <p class="hint">Il proprietario riceve un invito per scegliere la sua password (o se ha già un account la trova fra le sue redazioni).</p>
+    <form method="post" action="/operator/newsrooms" class="form-grid">
+      <label class="field">Nome<input name="name" required maxlength="100" placeholder="Redazione i3k"></label>
+      <label class="field">Email del proprietario<input name="owner_email" type="email" required></label>
+      <label class="field">Piano<input name="plan" maxlength="60" placeholder="standard"></label>
+      <label class="field">Siti<input name="max_sites" inputmode="numeric" placeholder="senza limite"></label>
+      <label class="field">Fonti attive<input name="max_active_sources" inputmode="numeric" placeholder="senza limite"></label>
+      <label class="field">Notizie al giorno<input name="max_items_per_day" inputmode="numeric" placeholder="senza limite"></label>
+      <label class="field">Bozze al mese<input name="max_drafts_month" inputmode="numeric" placeholder="senza limite"></label>
+      <label class="field">Costo modello al mese (€)<input name="max_llm_cost_month" inputmode="decimal" placeholder="senza limite"></label>
+      <div><button class="btn pri" type="submit">Crea la redazione</button></div>
+    </form>
+  </section>
+
+  <div class="cols">
+    <section class="card pad col-wide" id="operatori" aria-labelledby="h-ops">
+      <h2 id="h-ops">Operatori</h2>
+      {% for o in operators %}
+      <div class="list-row"><span>{{ o.name or o.email }}{% if o.name %} <span class="hint">{{ o.email }}</span>{% endif %}</span>{% if not o.password_hash %}<span class="chip amber">Invito non accettato</span>{% endif %}</div>
+      {% endfor %}
+      {% for i in pending %}
+      <div class="list-row"><span>{{ i.email }}</span><span class="chip">Invitato, scade {{ i.expires_at.strftime('%d/%m') }}</span></div>
+      {% endfor %}
+      <form method="post" action="/operator/operators" class="form-grid">
+        <label class="field">Email<input name="email" type="email" required></label>
+        <div><button class="btn" type="submit">Invita un operatore</button></div>
+      </form>
+      <form method="post" action="/operator/reset" class="form-grid">
+        <label class="field">Email di un account<input name="email" type="email" required></label>
+        <div><button class="btn" type="submit">Link per nuova password</button></div>
+      </form>
+    </section>
+
+    <section class="card pad col-side" id="api" aria-labelledby="h-keys">
+      <h2 id="h-keys">Chiavi API</h2>
+      <p class="hint">Per il sistema di pagamento: con una chiave crea, aggiorna e sospende le redazioni da <code>/api/operator/tenants</code>.</p>
+      {% for k in keys %}
+      <div class="list-row">
+        <span>{{ k.name }} <span class="hint">{{ k.created_at.strftime('%d/%m/%Y') if k.created_at else '' }}</span></span>
+        {% if k.revoked_at %}<span class="chip">Revocata</span>{% else %}<form class="inline" method="post" action="/operator/keys/{{ k.id }}/revoke"><button class="btn sm" type="submit">Revoca</button></form>{% endif %}
+      </div>
+      {% endfor %}
+      <form method="post" action="/operator/keys" class="form-grid">
+        <label class="field">Nome<input name="name" required maxlength="100" placeholder="pagamenti"></label>
+        <div><button class="btn" type="submit">Crea chiave</button></div>
+      </form>
+    </section>
+  </div>
+</main>
+</div>
+</body>
+</html>

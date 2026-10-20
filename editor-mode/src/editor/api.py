@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
+from . import accounts, auth, console, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -82,8 +82,18 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, core=None) -> FastAPI:
+def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> FastAPI:
+    """admin: the owner connection, for accounts and the operator (by
+    default the database's own `admin_url`, else `db`); mail: (to,
+    subject, text) -> None, for invites (None: links are shown instead);
+    public_url: the address people open, for the links in invites."""
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
+    if admin is None:
+        from .db import Database
+        admin = getattr(db, "_admin", None)
+        if admin is None:
+            url = getattr(db, "admin_url", None)
+            admin = db._admin = Database.from_url(url) if url else db
 
     @app.get("/static/{name}", include_in_schema=False)
     def static(name: str):
@@ -97,7 +107,7 @@ def create_app(db, core=None) -> FastAPI:
     def caller(request: Request) -> auth.Caller:
         header = request.headers.get("authorization", "")
         token = header.removeprefix("Bearer ").strip() if header.startswith("Bearer ") else request.cookies.get(COOKIE)
-        c = auth.resolve(db, token)
+        c = auth.resolve(db, token, admin)
         if c is None:
             raise HTTPException(401, "missing or invalid token")
         if request.method == "POST" and not header and request.headers.get("origin") not in (None, str(request.base_url).rstrip("/")):
@@ -391,9 +401,12 @@ def create_app(db, core=None) -> FastAPI:
 
     # --- HTML -------------------------------------------------------------
 
-    ui.register(app, SimpleNamespace(db=db, pages=pages, need=need, core=core,
+    ui.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, need=need, core=core, mail=mail,
+                                     public_url=public_url,
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_publication=run_publication))
+    console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
+                                          public_url=public_url))
 
     @app.exception_handler(HTTPException)
     def errors(request: Request, exc: HTTPException):
@@ -410,4 +423,6 @@ def create_app(db, core=None) -> FastAPI:
 def default_app() -> FastAPI:
     from . import runtime
 
-    return create_app(runtime.database(), runtime.core())
+    st = runtime.settings()
+    return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
+                      accounts.smtp_mailer(st), st.public_url)

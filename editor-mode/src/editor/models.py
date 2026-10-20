@@ -78,6 +78,7 @@ tenants = Table(
     Column("language", Text),
     Column("core_token_env", Text),
     Column("active", Boolean),
+    Column("external_ref", Text),
 )
 
 sites = Table(
@@ -455,4 +456,64 @@ secrets = Table(
     Column("ciphertext", Text, nullable=False),
     Column("key_id", Text, nullable=False),
     Column("updated_at", _ts()),
+)
+
+# Accounts (owner connection only; see migration 0014).
+
+users = Table(
+    "users",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("email", Text, nullable=False),
+    Column("name", Text, nullable=False),
+    Column("password_hash", Text),
+    Column("operator", Boolean, nullable=False),
+    Column("failed_logins", Integer, nullable=False),
+    Column("locked_until", _ts()),
+    Column("created_at", _ts()),
+    Column("disabled_at", _ts()),
+)
+
+memberships = Table(
+    "memberships",
+    metadata,
+    Column("user_id", BigInteger, primary_key=True),
+    Column("tenant_id", Text, primary_key=True),
+    Column("role", Text, nullable=False),
+    Column("created_at", _ts()),
+)
+
+sessions = Table(
+    "sessions",
+    metadata,
+    Column("token_sha256", Text, primary_key=True),
+    Column("user_id", BigInteger, nullable=False),
+    Column("tenant_id", Text),
+    Column("created_at", _ts()),
+    Column("expires_at", _ts(), nullable=False),
+)
+
+invites = Table(
+    "invites",
+    metadata,
+    Column("token_sha256", Text, primary_key=True),
+    Column("kind", Text, nullable=False),
+    Column("email", Text, nullable=False),
+    Column("tenant_id", Text),
+    Column("role", Text),
+    Column("operator", Boolean, nullable=False),
+    Column("created_by", Text, nullable=False),
+    Column("created_at", _ts()),
+    Column("expires_at", _ts(), nullable=False),
+    Column("used_at", _ts()),
+)
+
+operator_tokens = Table(
+    "operator_tokens",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("token_sha256", Text, nullable=False),
+    Column("created_at", _ts()),
+    Column("revoked_at", _ts()),
 )
