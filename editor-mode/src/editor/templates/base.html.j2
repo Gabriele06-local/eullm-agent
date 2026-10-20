@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Editor Mode{% endblock %} · EuLLM Editor</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
 {% include "_style.html.j2" %}
 </head>
 <body>
 <div class="shell">
 <nav class="nav" aria-label="Sezioni">
-  <div class="brand"><span class="mark" aria-hidden="true">E</span><span><strong>EuLLM Editor</strong><small>Editor Mode</small></span></div>
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
   {% if sites %}
   <form method="get" action="/switch" class="switch">
     <label for="site-pick">Sito</label>
