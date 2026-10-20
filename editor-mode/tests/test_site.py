@@ -199,3 +199,15 @@ def test_hreflang_alternates_are_read():
     page = parse_html('<html lang="it"><head><link rel="alternate" hreflang="en" href="/en/a/">'
                       '<link rel="alternate" hreflang="x-default" href="/a/"></head></html>', "https://x.eu/a/")
     assert page.alternates == {"en": "https://x.eu/en/a/"}
+
+
+def test_a_domain_that_redirects_is_read_where_it_lands():
+    with respx.mock(assert_all_called=False) as router:
+        fakesite.mount(router)
+        router.get("https://alias.example/robots.txt").mock(return_value=httpx.Response(200, text=fakesite.ROBOTS))
+        router.get("https://alias.example/").mock(return_value=httpx.Response(
+            200, text=fakesite.home_html(), headers={"x-final-url": f"{fakesite.BASE}/"}))
+        with httpx.Client() as c:
+            snap = SiteCrawler(c).analyse("alias.example")
+    assert snap.domain == "alias.example" and snap.read_at == "blog.example"
+    assert len(snap.posts) == 8 and snap.sitemap_urls == 8
