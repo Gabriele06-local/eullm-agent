@@ -29,6 +29,7 @@ from . import models as m
 from . import quotas, repo
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
+from .i18n import t
 from .normalize import url_hash
 from .site import SiteSnapshot, is_note
 from .text import tokens
@@ -350,39 +351,42 @@ def compare(old: dict, new: dict) -> list[dict]:
     def value(body, key):
         return ((body.get(key) or {}).get("value") or "").strip() or None
 
-    for key, label in (("sector", "Settore"), ("audience", "Pubblico")):
+    for key, label in (("sector", t("Settore")), ("audience", t("Pubblico"))):
         a, b = value(old, key), value(new, key)
         if a != b:
-            rows.append({"what": label, "before": a or "non determinato", "after": b or "non determinato"})
+            rows.append({"what": label, "before": a or t("non determinato"), "after": b or t("non determinato")})
     ta, tb = (old.get("style") or {}).get("tone"), (new.get("style") or {}).get("tone")
     if ta != tb:
-        rows.append({"what": "Tono", "before": ta or "non determinato", "after": tb or "non determinato"})
+        rows.append({"what": t("Tono"), "before": ta or t("non determinato"), "after": tb or t("non determinato")})
     la = old.get("languages") or ({old["language"]: None} if old.get("language") else {})
     lb = new.get("languages") or ({new["language"]: None} if new.get("language") else {})
     if set(la) != set(lb):
-        rows.append({"what": "Lingue", "before": ", ".join(la) or "non determinate", "after": ", ".join(lb) or "non determinate"})
+        rows.append({"what": t("Lingue"), "before": ", ".join(la) or t("non determinate"),
+                     "after": ", ".join(lb) or t("non determinate")})
     if bool(old.get("summary")) != bool(new.get("summary")) and new.get("summary"):
-        rows.append({"what": "Descrizione della linea", "before": "assente", "after": "scritta dal modello sulle pagine lette"})
+        rows.append({"what": t("Descrizione della linea"), "before": t("assente"),
+                     "after": t("scritta dal modello sulle pagine lette")})
     old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
     pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
-    for t in new_subs:
-        o = _match(t, old_subs)
+    for sub in new_subs:
+        o = _match(sub, old_subs)
         if o is None:
-            rows.append({"what": f"Tema «{t['name']}»", "before": "non c'era",
-                         "after": f"nuovo, {pct(t.get('share'))} degli articoli"})
-        elif abs((t.get("share") or 0) - (o.get("share") or 0)) >= 0.05 or o["name"] != t["name"]:
-            before = pct(o.get("share")) + (f" come «{o['name']}»" if o["name"] != t["name"] else "")
-            rows.append({"what": f"Tema «{t['name']}»", "before": before, "after": pct(t.get("share"))})
+            rows.append({"what": t("Tema «{name}»", name=sub["name"]), "before": t("non c'era"),
+                         "after": t("nuovo, {pct} degli articoli", pct=pct(sub.get("share")))})
+        elif abs((sub.get("share") or 0) - (o.get("share") or 0)) >= 0.05 or o["name"] != sub["name"]:
+            before = (t("{pct} come «{name}»", pct=pct(o.get("share")), name=o["name"])
+                      if o["name"] != sub["name"] else pct(o.get("share")))
+            rows.append({"what": t("Tema «{name}»", name=sub["name"]), "before": before, "after": pct(sub.get("share"))})
     gone = [o for o in old_subs if _match(o, new_subs) is None]
     for o in gone:
-        rows.append({"what": f"Tema «{o['name']}»", "before": pct(o.get("share")), "after": "esce dal profilo"})
+        rows.append({"what": t("Tema «{name}»", name=o["name"]), "before": pct(o.get("share")), "after": t("esce dal profilo")})
     if gone and sum(1 for o in gone if (o.get("share") or 0) >= 0.9) >= 2:
-        rows.append({"what": "Perché quei temi escono", "before": "", "after": "",
-                     "note": "Nella versione precedente erano parole chiave presenti su quasi tutte le pagine del sito "
-                             "(per questo vicine al 100%): descrivono il sito nel suo insieme, non di cosa parlano gli "
-                             "articoli. Ora restano tra le parole chiave del sito e i temi sono misurati sugli articoli."})
+        rows.append({"what": t("Perché quei temi escono"), "before": "", "after": "",
+                     "note": t("Nella versione precedente erano parole chiave presenti su quasi tutte le pagine del sito "
+                               "(per questo vicine al 100%): descrivono il sito nel suo insieme, non di cosa parlano gli "
+                               "articoli. Ora restano tra le parole chiave del sito e i temi sono misurati sugli articoli.")})
     so, sn = old.get("settings") or {}, new.get("settings") or {}
-    for key, label in (("proposals_per_day", "Proposte al giorno"), ("min_relevance", "Pertinenza minima")):
+    for key, label in (("proposals_per_day", t("Proposte al giorno")), ("min_relevance", t("Pertinenza minima"))):
         if key in so and key in sn and so[key] != sn[key]:
             rows.append({"what": label, "before": str(so[key]), "after": str(sn[key])})
     return rows

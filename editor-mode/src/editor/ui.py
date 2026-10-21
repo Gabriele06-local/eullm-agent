@@ -20,33 +20,34 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, billing, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
+from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
+from .i18n import N_, t
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
 NOTICE_COOKIE = "editor_notice"
 
 ORIGINS = {
-    "manual": "Aggiunta a mano",
-    "site_outbound": "Link dal sito",
-    "site_feed": "Feed del sito",
-    "autodiscovery": "Feed scoperto",
-    "api_query": "Ricerca dal profilo",
-    "model_suggestion": "Suggerita dal modello",
+    "manual": N_("Aggiunta a mano"),
+    "site_outbound": N_("Link dal sito"),
+    "site_feed": N_("Feed del sito"),
+    "autodiscovery": N_("Feed scoperto"),
+    "api_query": N_("Ricerca dal profilo"),
+    "model_suggestion": N_("Suggerita dal modello"),
 }
 KINDS = {"rss": "RSS", "hackernews": "HN", "github": "GitHub", "huggingface": "Hugging Face", "arxiv": "arXiv"}
-TARGET_KINDS = {"wordpress": "WordPress", "webhook": "Webhook", "telegram_channel": "Canale Telegram"}
+TARGET_KINDS = {"wordpress": "WordPress", "webhook": "Webhook", "telegram_channel": N_("Canale Telegram")}
 QUOTA_LABELS = {
-    "sites": "Siti",
-    "sources": "Fonti attive",
-    "items": "Notizie oggi",
-    "drafts": "Bozze nel mese",
-    "llm_cost": "Costo modello nel mese",
+    "sites": N_("Siti"),
+    "sources": N_("Fonti attive"),
+    "items": N_("Notizie oggi"),
+    "drafts": N_("Bozze nel mese"),
+    "llm_cost": N_("Costo modello nel mese"),
 }
 CHECKS = [
-    ("no valid source", "Ogni frase ha almeno una fonte"),
-    ("numbers not found", "Ogni numero compare nelle fonti citate"),
-    ("copies a passage", "Nessun passaggio copiato parola per parola"),
+    ("no valid source", N_("Ogni frase ha almeno una fonte")),
+    ("numbers not found", N_("Ogni numero compare nelle fonti citate")),
+    ("copies a passage", N_("Nessun passaggio copiato parola per parola")),
 ]
 
 
@@ -80,21 +81,21 @@ def done(path: str, notice: str | None = None) -> RedirectResponse:
 
 
 PROBLEMS = [
-    (r"no RSS or Atom feed found", "Il sito non ha un feed RSS o Atom: gli articoli sono stati trovati da sitemap e pagine."),
-    (r"no usable sitemap", "Nessuna sitemap utilizzabile: gli articoli sono stati trovati seguendo i link."),
-    (r"page budget reached", "Raggiunto il limite di pagine da leggere per un'analisi."),
-    (r"no publication dates found", "Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare."),
-    (r"language not determined", "Lingua non determinata."),
-    (r"home page unreachable", "La home page non risponde."),
-    (r"(\d+) articles read \(at least (\d+) wanted\)", r"Letti \1 articoli (ne servono almeno \2 per un'analisi completa)."),
-    (r"only (\d+) articles readable and no categories.*", r"Solo \1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito."),
-    (r"model analysis failed \((.*)\): .*", r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare."),
-    (r"model analysis not run.*", "Analisi del modello non eseguita: settore, pubblico e stile restano da determinare."),
-    (r"not enough material.*", "Materiale insufficiente: settore, pubblico e stile restano da determinare."),
-    (r"nothing new for more than (\d+) days", r"Nessuna notizia nuova da più di \1 giorni: ritorna in valutazione tra due settimane."),
-    (r"(\d+) failed fetches in a row", r"\1 letture fallite di fila: ritorna in valutazione tra due settimane."),
+    (r"no RSS or Atom feed found", N_("Il sito non ha un feed RSS o Atom: gli articoli sono stati trovati da sitemap e pagine.")),
+    (r"no usable sitemap", N_("Nessuna sitemap utilizzabile: gli articoli sono stati trovati seguendo i link.")),
+    (r"page budget reached", N_("Raggiunto il limite di pagine da leggere per un'analisi.")),
+    (r"no publication dates found", N_("Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare.")),
+    (r"language not determined", N_("Lingua non determinata.")),
+    (r"home page unreachable", N_("La home page non risponde.")),
+    (r"(\d+) articles read \(at least (\d+) wanted\)", N_(r"Letti \1 articoli (ne servono almeno \2 per un'analisi completa).")),
+    (r"only (\d+) articles readable and no categories.*", N_(r"Solo \1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito.")),
+    (r"model analysis failed \((.*)\): .*", N_(r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare.")),
+    (r"model analysis not run.*", N_("Analisi del modello non eseguita: settore, pubblico e stile restano da determinare.")),
+    (r"not enough material.*", N_("Materiale insufficiente: settore, pubblico e stile restano da determinare.")),
+    (r"nothing new for more than (\d+) days", N_(r"Nessuna notizia nuova da più di \1 giorni: ritorna in valutazione tra due settimane.")),
+    (r"(\d+) failed fetches in a row", N_(r"\1 letture fallite di fila: ritorna in valutazione tra due settimane.")),
     (r"off topic \(relevance ([\d.]+) on the last (\d+) items\)",
-     r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane."),
+     N_(r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane.")),
 ]
 
 
@@ -103,7 +104,7 @@ def problem(text) -> str:
     text = str(text)
     for pattern, it in PROBLEMS:
         if re.fullmatch(pattern, text, flags=re.S):
-            return re.sub(pattern, it, text, flags=re.S)
+            return re.sub(pattern, t(it), text, flags=re.S)
     return text
 
 
@@ -179,7 +180,7 @@ def register(app, ctx) -> None:
                 value = value.astimezone(tz)
                 if part == "time":
                     return value.strftime("%H:%M")
-            day = f"{value.day} {MONTHS[value.month - 1]}"
+            day = f"{value.day} {i18n.MONTHS[i18n.current()][value.month - 1]}"
             return f"{day} {value:%H:%M}" if part == "full" and isinstance(value, datetime) else day
 
         notice = request.cookies.get(NOTICE_COOKIE)
@@ -188,7 +189,7 @@ def register(app, ctx) -> None:
             "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
-            "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": DAYS, "months": MONTHS, **data,
+            "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": i18n.DAYS[i18n.current()], "months": i18n.MONTHS[i18n.current()], **data,
         }, status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
@@ -225,7 +226,7 @@ def register(app, ctx) -> None:
                 # Its trial or paid period ended: the owner can still choose a plan.
                 return signed_in(request, accounts.start_session(admin, s.user_id, None), "/account")
         if tenant is None and not s.operator:
-            return login_form(request, "Il tuo account non è in nessuna redazione attiva: chiedi un invito.", 403)
+            return login_form(request, t("Il tuo account non è in nessuna redazione attiva: chiedi un invito."), 403)
         token = accounts.start_session(admin, s.user_id, tenant)
         return signed_in(request, token, "/" if tenant else "/admin")
 
@@ -259,7 +260,7 @@ def register(app, ctx) -> None:
     def setup(request: Request, token: str, email: str = Form(...), name: str = Form(""),
               password: str = Form(...), again: str = Form(...)):
         if password != again:
-            return setup_form(request, token, "Le due password non coincidono.", 400)
+            return setup_form(request, token, t("Le due password non coincidono."), 400)
         try:
             s = accounts.complete_setup(admin, token, email, name, password)
         except accounts.AccountError as e:
@@ -271,14 +272,14 @@ def register(app, ctx) -> None:
         if token.strip():
             c = auth.resolve(db, token.strip())
             if c is None or token.strip().startswith("eds_"):
-                return login_form(request, "Token non valido", 401)
+                return login_form(request, t("Token non valido"), 401)
             return signed_in(request, token.strip())
         try:
             u = accounts.authenticate(admin, email, password)
         except accounts.AccountError as e:
             return login_form(request, f"{str(e)[:1].upper()}{str(e)[1:]}.", 429, email)
         if u is None:
-            return login_form(request, "Email o password sbagliate", 401, email)
+            return login_form(request, t("Email o password sbagliate"), 401, email)
         return session_for(request, accounts.Session(u.id, u.email, u.name, bool(u.operator), None, None))
 
     @app.post("/logout")
@@ -315,7 +316,7 @@ def register(app, ctx) -> None:
         if info is None:
             return invite_form(request, token, None, status_code=410)
         if not (info["kind"] == "invite" and info["has_password"]) and password != again:
-            return invite_form(request, token, info, "Le due password non coincidono.", 400)
+            return invite_form(request, token, info, t("Le due password non coincidono."), 400)
         try:
             s = accounts.accept(admin, token, password, name)
         except accounts.AccountError as e:
@@ -453,31 +454,31 @@ def register(app, ctx) -> None:
         site_items = m.source_items.c.source_id.in_(select(m.sources.c.id).where(of_site))
         working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
         steps = [
-            {"title": "Aggiungi il sito", "past": "Sito aggiunto", "done": bool(sites), "href": None,
+            {"title": t("Aggiungi il sito"), "past": t("Sito aggiunto"), "done": bool(sites), "href": None,
              "busy": "analysis" in working and not sites,
-             "wait": "Scansione del sito in corso: legge fino a 25 articoli, di solito pochi minuti.",
-             "todo": "Scrivi il dominio qui sotto: la redazione legge il sito e ne ricava temi, pubblico e tono."},
-            {"title": "Approva il profilo", "past": "Profilo approvato", "done": bool(lines), "href": "/site", "busy": "analysis" in working,
-             "wait": "Analisi in corso: il profilo da approvare arriva appena finisce.",
-             "todo": "Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva."},
-            {"title": "Attiva le fonti", "past": "Fonti attivate", "done": count(m.sources, m.sources.c.status == "active", of_site) > 0, "href": "/sources",
-             "busy": "discovery" in working, "wait": "Ricerca delle fonti in corso dopo l'approvazione del profilo.",
-             "todo": "Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi."},
-            {"title": "Raccogli le notizie", "past": "Notizie raccolte", "done": count(m.source_items, site_items) > 0, "href": "/trends", "busy": True,
-             "wait": "Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie.",
+             "wait": t("Scansione del sito in corso: legge fino a 25 articoli, di solito pochi minuti."),
+             "todo": t("Scrivi il dominio qui sotto: la redazione legge il sito e ne ricava temi, pubblico e tono.")},
+            {"title": t("Approva il profilo"), "past": t("Profilo approvato"), "done": bool(lines), "href": "/site", "busy": "analysis" in working,
+             "wait": t("Analisi in corso: il profilo da approvare arriva appena finisce."),
+             "todo": t("Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva.")},
+            {"title": t("Attiva le fonti"), "past": t("Fonti attivate"), "done": count(m.sources, m.sources.c.status == "active", of_site) > 0, "href": "/sources",
+             "busy": "discovery" in working, "wait": t("Ricerca delle fonti in corso dopo l'approvazione del profilo."),
+             "todo": t("Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi.")},
+            {"title": t("Raccogli le notizie"), "past": t("Notizie raccolte"), "done": count(m.source_items, site_items) > 0, "href": "/trends", "busy": True,
+             "wait": t("Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie."),
              "todo": ""},
-            {"title": "Accetta una proposta", "past": "Proposta accettata", "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
+            {"title": t("Accetta una proposta"), "past": t("Proposta accettata"), "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
              "href": "/trends", "busy": not count(m.proposals, m.proposals.c.status == "proposed"),
-             "wait": ("Hai scartato le proposte arrivate finora. " if count(m.proposals, m.proposals.c.status == "rejected") else "")
-             + "Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in "
-               "Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte "
-               "(opportunità da 50/100) di una fonte affidabile.",
-             "todo": "Accetta le proposte che ti interessano e scarta le altre."},
-            {"title": "Rileggi la prima bozza", "past": "Prima bozza approvata", "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
-             "href": "/drafts", "busy": "draft" in working, "wait": "La bozza è in scrittura.",
-             "todo": "Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala."},
-            {"title": "Collega il sito per pubblicare", "past": "Sito collegato", "done": count(m.publish_targets) > 0, "href": "/publications",
-             "busy": False, "wait": "", "todo": "Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì."},
+             "wait": (t("Hai scartato le proposte arrivate finora. ") if count(m.proposals, m.proposals.c.status == "rejected") else "")
+             + t("Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in "
+                 "Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte "
+                 "(opportunità da 50/100) di una fonte affidabile."),
+             "todo": t("Accetta le proposte che ti interessano e scarta le altre.")},
+            {"title": t("Rileggi la prima bozza"), "past": t("Prima bozza approvata"), "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
+             "href": "/drafts", "busy": "draft" in working, "wait": t("La bozza è in scrittura."),
+             "todo": t("Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala.")},
+            {"title": t("Collega il sito per pubblicare"), "past": t("Sito collegato"), "done": count(m.publish_targets) > 0, "href": "/publications",
+             "busy": False, "wait": "", "todo": t("Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì.")},
         ]
         if all(x["done"] for x in steps):
             return None
@@ -545,7 +546,7 @@ def register(app, ctx) -> None:
         from .api import normalise_domain
         d = normalise_domain(domain)
         ctx.run_analysis(c.tenant_id, d)
-        return done("/site", f"Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.")
+        return done("/site", t("Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.", d=d))
 
     @app.post("/ui/sites/{site_id}/review")
     def ui_review(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -554,7 +555,7 @@ def register(app, ctx) -> None:
         if domain is None:
             raise HTTPException(404, "site not found")
         ctx.run_analysis(c.tenant_id, domain)
-        return done("/site", f"Rianalisi di {domain} avviata.")
+        return done("/site", t("Rianalisi di {domain} avviata.", domain=domain))
 
     @app.post("/ui/sites/{site_id}/approve/{version}")
     def ui_approve(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -562,7 +563,7 @@ def register(app, ctx) -> None:
             if not prof.approve(s, site_id, version, c.name):
                 raise HTTPException(404, "version not found")
         ctx.run_discovery(c.tenant_id, site_id)
-        return done("/site", f"Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.")
+        return done("/site", t("Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.", version=version))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -572,7 +573,7 @@ def register(app, ctx) -> None:
                           .values(status="retired")).rowcount
         if not n:
             raise HTTPException(409, "not a draft version")
-        return done("/site", f"Proposta v{version} scartata: la linea resta quella approvata.")
+        return done("/site", t("Proposta v{version} scartata: la linea resta quella approvata.", version=version))
 
     @app.post("/ui/sites/{site_id}/topics/remove")
     def ui_remove_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
@@ -580,7 +581,7 @@ def register(app, ctx) -> None:
             version = prof.remove_topic(s, c.tenant_id, site_id, name, c.name)
         if version is None:
             raise HTTPException(404, "topic not found")
-        return done("/site", f"Tema «{name}» tolto (v{version}): non viene più seguito, anche nelle prossime analisi.")
+        return done("/site", t("Tema «{name}» tolto (v{version}): non viene più seguito, anche nelle prossime analisi.", name=name, version=version))
 
     @app.post("/ui/sites/{site_id}/topics/restore")
     def ui_restore_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
@@ -588,7 +589,7 @@ def register(app, ctx) -> None:
             version = prof.restore_topic(s, c.tenant_id, site_id, name, c.name)
         if version is None:
             raise HTTPException(404, "topic not found")
-        return done("/site", f"Tema «{name}» rimesso (v{version}).")
+        return done("/site", t("Tema «{name}» rimesso (v{version}).", name=name, version=version))
 
     @app.post("/ui/sites/{site_id}/versions/{version}/delete")
     def ui_delete_version(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -597,10 +598,10 @@ def register(app, ctx) -> None:
         if why == "not found":
             raise HTTPException(404, "version not found")
         if why == "approved":
-            return done("/site", f"La v{version} è la linea in uso: approvane un'altra prima di eliminarla.")
+            return done("/site", t("La v{version} è la linea in uso: approvane un'altra prima di eliminarla.", version=version))
         if why == "used":
-            return done("/site", f"La v{version} ha già prodotto proposte e punteggi: resta nello storico.")
-        return done("/site", f"Versione v{version} eliminata.")
+            return done("/site", t("La v{version} ha già prodotto proposte e punteggi: resta nello storico.", version=version))
+        return done("/site", t("Versione v{version} eliminata.", version=version))
 
     @app.post("/ui/sites/{site_id}/profile")
     def ui_edit_profile(request: Request, site_id: int, body: str = Form(...),
@@ -614,11 +615,11 @@ def register(app, ctx) -> None:
                 value = prof.validate_edit(json.loads(body))
             except ValueError as e:
                 return site_page(request, c, s, sites, site, editing=True, status_code=400,
-                                 error=f"Profilo non valido: {e}")
+                                 error=t("Profilo non valido: {e}", e=e))
             value["domain"] = site.domain
             pid = prof.edit(s, c.tenant_id, site_id, value)
             version = s.execute(select(m.editorial_profiles.c.version).where(m.editorial_profiles.c.id == pid)).scalar()
-        return done("/site", f"Modifiche salvate come bozza v{version}: approvala per renderla attiva.")
+        return done("/site", t("Modifiche salvate come bozza v{version}: approvala per renderla attiva.", version=version))
 
     # --- Fonti --------------------------------------------------------------------
 
@@ -679,8 +680,9 @@ def register(app, ctx) -> None:
             if status == "active":
                 quotas.check(s, "sources")
             repo.set_source_status(s, source_id, status, f"set by {c.name}", by=c.name)
-        label = {"active": "riattivata", "suspended": "sospesa", "rejected": "scartata"}[status]
-        return done(safe_path(back, "/sources"), f"{name} {label}.")
+        notice = {"active": t("{name} riattivata.", name=name), "suspended": t("{name} sospesa.", name=name),
+                  "rejected": t("{name} scartata.", name=name)}[status]
+        return done(safe_path(back, "/sources"), notice)
 
     @app.post("/ui/sites/{site_id}/discover")
     def ui_discover(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -688,7 +690,7 @@ def register(app, ctx) -> None:
             if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
                 raise HTTPException(404, "site not found")
         ctx.run_discovery(c.tenant_id, site_id)
-        return done("/sources?status=candidate", "Ricerca di nuove fonti avviata: le trovate entrano come candidate.")
+        return done("/sources?status=candidate", t("Ricerca di nuove fonti avviata: le trovate entrano come candidate."))
 
     # --- Trend e piano --------------------------------------------------------------
 
@@ -712,39 +714,39 @@ def register(app, ctx) -> None:
         with db.tenant(c.tenant_id) as s:
             _, site = current_site(s, request)
             if site is None:
-                return done("/trends", "Aggiungi prima un sito.")
+                return done("/trends", t("Aggiungi prima un sito."))
             if not s.execute(select(m.editorial_profiles.c.id).where(m.editorial_profiles.c.site_id == site.id,
                                                                        m.editorial_profiles.c.status == "approved")).first():
-                return done("/trends", "Approva prima il profilo del sito.")
+                return done("/trends", t("Approva prima il profilo del sito."))
             since = start_of_day(s)
             per_day = s.execute(select(m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "approved")).scalar()
             left = per_day.get("settings", {}).get("proposals_per_day", 3) - props.made_today(s, site.id, since)
         if left <= 0:
-            return done("/trends", "Le proposte di oggi sono già state fatte: le prossime arrivano domani.")
+            return done("/trends", t("Le proposte di oggi sono già state fatte: le prossime arrivano domani."))
         ctx.run_proposals(c.tenant_id, site.id, since)
-        return done("/trends", "Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti.")
+        return done("/trends", t("Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti."))
 
     @app.post("/ui/proposals/{proposal_id}")
     def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),
                   c: auth.Caller = Depends(ctx.need("editor"))):
         if not props.decide(db, c.tenant_id, proposal_id, accept == "1", c.name):
-            return done(safe_path(back, "/trends"), "Questa proposta era già stata decisa.")
+            return done(safe_path(back, "/trends"), t("Questa proposta era già stata decisa."))
         if accept == "1" and ctx.core is not None:
             ctx.run_draft(c.tenant_id, proposal_id)
-            return done(safe_path(back, "/trends"), "Proposta accettata: la bozza è in scrittura.")
-        return done(safe_path(back, "/trends"), "Proposta accettata." if accept == "1" else "Proposta scartata.")
+            return done(safe_path(back, "/trends"), t("Proposta accettata: la bozza è in scrittura."))
+        return done(safe_path(back, "/trends"), t("Proposta accettata.") if accept == "1" else t("Proposta scartata."))
 
     @app.post("/ui/proposals/{proposal_id}/draft")
     def ui_draft(proposal_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
         if ctx.core is None:
-            return done("/trends", "Nessun Core configurato: per scrivere le bozze serve un modello.")
+            return done("/trends", t("Nessun Core configurato: per scrivere le bozze serve un modello."))
         with db.tenant(c.tenant_id) as s:
             st = s.execute(select(m.proposals.c.status).where(m.proposals.c.id == proposal_id)).scalar()
         if st not in ("accepted", "drafted"):
-            return done("/trends", "Accetta prima la proposta.")
+            return done("/trends", t("Accetta prima la proposta."))
         ctx.run_draft(c.tenant_id, proposal_id)
-        return done("/drafts", "Bozza in scrittura: compare qui quando è pronta.")
+        return done("/drafts", t("Bozza in scrittura: compare qui quando è pronta."))
 
     # --- Bozze ----------------------------------------------------------------------
 
@@ -789,7 +791,7 @@ def register(app, ctx) -> None:
                                           "flagged": cl["ordinal"] in flagged})
             flags = d.flags or []
             problems = " ".join(p for f in flags for p in f.get("problems", []))
-            checks = [{"label": label, "ok": key not in problems} for key, label in CHECKS]
+            checks = [{"label": t(label), "ok": key not in problems} for key, label in CHECKS]
             targets = s.execute(select(m.publish_targets).where(m.publish_targets.c.site_id == d.site_id,
                                                                 m.publish_targets.c.enabled.is_not(False))).all()
             pubs = s.execute(select(m.publications.c.status, m.publications.c.mode, m.publications.c.external_url,
@@ -804,9 +806,9 @@ def register(app, ctx) -> None:
     @app.post("/ui/drafts/{draft_id}/decision")
     def ui_draft_decision(draft_id: int, accept: str = Form(...), c: auth.Caller = Depends(ctx.need("editor"))):
         if not drafts.decide(db, c.tenant_id, draft_id, accept == "1", c.name):
-            return done(f"/drafts/{draft_id}", "Questa bozza era già stata decisa.")
-        return done(f"/drafts/{draft_id}", "Bozza approvata: ora puoi chiederne la pubblicazione."
-                    if accept == "1" else "Bozza rifiutata.")
+            return done(f"/drafts/{draft_id}", t("Questa bozza era già stata decisa."))
+        return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione.")
+                    if accept == "1" else t("Bozza rifiutata."))
 
     @app.post("/ui/drafts/{draft_id}/publish")
     def ui_publish(draft_id: int, target_id: int = Form(...), mode: str = Form("draft"),
@@ -816,10 +818,10 @@ def register(app, ctx) -> None:
         try:
             publishing.request(db, c.tenant_id, draft_id, target_id, mode, c.name)
         except publishing.PublishError as e:
-            return done(f"/drafts/{draft_id}", f"Richiesta non inviata: {e}.")
+            return done(f"/drafts/{draft_id}", t("Richiesta non inviata: {e}.", e=e))
         except IntegrityError:
-            return done(f"/drafts/{draft_id}", "Questa pubblicazione è già stata chiesta.")
-        return done("/publications", "Pubblicazione chiesta: aspetta l'approvazione di un owner.")
+            return done(f"/drafts/{draft_id}", t("Questa pubblicazione è già stata chiesta."))
+        return done("/publications", t("Pubblicazione chiesta: aspetta l'approvazione di un owner."))
 
     # --- Pubblicazioni --------------------------------------------------------------
 
@@ -848,22 +850,22 @@ def register(app, ctx) -> None:
                         c: auth.Caller = Depends(ctx.need("owner"))):
         ok = accept == "1"
         if not publishing.decide(db, c.tenant_id, pub_id, ok, c.name):
-            return done("/publications", "Questa pubblicazione era già stata decisa.")
+            return done("/publications", t("Questa pubblicazione era già stata decisa."))
         if ok:
             ctx.run_publication(c.tenant_id, pub_id)
-        return done("/publications", "Approvata: l'invio parte a breve." if ok else "Pubblicazione rifiutata.")
+        return done("/publications", t("Approvata: l'invio parte a breve.") if ok else t("Pubblicazione rifiutata."))
 
     @app.post("/ui/publications/{pub_id}/uncertain")
     def ui_pub_uncertain(pub_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
         if not publishing.mark_uncertain_failed(db, c.tenant_id, pub_id, c.name):
-            return done("/publications", "Questa pubblicazione non è più in invio.")
-        return done("/publications", "Segnata come non riuscita: puoi chiederla di nuovo.")
+            return done("/publications", t("Questa pubblicazione non è più in invio."))
+        return done("/publications", t("Segnata come non riuscita: puoi chiederla di nuovo."))
 
     def _secret_var(tenant_id, name):
         try:
             return publishing.secret_variable(tenant_id, name)
         except publishing.PublishError:
-            return f"{name} (nome non valido: ricrea la destinazione)"
+            return t("{name} (nome non valido: ricrea la destinazione)", name=name)
 
     @app.post("/ui/targets")
     def ui_add_target(site_id: int = Form(...), kind: str = Form(...), name: str = Form(...),
@@ -876,9 +878,9 @@ def register(app, ctx) -> None:
             config["user"] = user.strip()
         env_name = secret_env.strip() or None
         if env_name is not None and (len(env_name) > 40 or not publishing.SECRET_NAME.match(env_name)):
-            return done("/publications", "Il nome del segreto va scritto in MAIUSCOLO, es. WP_SITO.")
+            return done("/publications", t("Il nome del segreto va scritto in MAIUSCOLO, es. WP_SITO."))
         if secret and env_name is None:
-            return done("/publications", "Dai un nome alla credenziale, es. WP_SITO.")
+            return done("/publications", t("Dai un nome alla credenziale, es. WP_SITO."))
         try:
             with db.tenant(c.tenant_id) as s:
                 if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
@@ -887,12 +889,12 @@ def register(app, ctx) -> None:
                 vault.put(db, c.tenant_id, env_name, secret)
             publishing.add_target(db, c.tenant_id, site_id, kind, name.strip()[:100], config, env_name)
         except (publishing.PublishError, vault.VaultError) as e:
-            return done("/publications", f"Destinazione non aggiunta: {e}.")
-        added = f"Destinazione {name.strip()[:100]} aggiunta."
+            return done("/publications", t("Destinazione non aggiunta: {e}.", e=e))
+        added = t("Destinazione {name} aggiunta.", name=name.strip()[:100])
         if env_name and secret:
-            added += " La credenziale è salvata cifrata e non verrà più mostrata."
+            added += t(" La credenziale è salvata cifrata e non verrà più mostrata.")
         elif env_name:
-            added += f" Sul server la credenziale va nella variabile {publishing.secret_variable(c.tenant_id, env_name)}."
+            added += t(" Sul server la credenziale va nella variabile {var}.", var=publishing.secret_variable(c.tenant_id, env_name))
         return done("/publications", added)
 
     @app.post("/ui/secrets/{name}")
@@ -900,8 +902,8 @@ def register(app, ctx) -> None:
         try:
             vault.put(db, c.tenant_id, name, value)
         except vault.VaultError as e:
-            return done("/publications", f"Credenziale non salvata: {e}.")
-        return done("/publications", f"Credenziale {name} aggiornata: è salvata cifrata e non verrà più mostrata.")
+            return done("/publications", t("Credenziale non salvata: {e}.", e=e))
+        return done("/publications", t("Credenziale {name} aggiornata: è salvata cifrata e non verrà più mostrata.", name=name))
 
     # --- Impostazioni ---------------------------------------------------------------
 
@@ -934,21 +936,21 @@ def register(app, ctx) -> None:
                          c: auth.Caller = Depends(ctx.need("owner"))):
         address = address.strip()
         if channel not in ("email", "telegram") or not address or len(address) > 200:
-            return done("/settings", "Destinatario non valido.")
+            return done("/settings", t("Destinatario non valido."))
         if any(ch in address for ch in "\r\n\t,;<>"):
-            return done("/settings", "Destinatario non valido.")
+            return done("/settings", t("Destinatario non valido."))
         if channel == "email" and ("@" not in address or " " in address):
-            return done("/settings", "Indirizzo email non valido.")
+            return done("/settings", t("Indirizzo email non valido."))
         with db.tenant(c.tenant_id) as s:
             s.execute(text("INSERT INTO editor.recipients (tenant_id, channel, address) VALUES (:t, :c, :a) "
                            "ON CONFLICT DO NOTHING"), {"t": c.tenant_id, "c": channel, "a": address})
-        return done("/settings", "Destinatario aggiunto: riceve il prossimo briefing.")
+        return done("/settings", t("Destinatario aggiunto: riceve il prossimo briefing."))
 
     @app.post("/ui/recipients/{rid}/delete")
     def ui_del_recipient(rid: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             s.execute(m.recipients.delete().where(m.recipients.c.id == rid))
-        return done("/settings", "Destinatario rimosso.")
+        return done("/settings", t("Destinatario rimosso."))
 
     @app.get("/ui/export")
     def ui_export(c: auth.Caller = Depends(ctx.need("owner"))):
@@ -959,7 +961,7 @@ def register(app, ctx) -> None:
                      c: auth.Caller = Depends(ctx.need("owner"))):
         name = name.strip()[:100]
         if role not in auth.ROLES or not name:
-            return done("/settings", "Nome o ruolo non valido.")
+            return done("/settings", t("Nome o ruolo non valido."))
         token = auth.create_token(db, c.tenant_id, name, role)
         with db.tenant(c.tenant_id) as s:
             return settings_page(request, c, s, new_token=token)
@@ -967,10 +969,10 @@ def register(app, ctx) -> None:
     @app.post("/ui/tokens/{tid}/revoke")
     def ui_revoke(tid: int, c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
-            t = m.access_tokens
-            n = s.execute(update(t).where(t.c.id == tid, t.c.revoked_at.is_(None))
+            tk = m.access_tokens
+            n = s.execute(update(tk).where(tk.c.id == tid, tk.c.revoked_at.is_(None))
                           .values(revoked_at=datetime.now(UTC))).rowcount
-        return done("/settings", "Accesso revocato." if n else "Accesso già revocato.")
+        return done("/settings", t("Accesso revocato.") if n else t("Accesso già revocato."))
 
     # --- Persone della redazione ----------------------------------------------------
 
@@ -981,7 +983,7 @@ def register(app, ctx) -> None:
             token = accounts.create_invite(admin, email, c.name, tenant_id=c.tenant_id, role=role)
         except accounts.AccountError as e:
             with db.tenant(c.tenant_id) as s:
-                return settings_page(request, c, s, error=f"Invito non creato: {e}.", status_code=400)
+                return settings_page(request, c, s, error=t("Invito non creato: {e}.", e=e), status_code=400)
         to = accounts.normalise_email(email)
         base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
         url, sent = f"{base}/invite/{token}", False
@@ -1001,18 +1003,18 @@ def register(app, ctx) -> None:
         try:
             accounts.change_role(admin, c.tenant_id, uid, role)
         except accounts.AccountError as e:
-            return done("/settings", f"Ruolo non cambiato: {e}.")
-        return done("/settings", "Ruolo aggiornato.")
+            return done("/settings", t("Ruolo non cambiato: {e}.", e=e))
+        return done("/settings", t("Ruolo aggiornato."))
 
     @app.post("/ui/people/{uid}/remove")
     def ui_remove(uid: int, c: auth.Caller = Depends(ctx.need("owner"))):
         try:
             accounts.remove_member(admin, c.tenant_id, uid)
         except accounts.AccountError as e:
-            return done("/settings", f"Persona non rimossa: {e}.")
-        return done("/settings", "Persona rimossa dalla redazione: non entra più.")
+            return done("/settings", t("Persona non rimossa: {e}.", e=e))
+        return done("/settings", t("Persona rimossa dalla redazione: non entra più."))
 
     @app.post("/ui/invites/{sha}/revoke")
     def ui_revoke_invite(sha: str, c: auth.Caller = Depends(ctx.need("owner"))):
         n = accounts.revoke_invite(admin, c.tenant_id, sha)
-        return done("/settings", "Invito annullato." if n else "Invito già usato o scaduto.")
+        return done("/settings", t("Invito annullato.") if n else t("Invito già usato o scaduto."))

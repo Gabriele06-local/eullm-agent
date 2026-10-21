@@ -25,6 +25,7 @@ from sqlalchemy import delete, func, insert, select, update
 
 from . import models as m
 from .auth import ROLES, digest
+from .i18n import t
 
 SESSION_DAYS = 30
 INVITE_DAYS = 7
@@ -63,15 +64,15 @@ def _now(now: datetime | None) -> datetime:
 def normalise_email(value: str) -> str:
     e = (value or "").strip().lower()
     if len(e) > 254 or not EMAIL.match(e):
-        raise AccountError("indirizzo email non valido")
+        raise AccountError(t("indirizzo email non valido"))
     return e
 
 
 def check_password(password: str) -> None:
     if len(password or "") < MIN_PASSWORD:
-        raise AccountError(f"la password deve avere almeno {MIN_PASSWORD} caratteri")
+        raise AccountError(t("la password deve avere almeno {n} caratteri", n=MIN_PASSWORD))
     if len(password) > 1024:
-        raise AccountError("password troppo lunga")
+        raise AccountError(t("password troppo lunga"))
 
 
 def hash_password(password: str) -> str:
@@ -146,7 +147,7 @@ def authenticate(admin, email: str, password: str, now: datetime | None = None):
             verify_password(password, _DUMMY)
             return None
         if u.locked_until is not None and u.locked_until > now:
-            raise AccountError("troppi tentativi sbagliati: riprova fra qualche minuto")
+            raise AccountError(t("troppi tentativi sbagliati: riprova fra qualche minuto"))
         if verify_password(password, u.password_hash):
             conn.execute(update(m.users).where(m.users.c.id == u.id).values(failed_logins=0, locked_until=None))
             return u
@@ -185,7 +186,7 @@ def members(admin, tenant_id: str) -> list:
 
 def set_member(conn, user_id: int, tenant_id: str, role: str) -> None:
     if role not in ROLES:
-        raise AccountError("ruolo non valido")
+        raise AccountError(t("ruolo non valido"))
     ms = m.memberships
     row = conn.execute(select(ms.c.role).where(ms.c.user_id == user_id, ms.c.tenant_id == tenant_id)).first()
     if row is None:
@@ -201,14 +202,14 @@ def _keep_an_owner(conn, tenant_id: str, leaving: int) -> None:
     others = conn.execute(select(func.count()).select_from(ms).where(
         ms.c.tenant_id == tenant_id, ms.c.role == "owner", ms.c.user_id != leaving)).scalar()
     if not others:
-        raise AccountError("la redazione deve avere almeno un owner")
+        raise AccountError(t("la redazione deve avere almeno un owner"))
 
 
 def change_role(admin, tenant_id: str, user_id: int, role: str) -> None:
     with admin.engine.begin() as conn:
         if not conn.execute(select(m.memberships.c.role).where(
                 m.memberships.c.user_id == user_id, m.memberships.c.tenant_id == tenant_id)).first():
-            raise AccountError("persona non trovata in questa redazione")
+            raise AccountError(t("persona non trovata in questa redazione"))
         set_member(conn, user_id, tenant_id, role)
 
 
@@ -217,7 +218,7 @@ def remove_member(admin, tenant_id: str, user_id: int) -> None:
     with admin.engine.begin() as conn:
         row = conn.execute(select(ms.c.role).where(ms.c.user_id == user_id, ms.c.tenant_id == tenant_id)).first()
         if row is None:
-            raise AccountError("persona non trovata in questa redazione")
+            raise AccountError(t("persona non trovata in questa redazione"))
         if row.role == "owner":
             _keep_an_owner(conn, tenant_id, user_id)
         conn.execute(delete(ms).where(ms.c.user_id == user_id, ms.c.tenant_id == tenant_id))
@@ -280,9 +281,9 @@ def create_invite(admin, email: str, created_by: str, tenant_id: str | None = No
     RESET_HOURS) and once."""
     email = normalise_email(email)
     if kind == "invite" and tenant_id is None and not operator:
-        raise AccountError("un invito è per una redazione o per un operatore")
+        raise AccountError(t("un invito è per una redazione o per un operatore"))
     if role is not None and role not in ROLES:
-        raise AccountError("ruolo non valido")
+        raise AccountError(t("ruolo non valido"))
     now = _now(now)
     ttl = timedelta(hours=RESET_HOURS) if kind == "reset" else timedelta(days=INVITE_DAYS)
     token = "edi_" + secrets.token_urlsafe(32)
@@ -315,12 +316,12 @@ def accept(admin, token: str, password: str, name: str = "", now: datetime | Non
     now = _now(now)
     info = invite(admin, token, now)
     if info is None:
-        raise AccountError("il link non è valido o è scaduto")
+        raise AccountError(t("il link non è valido o è scaduto"))
     with admin.engine.begin() as conn:
         u = find_user(conn, info["email"])
         if info["kind"] == "invite" and u is not None and u.password_hash:
             if not verify_password(password, u.password_hash):
-                raise AccountError("password sbagliata: usa quella del tuo account")
+                raise AccountError(t("password sbagliata: usa quella del tuo account"))
             uid = u.id
         else:
             check_password(password)
@@ -336,7 +337,7 @@ def accept(admin, token: str, password: str, name: str = "", now: datetime | Non
         n = conn.execute(update(m.invites).where(m.invites.c.token_sha256 == digest(token), m.invites.c.used_at.is_(None))
                          .values(used_at=now)).rowcount
         if not n:
-            raise AccountError("il link è già stato usato")
+            raise AccountError(t("il link è già stato usato"))
         u = conn.execute(select(m.users).where(m.users.c.id == uid)).first()
     tenant = info["tenant_id"]
     if tenant is None and not u.operator:
@@ -403,14 +404,14 @@ def complete_setup(admin, token: str, email: str, name: str, password: str, now:
     """Create the first administrator (operator) with the first-start link."""
     now = _now(now)
     if not setup_valid(admin, token, now):
-        raise AccountError("il link non è valido, è scaduto o l'amministratore esiste già")
+        raise AccountError(t("il link non è valido, è scaduto o l'amministratore esiste già"))
     email = normalise_email(email)
     check_password(password)
     with admin.engine.begin() as conn:
         n = conn.execute(update(m.invites).where(m.invites.c.token_sha256 == digest(token), m.invites.c.used_at.is_(None))
                          .values(used_at=now)).rowcount
         if not n:
-            raise AccountError("il link è già stato usato")
+            raise AccountError(t("il link è già stato usato"))
         uid = ensure_user(conn, email, name, operator=True)
         conn.execute(update(m.users).where(m.users.c.id == uid).values(
             password_hash=hash_password(password), failed_logins=0, locked_until=None, disabled_at=None))
@@ -442,7 +443,7 @@ def create_operator_token(admin, name: str, reseller_id: int | None = None) -> s
     reseller, it sees and changes only that reseller's customers."""
     name = name.strip()[:100]
     if not name:
-        raise AccountError("serve un nome")
+        raise AccountError(t("serve un nome"))
     token = "edo_" + secrets.token_urlsafe(32)
     with admin.engine.begin() as conn:
         conn.execute(insert(m.operator_tokens).values(name=name, token_sha256=digest(token), reseller_id=reseller_id))
@@ -499,13 +500,15 @@ def smtp_mailer(settings, smtp_factory=smtplib.SMTP):
     return send
 
 
-def link_text(kind: str, url: str, newsroom: str | None, by: str) -> tuple[str, str]:
-    """Subject and body of the email that carries a link."""
+def link_text(kind: str, url: str, newsroom: str | None, by: str, lang: str | None = None) -> tuple[str, str]:
+    """Subject and body of the email that carries a link (in `lang`, else
+    the language of the request)."""
     if kind == "reset":
-        return ("Reimposta la password di EuLLM Editor",
-                f"Per scegliere una nuova password apri questo link entro {RESET_HOURS} ore:\n\n{url}\n\n"
-                "Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima.\n")
-    where = f"la redazione {newsroom}" if newsroom else "la console di EuLLM Editor"
-    return (f"Invito a {where}",
-            f"{by} ti ha invitato in {where} su EuLLM Editor.\n\n"
-            f"Apri questo link entro {INVITE_DAYS} giorni per entrare:\n\n{url}\n")
+        return (t("Reimposta la password di EuLLM Editor", lang),
+                t("Per scegliere una nuova password apri questo link entro {hours} ore:", lang, hours=RESET_HOURS)
+                + f"\n\n{url}\n\n"
+                + t("Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima.", lang) + "\n")
+    where = t("la redazione {newsroom}", lang, newsroom=newsroom) if newsroom else t("la console di EuLLM Editor", lang)
+    return (t("Invito a {where}", lang, where=where),
+            t("{by} ti ha invitato in {where} su EuLLM Editor.", lang, by=by, where=where) + "\n\n"
+            + t("Apri questo link entro {days} giorni per entrare:", lang, days=INVITE_DAYS) + f"\n\n{url}\n")

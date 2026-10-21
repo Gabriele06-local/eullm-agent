@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from . import accounts, billing, commerce, newsrooms
 from .auth import ROLES
+from .i18n import t
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -274,17 +275,18 @@ def register(app, ctx) -> None:
                       "max_llm_cost_month": _num(max_llm_cost_month, money=True),
                       "max_drafts_month": _num(max_drafts_month)}
         except ValueError:
-            return page(request, s, 400, error="I limiti sono numeri di zero o più; vuoto vuol dire senza limite.")
+            return page(request, s, 400, error=t("I limiti sono numeri di zero o più; vuoto vuol dire senza limite."))
         spec = {"name": name, "owner_email": owner_email, "limits": limits} | ({"plan": plan.strip()[:60]} if plan.strip() else {})
         try:
             res = newsrooms.create(admin, spec, s.email, ctx.core)
         except (newsrooms.NewsroomError, accounts.AccountError) as e:
-            return page(request, s, 400, error=f"Redazione non creata: {e}.")
-        new = {"what": f"Redazione {name.strip()} creata (id {res['tenant_id']})", "warning": res["warning"]}
+            return page(request, s, 400, error=t("Redazione non creata: {error}.", error=e))
+        new = {"what": t("Redazione {name} creata (id {tenant})", name=name.strip(), tenant=res["tenant_id"]),
+               "warning": res["warning"]}
         if res["invite"]:
             new["link"] = send(request, res["invite"], "invite", res["owner_email"], name.strip(), s.email)
         else:
-            new["note"] = f"{res['owner_email']} ha già un account: la trova fra le sue redazioni."
+            new["note"] = t("{email} ha già un account: la trova fra le sue redazioni.", email=res["owner_email"])
         return page(request, s, new=new)
 
     @app.post("/admin/newsrooms/{tenant_id}")
@@ -299,10 +301,11 @@ def register(app, ctx) -> None:
             res = newsrooms.update_newsroom(admin, tenant_id, {"limits": limits} | (
                 {"plan": plan.strip()[:60]} if plan.strip() else {}), ctx.core)
         except ValueError:
-            return back("I limiti sono numeri di zero o più; vuoto vuol dire senza limite.")
+            return back(t("I limiti sono numeri di zero o più; vuoto vuol dire senza limite."))
         except LookupError:
-            return back("Redazione non trovata.")
-        return back(f"Piano di {tenant_id} aggiornato." + (f" Attenzione: {res['warning']}" if res["warning"] else ""))
+            return back(t("Redazione non trovata."))
+        return back(t("Piano di {tenant} aggiornato.", tenant=tenant_id)
+                    + (" " + t("Attenzione: {warning}", warning=res["warning"]) if res["warning"] else ""))
 
     @app.post("/admin/newsrooms/{tenant_id}/active")
     def ui_active(tenant_id: str, active: str = Form(...), s=Depends(need_console)):
@@ -310,32 +313,34 @@ def register(app, ctx) -> None:
         try:
             newsrooms.update_newsroom(admin, tenant_id, {"active": on})
         except LookupError:
-            return back("Redazione non trovata.")
-        return back(f"Redazione {tenant_id} riattivata." if on else
-                    f"Redazione {tenant_id} sospesa: le persone non entrano e il lavoro programmato si ferma, i dati restano.")
+            return back(t("Redazione non trovata."))
+        return back(t("Redazione {tenant} riattivata.", tenant=tenant_id) if on else
+                    t("Redazione {tenant} sospesa: le persone non entrano e il lavoro programmato si ferma, i dati restano.",
+                      tenant=tenant_id))
 
     @app.post("/admin/newsrooms/{tenant_id}/invite", response_class=HTMLResponse)
     def ui_invite(request: Request, tenant_id: str, email: str = Form(...), role: str = Form("owner"),
                   s=Depends(need_console)):
         rows = newsrooms.listing(admin, db, tenant_id)
         if not rows:
-            return back("Redazione non trovata.")
+            return back(t("Redazione non trovata."))
         try:
             token = accounts.create_invite(admin, email, s.email, tenant_id=tenant_id, role=role)
         except accounts.AccountError as e:
-            return page(request, s, 400, error=f"Invito non creato: {e}.")
-        return page(request, s, new={"what": f"Invito a {rows[0]['name']} per {email.strip().lower()}",
+            return page(request, s, 400, error=t("Invito non creato: {error}.", error=e))
+        return page(request, s, new={"what": t("Invito a {newsroom} per {email}", newsroom=rows[0]["name"],
+                                                       email=email.strip().lower()),
                                      "link": send(request, token, "invite", email.strip().lower(), rows[0]["name"], s.email)})
 
     @app.post("/admin/newsrooms/{tenant_id}/delete")
     def ui_delete(tenant_id: str, confirm: str = Form(""), s=Depends(need_console)):
         if confirm.strip() != tenant_id:
-            return back(f"Per cancellare scrivi l'id della redazione ({tenant_id}): niente è stato cancellato.")
+            return back(t("Per cancellare scrivi l'id della redazione ({tenant}): niente è stato cancellato.", tenant=tenant_id))
         try:
             newsrooms.delete(admin, tenant_id)
         except LookupError:
-            return back("Redazione non trovata.")
-        return back(f"Redazione {tenant_id} cancellata con tutti i suoi dati.")
+            return back(t("Redazione non trovata."))
+        return back(t("Redazione {tenant} cancellata con tutti i suoi dati.", tenant=tenant_id))
 
     @app.get("/admin/enter/{tenant_id}")
     def ui_enter(request: Request, tenant_id: str):
@@ -343,7 +348,7 @@ def register(app, ctx) -> None:
         if s is None:
             return RedirectResponse("/login", status_code=303)
         if not newsrooms.listing(admin, db, tenant_id):
-            return back("Redazione non trovata.")
+            return back(t("Redazione non trovata."))
         token = accounts.start_session(admin, s.user_id, tenant_id)
         accounts.end_session(admin, request.cookies.get(COOKIE))
         resp = RedirectResponse("/", status_code=303)
@@ -356,8 +361,8 @@ def register(app, ctx) -> None:
         try:
             token = accounts.create_invite(admin, email, s.email, operator=True)
         except accounts.AccountError as e:
-            return page(request, s, 400, error=f"Invito non creato: {e}.")
-        return page(request, s, new={"what": f"Invito come operatore per {email.strip().lower()}",
+            return page(request, s, 400, error=t("Invito non creato: {error}.", error=e))
+        return page(request, s, new={"what": t("Invito come operatore per {email}", email=email.strip().lower()),
                                      "link": send(request, token, "invite", email.strip().lower(), None, s.email)})
 
     @app.post("/admin/reset", response_class=HTMLResponse)
@@ -368,9 +373,9 @@ def register(app, ctx) -> None:
             return page(request, s, 400, error=f"{err}.")
         with accounts._read(admin) as conn:
             if accounts.find_user(conn, e) is None:
-                return page(request, s, 400, error=f"Nessun account per {e}.")
+                return page(request, s, 400, error=t("Nessun account per {email}.", email=e))
         token = accounts.create_invite(admin, e, s.email, kind="reset")
-        return page(request, s, new={"what": f"Link per reimpostare la password di {e}",
+        return page(request, s, new={"what": t("Link per reimpostare la password di {email}", email=e),
                                      "link": send(request, token, "reset", e, None, s.email)})
 
     @app.post("/admin/keys", response_class=HTMLResponse)
@@ -379,11 +384,11 @@ def register(app, ctx) -> None:
             key = accounts.create_operator_token(admin, name)
         except accounts.AccountError as e:
             return page(request, s, 400, error=f"{e}.")
-        return page(request, s, new={"what": f"Chiave API «{name.strip()}» creata", "key": key})
+        return page(request, s, new={"what": t("Chiave API «{name}» creata", name=name.strip()), "key": key})
 
     @app.post("/admin/keys/{key_id}/revoke")
     def ui_revoke_key(key_id: int, s=Depends(need_console)):
-        return back("Chiave revocata." if accounts.revoke_operator_token(admin, key_id) else "Chiave già revocata.")
+        return back(t("Chiave revocata.") if accounts.revoke_operator_token(admin, key_id) else t("Chiave già revocata."))
 
     commerce.register(app, ctx, operator=operator, own=own, no_reseller=no_reseller, send=send,
                       need_console=need_console, page=page, back=back, failed=failed)

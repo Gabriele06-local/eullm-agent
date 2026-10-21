@@ -1,0 +1,1646 @@
+{
+ " La credenziale è salvata cifrata e non verrà più mostrata.": {
+  "de": " Die Zugangsdaten sind verschlüsselt gespeichert und werden nicht mehr angezeigt.",
+  "en": " The credential is stored encrypted and will not be shown again.",
+  "es": " La credencial se guarda cifrada y no se volverá a mostrar.",
+  "fr": " L'identifiant est enregistré chiffré et ne sera plus affiché."
+ },
+ " Sul server la credenziale va nella variabile {var}.": {
+  "de": " Auf dem Server gehören die Zugangsdaten in die Variable {var}.",
+  "en": " On the server the credential goes in the variable {var}.",
+  "es": " En el servidor la credencial va en la variable {var}.",
+  "fr": " Sur le serveur, l'identifiant va dans la variable {var}."
+ },
+ "Accesso già revocato.": {
+  "de": "Zugang bereits widerrufen.",
+  "en": "Access already revoked.",
+  "es": "Acceso ya revocado.",
+  "fr": "Accès déjà révoqué."
+ },
+ "Accesso revocato.": {
+  "de": "Zugang widerrufen.",
+  "en": "Access revoked.",
+  "es": "Acceso revocado.",
+  "fr": "Accès révoqué."
+ },
+ "Accetta e scrivi la bozza": {
+  "de": "Annehmen und Entwurf schreiben",
+  "en": "Accept and write the draft",
+  "es": "Aceptar y redactar el borrador",
+  "fr": "Accepter et rédiger le brouillon"
+ },
+ "Accetta le proposte che ti interessano e scarta le altre.": {
+  "de": "Nehmen Sie die Vorschläge an, die Sie interessieren, und verwerfen Sie die anderen.",
+  "en": "Accept the proposals that interest you and discard the others.",
+  "es": "Acepta las propuestas que te interesen y descarta las demás.",
+  "fr": "Acceptez les propositions qui vous intéressent et écartez les autres."
+ },
+ "Accetta prima la proposta.": {
+  "de": "Nehmen Sie zuerst den Vorschlag an.",
+  "en": "Accept the proposal first.",
+  "es": "Acepta primero la propuesta.",
+  "fr": "Acceptez d'abord la proposition."
+ },
+ "Accetta una proposta": {
+  "de": "Einen Vorschlag annehmen",
+  "en": "Accept a proposal",
+  "es": "Acepta una propuesta",
+  "fr": "Acceptez une proposition"
+ },
+ "Accettata": {
+  "de": "Angenommen",
+  "en": "Accepted",
+  "es": "Aceptada",
+  "fr": "Acceptée"
+ },
+ "Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì.": {
+  "de": "Fügen Sie WordPress, einen Webhook oder einen Telegram-Kanal hinzu: Nichts geht ohne Ihr Ja hinaus.",
+  "en": "Add WordPress, a webhook or a Telegram channel: nothing goes out without your yes.",
+  "es": "Añade WordPress, un webhook o un canal de Telegram: nada sale sin tu sí.",
+  "fr": "Ajoutez WordPress, un webhook ou un canal Telegram : rien ne sort sans votre accord."
+ },
+ "Aggiungi il sito": {
+  "de": "Website hinzufügen",
+  "en": "Add the site",
+  "es": "Añade el sitio",
+  "fr": "Ajoutez le site"
+ },
+ "Aggiungi prima un sito.": {
+  "de": "Fügen Sie zuerst eine Website hinzu.",
+  "en": "Add a site first.",
+  "es": "Añade primero un sitio.",
+  "fr": "Ajoutez d'abord un site."
+ },
+ "Aggiungi un dominio da <a href=\"/site\">Sito e profilo</a> per far partire la scoperta delle fonti.": {
+  "de": "Fügen Sie eine Domain unter <a href=\"/site\">Website und Profil</a> hinzu, um die Quellensuche zu starten.",
+  "en": "Add a domain from <a href=\"/site\">Site and profile</a> to start discovering sources.",
+  "es": "Añade un dominio desde <a href=\"/site\">Sitio y perfil</a> para empezar a descubrir fuentes.",
+  "fr": "Ajoutez un domaine depuis <a href=\"/site\">Site et profil</a> pour lancer la découverte des sources."
+ },
+ "Aggiungi un dominio da <a href=\"/site\">Sito e profilo</a>.": {
+  "de": "Fügen Sie eine Domain unter <a href=\"/site\">Website und Profil</a> hinzu.",
+  "en": "Add a domain from <a href=\"/site\">Site and profile</a>.",
+  "es": "Añade un dominio desde <a href=\"/site\">Sitio y perfil</a>.",
+  "fr": "Ajoutez un domaine depuis <a href=\"/site\">Site et profil</a>."
+ },
+ "Aggiunta a mano": {
+  "de": "Manuell hinzugefügt",
+  "en": "Added manually",
+  "es": "Añadida a mano",
+  "fr": "Ajoutée manuellement"
+ },
+ "Analisi del modello non eseguita: settore, pubblico e stile restano da determinare.": {
+  "de": "Modellanalyse nicht ausgeführt: Branche, Publikum und Stil sind noch offen.",
+  "en": "Model analysis not run: sector, audience and style are still to be determined.",
+  "es": "Análisis del modelo no realizado: sector, público y estilo quedan por determinar.",
+  "fr": "Analyse du modèle non effectuée : secteur, public et style restent à déterminer."
+ },
+ "Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.": {
+  "de": "Analyse von {d} eingereiht: Die Website erscheint hier, sobald die Arbeit fertig ist; danach kommt das Profil als Entwurf zur Freigabe.",
+  "en": "Analysis of {d} queued: the site appears here when the job is done, then the profile arrives as a draft to approve.",
+  "es": "Análisis de {d} en cola: el sitio aparece aquí cuando termine el trabajo y después llega el perfil como borrador para aprobar.",
+  "fr": "Analyse de {d} en file d'attente : le site apparaît ici une fois le travail terminé, puis le profil arrive en brouillon à approuver."
+ },
+ "Analisi in corso: il profilo da approvare arriva appena finisce.": {
+  "de": "Analyse läuft: Das Profil zur Freigabe kommt, sobald sie fertig ist.",
+  "en": "Analysis in progress: the profile to approve arrives as soon as it finishes.",
+  "es": "Análisis en curso: el perfil para aprobar llega en cuanto termine.",
+  "fr": "Analyse en cours : le profil à approuver arrive dès qu'elle se termine."
+ },
+ "Analizza il sito": {
+  "de": "Website analysieren",
+  "en": "Analyse the site",
+  "es": "Analizar el sitio",
+  "fr": "Analyser le site"
+ },
+ "Ancora nessun tema da proporre: servono due fonti diverse sullo stesso tema, o una notizia forte di una fonte affidabile.": {
+  "de": "Noch kein Thema für einen Vorschlag: Nötig sind zwei verschiedene Quellen zum selben Thema oder eine starke Meldung aus einer zuverlässigen Quelle.",
+  "en": "No topic to propose yet: it takes two different sources on the same topic, or one strong news item from a reliable source.",
+  "es": "Todavía no hay ningún tema que proponer: hacen falta dos fuentes distintas sobre el mismo tema, o una noticia fuerte de una fuente fiable.",
+  "fr": "Pas encore de thème à proposer : il faut deux sources différentes sur le même thème, ou une actualité forte d'une source fiable."
+ },
+ "Approva": {
+  "de": "Freigeben",
+  "en": "Approve",
+  "es": "Aprobar",
+  "fr": "Approuver"
+ },
+ "Approva il profilo": {
+  "de": "Profil freigeben",
+  "en": "Approve the profile",
+  "es": "Aprueba el perfil",
+  "fr": "Approuvez le profil"
+ },
+ "Approva prima il profilo del sito.": {
+  "de": "Geben Sie zuerst das Profil der Website frei.",
+  "en": "Approve the site's profile first.",
+  "es": "Aprueba primero el perfil del sitio.",
+  "fr": "Approuvez d'abord le profil du site."
+ },
+ "Approvata: l'invio parte a breve.": {
+  "de": "Freigegeben: Der Versand beginnt in Kürze.",
+  "en": "Approved: sending starts shortly.",
+  "es": "Aprobada: el envío empieza en breve.",
+  "fr": "Approuvée : l'envoi démarre sous peu."
+ },
+ "Apri": {
+  "de": "Öffnen",
+  "en": "Open",
+  "es": "Abrir",
+  "fr": "Ouvrir"
+ },
+ "Apri la bozza": {
+  "de": "Entwurf öffnen",
+  "en": "Open the draft",
+  "es": "Abrir el borrador",
+  "fr": "Ouvrir le brouillon"
+ },
+ "Attiva": {
+  "de": "Aktiv",
+  "en": "Active",
+  "es": "Activa",
+  "fr": "Active"
+ },
+ "Attiva le fonti": {
+  "de": "Quellen aktivieren",
+  "en": "Activate the sources",
+  "es": "Activa las fuentes",
+  "fr": "Activez les sources"
+ },
+ "Attive": {
+  "de": "Aktiv",
+  "en": "Active",
+  "es": "Activas",
+  "fr": "Actives"
+ },
+ "Azioni": {
+  "de": "Aktionen",
+  "en": "Actions",
+  "es": "Acciones",
+  "fr": "Actions"
+ },
+ "Bozza approvata: ora puoi chiederne la pubblicazione.": {
+  "de": "Entwurf freigegeben: Sie können jetzt die Veröffentlichung anfordern.",
+  "en": "Draft approved: you can now request its publication.",
+  "es": "Borrador aprobado: ahora puedes solicitar su publicación.",
+  "fr": "Brouillon approuvé : vous pouvez maintenant demander sa publication."
+ },
+ "Bozza in scrittura: compare qui quando è pronta.": {
+  "de": "Entwurf wird geschrieben: Er erscheint hier, sobald er fertig ist.",
+  "en": "Draft being written: it appears here when it is ready.",
+  "es": "Borrador en redacción: aparece aquí cuando esté listo.",
+  "fr": "Brouillon en cours de rédaction : il apparaît ici dès qu'il est prêt."
+ },
+ "Bozza pronta": {
+  "de": "Entwurf fertig",
+  "en": "Draft ready",
+  "es": "Borrador listo",
+  "fr": "Brouillon prêt"
+ },
+ "Bozza rifiutata.": {
+  "de": "Entwurf abgelehnt.",
+  "en": "Draft rejected.",
+  "es": "Borrador rechazado.",
+  "fr": "Brouillon refusé."
+ },
+ "Bozze nel mese": {
+  "de": "Entwürfe im Monat",
+  "en": "Drafts this month",
+  "es": "Borradores del mes",
+  "fr": "Brouillons ce mois-ci"
+ },
+ "Bozze pronte": {
+  "de": "Fertige Entwürfe",
+  "en": "Drafts ready",
+  "es": "Borradores listos",
+  "fr": "Brouillons prêts"
+ },
+ "Briefing di oggi non ancora pronto": {
+  "de": "Heutiges Briefing noch nicht fertig",
+  "en": "Today's briefing not ready yet",
+  "es": "El resumen diario de hoy aún no está listo",
+  "fr": "Briefing du jour pas encore prêt"
+ },
+ "Briefing inviato alle {time}": {
+  "de": "Briefing um {time} gesendet",
+  "en": "Briefing sent at {time}",
+  "es": "Resumen diario enviado a las {time}",
+  "fr": "Briefing envoyé à {time}"
+ },
+ "Briefing ogni giorno alle {hour}:00": {
+  "de": "Briefing täglich um {hour}:00",
+  "en": "Briefing every day at {hour}:00",
+  "es": "Resumen diario cada día a las {hour}:00",
+  "fr": "Briefing chaque jour à {hour}:00"
+ },
+ "Briefing pronto, non inviato": {
+  "de": "Briefing fertig, nicht gesendet",
+  "en": "Briefing ready, not sent",
+  "es": "Resumen diario listo, no enviado",
+  "fr": "Briefing prêt, non envoyé"
+ },
+ "Canale Telegram": {
+  "de": "Telegram-Kanal",
+  "en": "Telegram channel",
+  "es": "Canal de Telegram",
+  "fr": "Canal Telegram"
+ },
+ "Candidata": {
+  "de": "Kandidat",
+  "en": "Candidate",
+  "es": "Candidata",
+  "fr": "Candidate"
+ },
+ "Candidate": {
+  "de": "Kandidaten",
+  "en": "Candidates",
+  "es": "Candidatas",
+  "fr": "Candidates"
+ },
+ "Ce ne sono su:": {
+  "de": "Es gibt welche auf:",
+  "en": "There are some on:",
+  "es": "Hay en:",
+  "fr": "Il y en a sur :"
+ },
+ "Cerca nuove fonti": {
+  "de": "Neue Quellen suchen",
+  "en": "Find new sources",
+  "es": "Buscar nuevas fuentes",
+  "fr": "Chercher de nouvelles sources"
+ },
+ "Collega il sito per pubblicare": {
+  "de": "Website zum Veröffentlichen verbinden",
+  "en": "Connect the site to publish",
+  "es": "Conecta el sitio para publicar",
+  "fr": "Connectez le site pour publier"
+ },
+ "Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva.": {
+  "de": "Prüfen Sie Themen und Beispielartikel, entfernen Sie unerwünschte Themen und geben Sie frei.",
+  "en": "Check the topics and sample articles, remove the topics you don't want and approve.",
+  "es": "Revisa los temas y los artículos de ejemplo, quita los temas que no quieras y aprueba.",
+  "fr": "Vérifiez les thèmes et les articles d'exemple, retirez les thèmes indésirables et approuvez."
+ },
+ "Cosa pubblicava alla valutazione": {
+  "de": "Was sie bei der Bewertung veröffentlichte",
+  "en": "What it published when assessed",
+  "es": "Qué publicaba en la evaluación",
+  "fr": "Ce qu'elle publiait lors de l'évaluation"
+ },
+ "Cosa sale, e cosa conviene scrivere": {
+  "de": "Was steigt und worüber sich das Schreiben lohnt",
+  "en": "What's rising, and what's worth writing",
+  "es": "Qué sube y qué conviene escribir",
+  "fr": "Ce qui monte, et ce qui vaut la peine d'être écrit"
+ },
+ "Costo modello nel mese": {
+  "de": "Modellkosten im Monat",
+  "en": "Model cost this month",
+  "es": "Coste del modelo del mes",
+  "fr": "Coût du modèle ce mois-ci"
+ },
+ "Credenziale non salvata: {e}.": {
+  "de": "Zugangsdaten nicht gespeichert: {e}.",
+  "en": "Credential not saved: {e}.",
+  "es": "Credencial no guardada: {e}.",
+  "fr": "Identifiant non enregistré : {e}."
+ },
+ "Credenziale {name} aggiornata: è salvata cifrata e non verrà più mostrata.": {
+  "de": "Zugangsdaten {name} aktualisiert: Sie sind verschlüsselt gespeichert und werden nicht mehr angezeigt.",
+  "en": "Credential {name} updated: it is stored encrypted and will not be shown again.",
+  "es": "Credencial {name} actualizada: se guarda cifrada y no se volverá a mostrar.",
+  "fr": "Identifiant {name} mis à jour : il est enregistré chiffré et ne sera plus affiché."
+ },
+ "Da decidere": {
+  "de": "Zu entscheiden",
+  "en": "To decide",
+  "es": "Por decidir",
+  "fr": "À décider"
+ },
+ "Dai un nome alla credenziale, es. WP_SITO.": {
+  "de": "Geben Sie den Zugangsdaten einen Namen, z. B. WP_SITE.",
+  "en": "Give the credential a name, e.g. WP_SITE.",
+  "es": "Ponle un nombre a la credencial, p. ej. WP_SITIO.",
+  "fr": "Donnez un nom à l'identifiant, par ex. WP_SITE."
+ },
+ "Destinatario aggiunto: riceve il prossimo briefing.": {
+  "de": "Empfänger hinzugefügt: Er erhält das nächste Briefing.",
+  "en": "Recipient added: they will get the next briefing.",
+  "es": "Destinatario añadido: recibirá el próximo resumen diario.",
+  "fr": "Destinataire ajouté : il recevra le prochain briefing."
+ },
+ "Destinatario non valido.": {
+  "de": "Ungültiger Empfänger.",
+  "en": "Invalid recipient.",
+  "es": "Destinatario no válido.",
+  "fr": "Destinataire non valide."
+ },
+ "Destinatario rimosso.": {
+  "de": "Empfänger entfernt.",
+  "en": "Recipient removed.",
+  "es": "Destinatario eliminado.",
+  "fr": "Destinataire supprimé."
+ },
+ "Destinazione non aggiunta: {e}.": {
+  "de": "Ziel nicht hinzugefügt: {e}.",
+  "en": "Destination not added: {e}.",
+  "es": "Destino no añadido: {e}.",
+  "fr": "Destination non ajoutée : {e}."
+ },
+ "Destinazione {name} aggiunta.": {
+  "de": "Ziel {name} hinzugefügt.",
+  "en": "Destination {name} added.",
+  "es": "Destino {name} añadido.",
+  "fr": "Destination {name} ajoutée."
+ },
+ "Dominio": {
+  "de": "Domain",
+  "en": "Domain",
+  "es": "Dominio",
+  "fr": "Domaine"
+ },
+ "Editor Mode analizza il sito, propone un profilo editoriale con le prove e cerca le fonti da solo. Nulla parte prima della tua approvazione.": {
+  "de": "Editor Mode analysiert die Website, schlägt ein Redaktionsprofil mit Belegen vor und sucht selbst die Quellen. Nichts startet ohne Ihre Freigabe.",
+  "en": "Editor Mode analyses the site, proposes an editorial profile with the evidence and finds sources on its own. Nothing starts before your approval.",
+  "es": "Editor Mode analiza el sitio, propone un perfil editorial con las pruebas y busca las fuentes por sí solo. Nada empieza sin tu aprobación.",
+  "fr": "Editor Mode analyse le site, propose un profil éditorial avec les preuves et cherche les sources tout seul. Rien ne démarre avant votre approbation."
+ },
+ "Elenco fonti": {
+  "de": "Quellenliste",
+  "en": "Source list",
+  "es": "Lista de fuentes",
+  "fr": "Liste des sources"
+ },
+ "Email o password sbagliate": {
+  "de": "E-Mail oder Passwort falsch",
+  "en": "Wrong email or password",
+  "es": "Email o contraseña incorrectos",
+  "fr": "E-mail ou mot de passe incorrect"
+ },
+ "Feed del sito": {
+  "de": "Feed der Website",
+  "en": "Site's feed",
+  "es": "Feed del sitio",
+  "fr": "Flux du site"
+ },
+ "Feed scoperto": {
+  "de": "Gefundener Feed",
+  "en": "Discovered feed",
+  "es": "Feed descubierto",
+  "fr": "Flux découvert"
+ },
+ "Filtra per stato": {
+  "de": "Nach Status filtern",
+  "en": "Filter by status",
+  "es": "Filtrar por estado",
+  "fr": "Filtrer par statut"
+ },
+ "Fonte": {
+  "de": "Quelle",
+  "en": "Source",
+  "es": "Fuente",
+  "fr": "Source"
+ },
+ "Fonti": {
+  "de": "Quellen",
+  "en": "Sources",
+  "es": "Fuentes",
+  "fr": "Sources"
+ },
+ "Fonti attivate": {
+  "de": "Quellen aktiviert",
+  "en": "Sources activated",
+  "es": "Fuentes activadas",
+  "fr": "Sources activées"
+ },
+ "Fonti attive": {
+  "de": "Aktive Quellen",
+  "en": "Active sources",
+  "es": "Fuentes activas",
+  "fr": "Sources actives"
+ },
+ "Fonti scoperte dall'agente": {
+  "de": "Vom Agenten gefundene Quellen",
+  "en": "Sources found by the agent",
+  "es": "Fuentes descubiertas por el agente",
+  "fr": "Sources découvertes par l'agent"
+ },
+ "Fuori tema: pertinenza \\1 sulle ultime \\2 notizie. Ritorna in valutazione tra due settimane.": {
+  "de": "Themenfremd: Relevanz \\1 bei den letzten \\2 Meldungen. Wird in zwei Wochen neu bewertet.",
+  "en": "Off topic: relevance \\1 on the last \\2 items. It will be reassessed in two weeks.",
+  "es": "Fuera de tema: pertinencia \\1 en las últimas \\2 noticias. Se volverá a evaluar en dos semanas.",
+  "fr": "Hors sujet : pertinence \\1 sur les \\2 dernières actualités. Réévaluation dans deux semaines."
+ },
+ "Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi.": {
+  "de": "Sehen Sie sich Herkunft, neueste Meldungen und Bewertung der Kandidaten an und aktivieren Sie die gewünschten.",
+  "en": "Look at the origin, latest news and score of the candidates and activate the ones you want.",
+  "es": "Mira el origen, las últimas noticias y la puntuación de las candidatas y activa las que quieras.",
+  "fr": "Regardez l'origine, les dernières actualités et le score des candidates et activez celles que vous voulez."
+ },
+ "Hai scartato le proposte arrivate finora. ": {
+  "de": "Sie haben die bisherigen Vorschläge verworfen. ",
+  "en": "You discarded the proposals received so far. ",
+  "es": "Has descartado las propuestas recibidas hasta ahora. ",
+  "fr": "Vous avez écarté les propositions reçues jusqu'ici. "
+ },
+ "Hype": {
+  "de": "Hype",
+  "en": "Hype",
+  "es": "Hype",
+  "fr": "Buzz"
+ },
+ "Hype misura quanto un tema cresce nel settore. Opportunità misura quanto conviene a questo sito: vicinanza al profilo, copertura che manca, fonti solide.": {
+  "de": "Hype misst, wie stark ein Thema in der Branche wächst. Chance misst, wie gut es zu dieser Website passt: Nähe zum Profil, fehlende Abdeckung, solide Quellen.",
+  "en": "Hype measures how much a topic is growing in the sector. Opportunity measures how much it suits this site: closeness to the profile, missing coverage, solid sources.",
+  "es": "El hype mide cuánto crece un tema en el sector. La oportunidad mide cuánto le conviene a este sitio: cercanía al perfil, cobertura que falta, fuentes sólidas.",
+  "fr": "Le buzz mesure à quel point un thème monte dans le secteur. L'opportunité mesure à quel point il convient à ce site : proximité avec le profil, couverture manquante, sources solides."
+ },
+ "Hype nel settore": {
+  "de": "Hype in der Branche",
+  "en": "Hype in the sector",
+  "es": "Hype en el sector",
+  "fr": "Buzz dans le secteur"
+ },
+ "Ignora": {
+  "de": "Ignorieren",
+  "en": "Ignore",
+  "es": "Ignorar",
+  "fr": "Ignorer"
+ },
+ "Il modello non ha completato l'analisi (\\1): settore, pubblico e stile restano da determinare.": {
+  "de": "Das Modell hat die Analyse nicht abgeschlossen (\\1): Branche, Publikum und Stil sind noch offen.",
+  "en": "The model did not complete the analysis (\\1): sector, audience and style are still to be determined.",
+  "es": "El modelo no completó el análisis (\\1): sector, público y estilo quedan por determinar.",
+  "fr": "Le modèle n'a pas terminé l'analyse (\\1) : secteur, public et style restent à déterminer."
+ },
+ "Il nome del segreto va scritto in MAIUSCOLO, es. WP_SITO.": {
+  "de": "Der Name des Geheimnisses muss in GROSSBUCHSTABEN sein, z. B. WP_SITE.",
+  "en": "The secret name must be in UPPERCASE, e.g. WP_SITE.",
+  "es": "El nombre del secreto va en MAYÚSCULAS, p. ej. WP_SITIO.",
+  "fr": "Le nom du secret doit être en MAJUSCULES, par ex. WP_SITE."
+ },
+ "Il punteggio pesa pertinenza ai temi del profilo (35%), frequenza (15%), freschezza (15%), qualità (15%), originalità (10%) e affidabilità (10%). Pertinenza: quante notizie della fonte contengono le parole chiave dei temi.": {
+  "de": "Die Bewertung gewichtet Relevanz für die Profilthemen (35 %), Häufigkeit (15 %), Aktualität (15 %), Qualität (15 %), Originalität (10 %) und Zuverlässigkeit (10 %). Relevanz: wie viele Meldungen der Quelle die Schlüsselwörter der Themen enthalten.",
+  "en": "The score weighs relevance to the profile's topics (35%), frequency (15%), freshness (15%), quality (15%), originality (10%) and reliability (10%). Relevance: how many of the source's news items contain the topics' keywords.",
+  "es": "La puntuación pondera la pertinencia para los temas del perfil (35 %), la frecuencia (15 %), la actualidad (15 %), la calidad (15 %), la originalidad (10 %) y la fiabilidad (10 %). Pertinencia: cuántas noticias de la fuente contienen las palabras clave de los temas.",
+  "fr": "Le score pondère la pertinence pour les thèmes du profil (35 %), la fréquence (15 %), la fraîcheur (15 %), la qualité (15 %), l'originalité (10 %) et la fiabilité (10 %). Pertinence : combien d'actualités de la source contiennent les mots-clés des thèmes."
+ },
+ "Il sito non ha un feed RSS o Atom: gli articoli sono stati trovati da sitemap e pagine.": {
+  "de": "Die Website hat keinen RSS- oder Atom-Feed: Die Artikel wurden über Sitemap und Seiten gefunden.",
+  "en": "The site has no RSS or Atom feed: articles were found from the sitemap and pages.",
+  "es": "El sitio no tiene feed RSS ni Atom: los artículos se encontraron en el sitemap y las páginas.",
+  "fr": "Le site n'a pas de flux RSS ou Atom : les articles ont été trouvés via le sitemap et les pages."
+ },
+ "Il tuo account non è in nessuna redazione attiva: chiedi un invito.": {
+  "de": "Ihr Konto gehört zu keiner aktiven Redaktion: Bitten Sie um eine Einladung.",
+  "en": "Your account is not in any active newsroom: ask for an invitation.",
+  "es": "Tu cuenta no está en ninguna redacción activa: pide una invitación.",
+  "fr": "Votre compte n'appartient à aucune rédaction active : demandez une invitation."
+ },
+ "In attesa": {
+  "de": "Wartet",
+  "en": "Waiting",
+  "es": "En espera",
+  "fr": "En attente"
+ },
+ "In attesa di bozza": {
+  "de": "Wartet auf Entwurf",
+  "en": "Waiting for a draft",
+  "es": "A la espera del borrador",
+  "fr": "En attente de brouillon"
+ },
+ "Indirizzo email non valido.": {
+  "de": "Ungültige E-Mail-Adresse.",
+  "en": "Invalid email address.",
+  "es": "Dirección de email no válida.",
+  "fr": "Adresse e-mail non valide."
+ },
+ "Inizia da un dominio": {
+  "de": "Mit einer Domain beginnen",
+  "en": "Start from a domain",
+  "es": "Empieza por un dominio",
+  "fr": "Commencez par un domaine"
+ },
+ "Invito annullato.": {
+  "de": "Einladung zurückgezogen.",
+  "en": "Invitation cancelled.",
+  "es": "Invitación anulada.",
+  "fr": "Invitation annulée."
+ },
+ "Invito già usato o scaduto.": {
+  "de": "Einladung bereits verwendet oder abgelaufen.",
+  "en": "Invitation already used or expired.",
+  "es": "Invitación ya usada o caducada.",
+  "fr": "Invitation déjà utilisée ou expirée."
+ },
+ "Invito non creato: {e}.": {
+  "de": "Einladung nicht erstellt: {e}.",
+  "en": "Invitation not created: {e}.",
+  "es": "Invitación no creada: {e}.",
+  "fr": "Invitation non créée : {e}."
+ },
+ "La bozza è in scrittura.": {
+  "de": "Der Entwurf wird geschrieben.",
+  "en": "The draft is being written.",
+  "es": "El borrador se está redactando.",
+  "fr": "Le brouillon est en cours de rédaction."
+ },
+ "La home page non risponde.": {
+  "de": "Die Startseite antwortet nicht.",
+  "en": "The home page is not responding.",
+  "es": "La página de inicio no responde.",
+  "fr": "La page d'accueil ne répond pas."
+ },
+ "La mappa compare quando ci sono temi con entrambi i punteggi: serve un profilo approvato e almeno un giro di raccolta.": {
+  "de": "Die Karte erscheint, sobald es Themen mit beiden Bewertungen gibt: Nötig sind ein freigegebenes Profil und mindestens ein Sammeldurchlauf.",
+  "en": "The map appears when there are topics with both scores: it needs an approved profile and at least one collection run.",
+  "es": "El mapa aparece cuando hay temas con ambas puntuaciones: hace falta un perfil aprobado y al menos una ronda de recopilación.",
+  "fr": "La carte apparaît quand il y a des thèmes avec les deux scores : il faut un profil approuvé et au moins un passage de collecte."
+ },
+ "La v{version} ha già prodotto proposte e punteggi: resta nello storico.": {
+  "de": "v{version} hat bereits Vorschläge und Bewertungen erzeugt: Sie bleibt im Verlauf.",
+  "en": "v{version} has already produced proposals and scores: it stays in the history.",
+  "es": "La v{version} ya ha generado propuestas y puntuaciones: queda en el historial.",
+  "fr": "La v{version} a déjà produit des propositions et des scores : elle reste dans l'historique."
+ },
+ "La v{version} è la linea in uso: approvane un'altra prima di eliminarla.": {
+  "de": "v{version} ist die aktuelle Linie: Geben Sie zuerst eine andere frei, bevor Sie sie löschen.",
+  "en": "v{version} is the line in use: approve another one before deleting it.",
+  "es": "La v{version} es la línea en uso: aprueba otra antes de eliminarla.",
+  "fr": "La v{version} est la ligne en vigueur : approuvez-en une autre avant de la supprimer."
+ },
+ "Le due password non coincidono.": {
+  "de": "Die beiden Passwörter stimmen nicht überein.",
+  "en": "The two passwords don't match.",
+  "es": "Las dos contraseñas no coinciden.",
+  "fr": "Les deux mots de passe ne correspondent pas."
+ },
+ "Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.": {
+  "de": "Quellen werden jeden Montag neu bewertet; die Sammlung läuft stündlich.",
+  "en": "Sources are reassessed every Monday; collection runs every hour.",
+  "es": "Las fuentes se reevalúan cada lunes; la recopilación se ejecuta cada hora.",
+  "fr": "Les sources sont réévaluées chaque lundi ; la collecte tourne toutes les heures."
+ },
+ "Le proposte di oggi sono già state fatte: le prossime arrivano domani.": {
+  "de": "Die heutigen Vorschläge wurden bereits erstellt: Die nächsten kommen morgen.",
+  "en": "Today's proposals have already been made: the next ones arrive tomorrow.",
+  "es": "Las propuestas de hoy ya se han hecho: las próximas llegan mañana.",
+  "fr": "Les propositions du jour ont déjà été faites : les prochaines arrivent demain."
+ },
+ "Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte (opportunità da 50/100) di una fonte affidabile.": {
+  "de": "Die nächsten kommen morgen früh zur Briefing-Zeit oder sofort mit „Jetzt vorschlagen“ unter Trends und Plan: Nötig sind zwei Meldungen aus zwei verschiedenen Quellen zum selben Thema oder eine starke Meldung (Chance ab 50/100) aus einer zuverlässigen Quelle.",
+  "en": "The next ones arrive tomorrow morning at briefing time, or right away with \"Propose now\" in Trends and plan: it takes two news items from two different sources on the same topic, or one strong item (opportunity from 50/100) from a reliable source.",
+  "es": "Las próximas llegan mañana por la mañana a la hora del resumen diario, o enseguida con «Proponer ahora» en Tendencias y plan: hacen falta dos noticias de dos fuentes distintas sobre el mismo tema, o una noticia fuerte (oportunidad desde 50/100) de una fuente fiable.",
+  "fr": "Les prochaines arrivent demain matin à l'heure du briefing, ou tout de suite avec « Proposer maintenant » dans Tendances et plan : il faut deux actualités de deux sources différentes sur le même thème, ou une actualité forte (opportunité à partir de 50/100) d'une source fiable."
+ },
+ "Leggi": {
+  "de": "Lesen",
+  "en": "Read",
+  "es": "Leer",
+  "fr": "Lire"
+ },
+ "Letti \\1 articoli (ne servono almeno \\2 per un'analisi completa).": {
+  "de": "\\1 Artikel gelesen (für eine vollständige Analyse sind mindestens \\2 nötig).",
+  "en": "Read \\1 articles (at least \\2 are needed for a full analysis).",
+  "es": "Leídos \\1 artículos (se necesitan al menos \\2 para un análisis completo).",
+  "fr": "\\1 articles lus (il en faut au moins \\2 pour une analyse complète)."
+ },
+ "Lingua non determinata.": {
+  "de": "Sprache nicht ermittelt.",
+  "en": "Language not determined.",
+  "es": "Idioma no determinado.",
+  "fr": "Langue non déterminée."
+ },
+ "Link dal sito": {
+  "de": "Link von der Website",
+  "en": "Link from the site",
+  "es": "Enlace del sitio",
+  "fr": "Lien depuis le site"
+ },
+ "Mappa dei temi": {
+  "de": "Themenkarte",
+  "en": "Topic map",
+  "es": "Mapa de temas",
+  "fr": "Carte des thèmes"
+ },
+ "Materiale insufficiente: settore, pubblico e stile restano da determinare.": {
+  "de": "Zu wenig Material: Branche, Publikum und Stil sind noch offen.",
+  "en": "Not enough material: sector, audience and style are still to be determined.",
+  "es": "Material insuficiente: sector, público y estilo quedan por determinar.",
+  "fr": "Matériel insuffisant : secteur, public et style restent à déterminer."
+ },
+ "Modifiche salvate come bozza v{version}: approvala per renderla attiva.": {
+  "de": "Änderungen als Entwurf v{version} gespeichert: Geben Sie ihn frei, um ihn zu aktivieren.",
+  "en": "Changes saved as draft v{version}: approve it to make it active.",
+  "es": "Cambios guardados como borrador v{version}: apruébalo para activarlo.",
+  "fr": "Modifications enregistrées comme brouillon v{version} : approuvez-le pour l'activer."
+ },
+ "Molto hype non vuol dire opportunità: conta quanto il tema è vicino al sito e quanto non l'hai già coperto.": {
+  "de": "Viel Hype heißt nicht Chance: Entscheidend ist, wie nah das Thema an der Website ist und wie wenig Sie es schon abgedeckt haben.",
+  "en": "Lots of hype doesn't mean opportunity: what counts is how close the topic is to the site and how much you haven't covered it yet.",
+  "es": "Mucho hype no significa oportunidad: cuenta lo cerca que está el tema del sitio y cuánto no lo has cubierto ya.",
+  "fr": "Beaucoup de buzz ne veut pas dire opportunité : ce qui compte, c'est la proximité du thème avec le site et le fait que vous ne l'ayez pas encore couvert."
+ },
+ "Nessun Core configurato: per scrivere le bozze serve un modello.": {
+  "de": "Kein Core konfiguriert: Zum Schreiben von Entwürfen wird ein Modell benötigt.",
+  "en": "No Core configured: writing drafts needs a model.",
+  "es": "No hay ningún Core configurado: para redactar borradores hace falta un modelo.",
+  "fr": "Aucun Core configuré : il faut un modèle pour rédiger les brouillons."
+ },
+ "Nessun passaggio copiato parola per parola": {
+  "de": "Keine wörtlich kopierte Passage",
+  "en": "No passage copied word for word",
+  "es": "Ningún pasaje copiado palabra por palabra",
+  "fr": "Aucun passage copié mot pour mot"
+ },
+ "Nessun sito": {
+  "de": "Keine Website",
+  "en": "No site",
+  "es": "Ningún sitio",
+  "fr": "Aucun site"
+ },
+ "Nessun sito: aggiungilo da Sito e profilo.": {
+  "de": "Keine Website: Fügen Sie sie unter Website und Profil hinzu.",
+  "en": "No site: add it from Site and profile.",
+  "es": "Ningún sitio: añádelo desde Sitio y perfil.",
+  "fr": "Aucun site : ajoutez-le depuis Site et profil."
+ },
+ "Nessun tema negli ultimi sette giorni.": {
+  "de": "Keine Themen in den letzten sieben Tagen.",
+  "en": "No topics in the last seven days.",
+  "es": "Ningún tema en los últimos siete días.",
+  "fr": "Aucun thème ces sept derniers jours."
+ },
+ "Nessuna fonte in questo stato per {domain}.": {
+  "de": "Keine Quellen mit diesem Status für {domain}.",
+  "en": "No sources with this status for {domain}.",
+  "es": "Ninguna fuente en este estado para {domain}.",
+  "fr": "Aucune source dans cet état pour {domain}."
+ },
+ "Nessuna lista fissa. L'agente trova le fonti in tre modi: le testate che gli articoli del sito citano, le ricerche fatte con le parole chiave dei temi del profilo (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per quei temi. Ogni fonte viene letta e giudicata su cosa pubblica; da 0,50 entra attiva, tra 0,35 e 0,50 resta candidata. Ogni lunedì vengono rivalutate.": {
+  "de": "Keine feste Liste. Der Agent findet Quellen auf drei Wegen: die Medien, die die Artikel der Website zitieren, Suchen mit den Schlüsselwörtern der Profilthemen (Hacker News, GitHub, Hugging Face, arXiv) und die Medien, die das Modell für diese Themen nennt. Jede Quelle wird gelesen und nach dem beurteilt, was sie veröffentlicht; ab 0,50 wird sie aktiv, zwischen 0,35 und 0,50 bleibt sie Kandidat. Jeden Montag werden sie neu bewertet.",
+  "en": "No fixed list. The agent finds sources in three ways: the outlets the site's articles cite, searches with the keywords of the profile's topics (Hacker News, GitHub, Hugging Face, arXiv) and the outlets the model suggests for those topics. Each source is read and judged on what it publishes; from 0.50 it becomes active, between 0.35 and 0.50 it stays a candidate. They are reassessed every Monday.",
+  "es": "Sin lista fija. El agente encuentra las fuentes de tres maneras: los medios que citan los artículos del sitio, las búsquedas con las palabras clave de los temas del perfil (Hacker News, GitHub, Hugging Face, arXiv) y los medios que el modelo indica para esos temas. Cada fuente se lee y se juzga por lo que publica; desde 0,50 entra activa, entre 0,35 y 0,50 queda como candidata. Se reevalúan cada lunes.",
+  "fr": "Aucune liste fixe. L'agent trouve les sources de trois façons : les médias que citent les articles du site, les recherches faites avec les mots-clés des thèmes du profil (Hacker News, GitHub, Hugging Face, arXiv) et les médias que le modèle indique pour ces thèmes. Chaque source est lue et jugée sur ce qu'elle publie ; à partir de 0,50 elle devient active, entre 0,35 et 0,50 elle reste candidate. Elles sont réévaluées chaque lundi."
+ },
+ "Nessuna notizia nuova da più di \\1 giorni: ritorna in valutazione tra due settimane.": {
+  "de": "Seit mehr als \\1 Tagen keine neuen Meldungen: wird in zwei Wochen neu bewertet.",
+  "en": "No new items for more than \\1 days: it will be reassessed in two weeks.",
+  "es": "Ninguna noticia nueva desde hace más de \\1 días: se volverá a evaluar en dos semanas.",
+  "fr": "Aucune nouvelle actualité depuis plus de \\1 jours : réévaluation dans deux semaines."
+ },
+ "Nessuna proposta aperta. Le nuove arrivano con il briefing del mattino.": {
+  "de": "Keine offenen Vorschläge. Neue kommen mit dem Morgen-Briefing.",
+  "en": "No open proposals. New ones arrive with the morning briefing.",
+  "es": "No hay propuestas abiertas. Las nuevas llegan con el resumen diario de la mañana.",
+  "fr": "Aucune proposition ouverte. Les nouvelles arrivent avec le briefing du matin."
+ },
+ "Nessuna sitemap utilizzabile: gli articoli sono stati trovati seguendo i link.": {
+  "de": "Keine nutzbare Sitemap: Die Artikel wurden über Links gefunden.",
+  "en": "No usable sitemap: articles were found by following links.",
+  "es": "No hay sitemap utilizable: los artículos se encontraron siguiendo los enlaces.",
+  "fr": "Aucun sitemap utilisable : les articles ont été trouvés en suivant les liens."
+ },
+ "Nicchia utile": {
+  "de": "Nützliche Nische",
+  "en": "Useful niche",
+  "es": "Nicho útil",
+  "fr": "Niche utile"
+ },
+ "Niente da decidere adesso.": {
+  "de": "Gerade nichts zu entscheiden.",
+  "en": "Nothing to decide right now.",
+  "es": "Nada que decidir ahora.",
+  "fr": "Rien à décider pour le moment."
+ },
+ "Nome o ruolo non valido.": {
+  "de": "Ungültiger Name oder ungültige Rolle.",
+  "en": "Invalid name or role.",
+  "es": "Nombre o rol no válido.",
+  "fr": "Nom ou rôle non valide."
+ },
+ "Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare.": {
+  "de": "Keine Veröffentlichungsdaten gefunden: Der Rhythmus der Website lässt sich nicht messen.",
+  "en": "No publication dates found: the site's publishing pace can't be measured.",
+  "es": "No se encontraron fechas de publicación: no se puede medir el ritmo del sitio.",
+  "fr": "Dates de publication introuvables : le rythme du site ne peut pas être mesuré."
+ },
+ "Notizie in 7 giorni": {
+  "de": "Meldungen in 7 Tagen",
+  "en": "News in 7 days",
+  "es": "Noticias en 7 días",
+  "fr": "Actualités sur 7 jours"
+ },
+ "Notizie oggi": {
+  "de": "Meldungen heute",
+  "en": "News today",
+  "es": "Noticias hoy",
+  "fr": "Actualités aujourd'hui"
+ },
+ "Notizie raccolte": {
+  "de": "Meldungen gesammelt",
+  "en": "News collected",
+  "es": "Noticias recopiladas",
+  "fr": "Actualités collectées"
+ },
+ "Nulla esce senza il tuo sì": {
+  "de": "Nichts geht ohne Ihr Ja hinaus",
+  "en": "Nothing goes out without your yes",
+  "es": "Nada sale sin tu sí",
+  "fr": "Rien ne sort sans votre accord"
+ },
+ "Oggi": {
+  "de": "Heute",
+  "en": "Today",
+  "es": "Hoy",
+  "fr": "Aujourd'hui"
+ },
+ "Ogni frase ha almeno una fonte": {
+  "de": "Jeder Satz hat mindestens eine Quelle",
+  "en": "Every sentence has at least one source",
+  "es": "Cada frase tiene al menos una fuente",
+  "fr": "Chaque phrase a au moins une source"
+ },
+ "Ogni numero compare nelle fonti citate": {
+  "de": "Jede Zahl steht in den zitierten Quellen",
+  "en": "Every number appears in the cited sources",
+  "es": "Cada número aparece en las fuentes citadas",
+  "fr": "Chaque chiffre figure dans les sources citées"
+ },
+ "Ogni riga è l'idea di un articolo, non l'articolo. Le proposte arrivano ogni mattina all'ora del briefing ({hour}:00) da temi con almeno due notizie di due fonti diverse, o da una notizia forte (opportunità da 50) di una fonte affidabile; &quot;Proponi adesso&quot; non aspetta la mattina. <strong>Accetta e scrivi la bozza</strong> fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.": {
+  "de": "Jede Zeile ist die Idee für einen Artikel, nicht der Artikel. Vorschläge kommen jeden Morgen zur Briefing-Zeit ({hour}:00) aus Themen mit mindestens zwei Meldungen aus zwei verschiedenen Quellen oder aus einer starken Meldung (Chance ab 50) aus einer zuverlässigen Quelle; &quot;Jetzt vorschlagen&quot; wartet nicht auf den Morgen. <strong>Annehmen und Entwurf schreiben</strong> lässt den Artikel schreiben, den Sie unter Entwürfe prüfen; <strong>Verwerfen</strong> entfernt ihn, und der Agent lernt, was Sie nicht interessiert. Chance (0-100) zeigt, wie gut das Thema zu dieser Website passt, Hype (0-100), wie viel in der Branche darüber gesprochen wird. Nichts wird ohne Ihr Ja veröffentlicht.",
+  "en": "Each row is the idea for an article, not the article. Proposals arrive every morning at briefing time ({hour}:00) from topics with at least two news items from two different sources, or from one strong item (opportunity from 50) from a reliable source; &quot;Propose now&quot; doesn't wait for the morning. <strong>Accept and write the draft</strong> has the article written, which you review in Drafts; <strong>Discard</strong> removes it and the agent learns what doesn't interest you. Opportunity (0-100) says how much the topic suits this site, Hype (0-100) how much the sector is talking about it. Nothing is published without your yes.",
+  "es": "Cada fila es la idea de un artículo, no el artículo. Las propuestas llegan cada mañana a la hora del resumen diario ({hour}:00) a partir de temas con al menos dos noticias de dos fuentes distintas, o de una noticia fuerte (oportunidad desde 50) de una fuente fiable; &quot;Proponer ahora&quot; no espera a la mañana. <strong>Aceptar y redactar el borrador</strong> hace que se escriba el artículo, que revisas en Borradores; <strong>Descartar</strong> la quita y el agente aprende lo que no te interesa. La oportunidad (0-100) indica cuánto le conviene el tema a este sitio, el hype (0-100) cuánto se habla de él en el sector. Nada se publica sin tu sí.",
+  "fr": "Chaque ligne est l'idée d'un article, pas l'article. Les propositions arrivent chaque matin à l'heure du briefing ({hour}:00) à partir de thèmes ayant au moins deux actualités de deux sources différentes, ou d'une actualité forte (opportunité à partir de 50) d'une source fiable ; &quot;Proposer maintenant&quot; n'attend pas le matin. <strong>Accepter et rédiger le brouillon</strong> fait rédiger l'article, que vous relisez dans Brouillons ; <strong>Écarter</strong> la retire et l'agent apprend ce qui ne vous intéresse pas. L'opportunité (0-100) indique à quel point le thème convient à ce site, le buzz (0-100) à quel point le secteur en parle. Rien n'est publié sans votre accord."
+ },
+ "Opportunità": {
+  "de": "Chance",
+  "en": "Opportunity",
+  "es": "Oportunidad",
+  "fr": "Opportunité"
+ },
+ "Opportunità alta": {
+  "de": "Hohe Chance",
+  "en": "High opportunity",
+  "es": "Oportunidad alta",
+  "fr": "Opportunité élevée"
+ },
+ "Opportunità del giorno": {
+  "de": "Chancen des Tages",
+  "en": "Today's opportunities",
+  "es": "Oportunidades del día",
+  "fr": "Opportunités du jour"
+ },
+ "Opportunità per il sito": {
+  "de": "Chance für die Website",
+  "en": "Opportunity for the site",
+  "es": "Oportunidad para el sitio",
+  "fr": "Opportunité pour le site"
+ },
+ "Origine": {
+  "de": "Herkunft",
+  "en": "Origin",
+  "es": "Origen",
+  "fr": "Origine"
+ },
+ "Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie.": {
+  "de": "Läuft jede Stunde automatisch über die aktiven Quellen: Zur nächsten vollen Stunde sehen Sie die ersten Meldungen.",
+  "en": "It runs by itself every hour from the active sources: at the next hour you see the first news.",
+  "es": "Se ejecuta sola cada hora desde las fuentes activas: a la próxima hora verás las primeras noticias.",
+  "fr": "Elle démarre seule toutes les heures depuis les sources actives : à l'heure suivante vous voyez les premières actualités."
+ },
+ "Perché ora:": {
+  "de": "Warum jetzt:",
+  "en": "Why now:",
+  "es": "Por qué ahora:",
+  "fr": "Pourquoi maintenant :"
+ },
+ "Perché questo punteggio": {
+  "de": "Warum diese Bewertung",
+  "en": "Why this score",
+  "es": "Por qué esta puntuación",
+  "fr": "Pourquoi ce score"
+ },
+ "Persona non rimossa: {e}.": {
+  "de": "Person nicht entfernt: {e}.",
+  "en": "Person not removed: {e}.",
+  "es": "Persona no eliminada: {e}.",
+  "fr": "Personne non retirée : {e}."
+ },
+ "Persona rimossa dalla redazione: non entra più.": {
+  "de": "Person aus der Redaktion entfernt: Sie hat keinen Zugang mehr.",
+  "en": "Person removed from the newsroom: they can no longer sign in.",
+  "es": "Persona eliminada de la redacción: ya no puede entrar.",
+  "fr": "Personne retirée de la rédaction : elle ne peut plus se connecter."
+ },
+ "Pertinenza": {
+  "de": "Relevanz",
+  "en": "Relevance",
+  "es": "Pertinencia",
+  "fr": "Pertinence"
+ },
+ "Piano editoriale": {
+  "de": "Redaktionsplan",
+  "en": "Editorial plan",
+  "es": "Plan editorial",
+  "fr": "Plan éditorial"
+ },
+ "Prima bozza approvata": {
+  "de": "Erster Entwurf freigegeben",
+  "en": "First draft approved",
+  "es": "Primer borrador aprobado",
+  "fr": "Premier brouillon approuvé"
+ },
+ "Primi passi": {
+  "de": "Erste Schritte",
+  "en": "Getting started",
+  "es": "Primeros pasos",
+  "fr": "Premiers pas"
+ },
+ "Profilo": {
+  "de": "Profil",
+  "en": "Profile",
+  "es": "Perfil",
+  "fr": "Profil"
+ },
+ "Profilo approvato": {
+  "de": "Profil freigegeben",
+  "en": "Profile approved",
+  "es": "Perfil aprobado",
+  "fr": "Profil approuvé"
+ },
+ "Profilo non valido: {e}": {
+  "de": "Ungültiges Profil: {e}",
+  "en": "Invalid profile: {e}",
+  "es": "Perfil no válido: {e}",
+  "fr": "Profil non valide : {e}"
+ },
+ "Proponi adesso": {
+  "de": "Jetzt vorschlagen",
+  "en": "Propose now",
+  "es": "Proponer ahora",
+  "fr": "Proposer maintenant"
+ },
+ "Proposta": {
+  "de": "Vorschlag",
+  "en": "Proposal",
+  "es": "Propuesta",
+  "fr": "Proposition"
+ },
+ "Proposta accettata": {
+  "de": "Vorschlag angenommen",
+  "en": "Proposal accepted",
+  "es": "Propuesta aceptada",
+  "fr": "Proposition acceptée"
+ },
+ "Proposta accettata.": {
+  "de": "Vorschlag angenommen.",
+  "en": "Proposal accepted.",
+  "es": "Propuesta aceptada.",
+  "fr": "Proposition acceptée."
+ },
+ "Proposta accettata: la bozza è in scrittura.": {
+  "de": "Vorschlag angenommen: Der Entwurf wird geschrieben.",
+  "en": "Proposal accepted: the draft is being written.",
+  "es": "Propuesta aceptada: el borrador se está redactando.",
+  "fr": "Proposition acceptée : le brouillon est en cours de rédaction."
+ },
+ "Proposta scartata.": {
+  "de": "Vorschlag verworfen.",
+  "en": "Proposal discarded.",
+  "es": "Propuesta descartada.",
+  "fr": "Proposition écartée."
+ },
+ "Proposta v{version} scartata: la linea resta quella approvata.": {
+  "de": "Vorschlag v{version} verworfen: Die freigegebene Linie bleibt.",
+  "en": "Proposal v{version} discarded: the approved line stays.",
+  "es": "Propuesta v{version} descartada: se mantiene la línea aprobada.",
+  "fr": "Proposition v{version} écartée : la ligne approuvée reste en place."
+ },
+ "Proposte nel piano": {
+  "de": "Vorschläge im Plan",
+  "en": "Proposals in the plan",
+  "es": "Propuestas en el plan",
+  "fr": "Propositions dans le plan"
+ },
+ "Pubblicazione": {
+  "de": "Veröffentlichung",
+  "en": "Publication",
+  "es": "Publicación",
+  "fr": "Publication"
+ },
+ "Pubblicazione chiesta: aspetta l'approvazione di un owner.": {
+  "de": "Veröffentlichung angefordert: Sie wartet auf die Freigabe durch einen Inhaber.",
+  "en": "Publication requested: it waits for approval by an owner.",
+  "es": "Publicación solicitada: espera la aprobación de un propietario.",
+  "fr": "Publication demandée : elle attend l'approbation d'un propriétaire."
+ },
+ "Pubblicazione rifiutata.": {
+  "de": "Veröffentlichung abgelehnt.",
+  "en": "Publication rejected.",
+  "es": "Publicación rechazada.",
+  "fr": "Publication refusée."
+ },
+ "Punteggio": {
+  "de": "Bewertung",
+  "en": "Score",
+  "es": "Puntuación",
+  "fr": "Score"
+ },
+ "Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala.": {
+  "de": "Wenn Sie einen Vorschlag annehmen, schreibt sich der Entwurf von selbst: Lesen Sie ihn, prüfen Sie Quellen und automatische Prüfungen und geben Sie ihn frei.",
+  "en": "When you accept a proposal the draft writes itself: review it, check the sources and automatic checks, and approve it.",
+  "es": "Cuando aceptas una propuesta el borrador se escribe solo: revísalo, mira las fuentes y las comprobaciones automáticas y apruébalo.",
+  "fr": "Quand vous acceptez une proposition, le brouillon s'écrit tout seul : relisez-le, vérifiez les sources et les contrôles automatiques, puis approuvez-le."
+ },
+ "Questa bozza era già stata decisa.": {
+  "de": "Über diesen Entwurf wurde bereits entschieden.",
+  "en": "This draft had already been decided.",
+  "es": "Este borrador ya se había decidido.",
+  "fr": "Ce brouillon avait déjà été tranché."
+ },
+ "Questa proposta era già stata decisa.": {
+  "de": "Über diesen Vorschlag wurde bereits entschieden.",
+  "en": "This proposal had already been decided.",
+  "es": "Esta propuesta ya se había decidido.",
+  "fr": "Cette proposition avait déjà été tranchée."
+ },
+ "Questa pubblicazione era già stata decisa.": {
+  "de": "Über diese Veröffentlichung wurde bereits entschieden.",
+  "en": "This publication had already been decided.",
+  "es": "Esta publicación ya se había decidido.",
+  "fr": "Cette publication avait déjà été tranchée."
+ },
+ "Questa pubblicazione non è più in invio.": {
+  "de": "Diese Veröffentlichung wird nicht mehr gesendet.",
+  "en": "This publication is no longer being sent.",
+  "es": "Esta publicación ya no se está enviando.",
+  "fr": "Cette publication n'est plus en cours d'envoi."
+ },
+ "Questa pubblicazione è già stata chiesta.": {
+  "de": "Diese Veröffentlichung wurde bereits angefordert.",
+  "en": "This publication has already been requested.",
+  "es": "Esta publicación ya se ha solicitado.",
+  "fr": "Cette publication a déjà été demandée."
+ },
+ "Raccogli le notizie": {
+  "de": "Meldungen sammeln",
+  "en": "Collect the news",
+  "es": "Recopila las noticias",
+  "fr": "Collectez les actualités"
+ },
+ "Raccolta": {
+  "de": "Sammlung",
+  "en": "Collection",
+  "es": "Recopilación",
+  "fr": "Collecte"
+ },
+ "Raggiunto il limite di pagine da leggere per un'analisi.": {
+  "de": "Seitenlimit für eine Analyse erreicht.",
+  "en": "Reached the page limit for one analysis.",
+  "es": "Se alcanzó el límite de páginas por análisis.",
+  "fr": "Limite de pages à lire pour une analyse atteinte."
+ },
+ "Rianalisi di {domain} avviata.": {
+  "de": "Neue Analyse von {domain} gestartet.",
+  "en": "Re-analysis of {domain} started.",
+  "es": "Nuevo análisis de {domain} iniciado.",
+  "fr": "Nouvelle analyse de {domain} lancée."
+ },
+ "Ricerca dal profilo": {
+  "de": "Suche aus dem Profil",
+  "en": "Search from the profile",
+  "es": "Búsqueda desde el perfil",
+  "fr": "Recherche depuis le profil"
+ },
+ "Ricerca delle fonti in corso dopo l'approvazione del profilo.": {
+  "de": "Quellensuche läuft nach der Freigabe des Profils.",
+  "en": "Searching for sources after the profile approval.",
+  "es": "Buscando fuentes tras la aprobación del perfil.",
+  "fr": "Recherche des sources en cours après l'approbation du profil."
+ },
+ "Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti.": {
+  "de": "Suche nach Vorschlägen gestartet: Sie erscheinen hier in einigen Minuten, wenn es genügend starke Themen gibt.",
+  "en": "Proposal search started: they appear here in a few minutes, if there are strong enough topics.",
+  "es": "Búsqueda de propuestas iniciada: aparecen aquí en unos minutos, si hay temas lo bastante fuertes.",
+  "fr": "Recherche de propositions lancée : elles apparaissent ici dans quelques minutes, s'il y a des thèmes assez forts."
+ },
+ "Ricerca di nuove fonti avviata: le trovate entrano come candidate.": {
+  "de": "Suche nach neuen Quellen gestartet: Gefundene Quellen kommen als Kandidaten hinzu.",
+  "en": "Search for new sources started: the ones found come in as candidates.",
+  "es": "Búsqueda de nuevas fuentes iniciada: las encontradas entran como candidatas.",
+  "fr": "Recherche de nouvelles sources lancée : celles trouvées entrent comme candidates."
+ },
+ "Richiesta non inviata: {e}.": {
+  "de": "Anfrage nicht gesendet: {e}.",
+  "en": "Request not sent: {e}.",
+  "es": "Solicitud no enviada: {e}.",
+  "fr": "Demande non envoyée : {e}."
+ },
+ "Riepilogo": {
+  "de": "Übersicht",
+  "en": "Summary",
+  "es": "Resumen",
+  "fr": "Résumé"
+ },
+ "Riepilogo fonti": {
+  "de": "Quellenübersicht",
+  "en": "Sources summary",
+  "es": "Resumen de fuentes",
+  "fr": "Résumé des sources"
+ },
+ "Rileggi la prima bozza": {
+  "de": "Ersten Entwurf prüfen",
+  "en": "Review the first draft",
+  "es": "Revisa el primer borrador",
+  "fr": "Relisez le premier brouillon"
+ },
+ "Rumore": {
+  "de": "Rauschen",
+  "en": "Noise",
+  "es": "Ruido",
+  "fr": "Bruit"
+ },
+ "Ruolo aggiornato.": {
+  "de": "Rolle aktualisiert.",
+  "en": "Role updated.",
+  "es": "Rol actualizado.",
+  "fr": "Rôle mis à jour."
+ },
+ "Ruolo non cambiato: {e}.": {
+  "de": "Rolle nicht geändert: {e}.",
+  "en": "Role not changed: {e}.",
+  "es": "Rol no cambiado: {e}.",
+  "fr": "Rôle non modifié : {e}."
+ },
+ "Scansione del sito in corso: legge fino a 25 articoli, di solito pochi minuti.": {
+  "de": "Website wird gescannt: bis zu 25 Artikel, meist wenige Minuten.",
+  "en": "Scanning the site: it reads up to 25 articles, usually a few minutes.",
+  "es": "Escaneando el sitio: lee hasta 25 artículos, normalmente unos minutos.",
+  "fr": "Analyse du site en cours : jusqu'à 25 articles lus, en général quelques minutes."
+ },
+ "Scarta": {
+  "de": "Verwerfen",
+  "en": "Discard",
+  "es": "Descartar",
+  "fr": "Écarter"
+ },
+ "Scartata": {
+  "de": "Abgelehnt",
+  "en": "Rejected",
+  "es": "Descartada",
+  "fr": "Rejetée"
+ },
+ "Scartate": {
+  "de": "Abgelehnt",
+  "en": "Rejected",
+  "es": "Descartadas",
+  "fr": "Rejetées"
+ },
+ "Scrivi il dominio qui sotto: la redazione legge il sito e ne ricava temi, pubblico e tono.": {
+  "de": "Geben Sie unten die Domain ein: Die Redaktion liest die Website und leitet Themen, Publikum und Ton ab.",
+  "en": "Enter the domain below: the newsroom reads the site and works out its topics, audience and tone.",
+  "es": "Escribe el dominio aquí abajo: la redacción lee el sitio y extrae temas, público y tono.",
+  "fr": "Saisissez le domaine ci-dessous : la rédaction lit le site et en tire thèmes, public et ton."
+ },
+ "Scrivi la bozza": {
+  "de": "Entwurf schreiben",
+  "en": "Write the draft",
+  "es": "Redactar el borrador",
+  "fr": "Rédiger le brouillon"
+ },
+ "Scrivi ora": {
+  "de": "Jetzt schreiben",
+  "en": "Write now",
+  "es": "Escribe ya",
+  "fr": "À écrire maintenant"
+ },
+ "Segnata come non riuscita: puoi chiederla di nuovo.": {
+  "de": "Als fehlgeschlagen markiert: Sie können sie erneut anfordern.",
+  "en": "Marked as failed: you can request it again.",
+  "es": "Marcada como fallida: puedes solicitarla de nuevo.",
+  "fr": "Marquée comme échouée : vous pouvez la redemander."
+ },
+ "Siti": {
+  "de": "Websites",
+  "en": "Sites",
+  "es": "Sitios",
+  "fr": "Sites"
+ },
+ "Sito aggiunto": {
+  "de": "Website hinzugefügt",
+  "en": "Site added",
+  "es": "Sitio añadido",
+  "fr": "Site ajouté"
+ },
+ "Sito collegato": {
+  "de": "Website verbunden",
+  "en": "Site connected",
+  "es": "Sitio conectado",
+  "fr": "Site connecté"
+ },
+ "Solo \\1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito.": {
+  "de": "Nur \\1 lesbare Artikel und keine Kategorien: zu wenig, um die Website zu beschreiben.",
+  "en": "Only \\1 readable articles and no categories: too little to describe the site.",
+  "es": "Solo \\1 artículos legibles y ninguna categoría: demasiado poco para describir el sitio.",
+  "fr": "Seulement \\1 articles lisibles et aucune catégorie : trop peu pour décrire le site."
+ },
+ "Solo hype": {
+  "de": "Nur Hype",
+  "en": "Hype only",
+  "es": "Solo hype",
+  "fr": "Buzz seulement"
+ },
+ "Sospendi": {
+  "de": "Pausieren",
+  "en": "Suspend",
+  "es": "Suspender",
+  "fr": "Suspendre"
+ },
+ "Sospesa": {
+  "de": "Pausiert",
+  "en": "Suspended",
+  "es": "Suspendida",
+  "fr": "Suspendue"
+ },
+ "Sospese": {
+  "de": "Pausiert",
+  "en": "Suspended",
+  "es": "Suspendidas",
+  "fr": "Suspendues"
+ },
+ "Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):": {
+  "de": "In den letzten 7 Tagen automatisch pausiert (Sie müssen nichts tun, sie werden in zwei Wochen neu bewertet):",
+  "en": "Suspended automatically in the last 7 days (you don't need to do anything, they are reassessed in two weeks):",
+  "es": "Suspendidas automáticamente en los últimos 7 días (no tienes que hacer nada, se volverán a evaluar en dos semanas):",
+  "fr": "Suspendues automatiquement ces 7 derniers jours (vous n'avez rien à faire, elles seront réévaluées dans deux semaines) :"
+ },
+ "Stato": {
+  "de": "Status",
+  "en": "Status",
+  "es": "Estado",
+  "fr": "Statut"
+ },
+ "Suggerita dal modello": {
+  "de": "Vom Modell vorgeschlagen",
+  "en": "Suggested by the model",
+  "es": "Sugerida por el modelo",
+  "fr": "Suggérée par le modèle"
+ },
+ "Tema «{name}» rimesso (v{version}).": {
+  "de": "Thema „{name}“ wiederhergestellt (v{version}).",
+  "en": "Topic “{name}” restored (v{version}).",
+  "es": "Tema «{name}» restablecido (v{version}).",
+  "fr": "Thème « {name} » rétabli (v{version})."
+ },
+ "Tema «{name}» tolto (v{version}): non viene più seguito, anche nelle prossime analisi.": {
+  "de": "Thema „{name}“ entfernt (v{version}): Es wird nicht mehr verfolgt, auch nicht in künftigen Analysen.",
+  "en": "Topic “{name}” removed (v{version}): it is no longer followed, including in future analyses.",
+  "es": "Tema «{name}» quitado (v{version}): ya no se sigue, tampoco en los próximos análisis.",
+  "fr": "Thème « {name} » retiré (v{version}) : il n'est plus suivi, y compris dans les prochaines analyses."
+ },
+ "Temi della settimana": {
+  "de": "Themen der Woche",
+  "en": "This week's topics",
+  "es": "Temas de la semana",
+  "fr": "Thèmes de la semaine"
+ },
+ "Temi disposti per hype (orizzontale) e opportunità (verticale)": {
+  "de": "Themen nach Hype (horizontal) und Chance (vertikal) angeordnet",
+  "en": "Topics laid out by hype (horizontal) and opportunity (vertical)",
+  "es": "Temas dispuestos por hype (horizontal) y oportunidad (vertical)",
+  "fr": "Thèmes disposés selon le buzz (horizontal) et l'opportunité (vertical)"
+ },
+ "Tocca a te": {
+  "de": "Sie sind dran",
+  "en": "Your turn",
+  "es": "Te toca",
+  "fr": "À vous"
+ },
+ "Token non valido": {
+  "de": "Ungültiges Token",
+  "en": "Invalid token",
+  "es": "Token no válido",
+  "fr": "Jeton non valide"
+ },
+ "Trend e piano": {
+  "de": "Trends und Plan",
+  "en": "Trends and plan",
+  "es": "Tendencias y plan",
+  "fr": "Tendances et plan"
+ },
+ "Tutte": {
+  "de": "Alle",
+  "en": "All",
+  "es": "Todas",
+  "fr": "Toutes"
+ },
+ "Tutti i trend": {
+  "de": "Alle Trends",
+  "en": "All trends",
+  "es": "Todas las tendencias",
+  "fr": "Toutes les tendances"
+ },
+ "Ultima notizia": {
+  "de": "Letzte Meldung",
+  "en": "Latest news",
+  "es": "Última noticia",
+  "fr": "Dernière actualité"
+ },
+ "Ultime notizie": {
+  "de": "Neueste Meldungen",
+  "en": "Latest news",
+  "es": "Últimas noticias",
+  "fr": "Dernières actualités"
+ },
+ "Vedi il profilo": {
+  "de": "Profil ansehen",
+  "en": "View the profile",
+  "es": "Ver el perfil",
+  "fr": "Voir le profil"
+ },
+ "Versione v{version} eliminata.": {
+  "de": "Version v{version} gelöscht.",
+  "en": "Version v{version} deleted.",
+  "es": "Versión v{version} eliminada.",
+  "fr": "Version v{version} supprimée."
+ },
+ "Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.": {
+  "de": "Version {version} freigegeben: Sie ist ab jetzt die Linie der Website. Passende Quellen werden gesucht.",
+  "en": "Version {version} approved: it is the site's line from now on. Looking for suitable sources.",
+  "es": "Versión {version} aprobada: desde ahora es la línea del sitio. Buscando fuentes adecuadas.",
+  "fr": "Version {version} approuvée : c'est désormais la ligne du site. Recherche des sources adaptées."
+ },
+ "Verso {target}": {
+  "de": "An {target}",
+  "en": "To {target}",
+  "es": "A {target}",
+  "fr": "Vers {target}"
+ },
+ "\\1 letture fallite di fila: ritorna in valutazione tra due settimane.": {
+  "de": "\\1 fehlgeschlagene Abrufe in Folge: wird in zwei Wochen neu bewertet.",
+  "en": "\\1 failed fetches in a row: it will be reassessed in two weeks.",
+  "es": "\\1 lecturas fallidas seguidas: se volverá a evaluar en dos semanas.",
+  "fr": "\\1 lectures échouées d'affilée : réévaluation dans deux semaines."
+ },
+ "analisi": {
+  "de": "Analyse",
+  "en": "analysis",
+  "es": "análisis",
+  "fr": "analyse"
+ },
+ "cambiamenti": {
+  "de": "Änderungen",
+  "en": "changes",
+  "es": "cambios",
+  "fr": "changements"
+ },
+ "cambiamento": {
+  "de": "Änderung",
+  "en": "change",
+  "es": "cambio",
+  "fr": "changement"
+ },
+ "categorie arXiv dei temi: {categories}": {
+  "de": "arXiv-Kategorien der Themen: {categories}",
+  "en": "arXiv categories of the topics: {categories}",
+  "es": "categorías de arXiv de los temas: {categories}",
+  "fr": "catégories arXiv des thèmes : {categories}"
+ },
+ "chiesta da {name}": {
+  "de": "angefordert von {name}",
+  "en": "requested by {name}",
+  "es": "solicitada por {name}",
+  "fr": "demandée par {name}"
+ },
+ "citata {n} volta negli articoli del sito": {
+  "de": "{n}-mal in den Artikeln der Website zitiert",
+  "en": "cited {n} time in the site's articles",
+  "es": "citada {n} vez en los artículos del sitio",
+  "fr": "citée {n} fois dans les articles du site"
+ },
+ "citata {n} volte negli articoli del sito": {
+  "de": "{n}-mal in den Artikeln der Website zitiert",
+  "en": "cited {n} times in the site's articles",
+  "es": "citada {n} veces en los artículos del sitio",
+  "fr": "citée {n} fois dans les articles du site"
+ },
+ "come bozza": {
+  "de": "als Entwurf",
+  "en": "as a draft",
+  "es": "como borrador",
+  "fr": "en brouillon"
+ },
+ "errori ripetuti o fonte ferma": {
+  "de": "wiederholte Fehler oder inaktive Quelle",
+  "en": "repeated errors or inactive source",
+  "es": "errores repetidos o fuente parada",
+  "fr": "erreurs répétées ou source inactive"
+ },
+ "esempio.it": {
+  "de": "beispiel.de",
+  "en": "example.com",
+  "es": "ejemplo.es",
+  "fr": "exemple.fr"
+ },
+ "fonte": {
+  "de": "Quelle",
+  "en": "source",
+  "es": "fuente",
+  "fr": "source"
+ },
+ "fonti": {
+  "de": "Quellen",
+  "en": "sources",
+  "es": "fuentes",
+  "fr": "sources"
+ },
+ "fonti attive": {
+  "de": "aktive Quellen",
+  "en": "active sources",
+  "es": "fuentes activas",
+  "fr": "sources actives"
+ },
+ "fonti attive in tutti i siti": {
+  "de": "aktive Quellen auf allen Websites",
+  "en": "active sources across all sites",
+  "es": "fuentes activas en todos los sitios",
+  "fr": "sources actives sur tous les sites"
+ },
+ "guida": {
+  "de": "Ratgeber",
+  "en": "guide",
+  "es": "guía",
+  "fr": "guide"
+ },
+ "i temi parlano di {topics}": {
+  "de": "die Themen handeln von {topics}",
+  "en": "the topics are about {topics}",
+  "es": "los temas hablan de {topics}",
+  "fr": "les thèmes parlent de {topics}"
+ },
+ "in analisi": {
+  "de": "wird analysiert",
+  "en": "being analysed",
+  "es": "en análisis",
+  "fr": "en analyse"
+ },
+ "in uso la v{version}": {
+  "de": "v{version} in Gebrauch",
+  "en": "v{version} in use",
+  "es": "en uso la v{version}",
+  "fr": "v{version} en vigueur"
+ },
+ "indicata dal modello per i temi del sito ({domain}), feed letto e verificato": {
+  "de": "vom Modell für die Themen der Website genannt ({domain}), Feed gelesen und geprüft",
+  "en": "suggested by the model for the site's topics ({domain}), feed read and verified",
+  "es": "indicada por el modelo para los temas del sitio ({domain}), feed leído y verificado",
+  "fr": "indiquée par le modèle pour les thèmes du site ({domain}), flux lu et vérifié"
+ },
+ "indicata dal modello per i temi del sito, feed letto e verificato": {
+  "de": "vom Modell für die Themen der Website genannt, Feed gelesen und geprüft",
+  "en": "suggested by the model for the site's topics, feed read and verified",
+  "es": "indicada por el modelo para los temas del sitio, feed leído y verificado",
+  "fr": "indiquée par le modèle pour les thèmes du site, flux lu et vérifié"
+ },
+ "intervista": {
+  "de": "Interview",
+  "en": "interview",
+  "es": "entrevista",
+  "fr": "interview"
+ },
+ "nessun tetto nel piano": {
+  "de": "keine Obergrenze im Tarif",
+  "en": "no cap in the plan",
+  "es": "sin tope en el plan",
+  "fr": "pas de plafond dans l'offre"
+ },
+ "nessuna notizia recente": {
+  "de": "keine aktuellen Meldungen",
+  "en": "no recent news",
+  "es": "ninguna noticia reciente",
+  "fr": "aucune actualité récente"
+ },
+ "nessuna versione in uso": {
+  "de": "keine Version in Gebrauch",
+  "en": "no version in use",
+  "es": "ninguna versión en uso",
+  "fr": "aucune version en vigueur"
+ },
+ "notizia": {
+  "de": "Meldung",
+  "en": "news item",
+  "es": "noticia",
+  "fr": "actualité"
+ },
+ "notizie": {
+  "de": "Meldungen",
+  "en": "news items",
+  "es": "noticias",
+  "fr": "actualités"
+ },
+ "notizie oggi": {
+  "de": "Meldungen heute",
+  "en": "news today",
+  "es": "noticias hoy",
+  "fr": "actualités aujourd'hui"
+ },
+ "nuova": {
+  "de": "neu",
+  "en": "new",
+  "es": "nueva",
+  "fr": "nouvelle"
+ },
+ "nuove": {
+  "de": "neu",
+  "en": "new",
+  "es": "nuevas",
+  "fr": "nouvelles"
+ },
+ "opinione": {
+  "de": "Meinung",
+  "en": "opinion",
+  "es": "opinión",
+  "fr": "opinion"
+ },
+ "parla poco dei temi del sito": {
+  "de": "behandelt die Themen der Website kaum",
+  "en": "rarely covers the site's topics",
+  "es": "habla poco de los temas del sitio",
+  "fr": "parle peu des thèmes du site"
+ },
+ "pertinenza {relevance} · frequenza {frequency} · freschezza {freshness} · originalità {originality} · qualità {quality} · affidabilità {reliability}": {
+  "de": "Relevanz {relevance} · Häufigkeit {frequency} · Aktualität {freshness} · Originalität {originality} · Qualität {quality} · Zuverlässigkeit {reliability}",
+  "en": "relevance {relevance} · frequency {frequency} · freshness {freshness} · originality {originality} · quality {quality} · reliability {reliability}",
+  "es": "pertinencia {relevance} · frecuencia {frequency} · actualidad {freshness} · originalidad {originality} · calidad {quality} · fiabilidad {reliability}",
+  "fr": "pertinence {relevance} · fréquence {frequency} · fraîcheur {freshness} · originalité {originality} · qualité {quality} · fiabilité {reliability}"
+ },
+ "poco pertinenti al profilo": {
+  "de": "zu wenig relevant für das Profil",
+  "en": "not relevant enough to the profile",
+  "es": "poco pertinentes para el perfil",
+  "fr": "peu pertinentes pour le profil"
+ },
+ "primi 7 di {n}": {
+  "de": "Top 7 von {n}",
+  "en": "top 7 of {n}",
+  "es": "primeros 7 de {n}",
+  "fr": "7 premiers sur {n}"
+ },
+ "profili": {
+  "de": "Profile",
+  "en": "profiles",
+  "es": "perfiles",
+  "fr": "profils"
+ },
+ "profilo": {
+  "de": "Profil",
+  "en": "profile",
+  "es": "perfil",
+  "fr": "profil"
+ },
+ "proposta": {
+  "de": "Vorschlag",
+  "en": "proposal",
+  "es": "propuesta",
+  "fr": "proposition"
+ },
+ "proposte": {
+  "de": "Vorschläge",
+  "en": "proposals",
+  "es": "propuestas",
+  "fr": "propositions"
+ },
+ "pubblicata subito": {
+  "de": "sofort veröffentlicht",
+  "en": "published right away",
+  "es": "publicada enseguida",
+  "fr": "publiée tout de suite"
+ },
+ "pubblicazione": {
+  "de": "Veröffentlichung",
+  "en": "publication",
+  "es": "publicación",
+  "fr": "publication"
+ },
+ "pubblicazioni": {
+  "de": "Veröffentlichungen",
+  "en": "publications",
+  "es": "publicaciones",
+  "fr": "publications"
+ },
+ "punteggio sotto 0,35": {
+  "de": "Bewertung unter 0,35",
+  "en": "score below 0.35",
+  "es": "puntuación inferior a 0,35",
+  "fr": "score inférieur à 0,35"
+ },
+ "recensione": {
+  "de": "Rezension",
+  "en": "review",
+  "es": "reseña",
+  "fr": "critique"
+ },
+ "sotto la soglia o in attesa di quota": {
+  "de": "unter der Schwelle oder wartend auf Kontingent",
+  "en": "below the threshold or waiting for quota",
+  "es": "bajo el umbral o a la espera de cuota",
+  "fr": "sous le seuil ou en attente de quota"
+ },
+ "spiegazione": {
+  "de": "Erklärstück",
+  "en": "explainer",
+  "es": "explicativo",
+  "fr": "décryptage"
+ },
+ "trovata cercando «{query}» su {kind}": {
+  "de": "gefunden bei der Suche nach „{query}“ auf {kind}",
+  "en": "found by searching “{query}” on {kind}",
+  "es": "encontrada buscando «{query}» en {kind}",
+  "fr": "trouvée en cherchant « {query} » sur {kind}"
+ },
+ "tutte con i controlli superati": {
+  "de": "alle Prüfungen bestanden",
+  "en": "all passed the checks",
+  "es": "todos superaron las comprobaciones",
+  "fr": "tous les contrôles réussis"
+ },
+ "ultimo giro": {
+  "de": "letzter Durchlauf",
+  "en": "last run",
+  "es": "última ronda",
+  "fr": "dernier passage"
+ },
+ "v{version} da approvare": {
+  "de": "v{version} zur Freigabe",
+  "en": "v{version} to approve",
+  "es": "v{version} por aprobar",
+  "fr": "v{version} à approuver"
+ },
+ "v{version} in uso": {
+  "de": "v{version} in Gebrauch",
+  "en": "v{version} in use",
+  "es": "v{version} en uso",
+  "fr": "v{version} en vigueur"
+ },
+ "{done} di {total}": {
+  "de": "{done} von {total}",
+  "en": "{done} of {total}",
+  "es": "{done} de {total}",
+  "fr": "{done} sur {total}"
+ },
+ "{items} notizie da {sources} fonti": {
+  "de": "{items} Meldungen aus {sources} Quellen",
+  "en": "{items} news items from {sources} sources",
+  "es": "{items} noticias de {sources} fuentes",
+  "fr": "{items} actualités de {sources} sources"
+ },
+ "{label} · opportunità {opportunity} · hype {hype}": {
+  "de": "{label} · Chance {opportunity} · Hype {hype}",
+  "en": "{label} · opportunity {opportunity} · hype {hype}",
+  "es": "{label} · oportunidad {opportunity} · hype {hype}",
+  "fr": "{label} · opportunité {opportunity} · buzz {hype}"
+ },
+ "{name} (nome non valido: ricrea la destinazione)": {
+  "de": "{name} (ungültiger Name: Ziel neu anlegen)",
+  "en": "{name} (invalid name: recreate the destination)",
+  "es": "{name} (nombre no válido: vuelve a crear el destino)",
+  "fr": "{name} (nom non valide : recréez la destination)"
+ },
+ "{name} riattivata.": {
+  "de": "{name} wieder aktiviert.",
+  "en": "{name} reactivated.",
+  "es": "{name} reactivada.",
+  "fr": "{name} réactivée."
+ },
+ "{name} scartata.": {
+  "de": "{name} abgelehnt.",
+  "en": "{name} rejected.",
+  "es": "{name} descartada.",
+  "fr": "{name} rejetée."
+ },
+ "{name} sospesa.": {
+  "de": "{name} pausiert.",
+  "en": "{name} suspended.",
+  "es": "{name} suspendida.",
+  "fr": "{name} suspendue."
+ },
+ "{n} da rivedere a mano": {
+  "de": "{n} manuell zu prüfen",
+  "en": "{n} to review by hand",
+  "es": "{n} para revisar a mano",
+  "fr": "{n} à revoir à la main"
+ },
+ "{n} da stamattina": {
+  "de": "{n} seit heute Morgen",
+  "en": "{n} since this morning",
+  "es": "{n} desde esta mañana",
+  "fr": "{n} depuis ce matin"
+ },
+ "{pct}% della quota mensile": {
+  "de": "{pct}% des Monatskontingents",
+  "en": "{pct}% of the monthly quota",
+  "es": "{pct}% de la cuota mensual",
+  "fr": "{pct}% du quota mensuel"
+ }
+}

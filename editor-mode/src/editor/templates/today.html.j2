@@ -1,32 +1,32 @@
 {% extends "base.html.j2" %}
-{% block title %}Oggi{% endblock %}
+{% block title %}{{ _('Oggi') }}{% endblock %}
 {% block main %}
 <header class="head">
   <div>
     <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }}{% if site %} · {{ site.domain }}{% endif %}</span>
-    <h1>Oggi</h1>
+    <h1>{{ _('Oggi') }}</h1>
   </div>
   <div class="row">
     {% if briefing and (briefing.sent_email_at or briefing.sent_telegram_at) %}
-      <span class="chip green">Briefing inviato alle {{ when(briefing.sent_email_at or briefing.sent_telegram_at, 'time') }}</span>
+      <span class="chip green">{{ _('Briefing inviato alle {time}', time=when(briefing.sent_email_at or briefing.sent_telegram_at, 'time')) }}</span>
     {% elif briefing %}
-      <span class="chip amber">Briefing pronto, non inviato</span>
+      <span class="chip amber">{{ _('Briefing pronto, non inviato') }}</span>
     {% else %}
-      <span class="chip">Briefing di oggi non ancora pronto</span>
+      <span class="chip">{{ _('Briefing di oggi non ancora pronto') }}</span>
     {% endif %}
-    <a class="btn" href="/trends">Trend e piano</a>
+    <a class="btn" href="/trends">{{ _('Trend e piano') }}</a>
   </div>
 </header>
 
 {% if guide %}
 <section class="card pad" aria-labelledby="h-steps">
-  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-steps">Primi passi</h2><span class="hint">{{ guide|selectattr('done')|list|length }} di {{ guide|length }}</span></div>
+  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-steps">{{ _('Primi passi') }}</h2><span class="hint">{{ _('{done} di {total}', done=guide|selectattr('done')|list|length, total=guide|length) }}</span></div>
   <ol class="steps" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
   {% for x in guide %}
     <li>
       {% if x.done %}<span class="hint">✓ {{ x.past }}</span>
-      {% elif x.current %}<strong>{{ x.title }}</strong>{% if x.busy %} <span class="chip teal">In attesa</span>{% else %} <span class="chip amber">Tocca a te</span>{% endif %}
-        <br><span class="lead">{{ x.wait if x.busy else x.todo }}</span>{% if x.href %} <a href="{{ x.href }}">Apri</a>{% endif %}
+      {% elif x.current %}<strong>{{ x.title }}</strong>{% if x.busy %} <span class="chip teal">{{ _('In attesa') }}</span>{% else %} <span class="chip amber">{{ _('Tocca a te') }}</span>{% endif %}
+        <br><span class="lead">{{ x.wait if x.busy else x.todo }}</span>{% if x.href %} <a href="{{ x.href }}">{{ _('Apri') }}</a>{% endif %}
       {% else %}<span class="hint">{{ x.title }}</span>{% endif %}
     </li>
   {% endfor %}
@@ -36,70 +36,70 @@
 
 {% if not sites %}
 <section class="card pad">
-  <h2>Inizia da un dominio</h2>
-  <p class="lead">Editor Mode analizza il sito, propone un profilo editoriale con le prove e cerca le fonti da solo. Nulla parte prima della tua approvazione.</p>
+  <h2>{{ _('Inizia da un dominio') }}</h2>
+  <p class="lead">{{ _('Editor Mode analizza il sito, propone un profilo editoriale con le prove e cerca le fonti da solo. Nulla parte prima della tua approvazione.') }}</p>
   {% if caller.can('owner') %}
   <form method="post" action="/ui/sites" class="form-grid">
-    <label class="field">Dominio<input name="domain" placeholder="esempio.it" required></label>
-    <div><button class="btn pri" type="submit">Analizza il sito</button></div>
+    <label class="field">{{ _('Dominio') }}<input name="domain" placeholder="{{ _('esempio.it') }}" required></label>
+    <div><button class="btn pri" type="submit">{{ _('Analizza il sito') }}</button></div>
   </form>
   {% endif %}
 </section>
 {% endif %}
 
-<section class="stats" aria-label="Riepilogo">
+<section class="stats" aria-label="{{ _('Riepilogo') }}">
   <div class="card stat">
-    <span class="label">Da decidere</span>
+    <span class="label">{{ _('Da decidere') }}</span>
     <span class="value">{{ decisions }}</span>
-    <span class="note {% if decisions %}warn{% endif %}">{{ profile_drafts|length|plural('profilo', 'profili') }} · {{ proposed|length|plural('proposta', 'proposte') }} · {{ pending_pubs|length|plural('pubblicazione', 'pubblicazioni') }}</span>
+    <span class="note {% if decisions %}warn{% endif %}">{{ profile_drafts|length|plural(_('profilo'), _('profili')) }} · {{ proposed|length|plural(_('proposta'), _('proposte')) }} · {{ pending_pubs|length|plural(_('pubblicazione'), _('pubblicazioni')) }}</span>
   </div>
   <div class="card stat">
-    <span class="label">Proposte nel piano</span>
+    <span class="label">{{ _('Proposte nel piano') }}</span>
     <span class="value">{{ proposed|length }}</span>
-    <span class="note">{{ new_today|plural('nuova', 'nuove') }} da stamattina</span>
+    <span class="note">{{ _('{n} da stamattina', n=new_today|plural(_('nuova'), _('nuove'))) }}</span>
   </div>
   <div class="card stat">
-    <span class="label">Bozze pronte</span>
+    <span class="label">{{ _('Bozze pronte') }}</span>
     <span class="value">{{ drafts_ready }}</span>
-    <span class="note">{% if needs_review %}{{ needs_review }} da rivedere a mano{% else %}tutte con i controlli superati{% endif %}</span>
+    <span class="note">{% if needs_review %}{{ _('{n} da rivedere a mano', n=needs_review) }}{% else %}{{ _('tutte con i controlli superati') }}{% endif %}</span>
   </div>
   <div class="card stat">
     {% set cost = (usage.used.get('llm_cost_month') or 0) if usage else 0 %}
     {% set cap = usage.plan.get('max_llm_cost_month') if usage else none %}
-    <span class="label">Costo modello nel mese</span>
+    <span class="label">{{ _('Costo modello nel mese') }}</span>
     <span class="value">€ {{ cost|num }}{% if cap %} <small>/ {{ cap|num(0) }}</small>{% endif %}</span>
     {% if cap %}
-    <div class="bar thin" role="img" aria-label="{{ (100 * cost / cap)|round|int }}% della quota mensile"><i style="width: {{ [100, 100 * cost / cap]|min }}%"></i></div>
-    {% else %}<span class="note">nessun tetto nel piano</span>{% endif %}
+    <div class="bar thin" role="img" aria-label="{{ _('{pct}% della quota mensile', pct=(100 * cost / cap)|round|int) }}"><i style="width: {{ [100, 100 * cost / cap]|min }}%"></i></div>
+    {% else %}<span class="note">{{ _('nessun tetto nel piano') }}</span>{% endif %}
   </div>
 </section>
 
 <div class="cols">
   <section class="card col-wide" aria-labelledby="h-decide" style="gap: 0;">
-    <div class="card-head"><h2 id="h-decide">Da decidere</h2><span class="hint">Nulla esce senza il tuo sì</span></div>
+    <div class="card-head"><h2 id="h-decide">{{ _('Da decidere') }}</h2><span class="hint">{{ _('Nulla esce senza il tuo sì') }}</span></div>
 
     {% for p in profile_drafts %}
     <div class="item">
-      <span class="chip amber">Profilo</span>
+      <span class="chip amber">{{ _('Profilo') }}</span>
       <div class="what">
         <strong>{{ p.domain }}</strong>
-        <span>v{{ p.version }} da approvare · {% if lines.get(p.site_id) %}in uso la v{{ lines.get(p.site_id) }}{% if p.changes %}, {{ p.changes|length|plural('cambiamento', 'cambiamenti') }}{% endif %}{% else %}nessuna versione in uso{% endif %}</span>
+        <span>{{ _('v{version} da approvare', version=p.version) }} · {% if lines.get(p.site_id) %}{{ _('in uso la v{version}', version=lines.get(p.site_id)) }}{% if p.changes %}, {{ p.changes|length|plural(_('cambiamento'), _('cambiamenti')) }}{% endif %}{% else %}{{ _('nessuna versione in uso') }}{% endif %}</span>
       </div>
-      <a class="btn pri" href="/switch?site={{ p.site_id }}&amp;back=/site">Vedi il profilo</a>
+      <a class="btn pri" href="/switch?site={{ p.site_id }}&amp;back=/site">{{ _('Vedi il profilo') }}</a>
     </div>
     {% endfor %}
 
     {% for p in pending_pubs %}
     <div class="item">
-      <span class="chip blue">Pubblicazione</span>
+      <span class="chip blue">{{ _('Pubblicazione') }}</span>
       <div class="what">
         <strong>{{ p.title }}</strong>
-        <span>Verso {{ p.target }} · {{ 'come bozza' if p.mode == 'draft' else 'pubblicata subito' }} · chiesta da {{ p.requested_by }}</span>
+        <span>{{ _('Verso {target}', target=p.target) }} · {{ _('come bozza') if p.mode == 'draft' else _('pubblicata subito') }} · {{ _('chiesta da {name}', name=p.requested_by) }}</span>
       </div>
       <div class="row">
-        <a class="btn" href="/drafts/{{ p.draft_id }}">Leggi</a>
+        <a class="btn" href="/drafts/{{ p.draft_id }}">{{ _('Leggi') }}</a>
         {% if caller.can('owner') %}
-        <form class="inline" method="post" action="/ui/publications/{{ p.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">Approva</button></form>
+        <form class="inline" method="post" action="/ui/publications/{{ p.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">{{ _('Approva') }}</button></form>
         {% endif %}
       </div>
     </div>
@@ -107,69 +107,69 @@
 
     {% for p in proposed %}
     <div class="item">
-      <span class="chip">Proposta</span>
+      <span class="chip">{{ _('Proposta') }}</span>
       <div class="what">
         <strong>{{ p.title }}</strong>
-        <span>Opportunità {{ p.opportunity|s100 }} · Hype {{ p.hype|s100 }} · {{ p.citations|plural('fonte', 'fonti') }}</span>
+        <span>{{ _('Opportunità') }} {{ p.opportunity|s100 }} · {{ _('Hype') }} {{ p.hype|s100 }} · {{ p.citations|plural(_('fonte'), _('fonti')) }}</span>
       </div>
       {% if caller.can('editor') %}
       <div class="row">
-        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/"><button class="btn" type="submit">Scarta</button></form>
-        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn pri" type="submit">Accetta e scrivi la bozza</button></form>
+        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/"><button class="btn" type="submit">{{ _('Scarta') }}</button></form>
+        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
       </div>
       {% endif %}
     </div>
     {% endfor %}
 
-    {% if not decisions %}<p class="empty">Niente da decidere adesso.</p>{% endif %}
+    {% if not decisions %}<p class="empty">{{ _('Niente da decidere adesso.') }}</p>{% endif %}
   </section>
 
   <div class="col-side">
     <section class="card pad" aria-labelledby="h-sites">
-      <h2 id="h-sites">Siti</h2>
+      <h2 id="h-sites">{{ _('Siti') }}</h2>
       {% for x in site_lines %}
       <div class="row" style="justify-content: space-between; flex-wrap: nowrap; gap: 8px;">
         <a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px; min-width: 0; overflow-wrap: anywhere;">{{ x.domain }}</a>
         <span class="row" style="gap: 6px; flex-wrap: nowrap;">
-          {% if x.approved %}<span class="chip">v{{ x.approved }} in uso</span>{% endif %}
-          {% if x.pending %}<span class="chip amber">v{{ x.pending }} da approvare</span>{% elif not x.approved %}<span class="chip">in analisi</span>{% endif %}
+          {% if x.approved %}<span class="chip">{{ _('v{version} in uso', version=x.approved) }}</span>{% endif %}
+          {% if x.pending %}<span class="chip amber">{{ _('v{version} da approvare', version=x.pending) }}</span>{% elif not x.approved %}<span class="chip">{{ _('in analisi') }}</span>{% endif %}
         </span>
       </div>
       {% else %}
-      <p class="hint">Nessun sito: aggiungilo da Sito e profilo.</p>
+      <p class="hint">{{ _('Nessun sito: aggiungilo da Sito e profilo.') }}</p>
       {% endfor %}
     </section>
 
     <section class="card pad" aria-labelledby="h-opp">
-      <div class="row" style="justify-content: space-between;"><h2 id="h-opp">Opportunità del giorno</h2><a href="/trends" style="font-size: 14px;">Tutti i trend</a></div>
-      <div class="legend"><span><i></i>Opportunità per il sito</span><span><i class="hype"></i>Hype nel settore</span></div>
+      <div class="row" style="justify-content: space-between;"><h2 id="h-opp">{{ _('Opportunità del giorno') }}</h2><a href="/trends" style="font-size: 14px;">{{ _('Tutti i trend') }}</a></div>
+      <div class="legend"><span><i></i>{{ _('Opportunità per il sito') }}</span><span><i class="hype"></i>{{ _('Hype nel settore') }}</span></div>
       {% for t in tops %}
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {{ t.items }} notizie da {{ t.sources }} fonti</span></span>
+        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {{ _('{items} notizie da {sources} fonti', items=t.items, sources=t.sources) }}</span></span>
         <div class="pair">
           <div class="bar"><i style="width: {{ t.opportunity|round|int }}%"></i></div><span class="num">{{ t.opportunity|s100 }}</span>
           <div class="bar"><i class="hype" style="width: {{ (t.hype or 0)|round|int }}%"></i></div><span class="num" style="color: var(--muted);">{{ t.hype|s100 }}</span>
         </div>
       </div>
       {% else %}
-      <p class="hint">Ancora nessun tema da proporre: servono due fonti diverse sullo stesso tema, o una notizia forte di una fonte affidabile.</p>
+      <p class="hint">{{ _('Ancora nessun tema da proporre: servono due fonti diverse sullo stesso tema, o una notizia forte di una fonte affidabile.') }}</p>
       {% endfor %}
-      <p class="hint">Molto hype non vuol dire opportunità: conta quanto il tema è vicino al sito e quanto non l'hai già coperto.</p>
+      <p class="hint">{{ _("Molto hype non vuol dire opportunità: conta quanto il tema è vicino al sito e quanto non l'hai già coperto.") }}</p>
     </section>
 
     <section class="card pad" aria-labelledby="h-raccolta">
-      <h2 id="h-raccolta">Raccolta</h2>
+      <h2 id="h-raccolta">{{ _('Raccolta') }}</h2>
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
-        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('active_sources', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">fonti attive{% if sites|length > 1 %} in tutti i siti{% endif %}</div></div>
-        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('items_today', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">notizie oggi</div></div>
-        <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">ultimo giro</div></div>
+        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('active_sources', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">{{ _('fonti attive in tutti i siti') if sites|length > 1 else _('fonti attive') }}</div></div>
+        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('items_today', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">{{ _('notizie oggi') }}</div></div>
+        <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">{{ _('ultimo giro') }}</div></div>
       </div>
-      <span class="hint">Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.</span>
+      <span class="hint">{{ _('Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.') }}</span>
       {% if stopped %}
       <div style="margin-top: 10px;">
-        <span class="hint">Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):</span>
+        <span class="hint">{{ _('Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):') }}</span>
         {% for x in stopped %}
-        <div class="hint" style="margin-top: 4px;"><a href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">{{ x.name }}</a>{% if sites|length > 1 %} · {{ x.domain }}{% endif %}: {{ x.status_reason|problem if x.status_reason else 'nessuna notizia recente' }}</div>
+        <div class="hint" style="margin-top: 4px;"><a href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">{{ x.name }}</a>{% if sites|length > 1 %} · {{ x.domain }}{% endif %}: {{ x.status_reason|problem if x.status_reason else _('nessuna notizia recente') }}</div>
         {% endfor %}
       </div>
       {% endif %}

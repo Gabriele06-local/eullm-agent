@@ -1,35 +1,35 @@
 {% extends "base.html.j2" %}
-{% block title %}Sito e profilo{% endblock %}
+{% block title %}{{ _('Sito e profilo') }}{% endblock %}
 {% block main %}
 {% macro job_panel() %}
 {% if jobs %}
-<div class="dashed"><strong>Lavori in coda, in corso o non riusciti</strong>{% for j in jobs %}<span class="hint">{{ {'analysis': 'Analisi', 'discovery': 'Ricerca fonti', 'draft': 'Bozza', 'maintain': 'Manutenzione fonti', 'review': 'Revisione settimanale', 'collect': 'Raccolta', 'briefing': 'Briefing', 'publish': 'Pubblicazione', 'tick': 'Giro orario'}.get(j.kind, j.kind) }}{% if j.subject %} ({{ j.subject }}){% endif %}: {% if j.status == 'running' %}in corso{% elif j.status == 'queued' %}in coda{% else %}non riuscito, {{ j.error }}{% endif %}</span>{% endfor %}</div>
+<div class="dashed"><strong>{{ _('Lavori in coda, in corso o non riusciti') }}</strong>{% for j in jobs %}<span class="hint">{{ {'analysis': _('Analisi'), 'discovery': _('Ricerca fonti'), 'draft': _('Bozza'), 'maintain': _('Manutenzione fonti'), 'review': _('Revisione settimanale'), 'collect': _('Raccolta'), 'briefing': _('Briefing'), 'publish': _('Pubblicazione'), 'tick': _('Giro orario')}.get(j.kind, j.kind) }}{% if j.subject %} ({{ j.subject }}){% endif %}: {% if j.status == 'running' %}{{ _('in corso') }}{% elif j.status == 'queued' %}{{ _('in coda') }}{% else %}{{ _('non riuscito, {error}', error=j.error) }}{% endif %}</span>{% endfor %}</div>
 {% endif %}
 {% endmacro %}
 {% if not site %}
-<header class="head"><div><span class="kicker">Sito e profilo editoriale</span><h1>Nessun sito</h1></div></header>
+<header class="head"><div><span class="kicker">{{ _('Sito e profilo editoriale') }}</span><h1>{{ _('Nessun sito') }}</h1></div></header>
 {{ job_panel() }}
 {% else %}
 <header class="head">
   <div>
-    <span class="kicker">Sito e profilo editoriale</span>
+    <span class="kicker">{{ _('Sito e profilo editoriale') }}</span>
     <h1>{{ site.domain }}</h1>
     {% if analysis %}
     <div class="row">
-      {% set st = {'complete': ('green', 'Analisi completa'), 'partial': ('amber', 'Analisi parziale'), 'insufficient': ('red', 'Dati insufficienti'), 'failed': ('red', 'Analisi fallita')}[analysis.status] %}
+      {% set st = {'complete': ('green', _('Analisi completa')), 'partial': ('amber', _('Analisi parziale')), 'insufficient': ('red', _('Dati insufficienti')), 'failed': ('red', _('Analisi fallita'))}[analysis.status] %}
       <span class="chip {{ st[0] }}">{{ st[1] }}</span>
-      <span class="chip">{{ analysis.pages_fetched or 0 }} pagine lette · {{ when(analysis.started_at) }}</span>
+      <span class="chip">{{ _('{n} pagine lette', n=analysis.pages_fetched or 0) }} · {{ when(analysis.started_at) }}</span>
       {% set langs = (shown.body.get('languages') if shown else None) or {} %}
-      {% if langs|length > 1 %}<span class="chip">Lingue: {% for k, v in langs.items() %}{{ k }} ({{ v }}){{ ', ' if not loop.last }}{% endfor %}</span>
-      {% elif site.language %}<span class="chip">Lingua: {{ site.language }}</span>{% endif %}
-      <span class="chip">robots.txt rispettato</span>
+      {% if langs|length > 1 %}<span class="chip">{{ _('Lingue:') }} {% for k, v in langs.items() %}{{ k }} ({{ v }}){{ ', ' if not loop.last }}{% endfor %}</span>
+      {% elif site.language %}<span class="chip">{{ _('Lingua: {language}', language=site.language) }}</span>{% endif %}
+      <span class="chip">{{ _('robots.txt rispettato') }}</span>
     </div>
     {% endif %}
   </div>
   {% if caller.can('owner') %}
   <div class="row">
-    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn" type="submit">Rianalizza ora</button></form>
-    {% if shown %}<a class="btn" href="/site?edit=1">Modifica il profilo</a>{% endif %}
+    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn" type="submit">{{ _('Rianalizza ora') }}</button></form>
+    {% if shown %}<a class="btn" href="/site?edit=1">{{ _('Modifica il profilo') }}</a>{% endif %}
   </div>
   {% endif %}
 </header>
@@ -37,17 +37,17 @@
 {{ job_panel() }}
 
 {% if analysis and analysis.problems %}
-<div class="dashed"><strong>{{ 'Note sull\'ultima analisi' if analysis.status == 'complete' else 'Perché l\'ultima analisi non è completa' }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
+<div class="dashed"><strong>{{ _("Note sull'ultima analisi") if analysis.status == 'complete' else _("Perché l'ultima analisi non è completa") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}
 
 {% if editing %}
 <section class="card pad" aria-labelledby="h-edit">
-  <h2 id="h-edit">Modifica il profilo</h2>
-  <p class="lead">Le modifiche diventano una nuova versione in bozza: la linea cambia solo quando la approvi.</p>
+  <h2 id="h-edit">{{ _('Modifica il profilo') }}</h2>
+  <p class="lead">{{ _('Le modifiche diventano una nuova versione in bozza: la linea cambia solo quando la approvi.') }}</p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="/ui/sites/{{ site.id }}/profile" style="display: flex; flex-direction: column; gap: 12px;">
-    <label class="field">Profilo (JSON)<textarea name="body" spellcheck="false">{{ body_json }}</textarea></label>
-    <div class="row"><a class="btn" href="/site">Annulla</a><button class="btn pri" type="submit">Salva come bozza</button></div>
+    <label class="field">{{ _('Profilo (JSON)') }}<textarea name="body" spellcheck="false">{{ body_json }}</textarea></label>
+    <div class="row"><a class="btn" href="/site">{{ _('Annulla') }}</a><button class="btn pri" type="submit">{{ _('Salva come bozza') }}</button></div>
   </form>
 </section>
 {% elif shown %}
@@ -56,25 +56,25 @@
   <div class="card-head">
     <div style="display: flex; flex-direction: column; gap: 4px;">
       {% if draft and approved %}
-      <h2 id="h-profile">Proposta di aggiornamento della linea · versione {{ draft.version }}</h2>
-      <span style="font-size: 14px;">{{ 'Dalla rianalisi' if draft.origin == 'reanalysis' else 'Modifica' }} del {{ when(draft.created_at, 'day') }}. L'agente propone, la linea cambia solo se approvi.</span>
+      <h2 id="h-profile">{{ _('Proposta di aggiornamento della linea · versione {version}', version=draft.version) }}</h2>
+      <span style="font-size: 14px;">{% if draft.origin == 'reanalysis' %}{{ _("Dalla rianalisi del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% else %}{{ _("Modifica del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% endif %}</span>
       {% elif draft %}
-      <h2 id="h-profile">Profilo proposto · versione {{ draft.version }}</h2>
-      <span style="font-size: 14px;">Ricostruito dall'analisi del sito: controllalo e approvalo per avviare piano e opportunità.</span>
+      <h2 id="h-profile">{{ _('Profilo proposto · versione {version}', version=draft.version) }}</h2>
+      <span style="font-size: 14px;">{{ _("Ricostruito dall'analisi del sito: controllalo e approvalo per avviare piano e opportunità.") }}</span>
       {% else %}
-      <h2 id="h-profile">Profilo approvato · versione {{ approved.version }}</h2>
-      <span class="hint">Approvato da {{ approved.approved_by }} il {{ when(approved.approved_at, 'day') }}</span>
+      <h2 id="h-profile">{{ _('Profilo approvato · versione {version}', version=approved.version) }}</h2>
+      <span class="hint">{{ _('Approvato da {who} il {date}', who=approved.approved_by, date=when(approved.approved_at, 'day')) }}</span>
       {% endif %}
     </div>
     {% if draft and caller.can('owner') %}
     <div class="row">
-      {% if approved %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/discard/{{ draft.version }}"><button class="btn" type="submit">Mantieni la v{{ approved.version }}</button></form>{% endif %}
-      <a class="btn" href="/site?edit=1">Modifica</a>
+      {% if approved %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/discard/{{ draft.version }}"><button class="btn" type="submit">{{ _('Mantieni la v{version}', version=approved.version) }}</button></form>{% endif %}
+      <a class="btn" href="/site?edit=1">{{ _('Modifica') }}</a>
       {% if incomplete %}
-      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn pri" type="submit">Rianalizza</button></form>
-      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn" type="submit">Approva comunque</button></form>
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn pri" type="submit">{{ _('Rianalizza') }}</button></form>
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn" type="submit">{{ _('Approva comunque') }}</button></form>
       {% else %}
-      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn pri" type="submit">Approva la v{{ draft.version }}</button></form>
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/approve/{{ draft.version }}"><button class="btn pri" type="submit">{{ _('Approva la v{version}', version=draft.version) }}</button></form>
       {% endif %}
     </div>
     {% endif %}
@@ -82,11 +82,11 @@
 
   {% if draft and approved %}
   <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-cmp">
-    <h3 id="h-cmp">Cosa cambia rispetto alla v{{ approved.version }} approvata</h3>
+    <h3 id="h-cmp">{{ _('Cosa cambia rispetto alla v{version} approvata', version=approved.version) }}</h3>
     {% if comparison %}
     <div class="scroll">
       <table style="min-width: 520px;">
-        <thead><tr><th>Cosa</th><th>Oggi (v{{ approved.version }})</th><th>Proposta (v{{ draft.version }})</th></tr></thead>
+        <thead><tr><th>{{ _('Cosa') }}</th><th>{{ _('Oggi (v{version})', version=approved.version) }}</th><th>{{ _('Proposta (v{version})', version=draft.version) }}</th></tr></thead>
         <tbody>
         {% for c in comparison %}
         {% if c.note %}<tr><td colspan="3" class="hint">{{ c.note }}</td></tr>
@@ -96,9 +96,9 @@
       </table>
     </div>
     {% else %}
-    <p class="hint" style="margin: 0;">Nessuna differenza nella linea: la proposta nasce da un modo migliore di leggere il sito.</p>
+    <p class="hint" style="margin: 0;">{{ _('Nessuna differenza nella linea: la proposta nasce da un modo migliore di leggere il sito.') }}</p>
     {% endif %}
-    <p class="hint" style="margin: 0;">"Approva" rende attiva la proposta; "Mantieni" la scarta e resta la v{{ approved.version }}. Sotto trovi il profilo proposto per intero.</p>
+    <p class="hint" style="margin: 0;">{{ _('"Approva" rende attiva la proposta; "Mantieni" la scarta e resta la v{version}. Sotto trovi il profilo proposto per intero.', version=approved.version) }}</p>
   </div>
   {% endif %}
 
@@ -109,47 +109,48 @@
   {% set an = b.get('analysis') or {} %}
   {% set langs = b.get('languages') or {} %}
   <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-what">
-    <h3 id="h-what">La linea editoriale di {{ site.domain }}</h3>
+    <h3 id="h-what">{{ _('La linea editoriale di {domain}', domain=site.domain) }}</h3>
     {% if b.get('summary') %}
     <p class="lead" style="margin: 0;">{{ b.get('summary') }}</p>
     {% else %}
-    <p class="lead" style="margin: 0;">{{ b.get('name') or site.domain }} pubblica {% if langs|length > 1 %}in {{ langs.keys()|join(' e ') }}{% elif b.get('language') %}in {{ b.get('language') }}{% endif %}{% if an.get('posts_per_week') %}, circa {{ an.get('posts_per_week')|num }} articoli a settimana{% endif %}{% if sty.get('typical_words') %} di circa {{ sty.get('typical_words') }} parole{% endif %}{% if subs %}, soprattutto su {% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}.{% if b.get('site_keywords') %} Si presenta con le parole chiave {{ b.get('site_keywords')|join(', ') }}.{% endif %}</p>
+    {% set nm = b.get('name') or site.domain %}
+    <p class="lead" style="margin: 0;">{% if langs|length > 1 %}{{ _('{name} pubblica in {languages}', name=nm, languages=langs.keys()|join(' ' ~ _('e') ~ ' ')) }}{% elif b.get('language') %}{{ _('{name} pubblica in {languages}', name=nm, languages=b.get('language')) }}{% else %}{{ _('{name} pubblica', name=nm) }}{% endif %}{% if an.get('posts_per_week') %}{{ _(', circa {n} articoli a settimana', n=an.get('posts_per_week')|num) }}{% endif %}{% if sty.get('typical_words') %} {{ _('di circa {n} parole', n=sty.get('typical_words')) }}{% endif %}{% if subs %}{{ _(', soprattutto su {topics}', topics=subs|map(attribute='name')|join(', ')) }}{% endif %}.{% if b.get('site_keywords') %} {{ _('Si presenta con le parole chiave {keywords}.', keywords=b.get('site_keywords')|join(', ')) }}{% endif %}</p>
     {% endif %}
     {% if incomplete %}
-    <p class="error" style="margin: 0;">Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in "Non determinato"). Rianalizza, oppure completali tu con "Modifica" prima di approvare.</p>
+    <p class="error" style="margin: 0;">{{ _("Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in &quot;Non determinato&quot;). Rianalizza, oppure completali tu con &quot;Modifica&quot; prima di approvare.") }}</p>
     {% endif %}
-    <p class="hint" style="margin: 0;">Approvare vuol dire: "questa è la mia linea". Da qui l'agente:</p>
+    <p class="hint" style="margin: 0;">{{ _("Approvare vuol dire: &quot;questa è la mia linea&quot;. Da qui l'agente:") }}</p>
     <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
-      <li><strong>cerca le fonti</strong> che scrivono di {% if subs %}{% for x in subs %}{{ x.name }}{{ ', ' if not loop.last }}{% endfor %}{% else %}questi temi{% endif %}, in tre modi: le testate che gli articoli del sito già citano, ricerche con le parole chiave dei temi (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per questi temi. Ogni fonte è letta e valutata prima di essere usata; in Fonti vedi da dove arriva ciascuna;</li>
-      <li><strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {{ ((st.get('min_relevance', 0.15)) * 100)|round|int }}%){% if st.get('exclude') %}, scartando {{ st.get('exclude')|join(', ') }}{% endif %};</li>
-      <li><strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;</li>
-      <li><strong>propone {{ st.get('proposals_per_day', 3) }} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;</li>
-      <li><strong>scrive le bozze</strong> in {{ b.get('language') or 'lingua del sito' }}{% if sty.get('tone') %}, tono {{ sty.get('tone') }}{% endif %}{% if sty.get('typical_words') %}, circa {{ sty.get('typical_words') }} parole{% endif %}, con le fonti citate. Nulla si pubblica senza il tuo sì.</li>
+      <li>{{ _('<strong>cerca le fonti</strong> che scrivono di {topics}, in tre modi: le testate che gli articoli del sito già citano, ricerche con le parole chiave dei temi (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per questi temi. Ogni fonte è letta e valutata prima di essere usata; in Fonti vedi da dove arriva ciascuna;', topics=subs|map(attribute='name')|join(', ') if subs else _('questi temi')) }}</li>
+      <li>{{ _('<strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {pct}%)', pct=((st.get('min_relevance', 0.15)) * 100)|round|int) }}{% if st.get('exclude') %}{{ _(', scartando {terms}', terms=st.get('exclude')|join(', ')) }}{% endif %};</li>
+      <li>{{ _("<strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;") }}</li>
+      <li>{{ _('<strong>propone {n} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;', n=st.get('proposals_per_day', 3)) }}</li>
+      <li>{{ _('<strong>scrive le bozze</strong> in {language}', language=b.get('language') or _('lingua del sito')) }}{% if sty.get('tone') %}{{ _(', tono {tone}', tone=sty.get('tone')) }}{% endif %}{% if sty.get('typical_words') %}{{ _(', circa {n} parole', n=sty.get('typical_words')) }}{% endif %}{{ _(', con le fonti citate. Nulla si pubblica senza il tuo sì.') }}</li>
     </ul>
-    {% if b.get('read_at') %}<p class="hint" style="margin: 0;">{{ site.domain }} porta a {{ b.get('read_at') }}: è stato letto quel sito.</p>{% endif %}
+    {% if b.get('read_at') %}<p class="hint" style="margin: 0;">{{ _('{domain} porta a {target}: è stato letto quel sito.', domain=site.domain, target=b.get('read_at')) }}</p>{% endif %}
   </div>
 
   <div class="pad" style="flex-direction: row; flex-wrap: wrap; gap: 32px;">
     <div style="flex: 3 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span class="label-up">Settore</span>
+        <span class="label-up">{{ _('Settore') }}</span>
         {% set old_sector = (approved.body.get('sector') or {}).get('value') if (approved and draft) else none %}
         {% set new_sector = (shown.body.get('sector') or {}).get('value') %}
         <div class="row" style="font-size: 16px; gap: 10px;">
           {% if old_sector and old_sector != new_sector %}<span style="text-decoration: line-through; color: var(--muted);">{{ old_sector }}</span><span aria-hidden="true" class="flat">→</span>{% endif %}
-          <strong>{{ new_sector or 'Non determinato' }}</strong>
+          <strong>{{ new_sector or _('Non determinato') }}</strong>
         </div>
       </div>
 
       <div style="display: flex; flex-direction: column;">
-        <span class="label-up" style="padding-bottom: 6px;">Temi · quota degli articoli letti che ne parlano, con articoli d'esempio</span>
-        <div class="share head-row"><span>Tema</span><span>{% if draft and approved %}v{{ approved.version }}{% endif %}</span><span>{% if draft and approved %}v{{ draft.version }}{% else %}Quota{% endif %}</span><span>{% if draft and approved %}Andamento{% endif %}</span></div>
+        <span class="label-up" style="padding-bottom: 6px;">{{ _("Temi · quota degli articoli letti che ne parlano, con articoli d'esempio") }}</span>
+        <div class="share head-row"><span>{{ _('Tema') }}</span><span>{% if draft and approved %}v{{ approved.version }}{% endif %}</span><span>{% if draft and approved %}v{{ draft.version }}{% else %}{{ _('Quota') }}{% endif %}</span><span>{% if draft and approved %}{{ _('Andamento') }}{% endif %}</span></div>
         {% for r in rows if r.current or not comparison %}
         <div class="share">
-          <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">nuova</span>{% endif %}
-            {% if r.keywords %}<small class="hint" style="display: block;">parole chiave: {{ r.keywords|join(', ') }}</small>{% endif %}
+          <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">{{ _('nuova') }}</span>{% endif %}
+            {% if r.keywords %}<small class="hint" style="display: block;">{{ _('parole chiave: {keywords}', keywords=r.keywords|join(', ')) }}</small>{% endif %}
             {% for e in r.examples %}<small style="display: block;"><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a></small>{% endfor %}
-            {% if r.current and caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/remove"><input type="hidden" name="name" value="{{ r.name }}"><button class="btn" type="submit" style="margin-top: 4px; padding: 2px 10px; font-size: 12px;" title="Non seguire più questo tema, anche nelle prossime analisi">Togli il tema</button></form>{% endif %}
+            {% if r.current and caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/remove"><input type="hidden" name="name" value="{{ r.name }}"><button class="btn" type="submit" style="margin-top: 4px; padding: 2px 10px; font-size: 12px;" title="{{ _('Non seguire più questo tema, anche nelle prossime analisi') }}">{{ _('Togli il tema') }}</button></form>{% endif %}
           </span>
           <span class="num">{% if r.old is not none %}{{ (100 * r.old)|round|int }}%{% endif %}</span>
           <span class="num">{{ (100 * r.new)|round|int }}%</span>
@@ -164,36 +165,36 @@
       {% set removed = (shown.body.get('settings') or {}).get('removed') or [] %}
       {% if removed %}
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span class="label-up">Temi tolti · non vengono seguiti, anche se l'analisi li ritrova</span>
-        <div class="row">{% for x in removed %}<span class="chip">{{ x.name }}</span>{% if caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/restore"><input type="hidden" name="name" value="{{ x.name }}"><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">Rimetti</button></form>{% endif %}{% endfor %}</div>
+        <span class="label-up">{{ _("Temi tolti · non vengono seguiti, anche se l'analisi li ritrova") }}</span>
+        <div class="row">{% for x in removed %}<span class="chip">{{ x.name }}</span>{% if caller.can('owner') %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/topics/restore"><input type="hidden" name="name" value="{{ x.name }}"><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">{{ _('Rimetti') }}</button></form>{% endif %}{% endfor %}</div>
       </div>
       {% endif %}
 
       <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start;">
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <span class="label-up">Pubblico</span>
-          <span>{{ (shown.body.get('audience') or {}).get('value') or 'Non determinato' }}</span>
+          <span class="label-up">{{ _('Pubblico') }}</span>
+          <span>{{ (shown.body.get('audience') or {}).get('value') or _('Non determinato') }}</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <span class="label-up">Stile</span>
+          <span class="label-up">{{ _('Stile') }}</span>
           {% set style = shown.body.get('style') or {} %}
-          <span>{{ style.get('tone') or 'Tono non determinato' }}{% if style.get('formats') %} · {{ style.get('formats')|join(', ') }}{% endif %}</span>
+          <span>{{ style.get('tone') or _('Tono non determinato') }}{% if style.get('formats') %} · {{ style.get('formats')|join(', ') }}{% endif %}</span>
         </div>
       </div>
     </div>
 
     <aside style="flex: 2 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-ev">
-      <h3 id="h-ev">Prove · {{ evidence|length }} pagine del sito</h3>
-      <p class="hint">Ogni affermazione del modello è legata a pagine lette. Quelle senza prova vengono scartate.</p>
+      <h3 id="h-ev">{{ _('Prove · {n} pagine del sito', n=evidence|length) }}</h3>
+      <p class="hint">{{ _('Ogni affermazione del modello è legata a pagine lette. Quelle senza prova vengono scartate.') }}</p>
       <ol class="evlist">
         {% for e in evidence[:6] %}
         <li><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.url|replace('https://', '')|replace('http://', '') }}</a>{% if e.label %}<small>{{ e.label }}</small>{% endif %}</li>
         {% endfor %}
       </ol>
-      {% if evidence|length > 6 %}<span class="hint">e altre {{ evidence|length - 6 }}</span>{% endif %}
+      {% if evidence|length > 6 %}<span class="hint">{{ _('e altre {n}', n=evidence|length - 6) }}</span>{% endif %}
       {% if shown.body.get('gaps') %}
       <div class="dashed">
-        <strong>Non determinato</strong>
+        <strong>{{ _('Non determinato') }}</strong>
         {% for g in shown.body.get('gaps')[:6] %}<span class="hint">{{ g|problem }}</span>{% endfor %}
       </div>
       {% endif %}
@@ -201,23 +202,23 @@
   </div>
 </section>
 {% else %}
-<section class="card pad"><h2>Profilo in preparazione</h2><p class="lead">L'analisi del sito non ha ancora prodotto un profilo. Torna tra poco o rianalizza.</p></section>
+<section class="card pad"><h2>{{ _('Profilo in preparazione') }}</h2><p class="lead">{{ _("L'analisi del sito non ha ancora prodotto un profilo. Torna tra poco o rianalizza.") }}</p></section>
 {% endif %}
 
 {% if profiles %}
 <section class="card pad" aria-labelledby="h-ver">
-  <h2 id="h-ver">Versioni</h2>
+  <h2 id="h-ver">{{ _('Versioni') }}</h2>
   <div class="scroll">
     <table style="min-width: 560px;">
-      <thead><tr><th>Versione</th><th>Origine</th><th>Stato</th><th>Decisione</th>{% if caller.can('owner') %}<th></th>{% endif %}</tr></thead>
+      <thead><tr><th>{{ _('Versione') }}</th><th>{{ _('Origine') }}</th><th>{{ _('Stato') }}</th><th>{{ _('Decisione') }}</th>{% if caller.can('owner') %}<th></th>{% endif %}</tr></thead>
       <tbody>
       {% for p in profiles %}
       <tr>
         <td class="num">v{{ p.version }}</td>
-        <td>{{ {'analysis': 'Prima analisi', 'reanalysis': 'Rianalisi periodica', 'manual': 'Modifica manuale'}.get(p.origin, p.origin) }}</td>
-        <td>{% if p.status == 'approved' %}<span class="chip green">Approvata</span>{% elif p.status == 'draft' %}<span class="chip amber">In attesa</span>{% else %}<span class="chip">Ritirata</span>{% endif %}</td>
+        <td>{{ {'analysis': _('Prima analisi'), 'reanalysis': _('Rianalisi periodica'), 'manual': _('Modifica manuale')}.get(p.origin, p.origin) }}</td>
+        <td>{% if p.status == 'approved' %}<span class="chip green">{{ _('Approvata') }}</span>{% elif p.status == 'draft' %}<span class="chip amber">{{ _('In attesa') }}</span>{% else %}<span class="chip">{{ _('Ritirata') }}</span>{% endif %}</td>
         <td>{% if p.approved_by %}{{ p.approved_by }} · {{ when(p.approved_at, 'day') }}{% else %}<span class="flat">–</span>{% endif %}</td>
-        {% if caller.can('owner') %}<td>{% if p.status != 'approved' %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/versions/{{ p.version }}/delete" onsubmit="return confirm('Eliminare la v{{ p.version }}? Non si può annullare.')"><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">Elimina</button></form>{% endif %}</td>{% endif %}
+        {% if caller.can('owner') %}<td>{% if p.status != 'approved' %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/versions/{{ p.version }}/delete" onsubmit='return confirm({{ _('Eliminare la v{version}? Non si può annullare.', version=p.version)|string|tojson }})'><button class="btn" type="submit" style="padding: 2px 10px; font-size: 12px;">{{ _('Elimina') }}</button></form>{% endif %}</td>{% endif %}
       </tr>
       {% endfor %}
       </tbody>
@@ -229,10 +230,10 @@
 
 {% if caller.can('owner') and not site %}
 <section class="card pad" aria-labelledby="h-add">
-  <h2 id="h-add">Aggiungi un dominio</h2>
+  <h2 id="h-add">{{ _('Aggiungi un dominio') }}</h2>
   <form method="post" action="/ui/sites" class="form-grid">
-    <label class="field">Dominio<input name="domain" placeholder="esempio.it" required></label>
-    <div><button class="btn" type="submit">Analizza il sito</button></div>
+    <label class="field">{{ _('Dominio') }}<input name="domain" placeholder="{{ _('esempio.it') }}" required></label>
+    <div><button class="btn" type="submit">{{ _('Analizza il sito') }}</button></div>
   </form>
 </section>
 {% endif %}

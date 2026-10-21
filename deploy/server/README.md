@@ -165,7 +165,15 @@ ends without a payment. Its data stay, and its owner can still sign in to
   It answers 201 with the customer, the newsroom, its subscription
   (`trialing`, 7 days) and the owner's invite; the same `external_ref`
   again answers 200 and changes nothing. VAT number, tax code, SDI code
-  and PEC are checked.
+  and PEC are checked. The error messages (`{"error": ...}`, meant for the
+  visitor) and the owner's invite email are written in `"language"` (`en`,
+  `it`, `de`, `fr`, `es`) when the body has it, else in the request's
+  `Accept-Language`; the newsroom gets the same language.
+  The plan the visitor picked goes in `"plan"` (and `"interval"`): from
+  the site's key a paid plan never starts without its payment, the
+  newsroom starts on trial and the subscription keeps `desired_plan` and
+  `desired_interval`, already selected when the owner opens `/account` to
+  pay. A reseller's key starts the plan at once (the reseller bills it).
 - **Customers**: `GET /api/operator/customers[?external_ref=...]`,
   `GET` and `PATCH /api/operator/customers/{id}`.
 - **Plan of a newsroom**: `GET` and `PUT /api/operator/tenants/{id}/subscription`

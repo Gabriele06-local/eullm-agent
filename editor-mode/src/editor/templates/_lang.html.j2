@@ -1,0 +1,8 @@
+<form method="get" action="/lang" class="switch lang-pick">
+  <label for="lang-pick" class="sr">{{ _('Lingua') }}</label>
+  <select id="lang-pick" name="l" onchange="this.form.submit()">
+    {% for code in lang_codes %}<option value="{{ code }}" {% if code == lang() %}selected{% endif %}>{{ lang_names[code] }}</option>{% endfor %}
+  </select>
+  <input type="hidden" name="back" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+  <noscript><button class="btn sm" type="submit">OK</button></noscript>
+</form>

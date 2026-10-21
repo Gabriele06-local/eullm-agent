@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="it">
+<html lang="{{ lang() }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Password dimenticata · EuLLM Editor</title>
+<title>{{ _('Password dimenticata') }} · EuLLM Editor</title>
 <link rel="icon" type="image/png" href="/static/favicon.png">
 {% include "_style.html.j2" %}
 </head>
@@ -11,21 +11,22 @@
 <main class="solo">
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
   <section class="card pad">
-    <h1 style="font-size: 22px;">Password dimenticata</h1>
+    <h1 style="font-size: 22px;">{{ _('Password dimenticata') }}</h1>
     {% if sent %}
-    <p class="lead">Se l'indirizzo ha un account, è partita un'email con il link per scegliere una nuova password. Il link vale 24 ore.</p>
-    <a class="btn" href="/login">Torna all'accesso</a>
+    <p class="lead">{{ _("Se l'indirizzo ha un account, è partita un'email con il link per scegliere una nuova password. Il link vale 24 ore.") }}</p>
+    <a class="btn" href="/login">{{ _("Torna all'accesso") }}</a>
     {% elif can_reset %}
-    <p class="lead">Ti mandiamo un link per scegliere una nuova password.</p>
+    <p class="lead">{{ _('Ti mandiamo un link per scegliere una nuova password.') }}</p>
     <form method="post" action="/forgot" style="display: flex; flex-direction: column; gap: 12px;">
-      <label class="field">Email<input name="email" type="email" autocomplete="username" required autofocus></label>
-      <button class="btn pri" type="submit">Manda il link</button>
+      <label class="field">{{ _('Email') }}<input name="email" type="email" autocomplete="username" required autofocus></label>
+      <button class="btn pri" type="submit">{{ _('Manda il link') }}</button>
     </form>
     {% else %}
-    <p class="lead">Questo server non manda email: chiedi un nuovo link a chi gestisce il servizio.</p>
-    <a class="btn" href="/login">Torna all'accesso</a>
+    <p class="lead">{{ _('Questo server non manda email: chiedi un nuovo link a chi gestisce il servizio.') }}</p>
+    <a class="btn" href="/login">{{ _("Torna all'accesso") }}</a>
     {% endif %}
   </section>
+  {% include "_lang.html.j2" %}
 </main>
 </body>
 </html>

@@ -23,8 +23,9 @@ from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 
-from . import accounts, billing, newsrooms
+from . import accounts, billing, i18n, newsrooms
 from .gateway import GatewayError
+from .i18n import t
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +75,9 @@ class SignupIn(BaseModel):
     interval: Literal["month", "year"] = "month"
     # The public site's id of this signup: the same one again changes nothing.
     external_ref: str | None = Field(None, max_length=200)
+    # The visitor's language: the errors of this request and the owner's
+    # invite are written in it (else the Accept-Language header).
+    language: Literal["en", "it", "de", "fr", "es"] | None = None
 
 
 class SubscriptionIn(BaseModel):
@@ -156,18 +160,23 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
 
     @app.post("/api/operator/signup", status_code=201)
     def api_signup(request: Request, body: SignupIn, by: str = Depends(operator)):
-        spec = body.model_dump()
-        spec["customer"] = {k: v for k, v in spec["customer"].items() if v is not None}
+        token = i18n.use(body.language) if body.language else None
         try:
-            res = billing.signup(admin, spec, by, reseller_id(request), ctx.core)
-        except (billing.BillingError, newsrooms.NewsroomError, accounts.AccountError) as e:
-            raise HTTPException(400, str(e)) from e
-        room = newsrooms.listing(admin, db, res["tenant_id"])[0]
-        out = {"customer": billing.customer(admin, res["customer_id"]), "tenant": room,
-               "subscription": billing.subscription(admin, res["tenant_id"]), "created": res["created"],
-               "owner": {"email": res["owner_email"], "invite": invite_out(request, res, room["name"])},
-               "warning": res["warning"]}
-        return out if res["created"] else JSONResponse(_json(out), status_code=200)
+            spec = body.model_dump(exclude={"language"})
+            spec["customer"] = {k: v for k, v in spec["customer"].items() if v is not None}
+            try:
+                res = billing.signup(admin, spec, by, reseller_id(request), ctx.core)
+            except (billing.BillingError, newsrooms.NewsroomError, accounts.AccountError) as e:
+                raise HTTPException(400, str(e)) from e
+            room = newsrooms.listing(admin, db, res["tenant_id"])[0]
+            out = {"customer": billing.customer(admin, res["customer_id"]), "tenant": room,
+                   "subscription": billing.subscription(admin, res["tenant_id"]), "created": res["created"],
+                   "owner": {"email": res["owner_email"], "invite": invite_out(request, res, room["name"])},
+                   "warning": res["warning"]}
+            return out if res["created"] else JSONResponse(_json(out), status_code=200)
+        finally:
+            if token is not None:
+                i18n._current.reset(token)
 
     @app.get("/api/operator/customers")
     def api_customers(request: Request, external_ref: str | None = None, by: str = Depends(operator)):
@@ -331,8 +340,8 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         try:
             billing.set_tenant_customer(admin, tenant_id, spec)
         except (billing.BillingError, accounts.AccountError) as e:
-            return to_account(f"Dati non salvati: {e}.", tenant_id)
-        return to_account("Dati di fatturazione salvati.", tenant_id)
+            return to_account(t("Dati non salvati: {error}.", error=e), tenant_id)
+        return to_account(t("Dati di fatturazione salvati."), tenant_id)
 
     @app.post("/account/{tenant_id}/checkout")
     def account_checkout(tenant_id: str, request: Request, plan: str = Form(...), interval: str = Form("month"),
@@ -342,16 +351,16 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             url = billing.checkout(admin, gateway, tenant_id, plan, interval,
                                    f"{base(request)}/account/{tenant_id}/paid", webhook_url(request))
         except (billing.BillingError, GatewayError) as e:
-            return to_account(f"Pagamento non avviato: {e}.", tenant_id)
+            return to_account(t("Pagamento non avviato: {error}.", error=e), tenant_id)
         except Exception:
             log.exception("checkout of %s failed", tenant_id)
-            return to_account("Pagamento non avviato: errore interno, riprova tra poco.", tenant_id)
+            return to_account(t("Pagamento non avviato: errore interno, riprova tra poco."), tenant_id)
         return RedirectResponse(url, status_code=303)
 
     @app.get("/account/{tenant_id}/paid")
     def account_paid(tenant_id: str, request: Request):
-        return to_account("Grazie. Il pagamento è in verifica: la redazione si attiva appena il circuito lo conferma, "
-                          "di solito entro un minuto.", tenant_id)
+        return to_account(t("Grazie. Il pagamento è in verifica: la redazione si attiva appena il circuito lo conferma, "
+                            "di solito entro un minuto."), tenant_id)
 
     @app.post("/account/{tenant_id}/cancel")
     def account_cancel(tenant_id: str, request: Request, s=Depends(person)):
@@ -359,10 +368,11 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         try:
             sub = billing.cancel(admin, tenant_id, gateway)
         except LookupError:
-            return to_account("Nessun abbonamento da disdire.", tenant_id)
+            return to_account(t("Nessun abbonamento da disdire."), tenant_id)
         end = sub["current_period_end"]
-        return to_account("Abbonamento disdetto: niente più rinnovi." +
-                          (f" La redazione resta attiva fino al {end:%d/%m/%Y}." if end else ""), tenant_id)
+        return to_account(t("Abbonamento disdetto: niente più rinnovi.") +
+                          (" " + t("La redazione resta attiva fino al {date}.", date=f"{end:%d/%m/%Y}") if end else ""),
+                          tenant_id)
 
     # --- the operator's console ----------------------------------------------------------
 
@@ -379,8 +389,10 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                       "max_drafts_month": _int(max_drafts_month), "public": public == "1"}
             billing.save_plan(admin, code, fields)
         except ValueError as e:
-            return back(f"Piano non salvato: {e if isinstance(e, billing.BillingError) else 'numeri di zero o più'}.")
-        return back(f"Piano {name.strip()} salvato. Le redazioni già su questo piano prendono i nuovi limiti al prossimo pagamento.")
+            return back(t("Piano non salvato: {error}.",
+                          error=e if isinstance(e, billing.BillingError) else t("numeri di zero o più")))
+        return back(t("Piano {name} salvato. Le redazioni già su questo piano prendono i nuovi limiti al prossimo pagamento.",
+                      name=name.strip()))
 
     @app.post("/admin/resellers", response_class=HTMLResponse)
     def ui_reseller(request: Request, name: str = Form(...), email: str = Form(...), discount: str = Form("0"),
@@ -389,26 +401,26 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             pct = float((discount or "0").replace(",", "."))
             rid = billing.create_reseller(admin, name, email, pct)
         except (ValueError, accounts.AccountError) as e:
-            return page(request, s, 400, error=f"Rivenditore non creato: {e}.")
+            return page(request, s, 400, error=t("Rivenditore non creato: {error}.", error=e))
         key = accounts.create_operator_token(admin, f"rivenditore {name.strip()}", rid)
-        return page(request, s, new={"what": f"Rivenditore {name.strip()} creato con la sua chiave API", "key": key})
+        return page(request, s, new={"what": t("Rivenditore {name} creato con la sua chiave API", name=name.strip()), "key": key})
 
     @app.post("/admin/resellers/{rid}/key", response_class=HTMLResponse)
     def ui_reseller_key(request: Request, rid: int, s=Depends(need_console)):
         r = billing.reseller(admin, rid)
         if r is None or not r.active:
-            return back("Rivenditore non trovato o disattivato.")
+            return back(t("Rivenditore non trovato o disattivato."))
         key = accounts.create_operator_token(admin, f"rivenditore {r.name}", rid)
-        return page(request, s, new={"what": f"Nuova chiave API per {r.name}", "key": key})
+        return page(request, s, new={"what": t("Nuova chiave API per {name}", name=r.name), "key": key})
 
     @app.post("/admin/resellers/{rid}/active")
     def ui_reseller_active(rid: int, active: str = Form(...), s=Depends(need_console)):
         try:
             billing.update_reseller(admin, rid, {"active": active == "1"})
         except LookupError:
-            return back("Rivenditore non trovato.")
-        return back("Rivenditore riattivato." if active == "1" else
-                    "Rivenditore disattivato: le sue chiavi non valgono più, i suoi clienti restano.")
+            return back(t("Rivenditore non trovato."))
+        return back(t("Rivenditore riattivato.") if active == "1" else
+                    t("Rivenditore disattivato: le sue chiavi non valgono più, i suoi clienti restano."))
 
     @app.post("/admin/subscriptions/{tenant_id}")
     def ui_subscription(tenant_id: str, plan: str = Form(...), interval: str = Form("month"),
@@ -426,10 +438,10 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                 provider = "reseller" if old.get("provider") == "reseller" else "manual"
                 billing.start(admin, tenant_id, plan, billing_customer(tenant_id), provider, interval, until, ctx.core)
         except LookupError:
-            return back("Redazione non trovata.")
+            return back(t("Redazione non trovata."))
         except ValueError as e:
-            return back(f"Abbonamento non cambiato: {e}.")
-        return back(f"Abbonamento di {tenant_id} aggiornato.")
+            return back(t("Abbonamento non cambiato: {error}.", error=e))
+        return back(t("Abbonamento di {tenant} aggiornato.", tenant=tenant_id))
 
 
 def _json(value):

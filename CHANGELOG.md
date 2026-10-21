@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.0
+
+### Added
+
+- The Editor Mode dashboard, the account page and the console in five
+  languages: English, Italian, German, French and Spanish. The language
+  comes from the selector at the bottom of every page (kept a year in a
+  cookie), else from the browser, else `EDITOR_LANGUAGE` (English by
+  default). Notices, errors, the invite and password emails follow it;
+  the trial reminder follows the newsroom's language.
+- Signup from the public site: `"language"` in the body (or
+  `Accept-Language`) sets the language of the error messages, of the
+  owner's invite and of the newsroom.
+- Signup from the public site: the plan the visitor picked is kept as
+  `desired_plan`/`desired_interval` while the newsroom is on trial, and is
+  already selected in `/account`. A paid plan never starts without its
+  payment from the site's key (it did before when `plan` was sent).
+
+### Upgrading from 0.8.3
+
+- Migration 0016 adds two columns to `editor.subscriptions`; it runs by
+  itself when the containers start.
 ## 0.8.3
 
 ### Changed
