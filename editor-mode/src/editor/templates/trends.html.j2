@@ -56,6 +56,7 @@
 
 <section class="card" aria-labelledby="h-plan" style="gap: 0;">
   <div class="card-head"><h2 id="h-plan">Piano editoriale</h2><span class="hint">Proposte nate dai temi a più alta opportunità, ognuna con le sue fonti</span></div>
+  <p class="hint" style="margin: 0; padding: 0 20px 12px;">Ogni riga è l'idea di un articolo, non l'articolo. <strong>Accetta</strong> la mette nel piano, poi "Scrivi la bozza" fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.</p>
   {% for p in plan %}
   <div class="item">
     {% if p.status == 'proposed' %}<span class="chip">Proposta</span>{% elif p.status == 'accepted' %}<span class="chip blue">Accettata</span>{% else %}<span class="chip green">Bozza pronta</span>{% endif %}
@@ -63,7 +64,7 @@
       <strong>{{ p.title }}</strong>
       {% if p.angle %}<span>{{ p.angle }}</span>{% endif %}
       {% if p.why_now %}<span><em>Perché ora:</em> {{ p.why_now }}</span>{% endif %}
-      <span class="num" style="font-size: 12px;">Opportunità {{ p.opportunity|s100 }} · Hype {{ p.hype|s100 }} · {{ p.citations|plural('fonte', 'fonti') }}{% if p.format %} · {{ p.format }}{% endif %}</span>
+      <span class="num" style="font-size: 12px;">Opportunità {{ p.opportunity|s100 }}/100 · Hype {{ p.hype|s100 }}/100 · {{ p.citations|plural('fonte', 'fonti') }}{% if p.format %} · {{ {'analysis': 'analisi', 'news': 'notizia', 'opinion': 'opinione', 'guide': 'guida', 'how-to': 'guida', 'tutorial': 'guida', 'interview': 'intervista', 'review': 'recensione', 'explainer': 'spiegazione'}.get(p.format, p.format) }}{% endif %}</span>
     </div>
     <div class="row">
       {% if p.status == 'proposed' and caller.can('editor') %}

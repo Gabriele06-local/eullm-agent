@@ -101,7 +101,7 @@ def test_proposals_cite_only_stored_items(db, tenant):
     with respx.mock() as router:
         router.post("http://core.test/v1/llm/chat").mock(side_effect=answer)
         created = props.propose(db, tenant, site_id, ops, CoreClient("http://core.test", "tok"))
-    assert len(created) == 2
+    assert len(created) == 1  # fibra; starlink rests on a single item, not yet a story
     with db.tenant(tenant) as s:
         rows = s.execute(text(
             "SELECT p.id, p.title, p.format, p.generated_by, count(c.item_id) AS n FROM editor.proposals p "
@@ -114,7 +114,7 @@ def test_proposals_cite_only_stored_items(db, tenant):
 
     # Proposed topics are not proposed again for a while.
     again = opp.score_site(db, tenant, site_id)
-    assert all(o.components["not_repeated"] == 0.0 for o in again)
+    assert all(o.components["not_repeated"] == 0.0 for o in again if o.matched_subtopic == "Fibra")
     assert props.propose(db, tenant, site_id, again, None) == []
 
     # A decision is recorded as feedback and counted next time.

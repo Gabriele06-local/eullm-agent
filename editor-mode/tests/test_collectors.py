@@ -60,11 +60,12 @@ def test_github():
     )
     with httpx.Client() as c:
         res = COLLECTORS["github"].fetch(
-            c, SourceSpec("github", "", {"query": "topic:rag created:>{since}", "since_days": 7})
+            c, SourceSpec("github", "", {"query": "topic:rag created:>{since}", "since_days": 7, "min_stars": 10})
         )
     q = route.calls[0].request.url.params["q"]
-    assert q.startswith("topic:rag created:>") and "{since}" not in q
-    assert [i.title for i in res.items] == ["acme/fast-rag", "lab/tiny-llm"]
+    assert q.startswith("topic:rag created:>") and "{since}" not in q and q.endswith(" stars:>=10")
+    # The description says what a repository is; the name alone does not.
+    assert [i.title for i in res.items] == ["acme/fast-rag: Agentic RAG with pgvector", "lab/tiny-llm"]
     assert res.items[0].metrics["stars"] == 5300
     assert res.items[1].summary == ""
 

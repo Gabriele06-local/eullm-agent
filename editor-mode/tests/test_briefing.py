@@ -71,7 +71,7 @@ def test_morning_builds_and_sends_once(db, tenant):
     assert msg["Bcc"] == "francesco@example.com" and msg["To"] == "editor@i3k.eu"
     with db.tenant(tenant) as s:
         b = s.execute(select(m.briefings)).one()
-    assert b.sent_email_at and b.sent_telegram_at and len(b.proposal_ids) == 2
+    assert b.sent_email_at and b.sent_telegram_at and len(b.proposal_ids) == 1
     assert "## Blog Rete (blog.example)" in b.body_md
     assert "Profilo editoriale da approvare" in b.body_md and "no publication dates found" in b.body_md
     assert "https://news.example/" in b.body_md  # proposals carry their sources
