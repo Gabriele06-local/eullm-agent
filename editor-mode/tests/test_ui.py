@@ -117,3 +117,23 @@ def test_owner_removes_a_topic_and_deletes_a_version_from_the_page(db, tenant):
     assert "eliminata" in page or "storico" in page
     viewer = logged_in(db, tenant, "viewer")
     assert viewer.post(f"/ui/sites/{site_id}/topics/restore", data={"name": name}).status_code == 403
+
+
+def test_suspended_source_of_another_site_opens_on_its_site(db, tenant):
+    from editor import repo
+    _, site_id = approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        source = s.execute(text("SELECT id FROM editor.sources LIMIT 1")).scalar()
+        # Sorted first, so it is the site in view: the source is not its own.
+        repo.ensure_site(s, tenant, "aaa.example", "Primo")
+    c = logged_in(db, tenant, "owner")
+    c.post(f"/ui/sources/{source}/status", data={"status": "suspended"})
+    home = c.get("/").text
+    link = f"/switch?site={site_id}&amp;back=/sources%3Fstatus%3Dsuspended"
+    assert link in home and "· blog.example" in home
+    # The register of the site in view is empty and points to the right one.
+    empty = c.get("/sources?status=suspended").text
+    assert "Nessuna fonte in questo stato per aaa.example" in empty and f"/switch?site={site_id}&amp;" in empty
+    r = c.get(link.replace("&amp;", "&"), follow_redirects=False)
+    assert r.headers["location"] == "/sources?status=suspended"
+    assert "news" in c.get("/sources?status=suspended").text

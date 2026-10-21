@@ -91,7 +91,8 @@
     </table>
   </div>
   {% else %}
-  <p class="empty">Nessuna fonte in questo stato.</p>
+  <p class="empty">Nessuna fonte in questo stato per {{ site.domain }}.
+    {% if elsewhere %}Ce ne sono su: {% for e in elsewhere %}<a href="/switch?site={{ e.id }}&amp;back={{ ('/sources?status=' ~ status)|urlencode }}">{{ e.domain }}</a> ({{ e.count }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
   {% endif %}
 </section>
 <p class="hint">Il punteggio pesa pertinenza ai temi del profilo (35%), frequenza (15%), freschezza (15%), qualità (15%), originalità (10%) e affidabilità (10%). Pertinenza: quante notizie della fonte contengono le parole chiave dei temi.</p>

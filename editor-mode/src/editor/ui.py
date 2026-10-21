@@ -411,7 +411,9 @@ def register(app, ctx) -> None:
                 .join(m.publish_targets, m.publish_targets.c.id == m.publications.c.target_id)
                 .where(m.publications.c.status == "pending_approval").order_by(m.publications.c.id)).all()
             stopped = s.execute(
-                select(m.sources.c.id, m.sources.c.name, m.sources.c.status_reason)
+                select(m.sources.c.id, m.sources.c.name, m.sources.c.status_reason, m.sources.c.site_id,
+                       m.sites.c.domain)
+                .join(m.sites, m.sites.c.id == m.sources.c.site_id)
                 .where(m.sources.c.status == "suspended",
                        m.sources.c.status_changed_at > datetime.now(UTC) - timedelta(days=7))).all()
             draft_counts = dict(s.execute(
@@ -425,7 +427,7 @@ def register(app, ctx) -> None:
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs) + len(stopped)
-            guide = first_steps(s, sites, lines)
+            guide = first_steps(s, sites, lines, sid)
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), guide=guide,
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
                           proposed=proposed, pending_pubs=pending_pubs,
@@ -433,11 +435,14 @@ def register(app, ctx) -> None:
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
 
-    def first_steps(s, sites, lines) -> list[dict] | None:
+    def first_steps(s, sites, lines, sid=None) -> list[dict] | None:
         """The way from a domain to the first article, step by step, with
-        what the newsroom is waiting for; None once every step is done."""
+        what the newsroom is waiting for; None once every step is done.
+        Sources and news are those of the site in view, like the Fonti page."""
         def count(table, *where):
             return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
+        of_site = m.sources.c.site_id == sid
+        site_items = m.source_items.c.source_id.in_(select(m.sources.c.id).where(of_site))
         working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
         steps = [
             {"title": "Aggiungi il sito", "past": "Sito aggiunto", "done": bool(sites), "href": None,
@@ -447,10 +452,10 @@ def register(app, ctx) -> None:
             {"title": "Approva il profilo", "past": "Profilo approvato", "done": bool(lines), "href": "/site", "busy": "analysis" in working,
              "wait": "Analisi in corso: il profilo da approvare arriva appena finisce.",
              "todo": "Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva."},
-            {"title": "Attiva le fonti", "past": "Fonti attivate", "done": count(m.sources, m.sources.c.status == "active") > 0, "href": "/sources",
+            {"title": "Attiva le fonti", "past": "Fonti attivate", "done": count(m.sources, m.sources.c.status == "active", of_site) > 0, "href": "/sources",
              "busy": "discovery" in working, "wait": "Ricerca delle fonti in corso dopo l'approvazione del profilo.",
              "todo": "Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi."},
-            {"title": "Raccogli le notizie", "past": "Notizie raccolte", "done": count(m.source_items) > 0, "href": "/trends", "busy": True,
+            {"title": "Raccogli le notizie", "past": "Notizie raccolte", "done": count(m.source_items, site_items) > 0, "href": "/trends", "busy": True,
              "wait": "Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie.",
              "todo": ""},
             {"title": "Accetta una proposta", "past": "Proposta accettata", "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
@@ -619,6 +624,16 @@ def register(app, ctx) -> None:
                 if status != "all":
                     q = q.where(src.c.status == status)
                 rows = s.execute(q.limit(500)).all()
+            # When this site has none, say which other sites do, so a link
+            # from the home page never lands on an empty list without a way on.
+            elsewhere = []
+            if site and not rows:
+                src = m.sources
+                q = (select(m.sites.c.id, m.sites.c.domain, func.count()).join(src, src.c.site_id == m.sites.c.id)
+                     .where(m.sites.c.id != site.id).group_by(m.sites.c.id, m.sites.c.domain).order_by(m.sites.c.domain))
+                if status != "all":
+                    q = q.where(src.c.status == status)
+                elsewhere = [{"id": i, "domain": d, "count": n} for i, d, n in s.execute(q)]
             # The latest news of each source shown: what it actually brings.
             latest: dict[int, list] = {}
             if rows:
@@ -630,7 +645,7 @@ def register(app, ctx) -> None:
                         latest[r.source_id].append({"title": r.title, "url": r.url})
             return render(request, "sources.html.j2", c, s, "sources", _sites=(sites, site), rows=rows,
                           counts=counts, total=sum(counts.values()), status=status, origins=ORIGINS, kinds=KINDS,
-                          usage=quotas.usage(s), latest=latest)
+                          usage=quotas.usage(s), latest=latest, elsewhere=elsewhere)
 
     @app.post("/ui/sources/{source_id}/status")
     def ui_source_status(source_id: int, status: str = Form(...), back: str = Form("/sources"),

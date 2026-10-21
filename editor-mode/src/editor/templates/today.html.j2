@@ -125,10 +125,10 @@
     <div class="item">
       <span class="chip teal">Fonte</span>
       <div class="what">
-        <strong>{{ x.name }} sospesa</strong>
+        <strong>{{ x.name }} sospesa</strong>{% if sites|length > 1 %} <span class="hint">· {{ x.domain }}</span>{% endif %}
         <span>{{ x.status_reason|problem if x.status_reason else 'Sospesa dalla manutenzione automatica.' }}</span>
       </div>
-      <a class="btn" href="/sources?status=suspended">Apri il registro</a>
+      <a class="btn" href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">Apri il registro</a>
     </div>
     {% endfor %}
 
@@ -171,7 +171,7 @@
     <section class="card pad" aria-labelledby="h-raccolta">
       <h2 id="h-raccolta">Raccolta</h2>
       <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
-        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('active_sources', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">fonti attive</div></div>
+        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('active_sources', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">fonti attive{% if sites|length > 1 %} in tutti i siti{% endif %}</div></div>
         <div><div class="num" style="font-size: 22px;">{{ usage.used.get('items_today', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">notizie oggi</div></div>
         <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">ultimo giro</div></div>
       </div>
