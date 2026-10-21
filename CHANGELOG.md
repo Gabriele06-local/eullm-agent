@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.1
+
+### Fixed
+
+- Editor home page: "Apri il registro" under a suspended source opened the
+  sources of the site in view, which could be another site, so the list
+  was empty. It now switches to the source's own site first, and the
+  suspended source shows which site it belongs to.
+- Sources page: when the site in view has no source in the chosen state,
+  it names the other sites that do, with a link to each.
+- "Primi passi" counts the sources and news of the site in view, like the
+  Fonti page; the "fonti attive" count under Raccolta says when it covers
+  every site.
 ## 0.8.0
 
 ### Added
