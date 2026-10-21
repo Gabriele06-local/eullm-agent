@@ -21,6 +21,7 @@
     <noscript><button class="btn sm" type="submit">Vai</button></noscript>
   </form>
   {% endif %}
+  {% if caller.can('owner') and sites %}<a href="/settings#h-sites" style="font-size: 12px; padding-top: 0;">+ Aggiungi un sito</a>{% endif %}
   {% if sites %}
   <form method="get" action="/switch" class="switch">
     <label for="site-pick">Sito</label>

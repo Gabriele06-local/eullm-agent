@@ -100,7 +100,9 @@ class CoreClient:
         if r.status_code != 200:
             raise CoreError(f"Core returned {r.status_code}: {_error(r)}")
         body = r.json()
-        return ChatResult(body.get("content", ""), body.get("usage"), body.get("cost"), model)
+        # The Core names the model that answered (a fallback, or the real
+        # model behind "default"); older Cores do not.
+        return ChatResult(body.get("content", ""), body.get("usage"), body.get("cost"), body.get("served_model") or model)
 
     def chat_json(self, system: str, user: str, validate, model: str | None = None, attempts: int = 2):
         """Ask for a JSON answer and validate it; one retry with the error.

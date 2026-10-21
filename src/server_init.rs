@@ -482,6 +482,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_spare_models_of_the_example_are_valid_once_uncommented() {
+        let start = CORE
+            .find("# fallback: spare")
+            .expect("the example has a spare");
+        let end = CORE.find("\nworkspace:").unwrap();
+        let block: String = CORE[start..end]
+            .lines()
+            .map(|l| format!("{}\n", l.strip_prefix("# ").unwrap_or(l)))
+            .collect();
+        let yaml = format!("provider:\n  type: eullm\n  model: m\n{block}");
+        let config = crate::config::Config::from_yaml(&yaml).unwrap();
+        assert_eq!(config.fallback.as_deref(), Some("spare"));
+        assert_eq!(config.models.len(), 2);
+    }
+
+    #[test]
     fn the_example_provider_is_replaced() {
         assert!(
             CORE.contains(EXAMPLE_PROVIDER),

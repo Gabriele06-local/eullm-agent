@@ -564,8 +564,12 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
         analysis_id = store_snapshot(s, tenant_id, site_id, snap)
         current = approved_profile(s, site_id)
         draft, _ = _editable(s, site_id)
-        previous = current or draft
-        removed = ((previous.body.get("settings") or {}).get("removed") if previous else None) or []
+        # Topics taken out stay out, whether on the line in use or on a proposal.
+        removed = []
+        for prev in (current, draft):
+            for r in ((prev.body.get("settings") or {}).get("removed") or []) if prev else []:
+                if all(r.get("name") != x.get("name") for x in removed):
+                    removed.append(r)
         if removed:
             body["settings"] = {**body["settings"], "removed": removed}
             body = _without_removed(body)
@@ -589,6 +593,10 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
         proposed = None
         if changes:
             body["settings"] = current.body.get("settings", body["settings"])  # owner's settings are kept
+            # The newer reading replaces the proposals of older ones still waiting.
+            p = m.editorial_profiles
+            s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "draft", p.c.origin == "reanalysis")
+                      .values(status="retired"))
             proposed = save_draft(s, tenant_id, site_id, body, "reanalysis", analysis_id, current.version, changes)
             result["profile_id"] = proposed
         s.execute(

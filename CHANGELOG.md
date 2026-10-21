@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.7.7
+
+### Added
+
+- A spare model for the main one: `fallback:` at the top of the
+  configuration names a model of `models` the Core uses when the provider
+  fails (an error, a rate limit, a timeout); a spare can have its own. The
+  server's `core.example.yaml` has a commented example with Mistral and
+  OpenRouter's free models, and `compose.yaml` passes their keys
+  (`LLM_FALLBACK_API_KEY`, `LLM_FALLBACK2_API_KEY`).
+- `/v1/llm/chat` answers with `served_model`, the provider's model that
+  answered. The dashboard shows it bottom left, instead of "default".
+
+### Fixed
+
+- A newer re-analysis replaces the proposal of an older one still waiting:
+  two versions to approve (v2 and v3) no longer pile up.
+- A topic taken out of a proposal stays out after the next analysis too.
+
+### Changed
+
+- "Aggiungi un dominio" moved from the bottom of the profile page to
+  Impostazioni ("Siti della redazione"), with a link under the site picker.
+  The profile page keeps it only when there is no site yet.
+- When a proposal is compared with the approved profile, the topics that
+  leave are listed in the comparison only, not again in the topics table.
+
+### Upgrading from 0.7.6
+
+- To use a spare model on an existing server, add `LLM_FALLBACK_API_KEY`
+  (and `LLM_FALLBACK2_API_KEY`) under `core:` → `environment:` in your
+  `compose.yaml`, as in `deploy/server/compose.yaml`, and the `fallback:`
+  block to `core.yaml`. Nothing to do otherwise.
+
 ## 0.7.6
 
 ### Fixed

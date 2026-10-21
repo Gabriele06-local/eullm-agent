@@ -1,4 +1,4 @@
-# EuLLM Agent 0.7.6 — example configuration
+# EuLLM Agent 0.7.7 — example configuration
 # Copy this file to config.yaml and fill in your values.
 #
 # Everything that can touch the machine or the network is OFF unless this
@@ -47,6 +47,10 @@ provider:
 # ── Model Router and profiles ─────────────────────────────────────────────────
 # `default` is the provider above. Add more models by name, with an optional
 # fallback and price per million tokens (used for run cost and budgets).
+# `fallback:` at the top level names the model tried when the provider above
+# fails (an error, a rate limit, a timeout):
+#
+# fallback: claude
 #
 # models:
 #   claude:

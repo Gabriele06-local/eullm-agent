@@ -19,6 +19,28 @@ provider:
 #   api_key_env: LLM_API_KEY
 #   max_tokens: 16384   # the reasoning counts too: without it the answer can be empty
 
+# A spare model, used when the one above fails (an error, a rate limit, a
+# timeout). Free tiers change often: check the provider's limits. Mistral is
+# European; its free tier may use prompts for training unless you opt out.
+# fallback: spare
+# models:
+#   spare:
+#     provider:
+#       type: openai
+#       base_url: https://api.mistral.ai/v1
+#       model: mistral-small-latest
+#       api_key_env: LLM_FALLBACK_API_KEY
+#     pricing: {input_per_mtok: 0.0, output_per_mtok: 0.0}
+#     # A spare can have its own spare, e.g. OpenRouter's free models:
+#     # fallback: spare2
+#   spare2:
+#     provider:
+#       type: openai
+#       base_url: https://openrouter.ai/api/v1
+#       model: openrouter/free
+#       api_key_env: LLM_FALLBACK2_API_KEY
+#     pricing: {input_per_mtok: 0.0, output_per_mtok: 0.0}
+
 workspace: /var/lib/eullm-agent/workspace
 
 database:

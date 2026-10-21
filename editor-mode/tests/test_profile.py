@@ -307,3 +307,21 @@ def test_compare_says_what_changes_against_what():
     assert by["Tema «Branding»"]["before"] == "non c'era"
     assert by["Tema «EuLLM»"]["after"] == "esce dal profilo"
     assert any(r.get("note") for r in rows)  # why the 100% topics leave
+
+
+def test_a_newer_reanalysis_replaces_the_proposal_still_waiting(db, tenant):
+    class C:
+        def __init__(self, articles):
+            self.articles = articles
+
+        def analyse(self, domain):
+            return snapshot(self.articles)
+
+    site_id = prof.analyse_site(db, tenant, "blog.example", C(fakesite.ARTICLES))["site_id"]
+    with db.tenant(tenant) as s:
+        assert prof.approve(s, site_id, 1, "francesco")
+    prof.analyse_site(db, tenant, "blog.example", C(fakesite.SHIFTED))
+    prof.analyse_site(db, tenant, "blog.example", C(fakesite.SHIFTED))
+    with db.tenant(tenant) as s:
+        rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+    assert [tuple(r) for r in rows] == [(1, "approved"), (2, "retired"), (3, "draft")]

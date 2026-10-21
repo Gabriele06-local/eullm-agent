@@ -36,7 +36,7 @@ impl ModelRouter {
             (
                 EstimatedUsage::wrap(build_client(&config.provider, timeout)?),
                 config.pricing,
-                None,
+                config.fallback.clone(),
             ),
         );
         for (name, m) in &config.models {
@@ -354,5 +354,18 @@ mod tests {
             })
         );
         assert!(router.unpriced().is_empty());
+    }
+
+    #[test]
+    fn the_default_model_can_fall_back_to_a_named_one() {
+        let yaml = "provider:\n  type: eullm\n  model: primary\nfallback: spare\nmodels:\n  spare:\n    provider:\n      type: eullm\n      model: spare\n";
+        let config: Config = serde_saphyr::from_str(yaml).unwrap();
+        config.validate().unwrap();
+        let router = ModelRouter::from_config(&config).unwrap();
+        // The chain answers under the primary's name; a fallback names itself in served_by.
+        assert_eq!(router.get("default").unwrap().client.model(), "primary");
+        let unknown = yaml.replace("fallback: spare", "fallback: missing");
+        let err = Config::from_yaml(&unknown).unwrap_err();
+        assert!(format!("{err:#}").contains("unknown model 'missing'"));
     }
 }

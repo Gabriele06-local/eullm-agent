@@ -56,6 +56,8 @@ services:
       EDITOR_CORE_TOKEN: ${EDITOR_CORE_TOKEN:?set EDITOR_CORE_TOKEN in .env}
       CORE_ADMIN_TOKEN: ${CORE_ADMIN_TOKEN:?set CORE_ADMIN_TOKEN in .env}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_FALLBACK_API_KEY: ${LLM_FALLBACK_API_KEY:-}
+      LLM_FALLBACK2_API_KEY: ${LLM_FALLBACK2_API_KEY:-}
       RUST_LOG: ${RUST_LOG:-eullm_agent=info}
     volumes:
       - ./core.yaml:/etc/eullm-agent/config.yaml:ro
