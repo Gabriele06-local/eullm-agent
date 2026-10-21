@@ -84,6 +84,10 @@ PROBLEMS = [
     (r"model analysis failed \((.*)\): .*", r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare."),
     (r"model analysis not run.*", "Analisi del modello non eseguita: settore, pubblico e stile restano da determinare."),
     (r"not enough material.*", "Materiale insufficiente: settore, pubblico e stile restano da determinare."),
+    (r"nothing new for more than (\d+) days", r"Nessuna notizia nuova da più di \1 giorni: ritorna in valutazione tra due settimane."),
+    (r"(\d+) failed fetches in a row", r"\1 letture fallite di fila: ritorna in valutazione tra due settimane."),
+    (r"off topic \(relevance ([\d.]+) on the last (\d+) items\)",
+     r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane."),
 ]
 
 
@@ -376,6 +380,12 @@ def register(app, ctx) -> None:
                 select(p.c.site_id, p.c.version, p.c.origin, p.c.changes, m.sites.c.domain)
                 .join(m.sites, m.sites.c.id == p.c.site_id).where(p.c.status == "draft")
                 .order_by(p.c.created_at.desc())).all()
+            lines = dict(s.execute(select(p.c.site_id, p.c.version).where(p.c.status == "approved")).all())
+            pending = {}
+            for r in profile_drafts:
+                pending.setdefault(r.site_id, r.version)
+            site_lines = [{"id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id)}
+                          for x in sites]
             proposed = proposal_rows(s, sid, ("proposed",), limit=6)
             pending_pubs = s.execute(
                 select(m.publications.c.id, m.publications.c.mode, m.publications.c.requested_by,
@@ -400,7 +410,8 @@ def register(app, ctx) -> None:
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs) + len(stopped)
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site),
-                          profile_drafts=profile_drafts, proposed=proposed, pending_pubs=pending_pubs,
+                          profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
+                          proposed=proposed, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
@@ -448,6 +459,7 @@ def register(app, ctx) -> None:
         return render(request, "site.html.j2", c, s, "site", status_code=status_code, _sites=(sites, site),
                       profiles=profiles, approved=approved, draft=draft, shown=shown, analysis=analysis,
                       rows=rows, evidence=ev, editing=editing, error=error,
+                      comparison=prof.compare(approved.body, draft.body) if approved and draft else [],
                       jobs=[j for j in jobs.recent(s, 10) if j["status"] != "done"][:5],
                       body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "")
 

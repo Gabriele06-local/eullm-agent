@@ -195,6 +195,28 @@ class Discoverer:
         return out
 
 
+# A search follows what is new: the plain search returns the most popular
+# stories of all time, so a source built on it looked silent for months.
+HN_SEARCH = "https://hn.algolia.com/api/v1/search"
+HN_RECENT = HN_SEARCH + "_by_date"
+
+
+def _recent_searches(s, now: datetime) -> None:
+    """Searches found before HN_RECENT existed move to it, and those suspended
+    as silent get another chance: their silence came from the wrong search."""
+    src = m.sources
+    for r in s.execute(select(src).where(src.c.kind == "hackernews", src.c.origin == "api_query",
+                                         src.c.url == HN_SEARCH)).all():
+        twin = s.execute(select(src.c.id).where(src.c.site_id == r.site_id, src.c.kind == r.kind,
+                                                src.c.url == HN_RECENT, src.c.config == r.config)).first()
+        if twin is not None:
+            continue
+        values = {"url": HN_RECENT, "last_item_at": None}
+        if r.status == "suspended" and not r.status_set_by and (r.status_reason or "").startswith("nothing new"):
+            values |= {"status": "active", "status_reason": None, "status_changed_at": now}
+        s.execute(update(src).where(src.c.id == r.id).values(**values))
+
+
 def api_candidates(body: dict) -> list[Candidate]:
     """Searches on public APIs built from the profile's subtopics."""
     subs = [s for s in body.get("subtopics", []) if s.get("share", 0) >= 0.05][:6] or body.get("subtopics", [])[:3]
@@ -203,7 +225,7 @@ def api_candidates(body: dict) -> list[Candidate]:
     queries = list(dict.fromkeys((body.get("search_terms") or []) + own))
     out = []
     for q in queries[:8]:
-        out.append(Candidate("hackernews", f"Hacker News: {q}", "https://hn.algolia.com/api/v1/search",
+        out.append(Candidate("hackernews", f"Hacker News: {q}", HN_RECENT,
                              {"query": q, "min_points": 20}, "api_query", {"query": q}))
         topic = "-".join(q.lower().split()[:2])
         out.append(Candidate("github", f"GitHub: {q}", "", {"query": f"{q} created:>{{since}}", "since_days": 30},
@@ -347,6 +369,7 @@ def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: dateti
     now = now or datetime.now(UTC)
     rep = MaintenanceReport()
     with db.tenant(tenant_id) as s:
+        _recent_searches(s, now)
         rows = s.execute(select(m.sources)).all()
         profiles = {}
         for r in rows:

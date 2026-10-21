@@ -294,3 +294,16 @@ def test_versions_not_in_use_can_be_deleted(db, tenant):
         assert prof.delete_version(s, site_id, 2) == "not found"
         versions = s.execute(select(m.editorial_profiles.c.version)).scalars().all()
     assert versions == [1]
+
+
+def test_compare_says_what_changes_against_what():
+    old = {"sector": {"value": None}, "subtopics": [{"name": "EuLLM", "keywords": ["eullm"], "share": 1.0},
+                                                    {"name": "RAG Enterprise", "keywords": ["rag", "enterprise"], "share": 1.0}]}
+    new = {"sector": {"value": "AI enterprise"}, "summary": "s",
+           "subtopics": [{"name": "Branding", "keywords": ["branding", "grafica"], "share": 0.28}]}
+    rows = prof.compare(old, new)
+    by = {r["what"]: r for r in rows}
+    assert by["Settore"]["before"] == "non determinato" and by["Settore"]["after"] == "AI enterprise"
+    assert by["Tema «Branding»"]["before"] == "non c'era"
+    assert by["Tema «EuLLM»"]["after"] == "esce dal profilo"
+    assert any(r.get("note") for r in rows)  # why the 100% topics leave

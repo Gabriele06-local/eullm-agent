@@ -80,6 +80,28 @@
     {% endif %}
   </div>
 
+  {% if draft and approved %}
+  <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-cmp">
+    <h3 id="h-cmp">Cosa cambia rispetto alla v{{ approved.version }} approvata</h3>
+    {% if comparison %}
+    <div class="scroll">
+      <table style="min-width: 520px;">
+        <thead><tr><th>Cosa</th><th>Oggi (v{{ approved.version }})</th><th>Proposta (v{{ draft.version }})</th></tr></thead>
+        <tbody>
+        {% for c in comparison %}
+        {% if c.note %}<tr><td colspan="3" class="hint">{{ c.note }}</td></tr>
+        {% else %}<tr><td>{{ c.what }}</td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="hint" style="margin: 0;">Nessuna differenza nella linea: la proposta nasce da un modo migliore di leggere il sito.</p>
+    {% endif %}
+    <p class="hint" style="margin: 0;">"Approva" rende attiva la proposta; "Mantieni" la scarta e resta la v{{ approved.version }}. Sotto trovi il profilo proposto per intero.</p>
+  </div>
+  {% endif %}
+
   {% set b = shown.body %}
   {% set subs = (b.get('subtopics') or [])[:4] %}
   {% set st = b.get('settings') or {} %}
