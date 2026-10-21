@@ -34,7 +34,7 @@
   {% if rows %}
   <div class="scroll">
     <table style="min-width: 760px;">
-      <thead><tr><th>Fonte</th><th>Origine</th><th>Punteggio</th><th>Pertinenza</th><th>Ultima notizia</th><th>Stato</th>{% if caller.can('owner') %}<th><span class="sr">Azioni</span></th>{% endif %}</tr></thead>
+      <thead><tr><th>Fonte</th><th>Origine</th><th>Punteggio</th><th>Pertinenza</th><th>Ultima notizia</th><th>Notizie in 7 giorni</th><th>Stato</th>{% if caller.can('owner') %}<th><span class="sr">Azioni</span></th>{% endif %}</tr></thead>
       <tbody>
       {% for r in rows %}
       {% set comp = (r.evaluation or {}).get('components') or {} %}
@@ -60,6 +60,7 @@
         </td>
         <td class="num">{% if comp.get('relevance') is not none %}{{ comp.get('relevance')|num }}{% else %}–{% endif %}</td>
         <td>{{ when(r.last_item_at, 'day') }}</td>
+        <td class="num">{{ week.get(r.id, 0) }}</td>
         <td>
           {% set st = {'active': ('green', 'Attiva'), 'candidate': ('blue', 'Candidata'), 'suspended': ('teal', 'Sospesa'), 'rejected': ('', 'Scartata')}.get(r.status, ('', r.status)) %}
           <span class="chip {{ st[0] }}">{{ st[1] }}</span>

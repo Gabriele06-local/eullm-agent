@@ -362,7 +362,9 @@ def register(app, ctx) -> None:
                      ORDER BY computed_at DESC LIMIT 1) AS opportunity,
                    (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items,
                    (SELECT count(DISTINCT si.source_id) FROM editor.topic_items ti
-                     JOIN editor.source_items si ON si.id = ti.item_id WHERE ti.topic_id = t.id) AS sources
+                     JOIN editor.source_items si ON si.id = ti.item_id WHERE ti.topic_id = t.id) AS sources,
+                   (SELECT max(src.score) FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
+                     JOIN editor.sources src ON src.id = si.source_id WHERE ti.topic_id = t.id) AS best_source
             FROM editor.topics t WHERE t.updated_at > :since
             ORDER BY opportunity DESC NULLS LAST, hype DESC NULLS LAST LIMIT :lim""").bindparams(
             bindparam("since", type_=m.topics.c.updated_at.type)),
@@ -425,8 +427,9 @@ def register(app, ctx) -> None:
                 m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s))).scalar()
             usage = quotas.usage(s)
             # Only what could become a proposal: the same rule as proposals.py.
-            tops = [t for t in topic_scores(s, sid, 40) if t.opportunity is not None and t.items >= props.MIN_ITEMS
-                    and t.sources >= props.MIN_SOURCES][:4] if sid else []
+            tops = [t for t in topic_scores(s, sid, 40) if t.opportunity is not None and (
+                (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
+                or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:4] if sid else []
             last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at))).scalar()
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
@@ -466,8 +469,9 @@ def register(app, ctx) -> None:
             {"title": "Accetta una proposta", "past": "Proposta accettata", "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
              "href": "/trends", "busy": not count(m.proposals, m.proposals.c.status == "proposed"),
              "wait": ("Hai scartato le proposte arrivate finora. " if count(m.proposals, m.proposals.c.status == "rejected") else "")
-             + "Le prossime arrivano domattina all'ora del briefing, solo per temi con almeno due notizie "
-               "di due fonti diverse e un'opportunità di almeno 35/100.",
+             + "Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in "
+               "Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte "
+               "(opportunità da 50/100) di una fonte affidabile.",
              "todo": "Accetta le proposte che ti interessano e scarta le altre."},
             {"title": "Rileggi la prima bozza", "past": "Prima bozza approvata", "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
              "href": "/drafts", "busy": "draft" in working, "wait": "La bozza è in scrittura.",
@@ -641,6 +645,14 @@ def register(app, ctx) -> None:
                 if status != "all":
                     q = q.where(src.c.status == status)
                 elsewhere = [{"id": i, "domain": d, "count": n} for i, d, n in s.execute(q)]
+            # How much each source brought in the last week: one that brings
+            # nothing is easy to spot.
+            week: dict[int, int] = {}
+            if rows:
+                it = m.source_items
+                week = dict(s.execute(select(it.c.source_id, func.count()).where(
+                    it.c.source_id.in_([r.id for r in rows]), it.c.fetched_at >= datetime.now(UTC) - timedelta(days=7))
+                    .group_by(it.c.source_id)).all())
             # The latest news of each source shown: what it actually brings.
             latest: dict[int, list] = {}
             if rows:
@@ -652,7 +664,7 @@ def register(app, ctx) -> None:
                         latest[r.source_id].append({"title": r.title, "url": r.url})
             return render(request, "sources.html.j2", c, s, "sources", _sites=(sites, site), rows=rows,
                           counts=counts, total=sum(counts.values()), status=status, origins=ORIGINS, kinds=KINDS,
-                          usage=quotas.usage(s), latest=latest, elsewhere=elsewhere)
+                          usage=quotas.usage(s), latest=latest, elsewhere=elsewhere, week=week)
 
     @app.post("/ui/sources/{source_id}/status")
     def ui_source_status(source_id: int, status: str = Form(...), back: str = Form("/sources"),
@@ -693,6 +705,25 @@ def register(app, ctx) -> None:
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,
                           dots=dots, plan=plan, briefing_hour=hour, can_draft=ctx.core is not None)
+
+    @app.post("/ui/proposals/now")
+    def ui_propose_now(request: Request, c: auth.Caller = Depends(ctx.need("editor"))):
+        """The day's proposals now, without waiting for the briefing."""
+        with db.tenant(c.tenant_id) as s:
+            _, site = current_site(s, request)
+            if site is None:
+                return done("/trends", "Aggiungi prima un sito.")
+            if not s.execute(select(m.editorial_profiles.c.id).where(m.editorial_profiles.c.site_id == site.id,
+                                                                       m.editorial_profiles.c.status == "approved")).first():
+                return done("/trends", "Approva prima il profilo del sito.")
+            since = start_of_day(s)
+            per_day = s.execute(select(m.editorial_profiles.c.body).where(
+                m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "approved")).scalar()
+            left = per_day.get("settings", {}).get("proposals_per_day", 3) - props.made_today(s, site.id, since)
+        if left <= 0:
+            return done("/trends", "Le proposte di oggi sono già state fatte: le prossime arrivano domani.")
+        ctx.run_proposals(c.tenant_id, site.id, since)
+        return done("/trends", "Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti.")
 
     @app.post("/ui/proposals/{proposal_id}")
     def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),

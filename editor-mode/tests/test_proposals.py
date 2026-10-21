@@ -37,7 +37,7 @@ def setup_site(db, tenant):
         prof.save_draft(s, tenant, site_id, PROFILE, "manual")
         prof.approve(s, site_id, 1, "francesco")
         sid = repo.upsert_source(s, tenant, kind="rss", name="news", url="https://news.example/feed", site_id=site_id)
-        s.execute(text("UPDATE editor.sources SET score = 0.7 WHERE id = :i"), {"i": sid})
+        s.execute(text("UPDATE editor.sources SET score = 0.55 WHERE id = :i"), {"i": sid})
         store_items(s, tenant, sid, [
             Item(url="https://news.example/1", title="Open Fiber completa la fibra FTTH a Bari", published_at=NOW - timedelta(hours=3)),
             Item(url="https://news.example/3", title="Starlink abbassa i prezzi del satellite in Italia", published_at=NOW - timedelta(hours=8)),
@@ -46,7 +46,7 @@ def setup_site(db, tenant):
         ], SourceReport(sid, "news"))
         # The same story from a second source: one source alone is not a story.
         other = repo.upsert_source(s, tenant, kind="rss", name="rete", url="https://rete.example/feed", site_id=site_id)
-        s.execute(text("UPDATE editor.sources SET score = 0.7 WHERE id = :i"), {"i": other})
+        s.execute(text("UPDATE editor.sources SET score = 0.55 WHERE id = :i"), {"i": other})
         store_items(s, tenant, other, [
             Item(url="https://rete.example/2", title="Fibra FTTH a Bari: Open Fiber chiude i lavori", published_at=NOW - timedelta(hours=5)),
         ], SourceReport(other, "rete"))
@@ -154,3 +154,25 @@ def test_one_source_alone_is_not_a_story(db, tenant):
         s.execute(text("UPDATE editor.source_items SET source_id = (SELECT id FROM editor.sources WHERE name = 'news')"))
     ops = opp.score_site(db, tenant, site_id, now=NOW)
     assert ops and props.propose(db, tenant, site_id, ops, None) == []
+
+
+def test_one_strong_item_from_a_reliable_source_is_a_story(db, tenant):
+    site_id = setup_site(db, tenant)
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.sources SET score = 0.8 WHERE name = 'news'"))
+    ops = opp.score_site(db, tenant, site_id, now=NOW)
+    created = props.propose(db, tenant, site_id, ops, None)
+    with db.tenant(tenant) as s:
+        titles = list(s.execute(text("SELECT title FROM editor.proposals")).scalars())
+    assert len(created) == 2 and any("Starlink" in t or "satellite" in t.lower() for t in titles)
+
+
+def test_proposals_now_stop_at_the_day_number(db, tenant):
+    site_id = setup_site(db, tenant)
+    since = NOW - timedelta(hours=12)
+    assert len(props.top_up(db, tenant, site_id, since, now=NOW)) == 1
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.sources SET score = 0.8"))
+    # PROFILE asks for 2 a day: one is left.
+    assert len(props.top_up(db, tenant, site_id, since, now=NOW)) == 1
+    assert props.top_up(db, tenant, site_id, since, now=NOW) == []

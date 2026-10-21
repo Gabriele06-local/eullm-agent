@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.3
+
+### Changed
+
+- A proposal can also come from one strong news item: a topic with an
+  opportunity of at least 50/100 from a source scored 0.60 or more. Two
+  items from two different sources still make a story at any score.
+- The day's proposals no longer stop at the first topics that fail the
+  rules: the next ones are tried until the day's number is reached.
+
+### Added
+
+- "Proponi adesso" in Trend e piano: the day's proposals now, without
+  waiting for the briefing, up to the number a day set in the profile.
+- Sources page: how many news items each source brought in the last 7 days.
 ## 0.8.2
 
 ### Fixed

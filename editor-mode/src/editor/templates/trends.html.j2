@@ -55,8 +55,8 @@
 </div>
 
 <section class="card" aria-labelledby="h-plan" style="gap: 0;">
-  <div class="card-head"><h2 id="h-plan">Piano editoriale</h2><span class="hint">Proposte nate dai temi a più alta opportunità, ognuna con le sue fonti</span></div>
-  <p class="hint" style="margin: 0; padding: 0 20px 12px;">Ogni riga è l'idea di un articolo, non l'articolo. <strong>Accetta</strong> la mette nel piano, poi "Scrivi la bozza" fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.</p>
+  <div class="card-head"><h2 id="h-plan">Piano editoriale</h2>{% if caller.can('editor') %}<form class="inline" method="post" action="/ui/proposals/now"><button class="btn" type="submit">Proponi adesso</button></form>{% endif %}</div>
+  <p class="hint" style="margin: 0; padding: 0 20px 12px;">Ogni riga è l'idea di un articolo, non l'articolo. Le proposte arrivano ogni mattina all'ora del briefing ({{ '%02d'|format(briefing_hour or 8) }}:00) da temi con almeno due notizie di due fonti diverse, o da una notizia forte (opportunità da 50) di una fonte affidabile; "Proponi adesso" non aspetta la mattina. <strong>Accetta e scrivi la bozza</strong> fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.</p>
   {% for p in plan %}
   <div class="item">
     {% if p.status == 'proposed' %}<span class="chip">Proposta</span>{% elif p.status == 'accepted' %}<span class="chip blue">Accettata</span>{% else %}<span class="chip green">Bozza pronta</span>{% endif %}
@@ -69,7 +69,7 @@
     <div class="row">
       {% if p.status == 'proposed' and caller.can('editor') %}
       <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><button class="btn" type="submit">Scarta</button></form>
-      <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">Accetta</button></form>
+      <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">Accetta e scrivi la bozza</button></form>
       {% elif p.draft_id %}
       <a class="btn" href="/drafts/{{ p.draft_id }}">Apri la bozza</a>
       {% elif p.status == 'accepted' and caller.can('editor') and can_draft %}
