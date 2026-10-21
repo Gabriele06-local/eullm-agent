@@ -217,9 +217,9 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                 if billing.subscription(admin, tenant_id) is None:
                     billing.start(admin, tenant_id, body.plan, provider=provider, interval=body.interval, core=ctx.core)
                 return billing.record_payment(admin, tenant_id, body.amount_cents, body.paid_until, by, body.note,
-                                              body.plan, body.interval, ctx.core)
+                                              body.plan, body.interval, ctx.core, gateway=gateway)
             return billing.start(admin, tenant_id, body.plan, billing_customer(tenant_id), provider, body.interval,
-                                 body.paid_until, ctx.core)
+                                 body.paid_until, ctx.core, gateway=gateway)
         except LookupError as e:
             raise HTTPException(404, "newsroom not found") from e
         except billing.BillingError as e:
@@ -341,6 +341,8 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             billing.set_tenant_customer(admin, tenant_id, spec)
         except (billing.BillingError, accounts.AccountError) as e:
             return to_account(t("Dati non salvati: {error}.", error=e), tenant_id)
+        except LookupError:
+            return to_account(t("Redazione non trovata."), tenant_id)
         return to_account(t("Dati di fatturazione salvati."), tenant_id)
 
     @app.post("/account/{tenant_id}/checkout")
@@ -432,11 +434,12 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                 if billing.subscription(admin, tenant_id) is None:
                     billing.start(admin, tenant_id, plan, interval=interval, core=ctx.core)
                 billing.record_payment(admin, tenant_id, cents, until, s.email, "registrato dalla console", plan,
-                                       interval, ctx.core)
+                                       interval, ctx.core, gateway=gateway)
             else:
                 old = billing.subscription(admin, tenant_id) or {}
                 provider = "reseller" if old.get("provider") == "reseller" else "manual"
-                billing.start(admin, tenant_id, plan, billing_customer(tenant_id), provider, interval, until, ctx.core)
+                billing.start(admin, tenant_id, plan, billing_customer(tenant_id), provider, interval, until, ctx.core,
+                              gateway=gateway)
         except LookupError:
             return back(t("Redazione non trovata."))
         except ValueError as e:
