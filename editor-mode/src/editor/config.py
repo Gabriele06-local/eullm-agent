@@ -37,6 +37,9 @@ class Settings:
     # The address people open the dashboard at (https://editor.example.com),
     # for the links of invites and password resets.
     public_url: str = ""
+    # Online payments (Mollie); empty: plans are paid by bank transfer and
+    # recorded by the operator.
+    mollie_api_key: str = ""
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -59,4 +62,5 @@ class Settings:
             mail_from=env.get("EDITOR_MAIL_FROM", ""),
             telegram_token=env.get("EDITOR_TELEGRAM_TOKEN", ""),
             public_url=env.get("EDITOR_PUBLIC_URL", "").strip().rstrip("/"),
+            mollie_api_key=env.get("EDITOR_MOLLIE_API_KEY", "").strip(),
         )

@@ -38,6 +38,8 @@ newsroom with plan, limits and usage; create, suspend, delete, invite
 owners; API keys for the billing system, which creates a newsroom with
 `POST /api/operator/tenants` when a payment goes through (see
 [deploy/server](../deploy/server/README.md#newsrooms-people-and-the-billing-system)).
+Plans, the 7-day trial, customers' billing data, Mollie payments and
+resellers are in [Selling](../deploy/server/README.md#selling-plans-trial-payments-resellers).
 
 <table>
 <tr>

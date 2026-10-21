@@ -20,6 +20,7 @@
 <div class="cols">
   <section class="card pad col-wide" aria-labelledby="h-plan">
     <h2 id="h-plan">Uso del piano</h2>
+    {% if plan_state %}<p class="hint">Piano {{ plan_state.plan_name }} · {{ plan_state.label|lower }}. <a href="/account">Abbonamento e fatturazione</a></p>{% endif %}
     {% for mt in meters %}
     <div class="meter">
       <span>{{ mt.label }}</span>

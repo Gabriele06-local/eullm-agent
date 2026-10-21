@@ -286,13 +286,18 @@ def cmd_serve(a):
 def cmd_worker(a):
     import logging
 
-    from . import queue
-    from .runtime import database, handlers
+    from . import accounts, billing, queue
+    from .runtime import admin_database, database, handlers, settings
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     db = database()
     # SQLite has one tenant, so one job at a time anyway.
     slots = 1 if db.sqlite else a.concurrency
-    queue.Worker(db, handlers(), concurrency=slots).run()
+    st = settings()
+    mail = accounts.smtp_mailer(st)
+
+    def hourly():  # trial reminders, and the hold when a trial or a paid period ends
+        billing.lifecycle(admin_database(), mail=mail, public_url=st.public_url)
+    queue.Worker(db, handlers(), concurrency=slots, hourly=hourly).run()
 
 
 def cmd_tenant_export(a):

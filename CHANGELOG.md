@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+
+- Selling the service from the backoffice, ready for a public site and
+  for resellers:
+  - **Plans** in the console (`/admin` → Piani): prices without VAT,
+    monthly and yearly, trial days, limits (sites, languages per site,
+    active sources, items a day, articles a month). The provisional
+    catalogue is Prova (7 days), Starter 49 €, Pro 149 €, Business 399 €.
+    The public site reads it from `GET /api/public/plans`, without a key.
+  - **Customers**: the billing data of whoever pays (company or person,
+    VAT number, tax code, address, SDI code, PEC, checked), sent by the
+    site with `POST /api/operator/signup` together with the newsroom on
+    trial and its owner's invite; `GET`/`PATCH /api/operator/customers`.
+  - **Trial and its end**: an email to the owner two days before; when the
+    trial (or a paid period, after three days of grace) ends, the newsroom
+    stops but keeps its data, and its owner signs in to `/account` to
+    choose a plan. A banner in the newsroom counts the days left.
+  - **Payments**: with `EDITOR_MOLLIE_API_KEY` the owner pays from
+    `/account` (card, PayPal and the other Mollie methods) and the
+    renewals are automatic; Mollie's notices arrive at
+    `/api/billing/mollie/webhook`. Without it, bank transfers are recorded
+    from the console or with `PUT /api/operator/tenants/{id}/subscription`.
+    The gateway sits behind a small interface, so another can replace it.
+  - **Resellers** (`/admin` → Rivenditori): an API key bound to the
+    reseller signs up and manages only its own customers, which it bills
+    itself.
+  - The console lists customers with their billing data and newsrooms, and
+    every newsroom shows its plan, state and paid period.
+- "Primi passi" on the home page: the way from the domain to the first
+  published article, step by step, with what the newsroom is waiting for
+  (the scan, the sources, the first collection, the morning proposals) and
+  what is up to you. It goes away once every step is done.
+
+### Upgrading from 0.7.7
+
+The database migration runs by itself. Newsrooms that already exist have
+no subscription and keep working as before; give one a plan from the
+console when it should be billed. For online payments add
+`EDITOR_MOLLIE_API_KEY` to `.env` (and `EDITOR_PUBLIC_URL`, which Mollie
+needs to reach the server), and to a `compose.yaml` written by an earlier
+`server-init` the line `EDITOR_MOLLIE_API_KEY: ${EDITOR_MOLLIE_API_KEY:-}`
+under `x-editor-env`.
+
 ## 0.7.7
 
 ### Added

@@ -18,7 +18,7 @@ from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 
-from . import accounts, newsrooms
+from . import accounts, billing, commerce, newsrooms
 from .auth import ROLES
 
 COOKIE = "editor_token"
@@ -104,12 +104,14 @@ def register(app, ctx) -> None:
 
     def operator(request: Request) -> str:
         """Who acts as operator: 'api:<key name>' or the person's email."""
+        request.state.reseller_id = None
         header = request.headers.get("authorization", "")
         if header.startswith("Bearer "):
-            name = accounts.resolve_operator_token(admin, header.removeprefix("Bearer ").strip())
-            if name is None:
+            key = accounts.operator_key(admin, header.removeprefix("Bearer ").strip())
+            if key is None:
                 raise HTTPException(401, "missing or invalid operator key")
-            return f"api:{name}"
+            request.state.reseller_id = key.reseller_id
+            return f"api:{key.name}"
         s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
         if s is None:
             raise HTTPException(401, "sign in as an operator")
@@ -132,6 +134,16 @@ def register(app, ctx) -> None:
                 sent = False
         return {"email": email, "url": url, "sent": sent}
 
+    def own(request: Request, tenant_id: str) -> None:
+        """A reseller's key reaches only its own customers' newsrooms."""
+        rid = getattr(request.state, "reseller_id", None)
+        if rid is not None and billing.reseller_of_tenant(admin, tenant_id) != rid:
+            raise HTTPException(404, "newsroom not found")
+
+    def no_reseller(request: Request) -> None:
+        if getattr(request.state, "reseller_id", None) is not None:
+            raise HTTPException(403, "not available to a reseller key")
+
     def failed(e: Exception):
         if isinstance(e, LookupError):
             raise HTTPException(404, "newsroom not found")
@@ -140,11 +152,17 @@ def register(app, ctx) -> None:
     # --- JSON -------------------------------------------------------------------
 
     @app.get("/api/operator/tenants")
-    def api_list(external_ref: str | None = None, by: str = Depends(operator)):
-        return {"tenants": newsrooms.listing(admin, db, external_ref=external_ref)}
+    def api_list(request: Request, external_ref: str | None = None, by: str = Depends(operator)):
+        rows = newsrooms.listing(admin, db, external_ref=external_ref)
+        rid = request.state.reseller_id
+        if rid is not None:
+            mine = billing.tenants_of_reseller(admin, rid)
+            rows = [r for r in rows if r["tenant_id"] in mine]
+        return {"tenants": rows}
 
     @app.post("/api/operator/tenants", status_code=201)
     def api_create(request: Request, body: NewsroomIn, by: str = Depends(operator)):
+        no_reseller(request)  # a reseller signs its customers up (/api/operator/signup)
         try:
             res = newsrooms.create(admin, body.spec() | body.model_dump(
                 include={"name", "owner_email", "owner_name", "tenant_id", "external_ref"}), by, ctx.core)
@@ -158,14 +176,18 @@ def register(app, ctx) -> None:
         return out if res["created"] else JSONResponse(jsonable(out), status_code=200)
 
     @app.get("/api/operator/tenants/{tenant_id}")
-    def api_get(tenant_id: str, by: str = Depends(operator)):
+    def api_get(request: Request, tenant_id: str, by: str = Depends(operator)):
+        own(request, tenant_id)
         rows = newsrooms.listing(admin, db, tenant_id)
         if not rows:
             raise HTTPException(404, "newsroom not found")
         return rows[0] | {"people": [dict(r._mapping) for r in accounts.members(admin, tenant_id)]}
 
     @app.patch("/api/operator/tenants/{tenant_id}")
-    def api_update(tenant_id: str, body: NewsroomPatch, by: str = Depends(operator)):
+    def api_update(request: Request, tenant_id: str, body: NewsroomPatch, by: str = Depends(operator)):
+        own(request, tenant_id)
+        if request.state.reseller_id is not None and body.model_dump(exclude_unset=True).keys() - {"name", "active"}:
+            raise HTTPException(403, "a reseller changes the plan through /subscription")
         try:
             res = newsrooms.update_newsroom(admin, tenant_id, body.spec(), ctx.core)
         except (newsrooms.NewsroomError, LookupError) as e:
@@ -174,6 +196,7 @@ def register(app, ctx) -> None:
 
     @app.post("/api/operator/tenants/{tenant_id}/invites", status_code=201)
     def api_invite(request: Request, tenant_id: str, body: InviteIn, by: str = Depends(operator)):
+        own(request, tenant_id)
         rows = newsrooms.listing(admin, db, tenant_id)
         if not rows:
             raise HTTPException(404, "newsroom not found")
@@ -184,8 +207,9 @@ def register(app, ctx) -> None:
         return send(request, token, "invite", accounts.normalise_email(body.email), rows[0]["name"], "EuLLM Editor")
 
     @app.delete("/api/operator/tenants/{tenant_id}")
-    def api_delete(tenant_id: str, confirm: str = "", by: str = Depends(operator)):
+    def api_delete(request: Request, tenant_id: str, confirm: str = "", by: str = Depends(operator)):
         """Every row of the newsroom goes; `confirm` repeats its id."""
+        own(request, tenant_id)
         if confirm != tenant_id:
             raise HTTPException(400, "repeat the newsroom id in ?confirm= to delete it")
         try:
@@ -208,6 +232,9 @@ def register(app, ctx) -> None:
             "me": s, "rooms": newsrooms.listing(admin, db), "operators": accounts.operators(admin),
             "keys": accounts.operator_tokens(admin), "pending": accounts.pending_invites(admin, None),
             "roles": ROLES, "notice": unquote(notice) if notice else None, "mine": accounts.memberships(admin, s.user_id),
+            "customers": billing.customers(admin), "resellers": billing.resellers(admin), "plans": billing.plans(admin),
+            "subs": billing.subscriptions(admin), "reseller_names": {r["id"]: r["name"] for r in billing.resellers(admin)},
+            "statuses": billing.STATUS_LABELS, "money": billing.money, "online": ctx.gateway is not None,
             "new": None, **data}, status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
@@ -357,6 +384,9 @@ def register(app, ctx) -> None:
     @app.post("/admin/keys/{key_id}/revoke")
     def ui_revoke_key(key_id: int, s=Depends(need_console)):
         return back("Chiave revocata." if accounts.revoke_operator_token(admin, key_id) else "Chiave già revocata.")
+
+    commerce.register(app, ctx, operator=operator, own=own, no_reseller=no_reseller, send=send,
+                      need_console=need_console, page=page, back=back, failed=failed)
 
 
 def set_session(request: Request, resp, token: str) -> None:

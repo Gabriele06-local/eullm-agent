@@ -79,6 +79,8 @@ tenants = Table(
     Column("core_token_env", Text),
     Column("active", Boolean),
     Column("external_ref", Text),
+    Column("customer_id", BigInteger),
+    Column("hold", Text),
 )
 
 sites = Table(
@@ -516,4 +518,99 @@ operator_tokens = Table(
     Column("token_sha256", Text, nullable=False),
     Column("created_at", _ts()),
     Column("revoked_at", _ts()),
+    Column("reseller_id", BigInteger),
+)
+
+# Customers, resellers, plans, subscriptions, payments (owner connection
+# only; see migration 0015).
+
+resellers = Table(
+    "resellers",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("email", Text, nullable=False),
+    Column("discount_pct", Float, nullable=False),
+    Column("notes", Text, nullable=False),
+    Column("active", Boolean, nullable=False),
+    Column("created_at", _ts()),
+)
+
+customers = Table(
+    "customers",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("reseller_id", BigInteger),
+    Column("external_ref", Text),
+    Column("kind", Text, nullable=False),
+    Column("name", Text, nullable=False),
+    Column("email", Text, nullable=False),
+    Column("phone", Text, nullable=False),
+    Column("vat_number", Text, nullable=False),
+    Column("tax_code", Text, nullable=False),
+    Column("address", Text, nullable=False),
+    Column("postal_code", Text, nullable=False),
+    Column("city", Text, nullable=False),
+    Column("province", Text, nullable=False),
+    Column("country", Text, nullable=False),
+    Column("sdi_code", Text, nullable=False),
+    Column("pec", Text, nullable=False),
+    Column("provider_customer_id", Text),
+    Column("created_at", _ts()),
+    Column("updated_at", _ts()),
+)
+
+plans = Table(
+    "plans",
+    metadata,
+    Column("code", Text, primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("description", Text, nullable=False),
+    Column("price_month_cents", Integer),
+    Column("price_year_cents", Integer),
+    Column("currency", Text, nullable=False),
+    Column("trial_days", Integer, nullable=False),
+    Column("max_sites", Integer),
+    Column("max_languages", Integer),
+    Column("max_active_sources", Integer),
+    Column("max_items_per_day", Integer),
+    Column("max_drafts_month", Integer),
+    Column("max_llm_cost_month", Float),
+    Column("public", Boolean, nullable=False),
+    Column("sort", Integer, nullable=False),
+)
+
+subscriptions = Table(
+    "subscriptions",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("customer_id", BigInteger),
+    Column("plan_code", Text, nullable=False),
+    Column("billing_interval", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("provider", Text, nullable=False),
+    Column("provider_subscription_id", Text),
+    Column("trial_ends_at", _ts()),
+    Column("current_period_end", _ts()),
+    Column("reminded_at", _ts()),
+    Column("created_at", _ts()),
+    Column("updated_at", _ts()),
+)
+
+payments = Table(
+    "payments",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("tenant_id", Text),
+    Column("subscription_id", BigInteger),
+    Column("provider", Text, nullable=False),
+    Column("provider_payment_id", Text),
+    Column("kind", Text, nullable=False),
+    Column("amount_cents", Integer, nullable=False),
+    Column("currency", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("note", Text, nullable=False),
+    Column("created_at", _ts()),
+    Column("paid_at", _ts()),
 )

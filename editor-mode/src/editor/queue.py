@@ -209,8 +209,9 @@ class Worker:
     stop the claims; the running jobs finish before the process exits (a job
     cut short by a hard kill is queued again by requeue_stale)."""
 
-    def __init__(self, db, handlers: Handlers, concurrency: int = 1, name: str | None = None):
+    def __init__(self, db, handlers: Handlers, concurrency: int = 1, name: str | None = None, hourly=None):
         self.db = db
+        self.hourly = hourly  # also run at the start of each hour (billing.lifecycle)
         self.handlers = handlers
         self.concurrency = max(1, concurrency)
         self.name = name or f"{socket.gethostname()}:{os.getpid()}"
@@ -238,6 +239,11 @@ class Worker:
                 requeue_stale(self.db)
                 hour = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
                 if hour != last_hour:
+                    if self.hourly is not None:
+                        try:
+                            self.hourly()
+                        except Exception:
+                            log.exception("hourly task failed")
                     log.info("queued the tick of %d tenants", enqueue_ticks(self.db, hour))
                     last_hour = hour
             except Exception:
