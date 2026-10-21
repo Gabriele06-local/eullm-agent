@@ -201,6 +201,11 @@ HN_SEARCH = "https://hn.algolia.com/api/v1/search"
 HN_RECENT = HN_SEARCH + "_by_date"
 
 
+# A new repository with a few stars is news; one with none is often just a
+# namesake (searching "eullm" found someone else's empty "eullm").
+GITHUB_MIN_STARS = 10
+
+
 def _recent_searches(s, now: datetime) -> None:
     """Searches found before HN_RECENT existed move to it, and those suspended
     as silent get another chance: their silence came from the wrong search."""
@@ -215,6 +220,15 @@ def _recent_searches(s, now: datetime) -> None:
         if r.status == "suspended" and not r.status_set_by and (r.status_reason or "").startswith("nothing new"):
             values |= {"status": "active", "status_reason": None, "status_changed_at": now}
         s.execute(update(src).where(src.c.id == r.id).values(**values))
+    for r in s.execute(select(src).where(src.c.kind == "github", src.c.origin == "api_query")).all():
+        cfg = dict(r.config or {})
+        if "min_stars" in cfg:
+            continue
+        cfg["min_stars"] = GITHUB_MIN_STARS
+        twin = s.execute(select(src.c.id).where(src.c.site_id == r.site_id, src.c.kind == r.kind,
+                                                src.c.url == r.url, src.c.config == cfg)).first()
+        if twin is None:
+            s.execute(update(src).where(src.c.id == r.id).values(config=cfg))
 
 
 def api_candidates(body: dict) -> list[Candidate]:
@@ -228,7 +242,7 @@ def api_candidates(body: dict) -> list[Candidate]:
         out.append(Candidate("hackernews", f"Hacker News: {q}", HN_RECENT,
                              {"query": q, "min_points": 20}, "api_query", {"query": q}))
         topic = "-".join(q.lower().split()[:2])
-        out.append(Candidate("github", f"GitHub: {q}", "", {"query": f"{q} created:>{{since}}", "since_days": 30},
+        out.append(Candidate("github", f"GitHub: {q}", "", {"query": f"{q} created:>{{since}}", "since_days": 30, "min_stars": GITHUB_MIN_STARS},
                              "api_query", {"query": q, "topic": topic}))
     words = {t for q in queries for t in tokens(q)} | profile_keywords(body)
     cats = [c for c, terms in ARXIV_CATEGORIES.items() if words & terms]

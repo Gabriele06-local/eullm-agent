@@ -21,6 +21,8 @@ class GitHubCollector:
         cfg = source.config
         since = (datetime.now(UTC) - timedelta(days=int(cfg.get("since_days", 7)))).date()
         query = cfg.get("query", "created:>{since}").replace("{since}", since.isoformat())
+        if cfg.get("min_stars") and "stars:" not in query:
+            query += f" stars:>={int(cfg['min_stars'])}"
         params = {
             "q": query,
             "sort": cfg.get("sort", "stars"),
@@ -43,7 +45,8 @@ class GitHubCollector:
             items.append(
                 Item(
                     url=repo["html_url"],
-                    title=repo["full_name"],
+                    # The name alone ("someone/eullm") says nothing of what it is.
+                    title=f"{repo['full_name']}: {repo['description']}"[:160] if repo.get("description") else repo["full_name"],
                     summary=repo.get("description") or "",
                     external_id=f"gh:{repo['id']}",
                     author=(repo.get("owner") or {}).get("login"),

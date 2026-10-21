@@ -1,0 +1,12 @@
+# EuLLM Agent Core image made by the release from the binary it has just
+# built (release.yml). To compile from source, use the Dockerfile.
+FROM debian:trixie-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --home /var/lib/eullm-agent --create-home eullm
+COPY eullm-agent /usr/local/bin/eullm-agent
+USER eullm
+WORKDIR /var/lib/eullm-agent
+EXPOSE 8088
+ENTRYPOINT ["eullm-agent", "-c", "/etc/eullm-agent/config.yaml"]
+CMD ["api", "--listen", "0.0.0.0:8088"]

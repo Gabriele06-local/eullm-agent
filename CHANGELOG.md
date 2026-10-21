@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.6
+
+### Fixed
+
+- A proposal no longer rests on a single item: a topic needs at least two
+  before the plan proposes an article on it. A new repository with no
+  stars, found because it shares a name with the site's product, had
+  become a proposal on its own.
+- GitHub searches found by source discovery keep only repositories with at
+  least 10 stars; the ones already found get the same filter at the next
+  source maintenance. A repository's title now carries its description
+  ("owner/name: what it is"), so topics made of repositories have a
+  readable name.
+
+### Changed
+
+- The editorial plan says what accepting means (the idea goes in the plan,
+  then "Scrivi la bozza" writes the article), what Opportunity and Hype
+  measure, both out of 100, and the format in Italian.
+- Release: the server's Core image is made from the Linux x64 binary the
+  release has just built, instead of compiling everything again inside
+  Docker. The release build starts from main's compiled dependencies (a new
+  CI job keeps them cached on main). A pull request from a branch of this
+  repository no longer runs CI twice: its push already did.
+
 ## 0.7.5
 
 ### Added

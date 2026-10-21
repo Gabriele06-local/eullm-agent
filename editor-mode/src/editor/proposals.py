@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 
 FORMATS = ["news", "analysis", "guide", "tutorial", "review", "comparison", "opinion", "interview", "data"]
 MIN_OPPORTUNITY = 35.0
+MIN_ITEMS = 2
 
 SYSTEM = (
     "You are the editorial planner of a website. Using ONLY the items listed (each has an id), propose one "
@@ -107,7 +108,8 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
         for o in picks:
             label = s.execute(select(m.topics.c.label).where(m.topics.c.id == o.topic_id)).scalar()
             items = _items_for(s, o.topic_id)
-            if items:
+            # A single item (one new repository, one post) is not yet a story.
+            if len(items) >= MIN_ITEMS:
                 work.append((o, label, items))
     for o, label, items in work:
         allowed = {it.id for it in items}
