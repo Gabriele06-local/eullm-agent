@@ -1,0 +1,572 @@
+{
+ "\"Ultimo giro\" a meno di un'ora fa, \"notizie oggi\" che cresce": {
+  "de": "„Letzter Durchlauf“ vor weniger als einer Stunde, „Meldungen heute“ steigend",
+  "en": "\"Last run\" less than an hour ago, \"news today\" growing",
+  "es": "«Última ronda» hace menos de una hora, «noticias hoy» en aumento",
+  "fr": "« Dernier passage » il y a moins d'une heure, « actualités aujourd'hui » en hausse"
+ },
+ "\"in uso\" accanto al sito, in Oggi": {
+  "de": "„in Gebrauch“ neben der Website, unter Heute",
+  "en": "\"in use\" next to the site, in Today",
+  "es": "«en uso» junto al sitio, en Hoy",
+  "fr": "« en vigueur » à côté du site, dans Aujourd'hui"
+ },
+ "A ogni raccolta": {
+  "de": "Bei jeder Sammlung",
+  "en": "At every collection",
+  "es": "En cada recopilación",
+  "fr": "À chaque collecte"
+ },
+ "Accettare o scartare le proposte: accettare fa scrivere la bozza.": {
+  "de": "Vorschläge annehmen oder verwerfen: Annehmen lässt den Entwurf schreiben.",
+  "en": "Accept or discard proposals: accepting has the draft written.",
+  "es": "Aceptar o descartar las propuestas: aceptar hace que se redacte el borrador.",
+  "fr": "Accepter ou écarter les propositions : accepter fait rédiger le brouillon."
+ },
+ "Aggiungi il dominio; poi ogni lunedì alle 04:00": {
+  "de": "Sie fügen die Domain hinzu; danach jeden Montag um 04:00",
+  "en": "You add the domain; then every Monday at 04:00",
+  "es": "Añades el dominio; después, cada lunes a las 04:00",
+  "fr": "Vous ajoutez le domaine ; puis chaque lundi à 04:00"
+ },
+ "Almeno due notizie con parole in comune": {
+  "de": "Mindestens zwei Meldungen mit gemeinsamen Wörtern",
+  "en": "At least two news items with words in common",
+  "es": "Al menos dos noticias con palabras en común",
+  "fr": "Au moins deux actualités avec des mots en commun"
+ },
+ "Analisi del sito": {
+  "de": "Website-Analyse",
+  "en": "Site analysis",
+  "es": "Análisis del sitio",
+  "fr": "Analyse du site"
+ },
+ "Approvare il profilo del sito.": {
+  "de": "Das Profil der Website freigeben.",
+  "en": "Approve the site profile.",
+  "es": "Aprobar el perfil del sitio.",
+  "fr": "Approuver le profil du site."
+ },
+ "Approvare la bozza.": {
+  "de": "Den Entwurf freigeben.",
+  "en": "Approve the draft.",
+  "es": "Aprobar el borrador.",
+  "fr": "Approuver le brouillon."
+ },
+ "Approvare la pubblicazione.": {
+  "de": "Die Veröffentlichung freigeben.",
+  "en": "Approve the publication.",
+  "es": "Aprobar la publicación.",
+  "fr": "Approuver la publication."
+ },
+ "Attivare, se vuoi, le fonti candidate: quelle con punteggio da 0,50 si attivano da sole.": {
+  "de": "Kandidaten-Quellen aktivieren, wenn Sie möchten: Quellen mit einer Bewertung ab 0,50 werden automatisch aktiv.",
+  "en": "Activate candidate sources, if you want: those scoring from 0.50 activate on their own.",
+  "es": "Activar, si quieres, las fuentes candidatas: las que tienen una puntuación desde 0,50 se activan solas.",
+  "fr": "Activer, si vous le souhaitez, les sources candidates : celles dont le score atteint 0,50 s'activent toutes seules."
+ },
+ "Bozza": {
+  "de": "Entwurf",
+  "en": "Draft",
+  "es": "Borrador",
+  "fr": "Brouillon"
+ },
+ "Bozza approvata": {
+  "de": "Entwurf freigegeben",
+  "en": "Draft approved",
+  "es": "Borrador aprobado",
+  "fr": "Brouillon approuvé"
+ },
+ "Bozze": {
+  "de": "Entwürfe",
+  "en": "Drafts",
+  "es": "Borradores",
+  "fr": "Brouillons"
+ },
+ "Briefing": {
+  "de": "Briefing",
+  "en": "Briefing",
+  "es": "Resumen diario",
+  "fr": "Briefing"
+ },
+ "C'è un modello configurato e il piano ha articoli disponibili": {
+  "de": "Ein Modell ist konfiguriert und der Tarif hat noch Artikel verfügbar",
+  "en": "A model is configured and the plan has articles available",
+  "es": "Hay un modelo configurado y el plan tiene artículos disponibles",
+  "fr": "Un modèle est configuré et l'offre a des articles disponibles"
+ },
+ "Che i temi corrispondano davvero al sito: togli quelli sbagliati prima di approvare. Un'analisi \"parziale\" dice sempre il motivo. Finché il profilo non è approvato non parte nient'altro.": {
+  "de": "Dass die Themen wirklich zur Website passen: Entfernen Sie falsche vor der Freigabe. Eine „teilweise“ Analyse nennt immer den Grund. Solange das Profil nicht freigegeben ist, startet nichts anderes.",
+  "en": "That the topics really match the site: remove the wrong ones before approving. A \"partial\" analysis always states the reason. Until the profile is approved, nothing else starts.",
+  "es": "Que los temas correspondan de verdad al sitio: quita los incorrectos antes de aprobar. Un análisis «parcial» siempre indica el motivo. Hasta que el perfil no esté aprobado, no arranca nada más.",
+  "fr": "Que les thèmes correspondent vraiment au site : retirez ceux qui sont erronés avant d'approuver. Une analyse « partielle » indique toujours la raison. Tant que le profil n'est pas approuvé, rien d'autre ne démarre."
+ },
+ "Che l'\"ultimo giro\" della raccolta sia di meno di un'ora fa e che le \"notizie oggi\" crescano. Se un passo dei Primi passi resta fermo, la riga dice cosa manca.": {
+  "de": "Dass der „letzte Durchlauf“ der Sammlung weniger als eine Stunde zurückliegt und die „Meldungen heute“ zunehmen. Bleibt ein Schritt der Ersten Schritte stehen, sagt die Zeile, was fehlt.",
+  "en": "That the collection's \"last run\" was less than an hour ago and that \"news today\" keeps growing. If a Getting started step stays stuck, its row says what is missing.",
+  "es": "Que la «última ronda» de la recopilación sea de hace menos de una hora y que las «noticias hoy» aumenten. Si un paso de Primeros pasos se queda parado, la fila dice qué falta.",
+  "fr": "Que le « dernier passage » de la collecte date de moins d'une heure et que les « actualités aujourd'hui » augmentent. Si une étape des Premiers pas reste bloquée, la ligne indique ce qui manque."
+ },
+ "Che ogni proposta citi notizie vere: apri le fonti citate. \"Accetta e scrivi la bozza\" fa scrivere l'articolo, che trovi in Bozze; \"Scarta\" insegna alla redazione cosa non ti interessa.": {
+  "de": "Dass jeder Vorschlag echte Meldungen zitiert: Öffnen Sie die zitierten Quellen. „Annehmen und Entwurf schreiben“ lässt den Artikel schreiben, den Sie unter Entwürfe finden; „Verwerfen“ zeigt der Redaktion, was Sie nicht interessiert.",
+  "en": "That every proposal cites real news: open the cited sources. \"Accept and write the draft\" has the article written, which you find in Drafts; \"Discard\" teaches the newsroom what does not interest you.",
+  "es": "Que cada propuesta cite noticias reales: abre las fuentes citadas. «Aceptar y redactar el borrador» hace que se escriba el artículo, que encuentras en Borradores; «Descartar» enseña a la redacción lo que no te interesa.",
+  "fr": "Que chaque proposition cite de vraies actualités : ouvrez les sources citées. « Accepter et rédiger le brouillon » fait rédiger l'article, que vous trouvez dans Brouillons ; « Écarter » apprend à la rédaction ce qui ne vous intéresse pas."
+ },
+ "Chi lavora nella redazione e con quale ruolo, chi riceve il briefing del mattino e a che ora, i siti della redazione e quanto del piano hai usato.": {
+  "de": "Wer in der Redaktion arbeitet und in welcher Rolle, wer das Morgen-Briefing erhält und um wie viel Uhr, die Websites der Redaktion und wie viel Sie von Ihrem Tarif verbraucht haben.",
+  "en": "Who works in the newsroom and in which role, who receives the morning briefing and at what time, the newsroom's sites and how much of the plan you have used.",
+  "es": "Quién trabaja en la redacción y con qué rol, quién recibe el resumen diario de la mañana y a qué hora, los sitios de la redacción y cuánto del plan has usado.",
+  "fr": "Qui travaille dans la rédaction et avec quel rôle, qui reçoit le briefing du matin et à quelle heure, les sites de la rédaction et la part de l'offre que vous avez utilisée."
+ },
+ "Ci sono destinatari": {
+  "de": "Es gibt Empfänger",
+  "en": "There are recipients",
+  "es": "Hay destinatarios",
+  "fr": "Il y a des destinataires"
+ },
+ "Ci sono fonti attive": {
+  "de": "Es gibt aktive Quellen",
+  "en": "There are active sources",
+  "es": "Hay fuentes activas",
+  "fr": "Il y a des sources actives"
+ },
+ "Come funziona questa pagina": {
+  "de": "So funktioniert diese Seite",
+  "en": "How this page works",
+  "es": "Cómo funciona esta página",
+  "fr": "Comment fonctionne cette page"
+ },
+ "Come lavora la redazione": {
+  "de": "So arbeitet die Redaktion",
+  "en": "How the newsroom works",
+  "es": "Cómo trabaja la redacción",
+  "fr": "Comment travaille la rédaction"
+ },
+ "Compila i dati di fatturazione prima di pagare. Il primo pagamento autorizza i rinnovi automatici, che puoi disdire da qui quando vuoi.": {
+  "de": "Füllen Sie die Rechnungsdaten vor der Zahlung aus. Die erste Zahlung autorisiert die automatischen Verlängerungen, die Sie hier jederzeit kündigen können.",
+  "en": "Fill in your billing details before paying. The first payment authorises automatic renewals, which you can cancel from here at any time.",
+  "es": "Rellena los datos de facturación antes de pagar. El primer pago autoriza las renovaciones automáticas, que puedes cancelar desde aquí cuando quieras.",
+  "fr": "Remplissez les données de facturation avant de payer. Le premier paiement autorise les renouvellements automatiques, que vous pouvez résilier d'ici quand vous voulez."
+ },
+ "Cosa aspettarsi": {
+  "de": "Was Sie erwarten können",
+  "en": "What to expect",
+  "es": "Qué esperar",
+  "fr": "À quoi s'attendre"
+ },
+ "Cosa controllare": {
+  "de": "Was Sie prüfen sollten",
+  "en": "What to check",
+  "es": "Qué comprobar",
+  "fr": "Que vérifier"
+ },
+ "Cosa devi vedere": {
+  "de": "Was Sie sehen sollten",
+  "en": "What you should see",
+  "es": "Qué debes ver",
+  "fr": "Ce que vous devez voir"
+ },
+ "Cosa fa": {
+  "de": "Was sie macht",
+  "en": "What it does",
+  "es": "Qué hace",
+  "fr": "Ce qu'elle fait"
+ },
+ "Dal dominio all'articolo pubblicato, passo per passo: cosa fa partire ogni passo, quando va avanti e cosa devi vedere. Se un passo non dà quello che dice l'ultima colonna, qualcosa non va.": {
+  "de": "Von der Domain zum veröffentlichten Artikel, Schritt für Schritt: was jeden Schritt auslöst, wann es weitergeht und was Sie sehen sollten. Liefert ein Schritt nicht, was in der letzten Spalte steht, stimmt etwas nicht.",
+  "en": "From the domain to the published article, step by step: what starts each step, when it moves on and what you should see. If a step doesn't give what the last column says, something is wrong.",
+  "es": "Del dominio al artículo publicado, paso a paso: qué pone en marcha cada paso, cuándo avanza y qué debes ver. Si un paso no da lo que dice la última columna, algo va mal.",
+  "fr": "Du domaine à l'article publié, étape par étape : ce qui déclenche chaque étape, quand elle avance et ce que vous devez voir. Si une étape ne donne pas ce qu'indique la dernière colonne, quelque chose ne va pas."
+ },
+ "Dopo aver aggiunto il dominio l'analisi dura alcuni minuti (fino a 25 articoli letti). Ogni lunedì il sito viene rianalizzato: se è cambiato compare una nuova versione da approvare, con le differenze.": {
+  "de": "Nach dem Hinzufügen der Domain dauert die Analyse einige Minuten (bis zu 25 gelesene Artikel). Jeden Montag wird die Website erneut analysiert: Hat sie sich geändert, erscheint eine neue Version zur Freigabe, mit den Unterschieden.",
+  "en": "After you add the domain, the analysis takes a few minutes (up to 25 articles read). Every Monday the site is analysed again: if it has changed, a new version appears for approval, with the differences.",
+  "es": "Tras añadir el dominio, el análisis dura unos minutos (hasta 25 artículos leídos). Cada lunes se vuelve a analizar el sitio: si ha cambiado, aparece una nueva versión para aprobar, con las diferencias.",
+  "fr": "Après l'ajout du domaine, l'analyse dure quelques minutes (jusqu'à 25 articles lus). Chaque lundi, le site est réanalysé : s'il a changé, une nouvelle version à approuver apparaît, avec les différences."
+ },
+ "Dove escono gli articoli approvati: WordPress, un webhook o un canale Telegram, configurati una volta per sito.": {
+  "de": "Wo freigegebene Artikel erscheinen: WordPress, ein Webhook oder ein Telegram-Kanal, einmal pro Website eingerichtet.",
+  "en": "Where approved articles go out: WordPress, a webhook or a Telegram channel, set up once per site.",
+  "es": "Dónde salen los artículos aprobados: WordPress, un webhook o un canal de Telegram, configurados una vez por sitio.",
+  "fr": "Où sortent les articles approuvés : WordPress, un webhook ou un canal Telegram, configurés une fois par site."
+ },
+ "Email o Telegram con proposte, trend e fonti": {
+  "de": "E-Mail oder Telegram mit Vorschlägen, Trends und Quellen",
+  "en": "Email or Telegram with proposals, trends and sources",
+  "es": "Correo o Telegram con propuestas, tendencias y fuentes",
+  "fr": "E-mail ou Telegram avec propositions, tendances et sources"
+ },
+ "Fonti": {
+  "de": "Quellen",
+  "en": "Sources",
+  "es": "Fuentes",
+  "fr": "Sources"
+ },
+ "Fonti attive (da 0,50) e candidate (0,35-0,50), ognuna con origine e ultime notizie": {
+  "de": "Aktive Quellen (ab 0,50) und Kandidaten (0,35-0,50), jeweils mit Herkunft und neuesten Meldungen",
+  "en": "Active sources (from 0.50) and candidates (0.35-0.50), each with its origin and latest news",
+  "es": "Fuentes activas (desde 0,50) y candidatas (0,35-0,50), cada una con su origen y sus últimas noticias",
+  "fr": "Sources actives (à partir de 0,50) et candidates (0,35-0,50), chacune avec son origine et ses dernières actualités"
+ },
+ "Fonti con 5 errori di fila, 45 giorni senza notizie o fuori tema sospese da sole e rivalutate dopo 14 giorni": {
+  "de": "Quellen mit 5 Fehlern in Folge, 45 Tagen ohne Meldungen oder außerhalb der Themen werden automatisch pausiert und nach 14 Tagen neu bewertet",
+  "en": "Sources with 5 errors in a row, 45 days without news or off-topic are suspended automatically and reassessed after 14 days",
+  "es": "Fuentes con 5 errores seguidos, 45 días sin noticias o fuera de tema suspendidas solas y reevaluadas a los 14 días",
+  "fr": "Sources avec 5 erreurs d'affilée, 45 jours sans actualités ou hors sujet suspendues automatiquement et réévaluées après 14 jours"
+ },
+ "Gli articoli scritti dalla redazione, nella lingua e nel tono del sito, con le fonti citate frase per frase.": {
+  "de": "Die von der Redaktion geschriebenen Artikel, in Sprache und Ton der Website, mit Quellenangaben Satz für Satz.",
+  "en": "The articles written by the newsroom, in the site's language and tone, with sources cited sentence by sentence.",
+  "es": "Los artículos escritos por la redacción, en el idioma y el tono del sitio, con las fuentes citadas frase por frase.",
+  "fr": "Les articles rédigés par la rédaction, dans la langue et le ton du site, avec les sources citées phrase par phrase."
+ },
+ "Gli inviti arrivano per email. Il briefing parte ogni mattina all'ora scelta con proposte, trend e fonti. Quando un limite del piano è raggiunto, il lavoro relativo si ferma con un messaggio chiaro.": {
+  "de": "Einladungen kommen per E-Mail. Das Briefing geht jeden Morgen zur gewählten Uhrzeit mit Vorschlägen, Trends und Quellen hinaus. Ist ein Tariflimit erreicht, stoppt die betroffene Arbeit mit einer klaren Meldung.",
+  "en": "Invitations arrive by email. The briefing goes out every morning at the chosen time with proposals, trends and sources. When a plan limit is reached, the related work stops with a clear message.",
+  "es": "Las invitaciones llegan por correo. El resumen diario sale cada mañana a la hora elegida con propuestas, tendencias y fuentes. Cuando se alcanza un límite del plan, el trabajo correspondiente se detiene con un mensaje claro.",
+  "fr": "Les invitations arrivent par e-mail. Le briefing part chaque matin à l'heure choisie avec propositions, tendances et sources. Quand une limite de l'offre est atteinte, le travail concerné s'arrête avec un message clair."
+ },
+ "Guida": {
+  "de": "Anleitung",
+  "en": "Guide",
+  "es": "Guía",
+  "fr": "Guide"
+ },
+ "Guida completa": {
+  "de": "Vollständige Anleitung",
+  "en": "Full guide",
+  "es": "Guía completa",
+  "fr": "Guide complet"
+ },
+ "Hai controllato temi e articoli d'esempio": {
+  "de": "Sie haben Themen und Beispielartikel geprüft",
+  "en": "You have checked the topics and sample articles",
+  "es": "Has revisado los temas y los artículos de ejemplo",
+  "fr": "Vous avez vérifié les thèmes et les articles d'exemple"
+ },
+ "Hai letto i controlli automatici e corretto i problemi": {
+  "de": "Sie haben die automatischen Prüfungen gelesen und die Probleme korrigiert",
+  "en": "You have read the automatic checks and fixed the problems",
+  "es": "Has leído las comprobaciones automáticas y corregido los problemas",
+  "fr": "Vous avez lu les contrôles automatiques et corrigé les problèmes"
+ },
+ "I passi": {
+  "de": "Die Schritte",
+  "en": "The steps",
+  "es": "Los pasos",
+  "fr": "Les étapes"
+ },
+ "I temi di cui parlano le notizie raccolte, con due punteggi su 100: Opportunità (quanto conviene al tuo sito) e Hype (quanto se ne parla). Sotto, il piano editoriale: le proposte di articolo.": {
+  "de": "Die Themen, über die die gesammelten Meldungen berichten, mit zwei Bewertungen von 100: Chance (wie gut es zu Ihrer Website passt) und Hype (wie viel darüber gesprochen wird). Darunter der Redaktionsplan: die Artikelvorschläge.",
+  "en": "The topics the collected news is talking about, with two scores out of 100: Opportunity (how much it suits your site) and Hype (how much it is being talked about). Below, the editorial plan: the article proposals.",
+  "es": "Los temas de los que hablan las noticias recopiladas, con dos puntuaciones sobre 100: Oportunidad (cuánto le conviene a tu sitio) y Hype (cuánto se habla de ello). Debajo, el plan editorial: las propuestas de artículo.",
+  "fr": "Les thèmes dont parlent les actualités collectées, avec deux scores sur 100 : Opportunité (à quel point il convient à votre site) et Buzz (à quel point on en parle). En dessous, le plan éditorial : les propositions d'articles."
+ },
+ "Il briefing deve arrivare all'ora scelta. Gli owner approvano profili e pubblicazioni, gli editor decidono proposte e bozze, chi ha la sola lettura guarda e basta.": {
+  "de": "Das Briefing muss zur gewählten Uhrzeit ankommen. Inhaber geben Profile und Veröffentlichungen frei, Redakteure entscheiden über Vorschläge und Entwürfe, wer nur Leserechte hat, sieht nur zu.",
+  "en": "The briefing must arrive at the chosen time. Owners approve profiles and publications, editors decide on proposals and drafts, read-only users just look.",
+  "es": "El resumen diario debe llegar a la hora elegida. Los propietarios aprueban perfiles y publicaciones, los editores deciden propuestas y borradores, y quien tiene solo lectura solo mira.",
+  "fr": "Le briefing doit arriver à l'heure choisie. Les propriétaires approuvent profils et publications, les éditeurs décident des propositions et des brouillons, les utilisateurs en lecture seule ne font que consulter."
+ },
+ "Il profilo ha temi e parole chiave": {
+  "de": "Das Profil hat Themen und Schlüsselwörter",
+  "en": "The profile has topics and keywords",
+  "es": "El perfil tiene temas y palabras clave",
+  "fr": "Le profil a des thèmes et des mots-clés"
+ },
+ "Il sito ha una destinazione (WordPress, webhook, Telegram)": {
+  "de": "Die Website hat ein Ziel (WordPress, Webhook, Telegram)",
+  "en": "The site has a destination (WordPress, webhook, Telegram)",
+  "es": "El sitio tiene un destino (WordPress, webhook, Telegram)",
+  "fr": "Le site a une destination (WordPress, webhook, Telegram)"
+ },
+ "Il sito risponde e ha articoli leggibili": {
+  "de": "Die Website antwortet und hat lesbare Artikel",
+  "en": "The site responds and has readable articles",
+  "es": "El sitio responde y tiene artículos legibles",
+  "fr": "Le site répond et a des articles lisibles"
+ },
+ "Il tuo abbonamento: il piano, la prova, i dati di fatturazione e il pagamento.": {
+  "de": "Ihr Abonnement: Tarif, Testphase, Rechnungsdaten und Zahlung.",
+  "en": "Your subscription: the plan, the trial, billing details and payment.",
+  "es": "Tu suscripción: el plan, la prueba, los datos de facturación y el pago.",
+  "fr": "Votre abonnement : l'offre, l'essai, les données de facturation et le paiement."
+ },
+ "L'analisi del sito ricava settore, pubblico, temi e tono dagli articoli che pubblica. Il risultato è il profilo editoriale: la redazione scrive e sceglie le fonti solo dentro questo profilo.": {
+  "de": "Die Website-Analyse leitet Branche, Zielgruppe, Themen und Ton aus den veröffentlichten Artikeln ab. Das Ergebnis ist das Redaktionsprofil: Die Redaktion schreibt und wählt Quellen nur innerhalb dieses Profils.",
+  "en": "The site analysis works out sector, audience, topics and tone from the articles it publishes. The result is the editorial profile: the newsroom writes and picks sources only within this profile.",
+  "es": "El análisis del sitio deduce sector, público, temas y tono a partir de los artículos que publica. El resultado es el perfil editorial: la redacción escribe y elige las fuentes solo dentro de este perfil.",
+  "fr": "L'analyse du site déduit le secteur, le public, les thèmes et le ton à partir des articles qu'il publie. Le résultat est le profil éditorial : la rédaction écrit et choisit ses sources uniquement dans ce cadre."
+ },
+ "La approvi tu": {
+  "de": "Sie geben ihn frei",
+  "en": "You approve it",
+  "es": "Lo apruebas tú",
+  "fr": "Vous l'approuvez"
+ },
+ "La bozza nella lingua e nel tono del sito, con fonti e controlli automatici": {
+  "de": "Der Entwurf in Sprache und Ton der Website, mit Quellen und automatischen Prüfungen",
+  "en": "The draft in the site's language and tone, with sources and automatic checks",
+  "es": "El borrador en el idioma y el tono del sitio, con fuentes y comprobaciones automáticas",
+  "fr": "Le brouillon dans la langue et le ton du site, avec sources et contrôles automatiques"
+ },
+ "La chiedi su una bozza approvata": {
+  "de": "Sie fordern sie für einen freigegebenen Entwurf an",
+  "en": "You request it on an approved draft",
+  "es": "La solicitas en un borrador aprobado",
+  "fr": "Vous la demandez sur un brouillon approuvé"
+ },
+ "La colonna \"Notizie in 7 giorni\": una fonte attiva che non porta niente va sospesa o scartata. Servono alcune fonti attive che pubblicano spesso, altrimenti non arrivano proposte.": {
+  "de": "Die Spalte „Meldungen in 7 Tagen“: Eine aktive Quelle, die nichts liefert, sollte pausiert oder abgelehnt werden. Es braucht einige aktive Quellen, die oft veröffentlichen, sonst kommen keine Vorschläge.",
+  "en": "The \"News in 7 days\" column: an active source that brings nothing should be suspended or rejected. You need a few active sources that publish often, otherwise no proposals arrive.",
+  "es": "La columna «Noticias en 7 días»: una fuente activa que no aporta nada debe suspenderse o descartarse. Hacen falta algunas fuentes activas que publiquen a menudo; si no, no llegan propuestas.",
+  "fr": "La colonne « Actualités sur 7 jours » : une source active qui n'apporte rien doit être suspendue ou écartée. Il faut quelques sources actives qui publient souvent, sinon aucune proposition n'arrive."
+ },
+ "La console di chi gestisce il servizio: redazioni, clienti, rivenditori, piani e chiavi API per il sito di vendita.": {
+  "de": "Die Konsole für die Betreiber des Dienstes: Redaktionen, Kunden, Wiederverkäufer, Tarife und API-Schlüssel für die Verkaufswebsite.",
+  "en": "The console for those who run the service: newsrooms, customers, resellers, plans and API keys for the sales site.",
+  "es": "La consola de quien gestiona el servicio: redacciones, clientes, revendedores, planes y claves API para el sitio de venta.",
+  "fr": "La console de ceux qui gèrent le service : rédactions, clients, revendeurs, offres et clés API pour le site de vente."
+ },
+ "La pagina da cui partire ogni giorno. \"Primi passi\" dice a che punto è la redazione e cosa sta aspettando; \"Da decidere\" raccoglie solo ciò che aspetta il tuo sì: profili, proposte e pubblicazioni.": {
+  "de": "Die Seite, mit der Sie jeden Tag beginnen. „Erste Schritte“ zeigt, wo die Redaktion steht und worauf sie wartet; „Zu entscheiden“ sammelt nur, was auf Ihr Ja wartet: Profile, Vorschläge und Veröffentlichungen.",
+  "en": "The page to start from every day. \"Getting started\" shows where the newsroom stands and what it is waiting for; \"To decide\" gathers only what is waiting for your yes: profiles, proposals and publications.",
+  "es": "La página desde la que empezar cada día. «Primeros pasos» indica en qué punto está la redacción y qué está esperando; «Por decidir» reúne solo lo que espera tu sí: perfiles, propuestas y publicaciones.",
+  "fr": "La page par laquelle commencer chaque jour. « Premiers pas » indique où en est la rédaction et ce qu'elle attend ; « À décider » regroupe uniquement ce qui attend votre accord : profils, propositions et publications."
+ },
+ "La prova dura 7 giorni; due giorni prima della fine arriva un'email. A fine prova, se non hai scelto un piano, la redazione si ferma ma i dati restano: scegli un piano e riparte da dove era.": {
+  "de": "Die Testphase dauert 7 Tage; zwei Tage vor dem Ende kommt eine E-Mail. Haben Sie bis zum Ende keinen Tarif gewählt, stoppt die Redaktion, aber die Daten bleiben: Wählen Sie einen Tarif, und sie macht dort weiter, wo sie war.",
+  "en": "The trial lasts 7 days; you get an email two days before it ends. At the end of the trial, if you haven't chosen a plan, the newsroom stops but the data stays: choose a plan and it picks up where it left off.",
+  "es": "La prueba dura 7 días; dos días antes del final llega un correo. Al acabar la prueba, si no has elegido un plan, la redacción se detiene pero los datos se conservan: elige un plan y continúa donde estaba.",
+  "fr": "L'essai dure 7 jours ; un e-mail arrive deux jours avant la fin. À la fin de l'essai, si vous n'avez pas choisi d'offre, la rédaction s'arrête mais les données restent : choisissez une offre et elle reprend là où elle en était."
+ },
+ "Le cinque decisioni che spettano a te": {
+  "de": "Die fünf Entscheidungen, die bei Ihnen liegen",
+  "en": "The five decisions that are up to you",
+  "es": "Las cinco decisiones que te corresponden",
+  "fr": "Les cinq décisions qui vous reviennent"
+ },
+ "Le fonti da cui la redazione prende le notizie, trovate dall'agente: testate citate dal sito, ricerche su Hacker News, GitHub, Hugging Face e arXiv con le parole chiave del profilo, domini suggeriti dal modello.": {
+  "de": "Die Quellen, aus denen die Redaktion ihre Meldungen bezieht, gefunden vom Agenten: von der Website zitierte Medien, Suchen auf Hacker News, GitHub, Hugging Face und arXiv mit den Schlüsselwörtern des Profils, vom Modell vorgeschlagene Domains.",
+  "en": "The sources the newsroom takes its news from, found by the agent: outlets cited by the site, searches on Hacker News, GitHub, Hugging Face and arXiv with the profile's keywords, and domains suggested by the model.",
+  "es": "Las fuentes de las que la redacción toma las noticias, encontradas por el agente: medios citados por el sitio, búsquedas en Hacker News, GitHub, Hugging Face y arXiv con las palabras clave del perfil, dominios sugeridos por el modelo.",
+  "fr": "Les sources d'où la rédaction tire ses actualités, trouvées par l'agent : médias cités par le site, recherches sur Hacker News, GitHub, Hugging Face et arXiv avec les mots-clés du profil, domaines suggérés par le modèle."
+ },
+ "Le iscrizioni dal sito arrivano qui come redazioni in prova, con l'anagrafica del cliente. Le prove scadute e i pagamenti mancati fermano la redazione da soli, senza cancellare i dati.": {
+  "de": "Anmeldungen über die Website erscheinen hier als Redaktionen in der Testphase, mit den Kundendaten. Abgelaufene Testphasen und ausgebliebene Zahlungen stoppen die Redaktion automatisch, ohne Daten zu löschen.",
+  "en": "Sign-ups from the site arrive here as newsrooms on trial, with the customer's details. Expired trials and missed payments stop the newsroom automatically, without deleting the data.",
+  "es": "Las altas desde el sitio llegan aquí como redacciones en prueba, con los datos del cliente. Las pruebas vencidas y los pagos fallidos detienen la redacción solos, sin borrar los datos.",
+  "fr": "Les inscriptions depuis le site arrivent ici comme rédactions en essai, avec les coordonnées du client. Les essais expirés et les paiements manqués arrêtent la rédaction automatiquement, sans supprimer les données."
+ },
+ "Le proposte arrivano ogni mattina, oppure subito con \"Proponi adesso\", da temi con due notizie di due fonti diverse o da una notizia forte di una fonte affidabile. Al massimo il numero al giorno impostato nel profilo.": {
+  "de": "Vorschläge kommen jeden Morgen oder sofort mit „Jetzt vorschlagen“, aus Themen mit zwei Meldungen aus zwei verschiedenen Quellen oder aus einer starken Meldung einer zuverlässigen Quelle. Höchstens so viele pro Tag, wie im Profil eingestellt.",
+  "en": "Proposals arrive every morning, or right away with \"Propose now\", from topics with two news items from two different sources or from one strong item from a reliable source. At most the daily number set in the profile.",
+  "es": "Las propuestas llegan cada mañana, o enseguida con «Proponer ahora», a partir de temas con dos noticias de dos fuentes distintas o de una noticia fuerte de una fuente fiable. Como máximo, el número diario fijado en el perfil.",
+  "fr": "Les propositions arrivent chaque matin, ou tout de suite avec « Proposer maintenant », à partir de thèmes ayant deux actualités de deux sources différentes ou d'une actualité forte d'une source fiable. Au maximum le nombre quotidien défini dans le profil."
+ },
+ "Le proposte in \"Da decidere\", ognuna con le sue fonti": {
+  "de": "Die Vorschläge unter „Zu entscheiden“, jeweils mit ihren Quellen",
+  "en": "The proposals in \"To decide\", each with its sources",
+  "es": "Las propuestas en «Por decidir», cada una con sus fuentes",
+  "fr": "Les propositions dans « À décider », chacune avec ses sources"
+ },
+ "Leggi la sezione \"Controlli automatici\": numeri che non compaiono nelle fonti, frasi senza fonte, passaggi copiati. Correggi, poi approva: solo una bozza approvata si può pubblicare.": {
+  "de": "Lesen Sie den Abschnitt „Automatische Prüfungen“: Zahlen, die nicht in den Quellen stehen, Sätze ohne Quelle, kopierte Passagen. Korrigieren Sie, dann geben Sie frei: Nur ein freigegebener Entwurf kann veröffentlicht werden.",
+  "en": "Read the \"Automatic checks\" section: numbers that do not appear in the sources, sentences without a source, copied passages. Fix them, then approve: only an approved draft can be published.",
+  "es": "Lee la sección «Comprobaciones automáticas»: cifras que no aparecen en las fuentes, frases sin fuente, pasajes copiados. Corrige y luego aprueba: solo un borrador aprobado se puede publicar.",
+  "fr": "Lisez la section « Contrôles automatiques » : chiffres absents des sources, phrases sans source, passages copiés. Corrigez, puis approuvez : seul un brouillon approuvé peut être publié."
+ },
+ "Lo approvi tu": {
+  "de": "Sie geben es frei",
+  "en": "You approve it",
+  "es": "Lo apruebas tú",
+  "fr": "Vous l'approuvez"
+ },
+ "Lo stato dell'abbonamento di ogni redazione e i pagamenti ricevuti. Un bonifico lo registri tu dal modulo \"Abbonamento\" della redazione.": {
+  "de": "Der Abonnementstatus jeder Redaktion und die eingegangenen Zahlungen. Eine Überweisung erfassen Sie selbst im Formular „Abonnement“ der Redaktion.",
+  "en": "The subscription status of every newsroom and the payments received. You record a bank transfer yourself from the newsroom's \"Subscription\" form.",
+  "es": "El estado de la suscripción de cada redacción y los pagos recibidos. Una transferencia la registras tú desde el formulario «Suscripción» de la redacción.",
+  "fr": "L'état de l'abonnement de chaque rédaction et les paiements reçus. Un virement, vous l'enregistrez vous-même depuis le formulaire « Abonnement » de la rédaction."
+ },
+ "Manutenzione": {
+  "de": "Wartung",
+  "en": "Maintenance",
+  "es": "Mantenimiento",
+  "fr": "Maintenance"
+ },
+ "Nello storico l'esito di ogni invio. Se è incerto, controlla nel tuo CMS e segnalo fallito per poterlo richiedere di nuovo.": {
+  "de": "Im Verlauf steht das Ergebnis jedes Versands. Ist es unklar, prüfen Sie es in Ihrem CMS und markieren Sie ihn als fehlgeschlagen, um ihn erneut anfordern zu können.",
+  "en": "The history shows the outcome of every send. If it is uncertain, check in your CMS and mark it as failed so you can request it again.",
+  "es": "En el historial aparece el resultado de cada envío. Si es incierto, compruébalo en tu CMS y márcalo como fallido para poder solicitarlo de nuevo.",
+  "fr": "L'historique indique le résultat de chaque envoi. S'il est incertain, vérifiez dans votre CMS et marquez-le comme échoué pour pouvoir le redemander."
+ },
+ "Ogni fonte ha un punteggio: da 0,50 diventa attiva da sola, tra 0,35 e 0,50 resta candidata e la attivi tu se ti interessa. Una fonte con troppi errori, 45 giorni senza notizie o fuori tema viene sospesa da sola e rivalutata dopo 14 giorni.": {
+  "de": "Jede Quelle hat eine Bewertung: Ab 0,50 wird sie automatisch aktiv, zwischen 0,35 und 0,50 bleibt sie Kandidat und Sie aktivieren sie, wenn sie Sie interessiert. Eine Quelle mit zu vielen Fehlern, 45 Tagen ohne Meldungen oder außerhalb der Themen wird automatisch pausiert und nach 14 Tagen neu bewertet.",
+  "en": "Every source has a score: from 0.50 it becomes active on its own; between 0.35 and 0.50 it stays a candidate and you activate it if you are interested. A source with too many errors, 45 days without news or off-topic is suspended automatically and reassessed after 14 days.",
+  "es": "Cada fuente tiene una puntuación: desde 0,50 se activa sola; entre 0,35 y 0,50 queda como candidata y la activas tú si te interesa. Una fuente con demasiados errores, 45 días sin noticias o fuera de tema se suspende sola y se reevalúa a los 14 días.",
+  "fr": "Chaque source a un score : à partir de 0,50 elle devient active toute seule ; entre 0,35 et 0,50 elle reste candidate et vous l'activez si elle vous intéresse. Une source avec trop d'erreurs, 45 jours sans actualités ou hors sujet est suspendue automatiquement et réévaluée après 14 jours."
+ },
+ "Ogni giorno dalle 03:00": {
+  "de": "Jeden Tag ab 03:00",
+  "en": "Every day from 03:00",
+  "es": "Cada día desde las 03:00",
+  "fr": "Chaque jour à partir de 03:00"
+ },
+ "Ogni mattina all'ora del briefing, o con \"Proponi adesso\"": {
+  "de": "Jeden Morgen zur Briefing-Zeit oder mit „Jetzt vorschlagen“",
+  "en": "Every morning at briefing time, or with \"Propose now\"",
+  "es": "Cada mañana a la hora del resumen diario, o con «Proponer ahora»",
+  "fr": "Chaque matin à l'heure du briefing, ou avec « Proposer maintenant »"
+ },
+ "Ogni mattina dopo le proposte": {
+  "de": "Jeden Morgen nach den Vorschlägen",
+  "en": "Every morning after the proposals",
+  "es": "Cada mañana después de las propuestas",
+  "fr": "Chaque matin après les propositions"
+ },
+ "Ogni ora": {
+  "de": "Jede Stunde",
+  "en": "Every hour",
+  "es": "Cada hora",
+  "fr": "Toutes les heures"
+ },
+ "Ogni ora la raccolta legge le fonti attive; ogni mattina all'ora del briefing arrivano le proposte del giorno. Se non c'è niente da decidere, la redazione sta lavorando da sola.": {
+  "de": "Jede Stunde liest die Sammlung die aktiven Quellen; jeden Morgen zur Briefing-Zeit kommen die Vorschläge des Tages. Wenn es nichts zu entscheiden gibt, arbeitet die Redaktion selbstständig.",
+  "en": "Every hour the collection reads the active sources; every morning at briefing time the day's proposals arrive. If there is nothing to decide, the newsroom is working on its own.",
+  "es": "Cada hora la recopilación lee las fuentes activas; cada mañana, a la hora del resumen diario, llegan las propuestas del día. Si no hay nada que decidir, la redacción está trabajando sola.",
+  "fr": "Toutes les heures, la collecte lit les sources actives ; chaque matin à l'heure du briefing arrivent les propositions du jour. S'il n'y a rien à décider, la rédaction travaille toute seule."
+ },
+ "Opportunità almeno 35/100 e due notizie da due fonti diverse, o una notizia forte (da 50/100) di una fonte affidabile": {
+  "de": "Chance mindestens 35/100 und zwei Meldungen aus zwei verschiedenen Quellen oder eine starke Meldung (ab 50/100) aus einer zuverlässigen Quelle",
+  "en": "Opportunity at least 35/100 and two news items from two different sources, or one strong item (from 50/100) from a reliable source",
+  "es": "Oportunidad de al menos 35/100 y dos noticias de dos fuentes distintas, o una noticia fuerte (desde 50/100) de una fuente fiable",
+  "fr": "Opportunité d'au moins 35/100 et deux actualités de deux sources différentes, ou une actualité forte (à partir de 50/100) d'une source fiable"
+ },
+ "Parte quando": {
+  "de": "Startet, wenn",
+  "en": "Starts when",
+  "es": "Empieza cuando",
+  "fr": "Démarre quand"
+ },
+ "Passo": {
+  "de": "Schritt",
+  "en": "Step",
+  "es": "Paso",
+  "fr": "Étape"
+ },
+ "Profilo approvato": {
+  "de": "Profil freigegeben",
+  "en": "Profile approved",
+  "es": "Perfil aprobado",
+  "fr": "Profil approuvé"
+ },
+ "Profilo in bozza, esito \"completa\" o \"parziale\" con il motivo": {
+  "de": "Profil im Entwurf, Ergebnis „vollständig“ oder „teilweise“ mit Begründung",
+  "en": "Draft profile, outcome \"complete\" or \"partial\" with the reason",
+  "es": "Perfil en borrador, resultado «completo» o «parcial» con el motivo",
+  "fr": "Profil en brouillon, résultat « complète » ou « partielle » avec la raison"
+ },
+ "Proposte": {
+  "de": "Vorschläge",
+  "en": "Proposals",
+  "es": "Propuestas",
+  "fr": "Propositions"
+ },
+ "Pubblicazione": {
+  "de": "Veröffentlichung",
+  "en": "Publication",
+  "es": "Publicación",
+  "fr": "Publication"
+ },
+ "Pubblicazioni": {
+  "de": "Veröffentlichungen",
+  "en": "Publications",
+  "es": "Publicaciones",
+  "fr": "Publications"
+ },
+ "Quando accetti una proposta": {
+  "de": "Wenn Sie einen Vorschlag annehmen",
+  "en": "When you accept a proposal",
+  "es": "Cuando aceptas una propuesta",
+  "fr": "Quand vous acceptez une proposition"
+ },
+ "Raccolta": {
+  "de": "Sammlung",
+  "en": "Collection",
+  "es": "Recopilación",
+  "fr": "Collecte"
+ },
+ "Ricerca delle fonti": {
+  "de": "Quellensuche",
+  "en": "Source discovery",
+  "es": "Búsqueda de fuentes",
+  "fr": "Recherche des sources"
+ },
+ "Richiesta \"in attesa\", poi l'esito nello storico": {
+  "de": "Anfrage „ausstehend“, dann das Ergebnis im Verlauf",
+  "en": "Request \"pending\", then the outcome in the history",
+  "es": "Solicitud «pendiente», luego el resultado en el historial",
+  "fr": "Demande « en attente », puis le résultat dans l'historique"
+ },
+ "Sito e profilo": {
+  "de": "Website und Profil",
+  "en": "Site and profile",
+  "es": "Sitio y perfil",
+  "fr": "Site et profil"
+ },
+ "Stato \"approvata\"": {
+  "de": "Status „freigegeben“",
+  "en": "Status \"approved\"",
+  "es": "Estado «aprobado»",
+  "fr": "Statut « approuvé »"
+ },
+ "Su una bozza approvata chiedi la pubblicazione; la richiesta resta \"in attesa\" finché un owner non la approva, poi parte l'invio. Nulla esce senza un sì.": {
+  "de": "Für einen freigegebenen Entwurf fordern Sie die Veröffentlichung an; die Anfrage bleibt „ausstehend“, bis ein Inhaber sie freigibt, dann beginnt der Versand. Nichts geht ohne ein Ja hinaus.",
+  "en": "On an approved draft you request publication; the request stays \"pending\" until an owner approves it, then sending starts. Nothing goes out without a yes.",
+  "es": "En un borrador aprobado solicitas la publicación; la solicitud queda «pendiente» hasta que un propietario la aprueba y entonces empieza el envío. Nada sale sin un sí.",
+  "fr": "Sur un brouillon approuvé, vous demandez la publication ; la demande reste « en attente » jusqu'à ce qu'un propriétaire l'approuve, puis l'envoi démarre. Rien ne sort sans accord."
+ },
+ "Subito dopo l'approvazione; poi ogni lunedì": {
+  "de": "Direkt nach der Freigabe; danach jeden Montag",
+  "en": "Right after approval; then every Monday",
+  "es": "Justo después de la aprobación; después, cada lunes",
+  "fr": "Juste après l'approbation ; puis chaque lundi"
+ },
+ "Temi": {
+  "de": "Themen",
+  "en": "Topics",
+  "es": "Temas",
+  "fr": "Thèmes"
+ },
+ "Temi con Hype e Opportunità su 100": {
+  "de": "Themen mit Hype und Chance von 100",
+  "en": "Topics with Hype and Opportunity out of 100",
+  "es": "Temas con Hype y Oportunidad sobre 100",
+  "fr": "Thèmes avec Buzz et Opportunité sur 100"
+ },
+ "Trend e piano": {
+  "de": "Trends und Plan",
+  "en": "Trends and plan",
+  "es": "Tendencias y plan",
+  "fr": "Tendances et plan"
+ },
+ "Tutto il resto è automatico. Una fonte sospesa dalla manutenzione è un avviso, non una decisione.": {
+  "de": "Alles andere läuft automatisch. Eine von der Wartung pausierte Quelle ist ein Hinweis, keine Entscheidung.",
+  "en": "Everything else is automatic. A source suspended by maintenance is a notice, not a decision.",
+  "es": "Todo lo demás es automático. Una fuente suspendida por el mantenimiento es un aviso, no una decisión.",
+  "fr": "Tout le reste est automatique. Une source suspendue par la maintenance est un avertissement, pas une décision."
+ },
+ "Una bozza arriva qualche minuto dopo che hai accettato una proposta. Se i controlli automatici trovano problemi è \"da rivedere\".": {
+  "de": "Ein Entwurf kommt wenige Minuten, nachdem Sie einen Vorschlag angenommen haben. Finden die automatischen Prüfungen Probleme, ist er „zu prüfen“.",
+  "en": "A draft arrives a few minutes after you accept a proposal. If the automatic checks find problems, it is marked \"to review\".",
+  "es": "Un borrador llega unos minutos después de que aceptes una propuesta. Si las comprobaciones automáticas encuentran problemas, queda «por revisar».",
+  "fr": "Un brouillon arrive quelques minutes après que vous avez accepté une proposition. Si les contrôles automatiques trouvent des problèmes, il est « à revoir »."
+ },
+ "Va avanti se": {
+  "de": "Geht weiter, wenn",
+  "en": "Moves on if",
+  "es": "Avanza si",
+  "fr": "Avance si"
+ }
+}

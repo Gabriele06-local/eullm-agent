@@ -26,9 +26,9 @@
     <span>{{ me.email }} · {{ _('operatore') }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
   </div>
-  {% include "_lang.html.j2" %}
 </nav>
 <main class="main">
+  <div class="topbar">{% include "_lang.html.j2" %}</div>
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   {% if new %}
@@ -49,6 +49,7 @@
     <div><span class="kicker">{{ _('Amministrazione') }}</span><h1>{{ _('Redazioni') }}</h1></div>
     <span class="chip dark">{{ rooms|length }} {{ _('redazione') if rooms|length == 1 else _('redazioni') }}</span>
   </header>
+{% with page="console" %}{% include "_help.html.j2" %}{% endwith %}
 
   {% for r in rooms %}
   <section class="card" aria-labelledby="h-{{ r.tenant_id }}">

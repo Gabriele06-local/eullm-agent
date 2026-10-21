@@ -9,6 +9,7 @@
   </div>
   <a class="btn" href="/trends">{{ _('Torna al piano') }}</a>
 </header>
+{% with page="drafts" %}{% include "_help.html.j2" %}{% endwith %}
 
 <section class="card" aria-label="{{ _('Elenco bozze') }}">
   {% if rows %}

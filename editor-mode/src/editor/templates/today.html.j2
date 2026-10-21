@@ -17,6 +17,7 @@
     <a class="btn" href="/trends">{{ _('Trend e piano') }}</a>
   </div>
 </header>
+{% with page="today" %}{% include "_help.html.j2" %}{% endwith %}
 
 {% if guide %}
 <section class="card pad" aria-labelledby="h-steps">

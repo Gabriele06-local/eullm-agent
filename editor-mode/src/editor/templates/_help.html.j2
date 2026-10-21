@@ -1,0 +1,68 @@
+{# What a page is for, what to expect from it and what to check: the
+   pipeline of the newsroom, one page at a time. Open until closed; the
+   browser remembers it closed. #}
+{% set HELP = {
+  'today': [
+    _('La pagina da cui partire ogni giorno. "Primi passi" dice a che punto è la redazione e cosa sta aspettando; "Da decidere" raccoglie solo ciò che aspetta il tuo sì: profili, proposte e pubblicazioni.'),
+    _('Ogni ora la raccolta legge le fonti attive; ogni mattina all\'ora del briefing arrivano le proposte del giorno. Se non c\'è niente da decidere, la redazione sta lavorando da sola.'),
+    _('Che l\'"ultimo giro" della raccolta sia di meno di un\'ora fa e che le "notizie oggi" crescano. Se un passo dei Primi passi resta fermo, la riga dice cosa manca.'),
+  ],
+  'site': [
+    _('L\'analisi del sito ricava settore, pubblico, temi e tono dagli articoli che pubblica. Il risultato è il profilo editoriale: la redazione scrive e sceglie le fonti solo dentro questo profilo.'),
+    _('Dopo aver aggiunto il dominio l\'analisi dura alcuni minuti (fino a 25 articoli letti). Ogni lunedì il sito viene rianalizzato: se è cambiato compare una nuova versione da approvare, con le differenze.'),
+    _('Che i temi corrispondano davvero al sito: togli quelli sbagliati prima di approvare. Un\'analisi "parziale" dice sempre il motivo. Finché il profilo non è approvato non parte nient\'altro.'),
+  ],
+  'sources': [
+    _('Le fonti da cui la redazione prende le notizie, trovate dall\'agente: testate citate dal sito, ricerche su Hacker News, GitHub, Hugging Face e arXiv con le parole chiave del profilo, domini suggeriti dal modello.'),
+    _('Ogni fonte ha un punteggio: da 0,50 diventa attiva da sola, tra 0,35 e 0,50 resta candidata e la attivi tu se ti interessa. Una fonte con troppi errori, 45 giorni senza notizie o fuori tema viene sospesa da sola e rivalutata dopo 14 giorni.'),
+    _('La colonna "Notizie in 7 giorni": una fonte attiva che non porta niente va sospesa o scartata. Servono alcune fonti attive che pubblicano spesso, altrimenti non arrivano proposte.'),
+  ],
+  'trends': [
+    _('I temi di cui parlano le notizie raccolte, con due punteggi su 100: Opportunità (quanto conviene al tuo sito) e Hype (quanto se ne parla). Sotto, il piano editoriale: le proposte di articolo.'),
+    _('Le proposte arrivano ogni mattina, oppure subito con "Proponi adesso", da temi con due notizie di due fonti diverse o da una notizia forte di una fonte affidabile. Al massimo il numero al giorno impostato nel profilo.'),
+    _('Che ogni proposta citi notizie vere: apri le fonti citate. "Accetta e scrivi la bozza" fa scrivere l\'articolo, che trovi in Bozze; "Scarta" insegna alla redazione cosa non ti interessa.'),
+  ],
+  'drafts': [
+    _('Gli articoli scritti dalla redazione, nella lingua e nel tono del sito, con le fonti citate frase per frase.'),
+    _('Una bozza arriva qualche minuto dopo che hai accettato una proposta. Se i controlli automatici trovano problemi è "da rivedere".'),
+    _('Leggi la sezione "Controlli automatici": numeri che non compaiono nelle fonti, frasi senza fonte, passaggi copiati. Correggi, poi approva: solo una bozza approvata si può pubblicare.'),
+  ],
+  'publications': [
+    _('Dove escono gli articoli approvati: WordPress, un webhook o un canale Telegram, configurati una volta per sito.'),
+    _('Su una bozza approvata chiedi la pubblicazione; la richiesta resta "in attesa" finché un owner non la approva, poi parte l\'invio. Nulla esce senza un sì.'),
+    _('Nello storico l\'esito di ogni invio. Se è incerto, controlla nel tuo CMS e segnalo fallito per poterlo richiedere di nuovo.'),
+  ],
+  'settings': [
+    _('Chi lavora nella redazione e con quale ruolo, chi riceve il briefing del mattino e a che ora, i siti della redazione e quanto del piano hai usato.'),
+    _('Gli inviti arrivano per email. Il briefing parte ogni mattina all\'ora scelta con proposte, trend e fonti. Quando un limite del piano è raggiunto, il lavoro relativo si ferma con un messaggio chiaro.'),
+    _('Il briefing deve arrivare all\'ora scelta. Gli owner approvano profili e pubblicazioni, gli editor decidono proposte e bozze, chi ha la sola lettura guarda e basta.'),
+  ],
+  'account': [
+    _('Il tuo abbonamento: il piano, la prova, i dati di fatturazione e il pagamento.'),
+    _('La prova dura 7 giorni; due giorni prima della fine arriva un\'email. A fine prova, se non hai scelto un piano, la redazione si ferma ma i dati restano: scegli un piano e riparte da dove era.'),
+    _('Compila i dati di fatturazione prima di pagare. Il primo pagamento autorizza i rinnovi automatici, che puoi disdire da qui quando vuoi.'),
+  ],
+  'console': [
+    _('La console di chi gestisce il servizio: redazioni, clienti, rivenditori, piani e chiavi API per il sito di vendita.'),
+    _('Le iscrizioni dal sito arrivano qui come redazioni in prova, con l\'anagrafica del cliente. Le prove scadute e i pagamenti mancati fermano la redazione da soli, senza cancellare i dati.'),
+    _('Lo stato dell\'abbonamento di ogni redazione e i pagamenti ricevuti. Un bonifico lo registri tu dal modulo "Abbonamento" della redazione.'),
+  ],
+} %}
+{% set h = HELP.get(page) %}
+{% if h %}
+<details class="card help" id="help-{{ page }}" open>
+  <summary><strong>{{ _('Come funziona questa pagina') }}</strong> <a href="/guide" class="hint">{{ _('Guida completa') }}</a></summary>
+  <div class="help-cols">
+    <div><h3>{{ _('Cosa fa') }}</h3><p>{{ h[0] }}</p></div>
+    <div><h3>{{ _('Cosa aspettarsi') }}</h3><p>{{ h[1] }}</p></div>
+    <div><h3>{{ _('Cosa controllare') }}</h3><p>{{ h[2] }}</p></div>
+  </div>
+</details>
+<script>
+(function () {
+  var d = document.getElementById('help-{{ page }}'), k = 'editor-help-{{ page }}';
+  try { if (localStorage.getItem(k) === 'closed') d.removeAttribute('open'); } catch (e) {}
+  d.addEventListener('toggle', function () { try { localStorage.setItem(k, d.open ? 'open' : 'closed'); } catch (e) {} });
+})();
+</script>
+{% endif %}
