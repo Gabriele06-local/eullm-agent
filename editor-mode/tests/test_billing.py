@@ -210,6 +210,35 @@ def test_online_payment_and_renewals_through_the_gateway(db, admin):
     assert fake.cancelled == [msub] and billing.subscription(admin, tid)["status"] == "canceled"
 
 
+def test_a_manual_payment_stops_the_automatic_renewals(db, admin):
+    """A bank transfer paid by the operator ends the renewals of the gateway:
+    otherwise the gateway would charge again and the period would grow twice."""
+    fake = FakeGateway()
+    c, sent = client(db, gateway=fake)
+    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    invite = sent[0][2].split("\n")[-2]
+    c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
+    c.post(f"/account/{tid}/customer", data={"name": "Rossi", "email": "r@example.com", "kind": "person",
+                                            "tax_code": "VRDMRA80A01H501U"})
+    c.post(f"/account/{tid}/checkout", data={"plan": "pro", "interval": "year"}, follow_redirects=False)
+    first = f"tr_{fake.run}1"
+    fake.payments[first]["status"] = "paid"
+    c.post("/api/billing/mollie/webhook", data={"id": first})
+    msub = billing.subscription(admin, tid)["provider_subscription_id"]
+    assert msub
+    # The operator records the bank transfer: the automatic renewal stops.
+    r = c.put(f"/api/operator/tenants/{tid}/subscription",
+              json={"plan": "starter", "amount_cents": 4900, "note": "bonifico"}, headers=key(db))
+    assert r.status_code == 200, r.text
+    assert fake.cancelled == [msub], "the automatic renewal was left alive"
+    sub = billing.subscription(admin, tid)
+    assert sub["provider"] == "manual" and sub["provider_subscription_id"] is None
+    # A notice of the cancelled subscription no longer extends the period.
+    end = sub["current_period_end"]
+    c.post("/api/billing/mollie/webhook", data={"id": fake.renewal(msub)})
+    assert billing.subscription(admin, tid)["current_period_end"] == end
+
+
 def test_billing_data_from_the_account_page(db, admin):
     fake = FakeGateway()
     c, sent = client(db, gateway=fake)
