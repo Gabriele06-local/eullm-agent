@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 FORMATS = ["news", "analysis", "guide", "tutorial", "review", "comparison", "opinion", "interview", "data"]
 MIN_OPPORTUNITY = 35.0
 MIN_ITEMS = 2
+MIN_SOURCES = 2  # the items come from at least two different sources
 
 SYSTEM = (
     "You are the editorial planner of a website. Using ONLY the items listed (each has an id), propose one "
@@ -67,7 +68,8 @@ def _validator(allowed_ids: set[int]):
 def _items_for(s, topic_id: int, limit: int = 12):
     si = m.source_items
     return s.execute(
-        select(si.c.id, si.c.title, si.c.url, si.c.summary, si.c.published_at, m.sources.c.name.label("source"))
+        select(si.c.id, si.c.title, si.c.url, si.c.summary, si.c.published_at, si.c.source_id,
+               m.sources.c.name.label("source"))
         .join(m.topic_items, m.topic_items.c.item_id == si.c.id)
         .join(m.sources, m.sources.c.id == si.c.source_id)
         .where(m.topic_items.c.topic_id == topic_id, si.c.duplicate_of.is_(None))
@@ -108,8 +110,10 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
         for o in picks:
             label = s.execute(select(m.topics.c.label).where(m.topics.c.id == o.topic_id)).scalar()
             items = _items_for(s, o.topic_id)
-            # A single item (one new repository, one post) is not yet a story.
-            if len(items) >= MIN_ITEMS:
+            # A single item (one new repository, one post) is not yet a story,
+            # nor are two items from the same source (the same repository
+            # found by two searches): a story is told by more than one source.
+            if len(items) >= MIN_ITEMS and len({it.source_id for it in items}) >= MIN_SOURCES:
                 work.append((o, label, items))
     for o, label, items in work:
         allowed = {it.id for it in items}

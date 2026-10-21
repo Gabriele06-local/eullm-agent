@@ -51,7 +51,7 @@
   <div class="card stat">
     <span class="label">Da decidere</span>
     <span class="value">{{ decisions }}</span>
-    <span class="note {% if decisions %}warn{% endif %}">{{ profile_drafts|length|plural('profilo', 'profili') }} · {{ proposed|length|plural('proposta', 'proposte') }} · {{ pending_pubs|length|plural('pubblicazione', 'pubblicazioni') }} · {{ stopped|length|plural('fonte', 'fonti') }}</span>
+    <span class="note {% if decisions %}warn{% endif %}">{{ profile_drafts|length|plural('profilo', 'profili') }} · {{ proposed|length|plural('proposta', 'proposte') }} · {{ pending_pubs|length|plural('pubblicazione', 'pubblicazioni') }}</span>
   </div>
   <div class="card stat">
     <span class="label">Proposte nel piano</span>
@@ -115,20 +115,9 @@
       {% if caller.can('editor') %}
       <div class="row">
         <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/"><button class="btn" type="submit">Scarta</button></form>
-        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn pri" type="submit">Accetta</button></form>
+        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn pri" type="submit">Accetta e scrivi la bozza</button></form>
       </div>
       {% endif %}
-    </div>
-    {% endfor %}
-
-    {% for x in stopped %}
-    <div class="item">
-      <span class="chip teal">Fonte</span>
-      <div class="what">
-        <strong>{{ x.name }} sospesa</strong>{% if sites|length > 1 %} <span class="hint">· {{ x.domain }}</span>{% endif %}
-        <span>{{ x.status_reason|problem if x.status_reason else 'Sospesa dalla manutenzione automatica.' }}</span>
-      </div>
-      <a class="btn" href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">Apri il registro</a>
     </div>
     {% endfor %}
 
@@ -156,14 +145,14 @@
       <div class="legend"><span><i></i>Opportunità per il sito</span><span><i class="hype"></i>Hype nel settore</span></div>
       {% for t in tops %}
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span style="font-size: 14px; font-weight: 500;">{{ t.label }}</span>
+        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {{ t.items }} notizie da {{ t.sources }} fonti</span></span>
         <div class="pair">
           <div class="bar"><i style="width: {{ t.opportunity|round|int }}%"></i></div><span class="num">{{ t.opportunity|s100 }}</span>
           <div class="bar"><i class="hype" style="width: {{ (t.hype or 0)|round|int }}%"></i></div><span class="num" style="color: var(--muted);">{{ t.hype|s100 }}</span>
         </div>
       </div>
       {% else %}
-      <p class="hint">Nessun punteggio ancora: serve un profilo approvato e un giro di raccolta.</p>
+      <p class="hint">Ancora nessun tema da proporre: serve che almeno due fonti diverse parlino dello stesso tema.</p>
       {% endfor %}
       <p class="hint">Molto hype non vuol dire opportunità: conta quanto il tema è vicino al sito e quanto non l'hai già coperto.</p>
     </section>
@@ -176,6 +165,14 @@
         <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">ultimo giro</div></div>
       </div>
       <span class="hint">Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.</span>
+      {% if stopped %}
+      <div style="margin-top: 10px;">
+        <span class="hint">Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):</span>
+        {% for x in stopped %}
+        <div class="hint" style="margin-top: 4px;"><a href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">{{ x.name }}</a>{% if sites|length > 1 %} · {{ x.domain }}{% endif %}: {{ x.status_reason|problem if x.status_reason else 'nessuna notizia recente' }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </section>
   </div>
 </div>

@@ -360,7 +360,9 @@ def register(app, ctx) -> None:
                    (SELECT score FROM editor.trend_scores ts WHERE ts.topic_id = t.id ORDER BY computed_at DESC LIMIT 1) AS hype,
                    (SELECT score FROM editor.opportunity_scores o WHERE o.topic_id = t.id AND o.site_id = :site
                      ORDER BY computed_at DESC LIMIT 1) AS opportunity,
-                   (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items
+                   (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items,
+                   (SELECT count(DISTINCT si.source_id) FROM editor.topic_items ti
+                     JOIN editor.source_items si ON si.id = ti.item_id WHERE ti.topic_id = t.id) AS sources
             FROM editor.topics t WHERE t.updated_at > :since
             ORDER BY opportunity DESC NULLS LAST, hype DESC NULLS LAST LIMIT :lim""").bindparams(
             bindparam("since", type_=m.topics.c.updated_at.type)),
@@ -422,11 +424,14 @@ def register(app, ctx) -> None:
             new_today = s.execute(select(func.count()).select_from(m.proposals).where(
                 m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s))).scalar()
             usage = quotas.usage(s)
-            tops = [t for t in topic_scores(s, sid, 20) if t.opportunity is not None][:4] if sid else []
+            # Only what could become a proposal: the same rule as proposals.py.
+            tops = [t for t in topic_scores(s, sid, 40) if t.opportunity is not None and t.items >= props.MIN_ITEMS
+                    and t.sources >= props.MIN_SOURCES][:4] if sid else []
             last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at))).scalar()
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
-            decisions = len(profile_drafts) + len(proposed) + len(pending_pubs) + len(stopped)
+            # A source the maintenance suspended is news, not a decision.
+            decisions = len(profile_drafts) + len(proposed) + len(pending_pubs)
             guide = first_steps(s, sites, lines, sid)
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), guide=guide,
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
@@ -460,11 +465,13 @@ def register(app, ctx) -> None:
              "todo": ""},
             {"title": "Accetta una proposta", "past": "Proposta accettata", "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
              "href": "/trends", "busy": not count(m.proposals, m.proposals.c.status == "proposed"),
-             "wait": "Le proposte arrivano ogni mattina all'ora del briefing, quando almeno due notizie parlano dello stesso tema.",
+             "wait": ("Hai scartato le proposte arrivate finora. " if count(m.proposals, m.proposals.c.status == "rejected") else "")
+             + "Le prossime arrivano domattina all'ora del briefing, solo per temi con almeno due notizie "
+               "di due fonti diverse e un'opportunità di almeno 35/100.",
              "todo": "Accetta le proposte che ti interessano e scarta le altre."},
             {"title": "Rileggi la prima bozza", "past": "Prima bozza approvata", "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
              "href": "/drafts", "busy": "draft" in working, "wait": "La bozza è in scrittura.",
-             "todo": "Su una proposta accettata premi \"Scrivi la bozza\", poi controlla fonti e controlli automatici e approvala."},
+             "todo": "Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala."},
             {"title": "Collega il sito per pubblicare", "past": "Sito collegato", "done": count(m.publish_targets) > 0, "href": "/publications",
              "busy": False, "wait": "", "todo": "Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì."},
         ]

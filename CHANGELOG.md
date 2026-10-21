@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.2
+
+### Fixed
+
+- A proposal needs at least two news items from two different sources: the
+  same repository found by two GitHub searches was enough before, and gave
+  topics like a namesake repository.
+- Editor home page, "Opportunità del giorno": only topics that could become
+  a proposal (two items from two sources), each with how many items and
+  sources it has.
+- A source the daily maintenance suspended is no longer counted in "Da
+  decidere": it is listed under Raccolta, saying nothing has to be done.
+- "Primi passi": after discarding proposals the step says so and when the
+  next ones come; the proposal button reads "Accetta e scrivi la bozza",
+  because accepting already writes the draft.
 ## 0.8.1
 
 ### Fixed
