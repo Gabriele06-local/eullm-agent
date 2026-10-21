@@ -358,8 +358,28 @@ def _release(conn, tenant_id: str) -> None:
                  .values(active=True, hold=None))
 
 
+def _leave_the_gateway(admin, tenant_id: str, sub: dict, values: dict, gateway) -> None:
+    """The subscription stops being paid at the gateway: its automatic
+    renewals are cancelled and its id forgotten. Without this the gateway
+    would charge again at the next renewal and the notice would extend the
+    period a second time: the customer would pay twice for one period."""
+    if sub.get("provider") != "mollie" or not sub.get("provider_subscription_id"):
+        return
+    values["provider_subscription_id"] = None
+    if gateway is None:
+        return
+    customer = customer_of(admin, tenant_id)
+    if customer is None:
+        return
+    try:
+        gateway.cancel_subscription(customer["provider_customer_id"], sub["provider_subscription_id"])
+    except Exception:
+        log.exception("the automatic renewals of %s were not cancelled", tenant_id)
+
+
 def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None, provider: str = "manual",
-          interval: str = "month", paid_until: datetime | None = None, core=None, now: datetime | None = None) -> dict:
+          interval: str = "month", paid_until: datetime | None = None, core=None, now: datetime | None = None,
+          gateway=None) -> dict:
     """The newsroom's subscription: a plan with a trial starts its trial,
     any other plan is active (until `paid_until`, or open-ended when not
     given: a reseller or the operator decides). Replaces an existing one."""
@@ -368,6 +388,7 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
         raise BillingError("l'intervallo è month o year")
     if provider not in PROVIDERS:
         raise BillingError(f"provider: uno di {', '.join(PROVIDERS)}")
+    old = subscription(admin, tenant_id)
     with admin.engine.begin() as conn:
         plan = get_plan(conn, plan_code)
         if conn.execute(select(m.tenants.c.tenant_id).where(m.tenants.c.tenant_id == tenant_id)).first() is None:
@@ -383,6 +404,8 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
         if conn.execute(select(s.c.id).where(s.c.tenant_id == tenant_id)).first() is None:
             conn.execute(insert(s).values(tenant_id=tenant_id, created_at=now, **values))
         else:
+            if old is not None and old.get("provider") != provider:
+                _leave_the_gateway(admin, tenant_id, old, values, gateway)
             conn.execute(update(s).where(s.c.tenant_id == tenant_id).values(**values))
         if customer_id is not None:
             conn.execute(update(m.tenants).where(m.tenants.c.tenant_id == tenant_id).values(customer_id=customer_id))
@@ -394,7 +417,7 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
 
 def record_payment(admin, tenant_id: str, amount_cents: int, until: datetime | None, by: str, note: str = "",
                    plan_code: str | None = None, interval: str | None = None, core=None,
-                   now: datetime | None = None) -> dict:
+                   now: datetime | None = None, gateway=None) -> dict:
     """A payment the operator received (a bank transfer): the plan becomes
     active until `until` (by default one interval after the current end)."""
     now = _now(now)
@@ -402,16 +425,21 @@ def record_payment(admin, tenant_id: str, amount_cents: int, until: datetime | N
     if sub is None:
         raise LookupError(tenant_id)
     interval = interval or sub["billing_interval"]
+    values = {"plan_code": sub["plan_code"], "billing_interval": interval, "status": "active",
+              "current_period_end": None, "trial_ends_at": None, "updated_at": now}
     with admin.engine.begin() as conn:
         plan = get_plan(conn, plan_code or (sub["plan_code"] if sub["plan_code"] != TRIAL_PLAN else "starter"))
         base = max(sub["current_period_end"] or now, now)
         until = until or add_interval(base, interval)
+        values["plan_code"] = plan.code
+        values["current_period_end"] = until
+        if sub["provider"] == "mollie":
+            values["provider"] = "manual"
+            _leave_the_gateway(admin, tenant_id, sub, values, gateway)
         conn.execute(insert(m.payments).values(tenant_id=tenant_id, subscription_id=sub["id"], provider="manual",
                                                kind="manual", amount_cents=amount_cents, status="paid",
                                                note=f"{by}: {note}"[:500], paid_at=now))
-        conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tenant_id).values(
-            plan_code=plan.code, billing_interval=interval, status="active", current_period_end=until,
-            trial_ends_at=None, updated_at=now, provider="manual" if sub["provider"] == "mollie" else sub["provider"]))
+        conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tenant_id).values(**values))
         _release(conn, tenant_id)
     apply_plan(admin, tenant_id, plan, core)
     return subscription(admin, tenant_id)
