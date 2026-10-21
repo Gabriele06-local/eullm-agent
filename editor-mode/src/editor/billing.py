@@ -367,16 +367,16 @@ def _leave_the_gateway(admin, tenant_id: str, sub: dict, values: dict, gateway) 
     period a second time: the customer would pay twice for one period."""
     if sub.get("provider") != "mollie" or not sub.get("provider_subscription_id"):
         return
-    values["provider_subscription_id"] = None
     if gateway is None:
-        return
+        raise BillingError(t("il pagamento online non è configurato: i rinnovi su Mollie restano attivi"))
     customer = customer_of(admin, tenant_id)
-    if customer is None:
-        return
-    try:
-        gateway.cancel_subscription(customer["provider_customer_id"], sub["provider_subscription_id"])
-    except Exception:
-        log.exception("the automatic renewals of %s were not cancelled", tenant_id)
+    if customer is not None:
+        try:
+            gateway.cancel_subscription(customer["provider_customer_id"], sub["provider_subscription_id"])
+        except Exception as e:
+            log.exception("the automatic renewals of %s were not cancelled", tenant_id)
+            raise BillingError(t("i rinnovi automatici su Mollie non sono stati annullati, riprova")) from e
+    values["provider_subscription_id"] = None
 
 
 def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None, provider: str = "manual",

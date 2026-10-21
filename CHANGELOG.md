@@ -18,6 +18,20 @@
   already selected in `/account`. A paid plan never starts without its
   payment from the site's key (it did before when `plan` was sent).
 
+### Fixed
+
+- Local installation (SQLite): the queue no longer runs the work of a
+  suspended newsroom.
+- Core: the delegate limits of a token whose tenant is itself nested
+  (`parent/child`) apply to its sub-tenants.
+- Account page: billing data for a newsroom that does not exist give a
+  message instead of an error.
+- A payment recorded outside the gateway (bank transfer) cancels the
+  automatic renewals at Mollie, so the customer is not charged twice. If
+  Mollie does not confirm the cancellation, or online payment is not
+  configured, nothing is recorded and the console says why, instead of
+  leaving the renewals running.
+
 ### Upgrading from 0.8.3
 
 - Migration 0016 adds two columns to `editor.subscriptions`; it runs by

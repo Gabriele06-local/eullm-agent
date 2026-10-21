@@ -1210,5 +1210,17 @@
   "de": "{n} T.",
   "fr": "{n} j",
   "es": "{n} d"
+ },
+ "il pagamento online non è configurato: i rinnovi su Mollie restano attivi": {
+  "en": "online payment is not configured: the automatic renewals at Mollie are still active",
+  "de": "die Online-Zahlung ist nicht eingerichtet: die automatischen Verlängerungen bei Mollie bleiben aktiv",
+  "fr": "le paiement en ligne n'est pas configuré : les renouvellements automatiques chez Mollie restent actifs",
+  "es": "el pago en línea no está configurado: las renovaciones automáticas en Mollie siguen activas"
+ },
+ "i rinnovi automatici su Mollie non sono stati annullati, riprova": {
+  "en": "the automatic renewals at Mollie were not cancelled, try again",
+  "de": "die automatischen Verlängerungen bei Mollie wurden nicht storniert, bitte erneut versuchen",
+  "fr": "les renouvellements automatiques chez Mollie n'ont pas été annulés, réessayez",
+  "es": "las renovaciones automáticas en Mollie no se han cancelado, inténtalo de nuevo"
  }
 }
