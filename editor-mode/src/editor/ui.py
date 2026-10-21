@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+from importlib import metadata
 from datetime import UTC, datetime, time, timedelta
 from urllib.parse import quote, unquote
 from zoneinfo import ZoneInfo
@@ -63,6 +64,12 @@ def safe_path(value: str | None, default: str = "/") -> str:
             and "\n" not in value and "\r" not in value):
         return value
     return default
+
+
+try:
+    VERSION = metadata.version("eullm-editor-mode")
+except metadata.PackageNotFoundError:
+    VERSION = None
 
 
 def done(path: str, notice: str | None = None) -> RedirectResponse:
@@ -129,6 +136,7 @@ def register(app, ctx) -> None:
     admin = getattr(ctx, "admin", None) or db
     env = pages.env
     env.filters["num"] = number
+    env.globals["version"] = VERSION
     env.filters["problem"] = problem
     env.filters["s100"] = score100
     env.filters["plural"] = plural
@@ -175,6 +183,7 @@ def register(app, ctx) -> None:
         notice = request.cookies.get(NOTICE_COOKIE)
         rooms = [x for x in accounts.memberships(admin, c.user_id) if x.active] if c.user_id else []
         resp = pages.TemplateResponse(request, name, {
+            "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": DAYS, "months": MONTHS, **data,
         }, status_code=status_code)

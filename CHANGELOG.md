@@ -32,6 +32,9 @@
 - Home: a Sites card lists every domain with the version in use, and the
   one to approve highlighted only when there is one. Profiles to approve
   are listed by domain and version.
+- The sidebar shows the Editor Mode version and the model last used, in
+  small print. Editor Mode's own version now follows the release
+  (`editor-mode/pyproject.toml`, was 0.1.0).
 - Calmer colours: a suspended source is shown in teal; red is kept for
   errors and blocking problems.
 
