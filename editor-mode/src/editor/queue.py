@@ -90,7 +90,8 @@ def claim(db, worker: str, tenant_id: str | None = None) -> Job | None:
                                                j.heartbeat_at > now - timedelta(seconds=STALE_SECONDS))).first()
         if busy is not None:
             return None
-        q = select(m.jobs).where(j.status == "queued", j.run_after <= now)
+        q = (select(m.jobs).join(m.tenants, m.tenants.c.tenant_id == m.jobs.c.tenant_id)
+             .where(j.status == "queued", j.run_after <= now, m.tenants.c.active.is_(True)))
         if tenant_id is not None:
             q = q.where(j.tenant_id == tenant_id)
         r = conn.execute(q.order_by(j.priority.desc(), j.id).limit(1)).first()
