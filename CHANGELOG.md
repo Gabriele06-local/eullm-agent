@@ -17,6 +17,7 @@
   `desired_plan`/`desired_interval` while the newsroom is on trial, and is
   already selected in `/account`. A paid plan never starts without its
   payment from the site's key (it did before when `plan` was sent).
+  A payment recorded by bank transfer clears the wish too.
 
 ### Fixed
 

@@ -430,7 +430,8 @@ def record_payment(admin, tenant_id: str, amount_cents: int, until: datetime | N
         raise LookupError(tenant_id)
     interval = interval or sub["billing_interval"]
     values = {"plan_code": sub["plan_code"], "billing_interval": interval, "status": "active",
-              "current_period_end": None, "trial_ends_at": None, "updated_at": now}
+              "current_period_end": None, "trial_ends_at": None, "updated_at": now,
+              "desired_plan": None, "desired_interval": None}
     with admin.engine.begin() as conn:
         plan = get_plan(conn, plan_code or (sub["plan_code"] if sub["plan_code"] != TRIAL_PLAN else "starter"))
         base = max(sub["current_period_end"] or now, now)

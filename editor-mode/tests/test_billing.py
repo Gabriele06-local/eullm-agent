@@ -355,6 +355,12 @@ def test_a_paid_plan_chosen_on_the_site_waits_for_its_payment(db, admin):
     assert sub["status"] == "trialing" and sub["plan_code"] == "trial"
     assert sub["desired_plan"] == "pro" and sub["desired_interval"] == "year"
     assert out["tenant"]["language"] == "de"
+    # Paid by bank transfer: the wish is now the plan.
+    tid = out["tenant"]["tenant_id"]
+    r = c.put(f"/api/operator/tenants/{tid}/subscription", json={"plan": "pro", "amount_cents": 149000, "interval": "year"},
+              headers=key(db))
+    assert r.status_code == 200, r.text
+    assert r.json()["plan_code"] == "pro" and r.json()["status"] == "active" and r.json()["desired_plan"] is None
 
 
 def test_the_billing_data_of_a_newsroom_that_does_not_exist_are_refused(db, admin):
