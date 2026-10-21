@@ -407,7 +407,7 @@ impl Core {
             return Ok(Some(l));
         }
         Ok(tenant
-            .split_once('/')
+            .rsplit_once('/')
             .and_then(|(parent, _)| self.delegate_defaults.get(parent))
             .cloned())
     }

@@ -1359,3 +1359,32 @@ async fn sub_tenant_limits_are_set_through_the_api() {
         .unwrap()
         .is_none());
 }
+
+#[tokio::test]
+async fn the_delegate_limits_of_a_nested_token_tenant_still_apply() {
+    // A token whose tenant is itself "parent/child" (the project uses that
+    // shape for tenants) acts for "parent/child/name": the limits of the
+    // token must still be the ones of that sub-tenant.
+    let config = format!(
+        "provider:\n  type: eullm\n  model: test\napi:\n  tokens:\n    - name: editor\n      tenant: acme/italy\n      token_sha256: {}\n      delegate: true\n      delegate_limits:\n        max_runs_per_day: 2\n",
+        api::sha256_hex(TOKEN_DELEGATE)
+    );
+    let h = harness_with(&config, vec![]);
+    let run = json!({"input": "go"});
+    for expected in [
+        StatusCode::ACCEPTED,
+        StatusCode::ACCEPTED,
+        StatusCode::TOO_MANY_REQUESTS,
+    ] {
+        let (s, v) = call_for(
+            &h.app,
+            "POST",
+            "/v1/runs",
+            Some(TOKEN_DELEGATE),
+            Some("cliente"),
+            Some(run.clone()),
+        )
+        .await;
+        assert_eq!(s, expected, "{v}");
+    }
+}
