@@ -73,7 +73,7 @@ def test_draft_every_claim_has_a_source(db, tenant):
                                {"text": "Le velocità annunciate arrivano a 10 Gbit/s.", "sources": [first]}]}]})
     answers = iter([bad, good])
     with respx.mock(assert_all_called=False) as router:
-        router.get(url__regex=r"https://news\.example/.*").mock(return_value=httpx.Response(200, text=ARTICLE_PAGE, headers={"content-type": "text/html"}))
+        router.get(url__regex=r"https://(news|rete)\.example/.*").mock(return_value=httpx.Response(200, text=ARTICLE_PAGE, headers={"content-type": "text/html"}))
         llm = router.post("http://core.test/v1/llm/chat").mock(side_effect=lambda r: chat(next(answers)))
         with httpx.Client() as client:
             did = drafts.write_draft(db, tenant, pid, CoreClient("http://core.test", "tok"), client)
