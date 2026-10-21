@@ -18,6 +18,22 @@
   </div>
 </header>
 
+{% if guide %}
+<section class="card pad" aria-labelledby="h-steps">
+  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-steps">Primi passi</h2><span class="hint">{{ guide|selectattr('done')|list|length }} di {{ guide|length }}</span></div>
+  <ol class="steps" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+  {% for x in guide %}
+    <li>
+      {% if x.done %}<span class="hint">✓ {{ x.past }}</span>
+      {% elif x.current %}<strong>{{ x.title }}</strong>{% if x.busy %} <span class="chip teal">In attesa</span>{% else %} <span class="chip amber">Tocca a te</span>{% endif %}
+        <br><span class="lead">{{ x.wait if x.busy else x.todo }}</span>{% if x.href %} <a href="{{ x.href }}">Apri</a>{% endif %}
+      {% else %}<span class="hint">{{ x.title }}</span>{% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
 {% if not sites %}
 <section class="card pad">
   <h2>Inizia da un dominio</h2>

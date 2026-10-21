@@ -82,11 +82,12 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> FastAPI:
+def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gateway=None) -> FastAPI:
     """admin: the owner connection, for accounts and the operator (by
     default the database's own `admin_url`, else `db`); mail: (to,
     subject, text) -> None, for invites (None: links are shown instead);
-    public_url: the address people open, for the links in invites."""
+    public_url: the address people open, for the links in invites;
+    gateway: online payments (gateway.Mollie), None for bank transfers."""
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
     if admin is None:
         from .db import Database
@@ -408,7 +409,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> Fa
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_publication=run_publication))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
-                                          public_url=public_url))
+                                          public_url=public_url, gateway=gateway))
 
     @app.exception_handler(HTTPException)
     def errors(request: Request, exc: HTTPException):
@@ -425,6 +426,8 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "") -> Fa
 def default_app() -> FastAPI:
     from . import runtime
 
+    from . import gateway
+
     st = runtime.settings()
     return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
-                      accounts.smtp_mailer(st), st.public_url)
+                      accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st))

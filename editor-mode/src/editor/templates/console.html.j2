@@ -14,6 +14,9 @@
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Amministrazione</small></div>
   <a href="#redazioni" class="on">Redazioni</a>
   <a href="#nuova">Nuova redazione</a>
+  <a href="#clienti">Clienti</a>
+  <a href="#rivenditori">Rivenditori</a>
+  <a href="#piani">Piani</a>
   <a href="#operatori">Operatori</a>
   <a href="#api">Chiavi API</a>
   {% if mine %}<span class="hint" style="padding: 12px 12px 4px;">Le tue redazioni</span>
@@ -54,7 +57,9 @@
         <span class="hint"><span class="num">{{ r.tenant_id }}</span> · piano {{ r.plan or '–' }} · {{ r.members }} {{ 'persona' if r.members == 1 else 'persone' }}{% if r.external_ref %} · rif. <span class="num">{{ r.external_ref }}</span>{% endif %} · dal {{ r.created_at.strftime('%d/%m/%Y') if r.created_at else '–' }}</span>
       </div>
       <div class="row">
-        {% if r.active is sameas false %}<span class="chip red">Sospesa</span>{% else %}<span class="chip green">Attiva</span>{% endif %}
+        {% set sub = subs.get(r.tenant_id) %}
+        {% if sub %}<span class="chip {{ 'teal' if sub.status == 'trialing' else 'green' if sub.status == 'active' else 'amber' }}">{{ sub.plan_name }} · {{ sub.label }}{% if sub.days_left is not none and sub.status != 'expired' %} · {{ sub.days_left }} gg{% endif %}</span>{% endif %}
+        {% if r.hold == 'billing' %}<span class="chip amber">Ferma: piano da pagare</span>{% elif r.active is sameas false %}<span class="chip red">Sospesa</span>{% else %}<span class="chip green">Attiva</span>{% endif %}
         <a class="btn sm" href="/admin/enter/{{ r.tenant_id }}">Entra</a>
         <form class="inline" method="post" action="/admin/newsrooms/{{ r.tenant_id }}/active">
           <input type="hidden" name="active" value="{{ '1' if r.active is sameas false else '0' }}">
@@ -72,6 +77,17 @@
         <span class="num" style="text-align: right;">{% if what == 'llm_cost' %}€ {{ (u.used or 0)|num }}{% if u.limit is not none %} / {{ u.limit|num(0) }}{% endif %}{% else %}{{ (u.used or 0)|int }}{% if u.limit is not none %} / {{ u.limit|int }}{% endif %}{% endif %}</span>
       </div>
       {% endfor %}
+      <details>
+        <summary class="hint">Abbonamento{% if sub %}: {{ sub.plan_name }}, {{ sub.label|lower }}{% if sub.current_period_end %}, pagato fino al {{ sub.current_period_end.strftime('%d/%m/%Y') }}{% elif sub.trial_ends_at %}, prova fino al {{ sub.trial_ends_at.strftime('%d/%m/%Y') }}{% endif %}{% if sub.provider == 'mollie' %} (Mollie){% elif sub.provider == 'reseller' %} (rivenditore){% endif %}{% endif %}</summary>
+        <form method="post" action="/admin/subscriptions/{{ r.tenant_id }}" class="form-grid" style="margin-top: 8px;">
+          <label class="field">Piano<select name="plan">{% for p in plans %}<option value="{{ p.code }}" {% if sub and sub.plan_code == p.code %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></label>
+          <label class="field">Rinnovo<select name="interval"><option value="month">Mensile</option><option value="year" {% if sub and sub.billing_interval == 'year' %}selected{% endif %}>Annuale</option></select></label>
+          <label class="field">Pagato fino al<input name="paid_until" type="date"></label>
+          <label class="field">Importo ricevuto (€)<input name="amount" inputmode="decimal" placeholder="nessuno"></label>
+          <div><button class="btn" type="submit">Salva</button></div>
+        </form>
+        <p class="hint">Con un importo registra un pagamento ricevuto (bonifico) e, senza data, allunga di un mese o un anno. Senza importo cambia solo il piano; senza data il piano non scade. I limiti del piano sostituiscono quelli della redazione.</p>
+      </details>
       <details>
         <summary class="hint">Piano e limiti</summary>
         <form method="post" action="/admin/newsrooms/{{ r.tenant_id }}" class="form-grid" style="margin-top: 8px;">
@@ -121,6 +137,80 @@
       <label class="field">Costo modello al mese (€)<input name="max_llm_cost_month" inputmode="decimal" placeholder="senza limite"></label>
       <div><button class="btn pri" type="submit">Crea la redazione</button></div>
     </form>
+  </section>
+
+  <section class="card" id="clienti" aria-labelledby="h-customers">
+    <div class="card-head"><h2 id="h-customers">Clienti</h2><span class="hint">{{ customers|length }}</span></div>
+    {% if customers %}
+    <div class="pad" style="overflow-x: auto;">
+    <table class="tbl">
+      <thead><tr><th>Cliente</th><th>Fiscale</th><th>Indirizzo</th><th>Redazioni</th><th>Rivenditore</th></tr></thead>
+      <tbody>
+      {% for c in customers %}
+      <tr>
+        <td><strong>{{ c.name }}</strong><br><span class="hint">{{ c.email }}{% if c.phone %} · {{ c.phone }}{% endif %}</span>{% if c.external_ref %}<br><span class="hint">rif. <span class="num">{{ c.external_ref }}</span></span>{% endif %}</td>
+        <td class="hint">{% if c.vat_number %}P.IVA {{ c.vat_number }}<br>{% endif %}{% if c.tax_code %}CF {{ c.tax_code }}<br>{% endif %}{% if c.sdi_code %}SDI {{ c.sdi_code }}<br>{% endif %}{% if c.pec %}PEC {{ c.pec }}{% endif %}</td>
+        <td class="hint">{{ c.address }}{% if c.city %}<br>{{ c.postal_code }} {{ c.city }}{% if c.province %} ({{ c.province }}){% endif %}{% endif %}<br>{{ c.country }}</td>
+        <td>{% for n in c.newsrooms %}<div>{{ n.name }} <span class="hint">{{ n.plan_code or '–' }} · {{ statuses.get(n.status, '–') }}</span></div>{% else %}<span class="hint">nessuna</span>{% endfor %}</td>
+        <td class="hint">{{ reseller_names.get(c.reseller_id, 'diretto') }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="empty">Nessun cliente: arrivano dal sito con <code>POST /api/operator/signup</code>, o dai rivenditori.</p>
+    {% endif %}
+  </section>
+
+  <div class="cols">
+    <section class="card pad col-wide" id="rivenditori" aria-labelledby="h-resellers">
+      <h2 id="h-resellers">Rivenditori</h2>
+      <p class="hint">Un rivenditore iscrive e gestisce i suoi clienti con la sua chiave API e li fattura lui: vede solo i suoi.</p>
+      {% for x in resellers %}
+      <div class="list-row">
+        <span>{{ x.name }} <span class="hint">{{ x.email }} · {{ x.customers }} {{ 'cliente' if x.customers == 1 else 'clienti' }}{% if x.discount_pct %} · sconto {{ x.discount_pct|num(0) }}%{% endif %}</span></span>
+        <span class="row">
+          {% if x.active %}<form class="inline" method="post" action="/admin/resellers/{{ x.id }}/key"><button class="btn sm" type="submit">Nuova chiave</button></form>{% else %}<span class="chip">Disattivato</span>{% endif %}
+          <form class="inline" method="post" action="/admin/resellers/{{ x.id }}/active"><input type="hidden" name="active" value="{{ '0' if x.active else '1' }}"><button class="btn sm" type="submit">{{ 'Disattiva' if x.active else 'Riattiva' }}</button></form>
+        </span>
+      </div>
+      {% endfor %}
+      <form method="post" action="/admin/resellers" class="form-grid">
+        <label class="field">Nome<input name="name" required maxlength="100"></label>
+        <label class="field">Email<input name="email" type="email" required></label>
+        <label class="field">Sconto (%)<input name="discount" inputmode="decimal" value="0"></label>
+        <div><button class="btn" type="submit">Aggiungi rivenditore</button></div>
+      </form>
+    </section>
+    <section class="card pad col-side" aria-labelledby="h-pay">
+      <h2 id="h-pay">Pagamenti</h2>
+      {% if online %}<p class="lead">Pagamenti online attivi (Mollie): il cliente sceglie il piano e paga dalla pagina Abbonamento; i rinnovi sono automatici.</p>
+      {% else %}<p class="lead">Pagamenti online non configurati: registra i bonifici da "Abbonamento" di ogni redazione. Per attivarli metti <code>EDITOR_MOLLIE_API_KEY</code> nel <code>.env</code>.</p>{% endif %}
+    </section>
+  </div>
+
+  <section class="card" id="piani" aria-labelledby="h-plans">
+    <div class="card-head"><h2 id="h-plans">Piani</h2><span class="hint">prezzi IVA esclusa</span></div>
+    <div class="pad">
+    {% for p in plans %}
+    <form method="post" action="/admin/plans/{{ p.code }}" class="form-grid" style="margin-bottom: 16px;">
+      <label class="field">Nome <span class="num">({{ p.code }})</span><input name="name" value="{{ p.name }}" required></label>
+      <label class="field">Al mese (€)<input name="price_month" inputmode="decimal" value="{{ '%.2f'|format(p.price_month_cents / 100) if p.price_month_cents is not none else '' }}"></label>
+      <label class="field">All'anno (€)<input name="price_year" inputmode="decimal" value="{{ '%.2f'|format(p.price_year_cents / 100) if p.price_year_cents is not none else '' }}"></label>
+      <label class="field">Giorni di prova<input name="trial_days" inputmode="numeric" value="{{ p.trial_days }}"></label>
+      <label class="field">Siti<input name="max_sites" inputmode="numeric" value="{{ p.max_sites if p.max_sites is not none else '' }}"></label>
+      <label class="field">Lingue per sito<input name="max_languages" inputmode="numeric" value="{{ p.max_languages if p.max_languages is not none else '' }}"></label>
+      <label class="field">Fonti attive<input name="max_active_sources" inputmode="numeric" value="{{ p.max_active_sources if p.max_active_sources is not none else '' }}"></label>
+      <label class="field">Notizie al giorno<input name="max_items_per_day" inputmode="numeric" value="{{ p.max_items_per_day if p.max_items_per_day is not none else '' }}"></label>
+      <label class="field">Articoli al mese<input name="max_drafts_month" inputmode="numeric" value="{{ p.max_drafts_month if p.max_drafts_month is not none else '' }}"></label>
+      <label class="field">Descrizione<input name="description" value="{{ p.description }}"></label>
+      <label class="field">Sul sito<select name="public"><option value="1" {% if p.public %}selected{% endif %}>Sì</option><option value="0" {% if not p.public %}selected{% endif %}>No</option></select></label>
+      <div><button class="btn" type="submit">Salva</button></div>
+    </form>
+    {% endfor %}
+    <p class="hint">Il sito pubblico legge i piani da <code>/api/public/plans</code>. Il piano "Prova" è quello di chi si iscrive.</p>
+    </div>
   </section>
 
   <div class="cols">

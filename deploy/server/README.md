@@ -143,6 +143,51 @@ Requirements: Docker with the compose plugin, and this repository.
   `max_drafts_month` and `max_llm_cost_month` (euro; it is also the
   newsroom's budget in the Core).
 
+## Selling: plans, trial, payments, resellers
+
+The public site (or a reseller) signs customers up through the same API;
+the newsroom starts on the trial plan and stops by itself when the trial
+ends without a payment. Its data stay, and its owner can still sign in to
+`/account` to choose a plan and pay.
+
+- **Plans** live in the console (`/admin` → Piani): prices without VAT,
+  trial days, limits. The public site reads them, without a key, from
+  `GET /api/public/plans`.
+- **Signup** from the site:
+
+      curl -X POST https://editor.example.com/api/operator/signup \
+        -H "Authorization: Bearer edo_..." -H "Content-Type: application/json" \
+        -d '{"external_ref": "web-123", "newsroom": "Rossi News",
+             "customer": {"kind": "company", "name": "Rossi Media srl", "email": "amministrazione@rossi.it",
+                          "vat_number": "01234567890", "address": "Via Roma 1", "postal_code": "00100",
+                          "city": "Roma", "province": "RM", "country": "IT", "sdi_code": "ABC1234"}}'
+
+  It answers 201 with the customer, the newsroom, its subscription
+  (`trialing`, 7 days) and the owner's invite; the same `external_ref`
+  again answers 200 and changes nothing. VAT number, tax code, SDI code
+  and PEC are checked.
+- **Customers**: `GET /api/operator/customers[?external_ref=...]`,
+  `GET` and `PATCH /api/operator/customers/{id}`.
+- **Plan of a newsroom**: `GET` and `PUT /api/operator/tenants/{id}/subscription`
+  (`plan`, `interval` month or year, `paid_until`, and `amount_cents` to
+  record a payment received by bank transfer), `POST .../cancel`.
+- **Online payments** (Mollie): set `EDITOR_MOLLIE_API_KEY` in `.env`
+  (a `test_` key first) and `EDITOR_PUBLIC_URL`. The owner chooses the
+  plan in `/account` and pays; the first payment also authorises the
+  renewals, which Mollie charges by itself. Mollie notifies
+  `https://<EDITOR_PUBLIC_URL>/api/billing/mollie/webhook`, which must be
+  reachable from the internet. `POST /api/operator/tenants/{id}/checkout`
+  gives the payment address to the public site instead. Without a key,
+  plans are paid by bank transfer and recorded from the console.
+- **What happens by itself** (every hour, in the worker): an email to the
+  owner two days before the trial ends; the hold when the trial ends, or
+  three days after a paid period ends without a renewal.
+- **Resellers** (`/admin` → Rivenditori, or `POST /api/operator/resellers`):
+  each one gets an API key bound to it. With that key it signs up and
+  manages its own customers only, sets their plan with `PUT .../subscription`
+  and bills them itself (no trial expiry unless it sets `paid_until`); it
+  cannot see other customers, create resellers or change limits directly.
+
 ## HTTPS
 
 A reverse proxy on the same machine, for example Caddy

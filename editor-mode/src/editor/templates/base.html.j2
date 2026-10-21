@@ -48,6 +48,14 @@
   <small class="hint" style="font-size: 11px; padding: 0 10px; overflow-wrap: anywhere;">{% if version %}EuLLM Editor {{ version }}{% endif %}{% if model %}<br>Modello: {{ model }}{% endif %}</small>
 </nav>
 <main class="main">
+  {% if plan_state and plan_state.status in ('trialing', 'past_due', 'canceled') %}
+  <p class="notice" role="status" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+    <span>{% if plan_state.status == 'trialing' %}Prova gratuita: {{ plan_state.days_left }} {{ 'giorno rimasto' if plan_state.days_left == 1 else 'giorni rimasti' }}.
+    {% elif plan_state.status == 'past_due' %}L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.
+    {% else %}Abbonamento disdetto: la redazione si ferma {% if plan_state.current_period_end %}il {{ plan_state.current_period_end.strftime('%d/%m') }}{% else %}a fine periodo{% endif %}.{% endif %}</span>
+    <a href="/account">{{ 'Scegli il piano' if plan_state.status != 'past_due' else 'Vedi l\'abbonamento' }}</a>
+  </p>
+  {% endif %}
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
   {% block main %}{% endblock %}
 </main>

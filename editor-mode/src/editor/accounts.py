@@ -437,28 +437,37 @@ def create_first_admin(admin, email: str, password: str, name: str = "") -> int 
 
 # --- operator API keys ---------------------------------------------------------------
 
-def create_operator_token(admin, name: str) -> str:
+def create_operator_token(admin, name: str, reseller_id: int | None = None) -> str:
+    """An API key for the billing system (or the public site); bound to a
+    reseller, it sees and changes only that reseller's customers."""
     name = name.strip()[:100]
     if not name:
         raise AccountError("serve un nome")
     token = "edo_" + secrets.token_urlsafe(32)
     with admin.engine.begin() as conn:
-        conn.execute(insert(m.operator_tokens).values(name=name, token_sha256=digest(token)))
+        conn.execute(insert(m.operator_tokens).values(name=name, token_sha256=digest(token), reseller_id=reseller_id))
     return token
 
 
-def resolve_operator_token(admin, token: str | None) -> str | None:
+def operator_key(admin, token: str | None):
+    """The key's name and reseller (None: the operator's own key)."""
     if not token or not token.startswith("edo_"):
         return None
     o = m.operator_tokens
     with _read(admin) as conn:
-        return conn.execute(select(o.c.name).where(o.c.token_sha256 == digest(token), o.c.revoked_at.is_(None))).scalar()
+        return conn.execute(select(o.c.name, o.c.reseller_id)
+                            .where(o.c.token_sha256 == digest(token), o.c.revoked_at.is_(None))).first()
+
+
+def resolve_operator_token(admin, token: str | None) -> str | None:
+    key = operator_key(admin, token)
+    return key.name if key is not None else None
 
 
 def operator_tokens(admin) -> list:
     o = m.operator_tokens
     with _read(admin) as conn:
-        return conn.execute(select(o.c.id, o.c.name, o.c.created_at, o.c.revoked_at)
+        return conn.execute(select(o.c.id, o.c.name, o.c.created_at, o.c.revoked_at, o.c.reseller_id)
                             .order_by(o.c.revoked_at.is_not(None), o.c.created_at)).all()
 
 

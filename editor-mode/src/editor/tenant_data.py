@@ -35,9 +35,10 @@ DELETE_ORDER = [
     "tenants",
 ]
 
-# Who belongs to the tenant, their sessions and invites: owner connection
-# only (accounts.py), never exported, deleted with the tenant row.
-ACCOUNT_TABLES = ("memberships", "sessions", "invites")
+# Who belongs to the tenant, their sessions and invites, its subscription:
+# owner connection only (accounts.py, billing.py), never exported, deleted
+# with the tenant row. Its payments stay, without the tenant, for the books.
+ACCOUNT_TABLES = ("memberships", "sessions", "invites", "subscriptions", "payments")
 
 # Never exported: what would let someone act as the tenant.
 WITHHELD = {"access_tokens": {"token_sha256"}, "secrets": {"ciphertext", "key_id"}}

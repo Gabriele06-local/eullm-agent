@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import bindparam, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
+from . import accounts, auth, billing, drafts, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -151,7 +151,9 @@ def register(app, ctx) -> None:
     def to_login(request: Request, exc: LoginRequired):
         # An operator signed in outside any newsroom works from the console.
         s = accounts.resolve_session(admin, request.cookies.get(COOKIE))
-        return RedirectResponse("/admin" if s is not None and s.operator else "/login", status_code=303)
+        # A person whose newsroom is on hold for billing chooses a plan in /account.
+        to = "/login" if s is None else "/admin" if s.operator else "/account"
+        return RedirectResponse(to, status_code=303)
 
     def zone(s) -> ZoneInfo:
         tz = s.execute(select(m.tenants.c.timezone)).scalar()
@@ -185,6 +187,7 @@ def register(app, ctx) -> None:
         resp = pages.TemplateResponse(request, name, {
             "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
+            "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": DAYS, "months": MONTHS, **data,
         }, status_code=status_code)
         if notice:
@@ -216,7 +219,11 @@ def register(app, ctx) -> None:
         from where /editor or "Entra" opens a newsroom."""
         tenant = s.tenant_id
         if tenant is None and not s.operator:
-            tenant = next((x.tenant_id for x in accounts.memberships(admin, s.user_id) if x.active), None)
+            rooms = accounts.memberships(admin, s.user_id)
+            tenant = next((x.tenant_id for x in rooms if x.active), None)
+            if tenant is None and any(x.role == "owner" and billing.on_hold(admin, x.tenant_id) for x in rooms):
+                # Its trial or paid period ended: the owner can still choose a plan.
+                return signed_in(request, accounts.start_session(admin, s.user_id, None), "/account")
         if tenant is None and not s.operator:
             return login_form(request, "Il tuo account non è in nessuna redazione attiva: chiedi un invito.", 403)
         token = accounts.start_session(admin, s.user_id, tenant)
@@ -418,12 +425,50 @@ def register(app, ctx) -> None:
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs) + len(stopped)
-            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site),
+            guide = first_steps(s, sites, lines)
+            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), guide=guide,
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
                           proposed=proposed, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
+
+    def first_steps(s, sites, lines) -> list[dict] | None:
+        """The way from a domain to the first article, step by step, with
+        what the newsroom is waiting for; None once every step is done."""
+        def count(table, *where):
+            return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
+        working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
+        steps = [
+            {"title": "Aggiungi il sito", "past": "Sito aggiunto", "done": bool(sites), "href": None,
+             "busy": "analysis" in working and not sites,
+             "wait": "Scansione del sito in corso: legge fino a 25 articoli, di solito pochi minuti.",
+             "todo": "Scrivi il dominio qui sotto: la redazione legge il sito e ne ricava temi, pubblico e tono."},
+            {"title": "Approva il profilo", "past": "Profilo approvato", "done": bool(lines), "href": "/site", "busy": "analysis" in working,
+             "wait": "Analisi in corso: il profilo da approvare arriva appena finisce.",
+             "todo": "Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva."},
+            {"title": "Attiva le fonti", "past": "Fonti attivate", "done": count(m.sources, m.sources.c.status == "active") > 0, "href": "/sources",
+             "busy": "discovery" in working, "wait": "Ricerca delle fonti in corso dopo l'approvazione del profilo.",
+             "todo": "Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi."},
+            {"title": "Raccogli le notizie", "past": "Notizie raccolte", "done": count(m.source_items) > 0, "href": "/trends", "busy": True,
+             "wait": "Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie.",
+             "todo": ""},
+            {"title": "Accetta una proposta", "past": "Proposta accettata", "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
+             "href": "/trends", "busy": not count(m.proposals, m.proposals.c.status == "proposed"),
+             "wait": "Le proposte arrivano ogni mattina all'ora del briefing, quando almeno due notizie parlano dello stesso tema.",
+             "todo": "Accetta le proposte che ti interessano e scarta le altre."},
+            {"title": "Rileggi la prima bozza", "past": "Prima bozza approvata", "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
+             "href": "/drafts", "busy": "draft" in working, "wait": "La bozza è in scrittura.",
+             "todo": "Su una proposta accettata premi \"Scrivi la bozza\", poi controlla fonti e controlli automatici e approvala."},
+            {"title": "Collega il sito per pubblicare", "past": "Sito collegato", "done": count(m.publish_targets) > 0, "href": "/publications",
+             "busy": False, "wait": "", "todo": "Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì."},
+        ]
+        if all(x["done"] for x in steps):
+            return None
+        current = next(i for i, x in enumerate(steps) if not x["done"])
+        for i, x in enumerate(steps):
+            x["current"] = i == current
+        return steps
 
     # --- Sito e profilo -------------------------------------------------------------
 
