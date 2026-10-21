@@ -144,7 +144,7 @@
       <div style="display: flex; flex-direction: column;">
         <span class="label-up" style="padding-bottom: 6px;">Temi · quota degli articoli letti che ne parlano, con articoli d'esempio</span>
         <div class="share head-row"><span>Tema</span><span>{% if draft and approved %}v{{ approved.version }}{% endif %}</span><span>{% if draft and approved %}v{{ draft.version }}{% else %}Quota{% endif %}</span><span>{% if draft and approved %}Andamento{% endif %}</span></div>
-        {% for r in rows %}
+        {% for r in rows if r.current or not comparison %}
         <div class="share">
           <span>{{ r.name }}{% if r.fresh %} <span class="chip blue">nuova</span>{% endif %}
             {% if r.keywords %}<small class="hint" style="display: block;">parole chiave: {{ r.keywords|join(', ') }}</small>{% endif %}
@@ -227,7 +227,7 @@
 {% endif %}
 {% endif %}
 
-{% if caller.can('owner') %}
+{% if caller.can('owner') and not site %}
 <section class="card pad" aria-labelledby="h-add">
   <h2 id="h-add">Aggiungi un dominio</h2>
   <form method="post" action="/ui/sites" class="form-grid">

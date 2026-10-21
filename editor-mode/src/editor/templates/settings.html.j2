@@ -45,6 +45,18 @@
   </section>
 </div>
 
+{% if caller.can('owner') %}
+<section class="card pad" aria-labelledby="h-sites">
+  <h2 id="h-sites">Siti della redazione</h2>
+  {% for x in sites %}<div class="list-row"><span>{{ x.domain }}</span><a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px;">Profilo</a></div>{% endfor %}
+  <form method="post" action="/ui/sites" class="form-grid">
+    <label class="field">Aggiungi un dominio<input name="domain" placeholder="esempio.it" required></label>
+    <div><button class="btn" type="submit">Analizza il sito</button></div>
+  </form>
+  <p class="hint">L'analisi parte in coda; quando finisce il profilo arriva da approvare in Sito e profilo.</p>
+</section>
+{% endif %}
+
 <section class="card pad" aria-labelledby="h-rec">
   <h2 id="h-rec">Chi riceve il briefing</h2>
   {% for r in recipients %}

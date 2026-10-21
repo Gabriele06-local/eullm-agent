@@ -389,8 +389,19 @@ async fn chat(
                 ApiError(StatusCode::BAD_GATEWAY, format!("model call failed: {e}"))
             }
         })?;
+    // The model that answered: the fallback when the first one failed.
+    let served_model = match &resp.served_by {
+        Some(s) => s.model.clone(),
+        None => st
+            .core
+            .router
+            .get(&body.model)
+            .map(|m| m.client.model().to_string())
+            .unwrap_or_else(|| body.model.clone()),
+    };
     Ok(Json(json!({
         "content": resp.content,
+        "served_model": served_model,
         "tool_calls": resp.tool_calls.iter().map(|c| json!({
             "id": c.id, "name": c.name, "arguments": c.arguments,
         })).collect::<Vec<_>>(),

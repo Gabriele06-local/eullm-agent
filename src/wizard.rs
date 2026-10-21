@@ -41,6 +41,7 @@ pub fn new_config(
         max_iterations: 20,
         system_prompt: default_system_prompt(),
         models: Default::default(),
+        fallback: None,
         profiles: Default::default(),
         policy_file: None,
         database: Some(local_database(config_path)),

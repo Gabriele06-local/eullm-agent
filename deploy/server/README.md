@@ -183,6 +183,21 @@ again, which writes only the missing files and changes nothing else.
 In a checkout of the sources (`deploy/server`) it is the same, with
 `git pull` first.
 
+## A spare model
+
+Free model services have rate limits and bad days. `fallback:` in
+`core.yaml` names a spare model the Core uses when the main one fails (an
+error, a rate limit, a timeout); a spare can have its own spare. The
+commented block in [core.example.yaml](core.example.yaml) has Mistral
+(European) and OpenRouter's free models. Uncomment it in `core.yaml`, put
+the keys in `.env` as `LLM_FALLBACK_API_KEY` and `LLM_FALLBACK2_API_KEY`,
+then `docker compose up -d`. The dashboard shows, bottom left, the model
+that answered last.
+
+A `compose.yaml` written before 0.7.7 does not pass those two keys to the
+Core: add them under `core:` → `environment:` as in
+[compose.yaml](compose.yaml).
+
 ## Day to day
 
 | What | Command |

@@ -30,6 +30,10 @@ pub struct Config {
     /// Extra named models for the Model Router; `default` is `provider`.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub models: BTreeMap<String, ModelConfig>,
+    /// Model of `models` tried when `provider` fails (an error, a rate
+    /// limit, a timeout); it can have its own fallback in turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fallback: Option<String>,
     /// Named run profiles (model, tools, budget); `default` is built from
     /// the top-level settings when not given.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -621,6 +625,11 @@ impl Config {
         }
         if self.models.contains_key("default") {
             bail!("models.default is reserved: it is the top-level provider");
+        }
+        if let Some(f) = &self.fallback {
+            if !self.models.contains_key(f) {
+                bail!("fallback refers to unknown model '{f}': add it under models");
+            }
         }
         for (name, m) in &self.models {
             if let Some(f) = &m.fallback {
