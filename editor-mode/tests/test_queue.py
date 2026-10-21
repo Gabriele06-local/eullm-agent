@@ -139,7 +139,6 @@ def test_two_workers_never_run_two_jobs_of_one_tenant(db, tenant):
     assert len(got) == 1
 
 
-@pytest.mark.postgres
 def test_an_inactive_tenants_work_waits(db, tenant):
     from conftest import set_plan
 
