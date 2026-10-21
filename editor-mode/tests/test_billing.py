@@ -345,6 +345,24 @@ def test_the_console_shows_customers_resellers_and_plans(db, admin):
     billing.save_plan(admin, "starter", {"price_month_cents": 4900, "price_year_cents": 49000, "max_drafts_month": 30})
 
 
+def test_a_paid_plan_chosen_on_the_site_waits_for_its_payment(db, admin):
+    c, sent = client(db)
+    r = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it", plan="pro", interval="year", language="de")
+    assert r.status_code == 201, r.text
+    out = r.json()
+    sub = out["subscription"]
+    # A trial, not the paid plan: that starts with its payment.
+    assert sub["status"] == "trialing" and sub["plan_code"] == "trial"
+    assert sub["desired_plan"] == "pro" and sub["desired_interval"] == "year"
+    assert out["tenant"]["language"] == "de"
+    # Paid by bank transfer: the wish is now the plan.
+    tid = out["tenant"]["tenant_id"]
+    r = c.put(f"/api/operator/tenants/{tid}/subscription", json={"plan": "pro", "amount_cents": 149000, "interval": "year"},
+              headers=key(db))
+    assert r.status_code == 200, r.text
+    assert r.json()["plan_code"] == "pro" and r.json()["status"] == "active" and r.json()["desired_plan"] is None
+
+
 def test_the_billing_data_of_a_newsroom_that_does_not_exist_are_refused(db, admin):
     c, _ = client(db)
     accounts.create_user(Database.from_url(db.admin_url), "op@example.com", "Operatore",

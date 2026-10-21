@@ -1,0 +1,1166 @@
+{
+ "\"Approva\" rende attiva la proposta; \"Mantieni\" la scarta e resta la v{version}. Sotto trovi il profilo proposto per intero.": {
+  "de": "„Freigeben“ aktiviert den Vorschlag; „Behalten“ verwirft ihn und v{version} bleibt. Darunter finden Sie das vollständige vorgeschlagene Profil.",
+  "en": "\"Approve\" makes the proposal active; \"Keep\" discards it and v{version} stays. The full proposed profile is below.",
+  "es": "\"Aprobar\" activa la propuesta; \"Mantener\" la descarta y se queda la v{version}. Debajo tienes el perfil propuesto completo.",
+  "fr": "« Approuver » active la proposition ; « Garder » l'écarte et la v{version} reste. Le profil proposé complet figure ci-dessous."
+ },
+ ", circa {n} articoli a settimana": {
+  "de": ", etwa {n} Artikel pro Woche",
+  "en": ", about {n} articles a week",
+  "es": ", unos {n} artículos a la semana",
+  "fr": ", environ {n} articles par semaine"
+ },
+ ", circa {n} parole": {
+  "de": ", etwa {n} Wörter",
+  "en": ", about {n} words",
+  "es": ", unas {n} palabras",
+  "fr": ", environ {n} mots"
+ },
+ ", con le fonti citate. Nulla si pubblica senza il tuo sì.": {
+  "de": ", mit zitierten Quellen. Nichts wird ohne Ihr Ja veröffentlicht.",
+  "en": ", with sources cited. Nothing is published without your yes.",
+  "es": ", con las fuentes citadas. No se publica nada sin tu sí.",
+  "fr": ", avec les sources citées. Rien n'est publié sans votre accord."
+ },
+ ", scartando {terms}": {
+  "de": ", ohne {terms}",
+  "en": ", discarding {terms}",
+  "es": ", descartando {terms}",
+  "fr": ", en écartant {terms}"
+ },
+ ", soprattutto su {topics}": {
+  "de": ", vor allem zu {topics}",
+  "en": ", mostly on {topics}",
+  "es": ", sobre todo sobre {topics}",
+  "fr": ", surtout sur {topics}"
+ },
+ ", tono {tone}": {
+  "de": ", Ton {tone}",
+  "en": ", tone {tone}",
+  "es": ", tono {tone}",
+  "fr": ", ton {tone}"
+ },
+ "<strong>cerca le fonti</strong> che scrivono di {topics}, in tre modi: le testate che gli articoli del sito già citano, ricerche con le parole chiave dei temi (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per questi temi. Ogni fonte è letta e valutata prima di essere usata; in Fonti vedi da dove arriva ciascuna;": {
+  "de": "<strong>sucht der Agent Quellen</strong>, die über {topics} schreiben, auf drei Wegen: Medien, die die Artikel der Website bereits zitieren, Suchen mit den Schlüsselwörtern der Themen (Hacker News, GitHub, Hugging Face, arXiv) und Medien, die das Modell für diese Themen nennt. Jede Quelle wird vor der Nutzung gelesen und bewertet; unter Quellen sehen Sie, woher jede stammt;",
+  "en": "<strong>finds sources</strong> writing about {topics}, in three ways: the outlets the site's articles already cite, searches with the topics' keywords (Hacker News, GitHub, Hugging Face, arXiv) and the outlets the model suggests for these topics. Every source is read and assessed before it is used; in Sources you can see where each one comes from;",
+  "es": "<strong>busca las fuentes</strong> que escriben sobre {topics}, de tres formas: los medios que los artículos del sitio ya citan, búsquedas con las palabras clave de los temas (Hacker News, GitHub, Hugging Face, arXiv) y los medios que el modelo indica para estos temas. Cada fuente se lee y se evalúa antes de usarse; en Fuentes ves de dónde viene cada una;",
+  "fr": "<strong>cherche les sources</strong> qui écrivent sur {topics}, de trois façons : les médias que les articles du site citent déjà, des recherches avec les mots-clés des thèmes (Hacker News, GitHub, Hugging Face, arXiv) et les médias que le modèle indique pour ces thèmes. Chaque source est lue et évaluée avant d'être utilisée ; dans Sources, vous voyez d'où vient chacune ;"
+ },
+ "<strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;": {
+  "de": "<strong>misst er Trends</strong> mit zwei getrennten Bewertungen: Hype, wie viel darüber gesprochen wird, und Chance, wie nah das Thema an der Website ist und wie wenig Sie es schon behandelt haben;",
+  "en": "<strong>measures trends</strong> with two separate scores: Hype, how much it is being talked about, and Opportunity, how close the topic is to the site and how far you have not covered it yet;",
+  "es": "<strong>mide las tendencias</strong> con dos puntuaciones separadas: Hype, cuánto se habla del tema, y Oportunidad, cuánto se acerca el tema al sitio y cuánto no lo habéis cubierto aún;",
+  "fr": "<strong>mesure les tendances</strong> avec deux scores distincts : Buzz, à quel point on en parle, et Opportunité, à quel point le thème est proche du site et pas encore couvert par vous ;"
+ },
+ "<strong>propone {n} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;": {
+  "de": "<strong>schlägt er {n} Artikel pro Tag</strong> im Plan vor, mit Quellen; Sie entscheiden, welche geschrieben werden;",
+  "en": "<strong>proposes {n} articles a day</strong> in the plan, with sources; you decide which to write;",
+  "es": "<strong>propone {n} artículos al día</strong> en el plan, con las fuentes; tú decides cuáles escribir;",
+  "fr": "<strong>propose {n} articles par jour</strong> dans le plan, avec les sources ; vous décidez lesquels écrire ;"
+ },
+ "<strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {pct}%)": {
+  "de": "<strong>sammelt er stündlich Meldungen</strong> und behält die, die den Themen nahe sind (Relevanz mindestens {pct}%)",
+  "en": "<strong>collects news</strong> every hour and keeps the items close to the topics (relevance at least {pct}%)",
+  "es": "<strong>recopila las noticias</strong> cada hora y se queda con las cercanas a los temas (pertinencia mínima del {pct}%)",
+  "fr": "<strong>collecte l'actualité</strong> toutes les heures et garde les articles proches des thèmes (pertinence d'au moins {pct}%)"
+ },
+ "<strong>scrive le bozze</strong> in {language}": {
+  "de": "<strong>schreibt er Entwürfe</strong> auf {language}",
+  "en": "<strong>writes drafts</strong> in {language}",
+  "es": "<strong>escribe los borradores</strong> en {language}",
+  "fr": "<strong>rédige les brouillons</strong> en {language}"
+ },
+ "Abbonamento e fatturazione": {
+  "de": "Abonnement und Abrechnung",
+  "en": "Subscription and billing",
+  "es": "Suscripción y facturación",
+  "fr": "Abonnement et facturation"
+ },
+ "Account": {
+  "de": "Konto",
+  "en": "Account",
+  "es": "Cuenta",
+  "fr": "Compte"
+ },
+ "Aggiungi": {
+  "de": "Hinzufügen",
+  "en": "Add",
+  "es": "Añadir",
+  "fr": "Ajouter"
+ },
+ "Aggiungi un dominio": {
+  "de": "Domain hinzufügen",
+  "en": "Add a domain",
+  "es": "Añadir un dominio",
+  "fr": "Ajouter un domaine"
+ },
+ "Analisi": {
+  "de": "Analyse",
+  "en": "Analysis",
+  "es": "Análisis",
+  "fr": "Analyse"
+ },
+ "Analisi completa": {
+  "de": "Analyse vollständig",
+  "en": "Analysis complete",
+  "es": "Análisis completo",
+  "fr": "Analyse complète"
+ },
+ "Analisi fallita": {
+  "de": "Analyse fehlgeschlagen",
+  "en": "Analysis failed",
+  "es": "Análisis fallido",
+  "fr": "Échec de l'analyse"
+ },
+ "Analisi parziale": {
+  "de": "Teilweise Analyse",
+  "en": "Partial analysis",
+  "es": "Análisis parcial",
+  "fr": "Analyse partielle"
+ },
+ "Analizza il sito": {
+  "de": "Website analysieren",
+  "en": "Analyse the site",
+  "es": "Analizar el sitio",
+  "fr": "Analyser le site"
+ },
+ "Andamento": {
+  "de": "Entwicklung",
+  "en": "Trend",
+  "es": "Evolución",
+  "fr": "Évolution"
+ },
+ "Annulla": {
+  "de": "Abbrechen",
+  "en": "Cancel",
+  "es": "Cancelar",
+  "fr": "Annuler"
+ },
+ "Approva comunque": {
+  "de": "Trotzdem freigeben",
+  "en": "Approve anyway",
+  "es": "Aprobar de todos modos",
+  "fr": "Approuver quand même"
+ },
+ "Approva la v{version}": {
+  "de": "v{version} freigeben",
+  "en": "Approve v{version}",
+  "es": "Aprobar la v{version}",
+  "fr": "Approuver la v{version}"
+ },
+ "Approvare vuol dire: &quot;questa è la mia linea&quot;. Da qui l'agente:": {
+  "de": "Freigeben heißt: &quot;Das ist meine Linie&quot;. Ab dann:",
+  "en": "Approving means: &quot;this is my line&quot;. From then on the agent:",
+  "es": "Aprobar significa: &quot;esta es mi línea&quot;. A partir de ahí el agente:",
+  "fr": "Approuver signifie : &quot;c'est ma ligne&quot;. À partir de là, l'agent :"
+ },
+ "Approvata": {
+  "de": "Freigegeben",
+  "en": "Approved",
+  "es": "Aprobada",
+  "fr": "Approuvée"
+ },
+ "Approvato da {who} il {date}": {
+  "de": "Freigegeben von {who} am {date}",
+  "en": "Approved by {who} on {date}",
+  "es": "Aprobado por {who} el {date}",
+  "fr": "Approuvé par {who} le {date}"
+ },
+ "Attivo": {
+  "de": "Aktiv",
+  "en": "Active",
+  "es": "Activo",
+  "fr": "Actif"
+ },
+ "Azioni": {
+  "de": "Aktionen",
+  "en": "Actions",
+  "es": "Acciones",
+  "fr": "Actions"
+ },
+ "Bozza": {
+  "de": "Entwurf",
+  "en": "Draft",
+  "es": "Borrador",
+  "fr": "Brouillon"
+ },
+ "Bozze nel mese": {
+  "de": "Entwürfe im Monat",
+  "en": "Drafts this month",
+  "es": "Borradores del mes",
+  "fr": "Brouillons du mois"
+ },
+ "Briefing": {
+  "de": "Briefing",
+  "en": "Briefing",
+  "es": "Resumen diario",
+  "fr": "Briefing"
+ },
+ "Cambia": {
+  "de": "Ändern",
+  "en": "Change",
+  "es": "Cambiar",
+  "fr": "Modifier"
+ },
+ "Canale": {
+  "de": "Kanal",
+  "en": "Channel",
+  "es": "Canal",
+  "fr": "Canal"
+ },
+ "Canale Telegram": {
+  "de": "Telegram-Kanal",
+  "en": "Telegram channel",
+  "es": "Canal de Telegram",
+  "fr": "Canal Telegram"
+ },
+ "Chi riceve il briefing": {
+  "de": "Wer das Briefing erhält",
+  "en": "Who receives the briefing",
+  "es": "Quién recibe el resumen diario",
+  "fr": "Qui reçoit le briefing"
+ },
+ "Copialo adesso: non verrà più mostrato.": {
+  "de": "Kopieren Sie ihn jetzt: Er wird nicht mehr angezeigt.",
+  "en": "Copy it now: it will not be shown again.",
+  "es": "Cópialo ahora: no se volverá a mostrar.",
+  "fr": "Copiez-le maintenant : il ne sera plus affiché."
+ },
+ "Cosa": {
+  "de": "Was",
+  "en": "What",
+  "es": "Qué",
+  "fr": "Quoi"
+ },
+ "Cosa cambia rispetto alla v{version} approvata": {
+  "de": "Was sich gegenüber der freigegebenen v{version} ändert",
+  "en": "What changes compared with the approved v{version}",
+  "es": "Qué cambia respecto a la v{version} aprobada",
+  "fr": "Ce qui change par rapport à la v{version} approuvée"
+ },
+ "Costo modello nel mese": {
+  "de": "Modellkosten im Monat",
+  "en": "Model cost this month",
+  "es": "Coste del modelo del mes",
+  "fr": "Coût du modèle du mois"
+ },
+ "Crea token": {
+  "de": "Token erstellen",
+  "en": "Create token",
+  "es": "Crear token",
+  "fr": "Créer un jeton"
+ },
+ "Creato": {
+  "de": "Erstellt",
+  "en": "Created",
+  "es": "Creado",
+  "fr": "Créé"
+ },
+ "Da": {
+  "de": "Seit",
+  "en": "Since",
+  "es": "Desde",
+  "fr": "Depuis"
+ },
+ "Dalla rianalisi del {date}. L'agente propone, la linea cambia solo se approvi.": {
+  "de": "Aus der Neuanalyse vom {date}. Der Agent schlägt vor, die Linie ändert sich nur mit Ihrer Freigabe.",
+  "en": "From the re-analysis of {date}. The agent proposes; the line only changes if you approve.",
+  "es": "Del nuevo análisis del {date}. El agente propone; la línea solo cambia si apruebas.",
+  "fr": "Issue de la réanalyse du {date}. L'agent propose, la ligne ne change que si vous approuvez."
+ },
+ "Dati insufficienti": {
+  "de": "Zu wenige Daten",
+  "en": "Not enough data",
+  "es": "Datos insuficientes",
+  "fr": "Données insuffisantes"
+ },
+ "Decisione": {
+  "de": "Entscheidung",
+  "en": "Decision",
+  "es": "Decisión",
+  "fr": "Décision"
+ },
+ "Descrizione della linea": {
+  "de": "Beschreibung der Linie",
+  "en": "Description of the line",
+  "es": "Descripción de la línea",
+  "fr": "Description de la ligne"
+ },
+ "Dominio": {
+  "de": "Domain",
+  "en": "Domain",
+  "es": "Dominio",
+  "fr": "Domaine"
+ },
+ "Editor": {
+  "de": "Redakteur",
+  "en": "Editor",
+  "es": "Editor",
+  "fr": "Éditeur"
+ },
+ "Elimina": {
+  "de": "Löschen",
+  "en": "Delete",
+  "es": "Eliminar",
+  "fr": "Supprimer"
+ },
+ "Eliminare la v{version}? Non si può annullare.": {
+  "de": "v{version} löschen? Das kann nicht rückgängig gemacht werden.",
+  "en": "Delete v{version}? This cannot be undone.",
+  "es": "¿Eliminar la v{version}? No se puede deshacer.",
+  "fr": "Supprimer la v{version} ? Cette action est irréversible."
+ },
+ "Email": {
+  "de": "E-Mail",
+  "en": "Email",
+  "es": "Correo electrónico",
+  "fr": "E-mail"
+ },
+ "Fonti attive": {
+  "de": "Aktive Quellen",
+  "en": "Active sources",
+  "es": "Fuentes activas",
+  "fr": "Sources actives"
+ },
+ "Fuso orario": {
+  "de": "Zeitzone",
+  "en": "Time zone",
+  "es": "Zona horaria",
+  "fr": "Fuseau horaire"
+ },
+ "Giro orario": {
+  "de": "Stündlicher Durchlauf",
+  "en": "Hourly run",
+  "es": "Ronda horaria",
+  "fr": "Passage horaire"
+ },
+ "I tuoi dati": {
+  "de": "Ihre Daten",
+  "en": "Your data",
+  "es": "Tus datos",
+  "fr": "Vos données"
+ },
+ "Il piano lo imposta chi gestisce il servizio. Quando un limite è raggiunto l'agente si ferma su quella voce e te lo dice, senza costi a sorpresa.": {
+  "de": "Der Tarif wird vom Betreiber des Dienstes festgelegt. Ist ein Limit erreicht, hält der Agent bei diesem Punkt an und sagt es Ihnen, ohne überraschende Kosten.",
+  "en": "The plan is set by whoever runs the service. When a limit is reached the agent stops on that item and tells you, with no surprise costs.",
+  "es": "El plan lo fija quien gestiona el servicio. Cuando se alcanza un límite, el agente se detiene en ese punto y te avisa, sin costes sorpresa.",
+  "fr": "L'offre est définie par le gestionnaire du service. Quand une limite est atteinte, l'agent s'arrête sur ce poste et vous prévient, sans coûts surprises."
+ },
+ "Impostazioni": {
+  "de": "Einstellungen",
+  "en": "Settings",
+  "es": "Ajustes",
+  "fr": "Paramètres"
+ },
+ "In attesa": {
+  "de": "Ausstehend",
+  "en": "Pending",
+  "es": "Pendiente",
+  "fr": "En attente"
+ },
+ "Indirizzo o chat id": {
+  "de": "Adresse oder Chat-ID",
+  "en": "Address or chat id",
+  "es": "Dirección o chat id",
+  "fr": "Adresse ou ID de chat"
+ },
+ "Invita": {
+  "de": "Einladen",
+  "en": "Invite",
+  "es": "Invitar",
+  "fr": "Inviter"
+ },
+ "Invitato": {
+  "de": "Eingeladen",
+  "en": "Invited",
+  "es": "Invitado",
+  "fr": "Invité"
+ },
+ "Invito non ancora accettato": {
+  "de": "Einladung noch nicht angenommen",
+  "en": "Invitation not yet accepted",
+  "es": "Invitación aún no aceptada",
+  "fr": "Invitation pas encore acceptée"
+ },
+ "Invito per {email}": {
+  "de": "Einladung für {email}",
+  "en": "Invitation for {email}",
+  "es": "Invitación para {email}",
+  "fr": "Invitation pour {email}"
+ },
+ "L'analisi del sito non ha ancora prodotto un profilo. Torna tra poco o rianalizza.": {
+  "de": "Die Analyse der Website hat noch kein Profil ergeben. Schauen Sie gleich wieder vorbei oder analysieren Sie neu.",
+  "en": "The site analysis has not produced a profile yet. Come back shortly or re-analyse.",
+  "es": "El análisis del sitio aún no ha generado un perfil. Vuelve en un rato o vuelve a analizar.",
+  "fr": "L'analyse du site n'a pas encore produit de profil. Revenez dans un instant ou réanalysez."
+ },
+ "L'analisi parte in coda; quando finisce il profilo arriva da approvare in Sito e profilo.": {
+  "de": "Die Analyse wird eingereiht; danach wartet das Profil unter Website und Profil auf Ihre Freigabe.",
+  "en": "The analysis is queued; when it finishes, the profile is waiting for approval in Site and profile.",
+  "es": "El análisis entra en cola; cuando termina, el perfil queda pendiente de aprobación en Sitio y perfil.",
+  "fr": "L'analyse est mise en file d'attente ; une fois terminée, le profil est à approuver dans Site et profil."
+ },
+ "L'invito è partito per email. Il link vale 7 giorni.": {
+  "de": "Die Einladung wurde per E-Mail verschickt. Der Link ist 7 Tage gültig.",
+  "en": "The invitation was sent by email. The link is valid for 7 days.",
+  "es": "La invitación se ha enviado por correo. El enlace vale 7 días.",
+  "fr": "L'invitation a été envoyée par e-mail. Le lien est valable 7 jours."
+ },
+ "La linea editoriale di {domain}": {
+  "de": "Die redaktionelle Linie von {domain}",
+  "en": "The editorial line of {domain}",
+  "es": "La línea editorial de {domain}",
+  "fr": "La ligne éditoriale de {domain}"
+ },
+ "Lavori in coda, in corso o non riusciti": {
+  "de": "Aufgaben in der Warteschlange, laufend oder fehlgeschlagen",
+  "en": "Jobs queued, running or failed",
+  "es": "Tareas en cola, en curso o fallidas",
+  "fr": "Tâches en attente, en cours ou échouées"
+ },
+ "Le cambia chi gestisce il servizio.": {
+  "de": "Sie werden vom Betreiber des Dienstes geändert.",
+  "en": "They are changed by whoever runs the service.",
+  "es": "Las cambia quien gestiona el servicio.",
+  "fr": "Elles sont modifiées par le gestionnaire du service."
+ },
+ "Le modifiche diventano una nuova versione in bozza: la linea cambia solo quando la approvi.": {
+  "de": "Ihre Änderungen werden zu einer neuen Entwurfsversion: Die Linie ändert sich erst, wenn Sie sie freigeben.",
+  "en": "Your changes become a new draft version: the line only changes once you approve it.",
+  "es": "Los cambios se convierten en una nueva versión en borrador: la línea solo cambia cuando la apruebas.",
+  "fr": "Vos modifications deviennent une nouvelle version en brouillon : la ligne ne change que lorsque vous l'approuvez."
+ },
+ "Lettura": {
+  "de": "Nur Lesen",
+  "en": "Read-only",
+  "es": "Solo lectura",
+  "fr": "Lecture seule"
+ },
+ "Lingua": {
+  "de": "Sprache",
+  "en": "Language",
+  "es": "Idioma",
+  "fr": "Langue"
+ },
+ "Lingua: {language}": {
+  "de": "Sprache: {language}",
+  "en": "Language: {language}",
+  "es": "Idioma: {language}",
+  "fr": "Langue : {language}"
+ },
+ "Lingue": {
+  "de": "Sprachen",
+  "en": "Languages",
+  "es": "Idiomas",
+  "fr": "Langues"
+ },
+ "Lingue:": {
+  "de": "Sprachen:",
+  "en": "Languages:",
+  "es": "Idiomas:",
+  "fr": "Langues :"
+ },
+ "Mandagli questo link: vale 7 giorni e si usa una volta.": {
+  "de": "Schicken Sie diesen Link: Er ist 7 Tage gültig und einmal verwendbar.",
+  "en": "Send them this link: it is valid for 7 days and works once.",
+  "es": "Envíale este enlace: vale 7 días y se usa una sola vez.",
+  "fr": "Envoyez-lui ce lien : il est valable 7 jours et ne sert qu'une fois."
+ },
+ "Mantieni la v{version}": {
+  "de": "v{version} behalten",
+  "en": "Keep v{version}",
+  "es": "Mantener la v{version}",
+  "fr": "Garder la v{version}"
+ },
+ "Manutenzione fonti": {
+  "de": "Quellenpflege",
+  "en": "Source maintenance",
+  "es": "Mantenimiento de fuentes",
+  "fr": "Maintenance des sources"
+ },
+ "Modifica": {
+  "de": "Bearbeiten",
+  "en": "Edit",
+  "es": "Editar",
+  "fr": "Modifier"
+ },
+ "Modifica del {date}. L'agente propone, la linea cambia solo se approvi.": {
+  "de": "Änderung vom {date}. Der Agent schlägt vor, die Linie ändert sich nur mit Ihrer Freigabe.",
+  "en": "Edit of {date}. The agent proposes; the line only changes if you approve.",
+  "es": "Edición del {date}. El agente propone; la línea solo cambia si apruebas.",
+  "fr": "Modification du {date}. L'agent propose, la ligne ne change que si vous approuvez."
+ },
+ "Modifica il profilo": {
+  "de": "Profil bearbeiten",
+  "en": "Edit the profile",
+  "es": "Editar el perfil",
+  "fr": "Modifier le profil"
+ },
+ "Modifica manuale": {
+  "de": "Manuelle Änderung",
+  "en": "Manual edit",
+  "es": "Edición manual",
+  "fr": "Modification manuelle"
+ },
+ "Nella versione precedente erano parole chiave presenti su quasi tutte le pagine del sito (per questo vicine al 100%): descrivono il sito nel suo insieme, non di cosa parlano gli articoli. Ora restano tra le parole chiave del sito e i temi sono misurati sugli articoli.": {
+  "de": "In der vorherigen Version waren es Schlüsselwörter, die auf fast allen Seiten der Website stehen (daher nahe 100%): Sie beschreiben die Website als Ganzes, nicht, worüber die Artikel schreiben. Jetzt bleiben sie bei den Schlüsselwörtern der Website und die Themen werden an den Artikeln gemessen.",
+  "en": "In the previous version they were keywords found on almost every page of the site (hence close to 100%): they describe the site as a whole, not what the articles are about. They now stay among the site's keywords and topics are measured on the articles.",
+  "es": "En la versión anterior eran palabras clave presentes en casi todas las páginas del sitio (por eso cercanas al 100%): describen el sitio en su conjunto, no de qué hablan los artículos. Ahora se quedan entre las palabras clave del sitio y los temas se miden sobre los artículos.",
+  "fr": "Dans la version précédente, c'étaient des mots-clés présents sur presque toutes les pages du site (d'où une valeur proche de 100%) : ils décrivent le site dans son ensemble, pas le sujet des articles. Ils restent désormais parmi les mots-clés du site et les thèmes sont mesurés sur les articles."
+ },
+ "Nessun dato d'uso disponibile.": {
+  "de": "Keine Nutzungsdaten verfügbar.",
+  "en": "No usage data available.",
+  "es": "No hay datos de uso disponibles.",
+  "fr": "Aucune donnée d'utilisation disponible."
+ },
+ "Nessun destinatario: il briefing si prepara ma non parte.": {
+  "de": "Keine Empfänger: Das Briefing wird erstellt, aber nicht versendet.",
+  "en": "No recipients: the briefing is prepared but not sent.",
+  "es": "Sin destinatarios: el resumen diario se prepara pero no se envía.",
+  "fr": "Aucun destinataire : le briefing est préparé mais pas envoyé."
+ },
+ "Nessun sito": {
+  "de": "Keine Website",
+  "en": "No site",
+  "es": "Ningún sitio",
+  "fr": "Aucun site"
+ },
+ "Nessuna differenza nella linea: la proposta nasce da un modo migliore di leggere il sito.": {
+  "de": "Kein Unterschied in der Linie: Der Vorschlag beruht auf einer besseren Auswertung der Website.",
+  "en": "No difference in the line: the proposal comes from a better way of reading the site.",
+  "es": "Ninguna diferencia en la línea: la propuesta nace de una mejor lectura del sitio.",
+  "fr": "Aucune différence dans la ligne : la proposition vient d'une meilleure lecture du site."
+ },
+ "Nessuna persona con un account: invita qualcuno qui sotto.": {
+  "de": "Noch niemand hat ein Konto: Laden Sie unten jemanden ein.",
+  "en": "Nobody has an account yet: invite someone below.",
+  "es": "Nadie tiene cuenta: invita a alguien aquí abajo.",
+  "fr": "Personne n'a de compte : invitez quelqu'un ci-dessous."
+ },
+ "Nome": {
+  "de": "Name",
+  "en": "Name",
+  "es": "Nombre",
+  "fr": "Nom"
+ },
+ "Non determinato": {
+  "de": "Nicht ermittelt",
+  "en": "Not determined",
+  "es": "No determinado",
+  "fr": "Non déterminé"
+ },
+ "Non seguire più questo tema, anche nelle prossime analisi": {
+  "de": "Diesem Thema nicht mehr folgen, auch in künftigen Analysen",
+  "en": "Stop following this topic, also in future analyses",
+  "es": "Dejar de seguir este tema, también en los próximos análisis",
+  "fr": "Ne plus suivre ce thème, y compris lors des prochaines analyses"
+ },
+ "Note sull'ultima analisi": {
+  "de": "Hinweise zur letzten Analyse",
+  "en": "Notes on the latest analysis",
+  "es": "Notas sobre el último análisis",
+  "fr": "Remarques sur la dernière analyse"
+ },
+ "Notizie oggi": {
+  "de": "Meldungen heute",
+  "en": "News today",
+  "es": "Noticias hoy",
+  "fr": "Actualités aujourd'hui"
+ },
+ "Nuovo accesso creato": {
+  "de": "Neuer Zugang erstellt",
+  "en": "New access created",
+  "es": "Nuevo acceso creado",
+  "fr": "Nouvel accès créé"
+ },
+ "Oggi (v{version})": {
+  "de": "Heute (v{version})",
+  "en": "Today (v{version})",
+  "es": "Hoy (v{version})",
+  "fr": "Aujourd'hui (v{version})"
+ },
+ "Ogni affermazione del modello è legata a pagine lette. Quelle senza prova vengono scartate.": {
+  "de": "Jede Aussage des Modells ist an gelesene Seiten gebunden. Aussagen ohne Beleg werden verworfen.",
+  "en": "Every statement from the model is tied to pages that were read. Those without evidence are dropped.",
+  "es": "Cada afirmación del modelo está ligada a páginas leídas. Las que no tienen prueba se descartan.",
+  "fr": "Chaque affirmation du modèle est liée à des pages lues. Celles sans preuve sont écartées."
+ },
+ "Ognuno entra con la sua email e la sua password. Lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni e gestisce le persone.": {
+  "de": "Jede Person meldet sich mit eigener E-Mail und eigenem Passwort an. Nur Lesen sieht, Redakteur entscheidet über Vorschläge und Entwürfe, Inhaber gibt Profile, Quellen und Veröffentlichungen frei und verwaltet die Personen.",
+  "en": "Everyone signs in with their own email and password. Read-only can view, editor decides on proposals and drafts, owner approves profiles, sources and publications and manages people.",
+  "es": "Cada uno entra con su correo y su contraseña. Solo lectura ve, editor decide propuestas y borradores, propietario aprueba perfiles, fuentes y publicaciones y gestiona a las personas.",
+  "fr": "Chacun se connecte avec son e-mail et son mot de passe. Lecture seule consulte, éditeur décide des propositions et des brouillons, propriétaire approuve profils, sources et publications et gère les membres."
+ },
+ "Ora del briefing": {
+  "de": "Uhrzeit des Briefings",
+  "en": "Briefing time",
+  "es": "Hora del resumen diario",
+  "fr": "Heure du briefing"
+ },
+ "Origine": {
+  "de": "Herkunft",
+  "en": "Origin",
+  "es": "Origen",
+  "fr": "Origine"
+ },
+ "Owner": {
+  "de": "Inhaber",
+  "en": "Owner",
+  "es": "Propietario",
+  "fr": "Propriétaire"
+ },
+ "Per programmi e integrazioni che usano l'API: ogni token ha il suo ruolo e si revoca da qui.": {
+  "de": "Für Programme und Integrationen, die die API nutzen: Jedes Token hat seine Rolle und wird hier widerrufen.",
+  "en": "For programs and integrations that use the API: each token has its own role and is revoked here.",
+  "es": "Para programas e integraciones que usan la API: cada token tiene su rol y se revoca desde aquí.",
+  "fr": "Pour les programmes et intégrations qui utilisent l'API : chaque jeton a son rôle et se révoque ici."
+ },
+ "Perché l'ultima analisi non è completa": {
+  "de": "Warum die letzte Analyse unvollständig ist",
+  "en": "Why the latest analysis is incomplete",
+  "es": "Por qué el último análisis no está completo",
+  "fr": "Pourquoi la dernière analyse est incomplète"
+ },
+ "Perché quei temi escono": {
+  "de": "Warum diese Themen wegfallen",
+  "en": "Why those topics leave",
+  "es": "Por qué salen esos temas",
+  "fr": "Pourquoi ces thèmes sortent"
+ },
+ "Persona": {
+  "de": "Person",
+  "en": "Person",
+  "es": "Persona",
+  "fr": "Personne"
+ },
+ "Persone della redazione": {
+  "de": "Personen der Redaktion",
+  "en": "Newsroom people",
+  "es": "Personas de la redacción",
+  "fr": "Membres de la rédaction"
+ },
+ "Pertinenza minima": {
+  "de": "Mindestrelevanz",
+  "en": "Minimum relevance",
+  "es": "Pertinencia mínima",
+  "fr": "Pertinence minimale"
+ },
+ "Piano {plan}": {
+  "de": "Tarif {plan}",
+  "en": "{plan} plan",
+  "es": "Plan {plan}",
+  "fr": "Offre {plan}"
+ },
+ "Piano {plan} · {state}.": {
+  "de": "Tarif {plan} · {state}.",
+  "en": "{plan} plan · {state}.",
+  "es": "Plan {plan} · {state}.",
+  "fr": "Offre {plan} · {state}."
+ },
+ "Preferenze": {
+  "de": "Präferenzen",
+  "en": "Preferences",
+  "es": "Preferencias",
+  "fr": "Préférences"
+ },
+ "Prima analisi": {
+  "de": "Erste Analyse",
+  "en": "First analysis",
+  "es": "Primer análisis",
+  "fr": "Première analyse"
+ },
+ "Profilo": {
+  "de": "Profil",
+  "en": "Profile",
+  "es": "Perfil",
+  "fr": "Profil"
+ },
+ "Profilo (JSON)": {
+  "de": "Profil (JSON)",
+  "en": "Profile (JSON)",
+  "es": "Perfil (JSON)",
+  "fr": "Profil (JSON)"
+ },
+ "Profilo approvato · versione {version}": {
+  "de": "Freigegebenes Profil · Version {version}",
+  "en": "Approved profile · version {version}",
+  "es": "Perfil aprobado · versión {version}",
+  "fr": "Profil approuvé · version {version}"
+ },
+ "Profilo in preparazione": {
+  "de": "Profil in Vorbereitung",
+  "en": "Profile in preparation",
+  "es": "Perfil en preparación",
+  "fr": "Profil en préparation"
+ },
+ "Profilo proposto · versione {version}": {
+  "de": "Vorgeschlagenes Profil · Version {version}",
+  "en": "Proposed profile · version {version}",
+  "es": "Perfil propuesto · versión {version}",
+  "fr": "Profil proposé · version {version}"
+ },
+ "Proposta (v{version})": {
+  "de": "Vorschlag (v{version})",
+  "en": "Proposal (v{version})",
+  "es": "Propuesta (v{version})",
+  "fr": "Proposition (v{version})"
+ },
+ "Proposta di aggiornamento della linea · versione {version}": {
+  "de": "Vorgeschlagene Aktualisierung der Linie · Version {version}",
+  "en": "Proposed update to the line · version {version}",
+  "es": "Propuesta de actualización de la línea · versión {version}",
+  "fr": "Proposition de mise à jour de la ligne · version {version}"
+ },
+ "Proposte al giorno": {
+  "de": "Vorschläge pro Tag",
+  "en": "Proposals per day",
+  "es": "Propuestas al día",
+  "fr": "Propositions par jour"
+ },
+ "Prove · {n} pagine del sito": {
+  "de": "Belege · {n} Seiten der Website",
+  "en": "Evidence · {n} pages of the site",
+  "es": "Pruebas · {n} páginas del sitio",
+  "fr": "Preuves · {n} pages du site"
+ },
+ "Pubblicazione": {
+  "de": "Veröffentlichung",
+  "en": "Publication",
+  "es": "Publicación",
+  "fr": "Publication"
+ },
+ "Pubblico": {
+  "de": "Zielgruppe",
+  "en": "Audience",
+  "es": "Público",
+  "fr": "Public"
+ },
+ "Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in &quot;Non determinato&quot;). Rianalizza, oppure completali tu con &quot;Modifica&quot; prima di approvare.": {
+  "de": "Diese Beschreibung ist unvollständig: Das Modell hat die Analyse nicht abgeschlossen, daher fehlen Branche, Zielgruppe und Stil (der Grund steht unter &quot;Nicht ermittelt&quot;). Analysieren Sie neu oder ergänzen Sie sie selbst über &quot;Bearbeiten&quot;, bevor Sie freigeben.",
+  "en": "This description is partial: the model did not complete the analysis, so sector, audience and style are missing (the reason is under &quot;Not determined&quot;). Re-analyse, or fill them in yourself with &quot;Edit&quot; before approving.",
+  "es": "Esta descripción es parcial: el modelo no completó el análisis, así que faltan sector, público y estilo (el motivo está en &quot;No determinado&quot;). Vuelve a analizar o complétalos tú con &quot;Editar&quot; antes de aprobar.",
+  "fr": "Cette description est partielle : le modèle n'a pas terminé l'analyse, il manque donc le secteur, le public et le style (la raison figure sous &quot;Non déterminé&quot;). Réanalysez, ou complétez-les vous-même avec &quot;Modifier&quot; avant d'approuver."
+ },
+ "Quota": {
+  "de": "Anteil",
+  "en": "Share",
+  "es": "Porcentaje",
+  "fr": "Part"
+ },
+ "Raccolta": {
+  "de": "Sammlung",
+  "en": "Collection",
+  "es": "Recopilación",
+  "fr": "Collecte"
+ },
+ "Revisione settimanale": {
+  "de": "Wöchentliche Überprüfung",
+  "en": "Weekly review",
+  "es": "Revisión semanal",
+  "fr": "Revue hebdomadaire"
+ },
+ "Revoca": {
+  "de": "Widerrufen",
+  "en": "Revoke",
+  "es": "Revocar",
+  "fr": "Révoquer"
+ },
+ "Revocato {date}": {
+  "de": "Widerrufen am {date}",
+  "en": "Revoked {date}",
+  "es": "Revocado el {date}",
+  "fr": "Révoqué le {date}"
+ },
+ "Rianalisi periodica": {
+  "de": "Regelmäßige Neuanalyse",
+  "en": "Periodic re-analysis",
+  "es": "Nuevo análisis periódico",
+  "fr": "Réanalyse périodique"
+ },
+ "Rianalizza": {
+  "de": "Neu analysieren",
+  "en": "Re-analyse",
+  "es": "Volver a analizar",
+  "fr": "Réanalyser"
+ },
+ "Rianalizza ora": {
+  "de": "Jetzt neu analysieren",
+  "en": "Re-analyse now",
+  "es": "Volver a analizar ahora",
+  "fr": "Réanalyser maintenant"
+ },
+ "Ricerca fonti": {
+  "de": "Quellensuche",
+  "en": "Source discovery",
+  "es": "Búsqueda de fuentes",
+  "fr": "Recherche de sources"
+ },
+ "Ricostruito dall'analisi del sito: controllalo e approvalo per avviare piano e opportunità.": {
+  "de": "Aus der Analyse der Website erstellt: Prüfen und freigeben, um Plan und Chancen zu starten.",
+  "en": "Rebuilt from the site analysis: check it and approve it to start the plan and opportunities.",
+  "es": "Reconstruido a partir del análisis del sitio: revísalo y apruébalo para poner en marcha el plan y las oportunidades.",
+  "fr": "Reconstruit à partir de l'analyse du site : vérifiez-le et approuvez-le pour lancer le plan et les opportunités."
+ },
+ "Rimetti": {
+  "de": "Wiederherstellen",
+  "en": "Restore",
+  "es": "Restaurar",
+  "fr": "Rétablir"
+ },
+ "Rimuovi": {
+  "de": "Entfernen",
+  "en": "Remove",
+  "es": "Quitar",
+  "fr": "Retirer"
+ },
+ "Ritirata": {
+  "de": "Zurückgezogen",
+  "en": "Retired",
+  "es": "Retirada",
+  "fr": "Retirée"
+ },
+ "Ruolo": {
+  "de": "Rolle",
+  "en": "Role",
+  "es": "Rol",
+  "fr": "Rôle"
+ },
+ "Ruolo di {email}": {
+  "de": "Rolle von {email}",
+  "en": "Role of {email}",
+  "es": "Rol de {email}",
+  "fr": "Rôle de {email}"
+ },
+ "Salva come bozza": {
+  "de": "Als Entwurf speichern",
+  "en": "Save as draft",
+  "es": "Guardar como borrador",
+  "fr": "Enregistrer comme brouillon"
+ },
+ "Scarica i dati": {
+  "de": "Daten herunterladen",
+  "en": "Download the data",
+  "es": "Descargar los datos",
+  "fr": "Télécharger les données"
+ },
+ "Settore": {
+  "de": "Branche",
+  "en": "Sector",
+  "es": "Sector",
+  "fr": "Secteur"
+ },
+ "Si presenta con le parole chiave {keywords}.": {
+  "de": "Sie präsentiert sich mit den Schlüsselwörtern {keywords}.",
+  "en": "It presents itself with the keywords {keywords}.",
+  "es": "Se presenta con las palabras clave {keywords}.",
+  "fr": "Il se présente avec les mots-clés {keywords}."
+ },
+ "Siti": {
+  "de": "Websites",
+  "en": "Sites",
+  "es": "Sitios",
+  "fr": "Sites"
+ },
+ "Siti della redazione": {
+  "de": "Websites der Redaktion",
+  "en": "Newsroom sites",
+  "es": "Sitios de la redacción",
+  "fr": "Sites de la rédaction"
+ },
+ "Sito e profilo": {
+  "de": "Website und Profil",
+  "en": "Site and profile",
+  "es": "Sitio y perfil",
+  "fr": "Site et profil"
+ },
+ "Sito e profilo editoriale": {
+  "de": "Website und Redaktionsprofil",
+  "en": "Site and editorial profile",
+  "es": "Sitio y perfil editorial",
+  "fr": "Site et profil éditorial"
+ },
+ "Stato": {
+  "de": "Status",
+  "en": "Status",
+  "es": "Estado",
+  "fr": "Statut"
+ },
+ "Stile": {
+  "de": "Stil",
+  "en": "Style",
+  "es": "Estilo",
+  "fr": "Style"
+ },
+ "Tema": {
+  "de": "Thema",
+  "en": "Topic",
+  "es": "Tema",
+  "fr": "Thème"
+ },
+ "Tema «{name}»": {
+  "de": "Thema „{name}“",
+  "en": "Topic “{name}”",
+  "es": "Tema «{name}»",
+  "fr": "Thème « {name} »"
+ },
+ "Temi tolti · non vengono seguiti, anche se l'analisi li ritrova": {
+  "de": "Entfernte Themen · werden nicht verfolgt, auch wenn die Analyse sie wiederfindet",
+  "en": "Removed topics · not followed, even if the analysis finds them again",
+  "es": "Temas quitados · no se siguen, aunque el análisis los vuelva a encontrar",
+  "fr": "Thèmes retirés · ne sont plus suivis, même si l'analyse les retrouve"
+ },
+ "Temi · quota degli articoli letti che ne parlano, con articoli d'esempio": {
+  "de": "Themen · Anteil der gelesenen Artikel, die sie behandeln, mit Beispielartikeln",
+  "en": "Topics · share of the articles read that cover them, with example articles",
+  "es": "Temas · porcentaje de los artículos leídos que tratan de ellos, con artículos de ejemplo",
+  "fr": "Thèmes · part des articles lus qui en parlent, avec des exemples"
+ },
+ "Togli il tema": {
+  "de": "Thema entfernen",
+  "en": "Remove topic",
+  "es": "Quitar el tema",
+  "fr": "Retirer le thème"
+ },
+ "Token per integrazioni": {
+  "de": "Tokens für Integrationen",
+  "en": "Integration tokens",
+  "es": "Tokens para integraciones",
+  "fr": "Jetons d'intégration"
+ },
+ "Tono": {
+  "de": "Ton",
+  "en": "Tone",
+  "es": "Tono",
+  "fr": "Ton"
+ },
+ "Tono non determinato": {
+  "de": "Ton nicht ermittelt",
+  "en": "Tone not determined",
+  "es": "Tono no determinado",
+  "fr": "Ton non déterminé"
+ },
+ "Tutti i dati della redazione in un file JSON: siti, profili, fonti, articoli raccolti, bozze, pubblicazioni, consumi. Credenziali e accessi sono esclusi.": {
+  "de": "Alle Daten der Redaktion in einer JSON-Datei: Websites, Profile, Quellen, gesammelte Artikel, Entwürfe, Veröffentlichungen, Verbrauch. Zugangsdaten und Zugänge sind ausgenommen.",
+  "en": "All the newsroom's data in one JSON file: sites, profiles, sources, collected articles, drafts, publications, usage. Credentials and access keys are excluded.",
+  "es": "Todos los datos de la redacción en un archivo JSON: sitios, perfiles, fuentes, artículos recopilados, borradores, publicaciones, consumos. Se excluyen credenciales y accesos.",
+  "fr": "Toutes les données de la rédaction dans un fichier JSON : sites, profils, sources, articles collectés, brouillons, publications, consommation. Identifiants et accès sont exclus."
+ },
+ "Uso del piano": {
+  "de": "Tarifnutzung",
+  "en": "Plan usage",
+  "es": "Uso del plan",
+  "fr": "Utilisation de l'offre"
+ },
+ "Versione": {
+  "de": "Version",
+  "en": "Version",
+  "es": "Versión",
+  "fr": "Version"
+ },
+ "Versioni": {
+  "de": "Versionen",
+  "en": "Versions",
+  "es": "Versiones",
+  "fr": "Versions"
+ },
+ "WordPress, automazioni": {
+  "de": "WordPress, Automatisierungen",
+  "en": "WordPress, automations",
+  "es": "WordPress, automatizaciones",
+  "fr": "WordPress, automatisations"
+ },
+ "assente": {
+  "de": "fehlt",
+  "en": "missing",
+  "es": "ausente",
+  "fr": "absente"
+ },
+ "di circa {n} parole": {
+  "de": "mit etwa {n} Wörtern",
+  "en": "of about {n} words",
+  "es": "de unas {n} palabras",
+  "fr": "d'environ {n} mots"
+ },
+ "disattivato": {
+  "de": "deaktiviert",
+  "en": "disabled",
+  "es": "desactivado",
+  "fr": "désactivé"
+ },
+ "e": {
+  "de": "und",
+  "en": "and",
+  "es": "y",
+  "fr": "et"
+ },
+ "e altre {n}": {
+  "de": "und {n} weitere",
+  "en": "and {n} more",
+  "es": "y {n} más",
+  "fr": "et {n} autres"
+ },
+ "editor": {
+  "de": "Redakteur",
+  "en": "editor",
+  "es": "editor",
+  "fr": "éditeur"
+ },
+ "esce dal profilo": {
+  "de": "fällt aus dem Profil",
+  "en": "leaves the profile",
+  "es": "sale del perfil",
+  "fr": "sort du profil"
+ },
+ "esempio.it": {
+  "de": "beispiel.de",
+  "en": "example.com",
+  "es": "ejemplo.es",
+  "fr": "exemple.fr"
+ },
+ "giulia@esempio.it": {
+  "de": "julia@beispiel.de",
+  "en": "julia@example.com",
+  "es": "julia@ejemplo.es",
+  "fr": "julie@exemple.fr"
+ },
+ "in coda": {
+  "de": "in der Warteschlange",
+  "en": "queued",
+  "es": "en cola",
+  "fr": "en attente"
+ },
+ "in corso": {
+  "de": "läuft",
+  "en": "running",
+  "es": "en curso",
+  "fr": "en cours"
+ },
+ "lettura": {
+  "de": "nur Lesen",
+  "en": "read-only",
+  "es": "solo lectura",
+  "fr": "lecture seule"
+ },
+ "lingua del sito": {
+  "de": "der Sprache der Website",
+  "en": "the site's language",
+  "es": "el idioma del sitio",
+  "fr": "la langue du site"
+ },
+ "non c'era": {
+  "de": "nicht vorhanden",
+  "en": "not there",
+  "es": "no estaba",
+  "fr": "absent"
+ },
+ "non determinate": {
+  "de": "nicht ermittelt",
+  "en": "not determined",
+  "es": "no determinados",
+  "fr": "non déterminées"
+ },
+ "non determinato": {
+  "de": "nicht ermittelt",
+  "en": "not determined",
+  "es": "no determinado",
+  "fr": "non déterminé"
+ },
+ "non riuscito, {error}": {
+  "de": "fehlgeschlagen, {error}",
+  "en": "failed, {error}",
+  "es": "fallida, {error}",
+  "fr": "échec, {error}"
+ },
+ "nuova": {
+  "de": "neu",
+  "en": "new",
+  "es": "nuevo",
+  "fr": "nouveau"
+ },
+ "nuovo, {pct} degli articoli": {
+  "de": "neu, {pct} der Artikel",
+  "en": "new, {pct} of articles",
+  "es": "nuevo, {pct} de los artículos",
+  "fr": "nouveau, {pct} des articles"
+ },
+ "owner": {
+  "de": "Inhaber",
+  "en": "owner",
+  "es": "propietario",
+  "fr": "propriétaire"
+ },
+ "parole chiave: {keywords}": {
+  "de": "Schlüsselwörter: {keywords}",
+  "en": "keywords: {keywords}",
+  "es": "palabras clave: {keywords}",
+  "fr": "mots-clés : {keywords}"
+ },
+ "questi temi": {
+  "de": "diese Themen",
+  "en": "these topics",
+  "es": "estos temas",
+  "fr": "ces thèmes"
+ },
+ "redazione@esempio.it": {
+  "de": "redaktion@beispiel.de",
+  "en": "newsroom@example.com",
+  "es": "redaccion@ejemplo.es",
+  "fr": "redaction@exemple.fr"
+ },
+ "robots.txt rispettato": {
+  "de": "robots.txt beachtet",
+  "en": "robots.txt respected",
+  "es": "robots.txt respetado",
+  "fr": "robots.txt respecté"
+ },
+ "scade {date}": {
+  "de": "läuft ab am {date}",
+  "en": "expires {date}",
+  "es": "caduca el {date}",
+  "fr": "expire le {date}"
+ },
+ "scritta dal modello sulle pagine lette": {
+  "de": "vom Modell anhand der gelesenen Seiten verfasst",
+  "en": "written by the model from the pages read",
+  "es": "escrita por el modelo a partir de las páginas leídas",
+  "fr": "rédigée par le modèle à partir des pages lues"
+ },
+ "senza limite": {
+  "de": "unbegrenzt",
+  "en": "no limit",
+  "es": "sin límite",
+  "fr": "illimité"
+ },
+ "{domain} porta a {target}: è stato letto quel sito.": {
+  "de": "{domain} führt zu {target}: Diese Website wurde gelesen.",
+  "en": "{domain} leads to {target}: that site was read.",
+  "es": "{domain} lleva a {target}: se leyó ese sitio.",
+  "fr": "{domain} mène à {target} : c'est ce site qui a été lu."
+ },
+ "{name} pubblica": {
+  "de": "{name} veröffentlicht",
+  "en": "{name} publishes",
+  "es": "{name} publica",
+  "fr": "{name} publie"
+ },
+ "{name} pubblica in {languages}": {
+  "de": "{name} veröffentlicht auf {languages}",
+  "en": "{name} publishes in {languages}",
+  "es": "{name} publica en {languages}",
+  "fr": "{name} publie en {languages}"
+ },
+ "{n} pagine lette": {
+  "de": "{n} Seiten gelesen",
+  "en": "{n} pages read",
+  "es": "{n} páginas leídas",
+  "fr": "{n} pages lues"
+ },
+ "{pct} come «{name}»": {
+  "de": "{pct} als „{name}“",
+  "en": "{pct} as “{name}”",
+  "es": "{pct} como «{name}»",
+  "fr": "{pct} sous « {name} »"
+ }
+}

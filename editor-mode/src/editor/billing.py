@@ -25,7 +25,9 @@ from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import func, insert, select, update
 
-from . import accounts, models as m, newsrooms
+from . import accounts, i18n, newsrooms
+from . import models as m
+from .i18n import N_, t
 
 log = logging.getLogger(__name__)
 
@@ -35,11 +37,11 @@ REMIND_DAYS = 2  # before the trial ends
 INTERVALS = ("month", "year")
 PROVIDERS = ("manual", "mollie", "reseller")
 STATUS_LABELS = {
-    "trialing": "In prova",
-    "active": "Attivo",
-    "past_due": "Pagamento non riuscito",
-    "canceled": "Disdetto",
-    "expired": "Scaduto",
+    "trialing": N_("In prova"),
+    "active": N_("Attivo"),
+    "past_due": N_("Pagamento non riuscito"),
+    "canceled": N_("Disdetto"),
+    "expired": N_("Scaduto"),
 }
 CUSTOMER_FIELDS = ("kind", "name", "email", "phone", "vat_number", "tax_code", "address", "postal_code", "city",
                    "province", "country", "sdi_code", "pec")
@@ -84,7 +86,7 @@ def plans(admin, public_only: bool = False) -> list[dict]:
 def get_plan(conn, code: str):
     plan = conn.execute(select(m.plans).where(m.plans.c.code == code)).first()
     if plan is None:
-        raise BillingError(f"piano sconosciuto: {code}")
+        raise BillingError(t("piano sconosciuto: {code}", code=code))
     return plan
 
 
@@ -102,12 +104,12 @@ def save_plan(admin, code: str, fields: dict) -> None:
     values = {k: v for k, v in fields.items() if k in allowed}
     for k, v in values.items():
         if k not in ("name", "description", "public") and v is not None and (isinstance(v, bool) or v < 0):
-            raise BillingError(f"{k}: un numero di zero o più")
+            raise BillingError(t("{field}: un numero di zero o più", field=k))
     if "name" in values and not str(values["name"]).strip():
-        raise BillingError("il piano ha bisogno di un nome")
+        raise BillingError(t("il piano ha bisogno di un nome"))
     with admin.engine.begin() as conn:
         if not conn.execute(update(m.plans).where(m.plans.c.code == code).values(**values)).rowcount:
-            raise BillingError(f"piano sconosciuto: {code}")
+            raise BillingError(t("piano sconosciuto: {code}", code=code))
 
 
 def apply_plan(admin, tenant_id: str, plan, core=None) -> str | None:
@@ -128,38 +130,38 @@ def clean_customer(spec: dict, partial: bool = False) -> dict:
     if not partial:
         for k in ("name", "email"):
             if not out.get(k):
-                raise BillingError(f"manca il campo {k}")
+                raise BillingError(t("manca il campo {field}", field=k))
     if "kind" in out and out["kind"] not in ("company", "person"):
-        raise BillingError("kind è company o person")
+        raise BillingError(t("kind è company o person"))
     if "name" in out and not out["name"]:
-        raise BillingError("serve un nome o una ragione sociale")
+        raise BillingError(t("serve un nome o una ragione sociale"))
     if "email" in out:
         out["email"] = accounts.normalise_email(out["email"])
     if out.get("pec"):
         try:
             out["pec"] = accounts.normalise_email(out["pec"])
         except accounts.AccountError as e:
-            raise BillingError("PEC non valida") from e
+            raise BillingError(t("PEC non valida")) from e
     if "country" in out:
         out["country"] = out["country"].upper() or "IT"
         if not re.fullmatch(r"[A-Z]{2}", out["country"]):
-            raise BillingError("il paese è un codice di due lettere (IT, DE, FR...)")
+            raise BillingError(t("il paese è un codice di due lettere (IT, DE, FR...)"))
     country = out.get("country", "IT")
     if out.get("vat_number"):
         vat = re.sub(r"[\s.-]", "", out["vat_number"]).upper()
         if vat.startswith(country) and country != "IT" or vat.startswith("IT"):
             vat = vat[2:]
         if country == "IT" and not re.fullmatch(r"\d{11}", vat):
-            raise BillingError("la partita IVA italiana ha 11 cifre")
+            raise BillingError(t("la partita IVA italiana ha 11 cifre"))
         out["vat_number"] = vat
     if out.get("tax_code"):
         out["tax_code"] = re.sub(r"\s", "", out["tax_code"]).upper()
         if country == "IT" and not re.fullmatch(r"[A-Z0-9]{11}|[A-Z0-9]{16}", out["tax_code"]):
-            raise BillingError("il codice fiscale ha 16 caratteri (11 cifre per un'azienda)")
+            raise BillingError(t("il codice fiscale ha 16 caratteri (11 cifre per un'azienda)"))
     if out.get("sdi_code"):
         out["sdi_code"] = out["sdi_code"].upper()
         if not re.fullmatch(r"[A-Z0-9]{6,7}", out["sdi_code"]):
-            raise BillingError("il codice destinatario SDI ha 7 caratteri (6 per la pubblica amministrazione)")
+            raise BillingError(t("il codice destinatario SDI ha 7 caratteri (6 per la pubblica amministrazione)"))
     if out.get("province"):
         out["province"] = out["province"].upper()
     return out
@@ -274,9 +276,9 @@ def tenants_of_reseller(admin, reseller_id: int) -> set[str]:
 def create_reseller(admin, name: str, email: str, discount_pct: float = 0, notes: str = "") -> int:
     name = (name or "").strip()[:100]
     if not name:
-        raise BillingError("il rivenditore ha bisogno di un nome")
+        raise BillingError(t("il rivenditore ha bisogno di un nome"))
     if not 0 <= discount_pct <= 100:
-        raise BillingError("lo sconto è una percentuale da 0 a 100")
+        raise BillingError(t("lo sconto è una percentuale da 0 a 100"))
     with admin.engine.begin() as conn:
         return conn.execute(insert(m.resellers).values(name=name, email=accounts.normalise_email(email),
                                                        discount_pct=discount_pct, notes=(notes or "")[:1000],
@@ -288,7 +290,7 @@ def update_reseller(admin, reseller_id: int, fields: dict) -> None:
     if "email" in values:
         values["email"] = accounts.normalise_email(values["email"])
     if "discount_pct" in values and not 0 <= values["discount_pct"] <= 100:
-        raise BillingError("lo sconto è una percentuale da 0 a 100")
+        raise BillingError(t("lo sconto è una percentuale da 0 a 100"))
     with admin.engine.begin() as conn:
         if not conn.execute(update(m.resellers).where(m.resellers.c.id == reseller_id).values(**values)).rowcount:
             raise LookupError(reseller_id)
@@ -336,7 +338,7 @@ def describe(row, now: datetime | None = None) -> dict:
     """A subscription with what a page says about it."""
     out = dict(row._mapping)
     now = _now(now)
-    out["label"] = STATUS_LABELS.get(out["status"], out["status"])
+    out["label"] = t(STATUS_LABELS[out["status"]]) if out["status"] in STATUS_LABELS else out["status"]
     out["days_left"] = None
     end = out["trial_ends_at"] if out["status"] == "trialing" else out["current_period_end"]
     if end is not None:
@@ -365,16 +367,16 @@ def _leave_the_gateway(admin, tenant_id: str, sub: dict, values: dict, gateway) 
     period a second time: the customer would pay twice for one period."""
     if sub.get("provider") != "mollie" or not sub.get("provider_subscription_id"):
         return
-    values["provider_subscription_id"] = None
     if gateway is None:
-        return
+        raise BillingError(t("il pagamento online non è configurato: i rinnovi su Mollie restano attivi"))
     customer = customer_of(admin, tenant_id)
-    if customer is None:
-        return
-    try:
-        gateway.cancel_subscription(customer["provider_customer_id"], sub["provider_subscription_id"])
-    except Exception:
-        log.exception("the automatic renewals of %s were not cancelled", tenant_id)
+    if customer is not None:
+        try:
+            gateway.cancel_subscription(customer["provider_customer_id"], sub["provider_subscription_id"])
+        except Exception as e:
+            log.exception("the automatic renewals of %s were not cancelled", tenant_id)
+            raise BillingError(t("i rinnovi automatici su Mollie non sono stati annullati, riprova")) from e
+    values["provider_subscription_id"] = None
 
 
 def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None, provider: str = "manual",
@@ -385,9 +387,9 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
     given: a reseller or the operator decides). Replaces an existing one."""
     now = _now(now)
     if interval not in INTERVALS:
-        raise BillingError("l'intervallo è month o year")
+        raise BillingError(t("l'intervallo è month o year"))
     if provider not in PROVIDERS:
-        raise BillingError(f"provider: uno di {', '.join(PROVIDERS)}")
+        raise BillingError(t("provider: uno di {names}", names=", ".join(PROVIDERS)))
     old = subscription(admin, tenant_id)
     with admin.engine.begin() as conn:
         plan = get_plan(conn, plan_code)
@@ -398,6 +400,8 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
                   "status": "trialing" if trial else "active",
                   "trial_ends_at": now + timedelta(days=plan.trial_days) if trial else None,
                   "current_period_end": None if trial else paid_until, "reminded_at": None, "updated_at": now}
+        if not trial:  # the plan wished for during the trial is now the plan
+            values |= {"desired_plan": None, "desired_interval": None}
         if customer_id is not None:
             values["customer_id"] = customer_id
         s = m.subscriptions
@@ -426,7 +430,8 @@ def record_payment(admin, tenant_id: str, amount_cents: int, until: datetime | N
         raise LookupError(tenant_id)
     interval = interval or sub["billing_interval"]
     values = {"plan_code": sub["plan_code"], "billing_interval": interval, "status": "active",
-              "current_period_end": None, "trial_ends_at": None, "updated_at": now}
+              "current_period_end": None, "trial_ends_at": None, "updated_at": now,
+              "desired_plan": None, "desired_interval": None}
     with admin.engine.begin() as conn:
         plan = get_plan(conn, plan_code or (sub["plan_code"] if sub["plan_code"] != TRIAL_PLAN else "starter"))
         base = max(sub["current_period_end"] or now, now)
@@ -471,12 +476,12 @@ def lifecycle(admin, now: datetime | None = None, mail=None, public_url: str = "
     """Run every hour by the worker: reminders before a trial ends, the hold
     when a trial or a paid period ends. Returns what it did."""
     now = _now(now)
-    s, t = m.subscriptions, m.tenants
+    s, tn = m.subscriptions, m.tenants
     report = {"reminded": [], "held": []}
     with accounts._read(admin) as conn:
         rows = conn.execute(select(s.c.tenant_id, s.c.status, s.c.trial_ends_at, s.c.current_period_end,
-                                   s.c.reminded_at, t.c.name, t.c.hold)
-                            .join(t, t.c.tenant_id == s.c.tenant_id)
+                                   s.c.reminded_at, tn.c.name, tn.c.hold, tn.c.language)
+                            .join(tn, tn.c.tenant_id == s.c.tenant_id)
                             .where(s.c.status != "expired")).all()
     link = f"{public_url.rstrip('/')}/account" if public_url else "/account"
     for r in rows:
@@ -485,13 +490,16 @@ def lifecycle(admin, now: datetime | None = None, mail=None, public_url: str = "
             continue
         if r.status == "trialing" and ends - timedelta(days=REMIND_DAYS) <= now < ends and r.reminded_at is None:
             if mail is not None:
+                # No request here: the newsroom's own language.
+                lang = r.language if r.language in i18n.LANGS else i18n.DEFAULT
                 for to in owners(admin, r.tenant_id):
                     try:
-                        mail(to, f"La prova di {r.name} finisce il {ends:%d/%m}",
-                             f"La prova gratuita della redazione {r.name} finisce il {ends:%d/%m/%Y}.\n\n"
-                             f"Per continuare senza interruzioni scegli un piano:\n\n{link}\n\n"
-                             "Se non scegli un piano la redazione si ferma, ma i tuoi dati restano e "
-                             "puoi riattivarla quando vuoi.\n")
+                        mail(to, t("La prova di {name} finisce il {date}", lang, name=r.name, date=f"{ends:%d/%m}"),
+                             t("La prova gratuita della redazione {name} finisce il {date}.", lang, name=r.name,
+                               date=f"{ends:%d/%m/%Y}") + "\n\n"
+                             + t("Per continuare senza interruzioni scegli un piano:", lang) + f"\n\n{link}\n\n"
+                             + t("Se non scegli un piano la redazione si ferma, ma i tuoi dati restano e "
+                                 "puoi riattivarla quando vuoi.", lang) + "\n")
                     except Exception:
                         log.exception("trial reminder to %s failed", to)
             with admin.engine.begin() as conn:
@@ -518,19 +526,37 @@ def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None
     if ref:
         cust["external_ref"] = ref
     plan_code = spec.get("plan") or TRIAL_PLAN
+    interval = spec.get("interval") or "month"
+    # From the public site a paid plan starts only with its payment: the
+    # newsroom starts on trial and the choice waits in /account. A reseller
+    # bills its customers itself, so its plan starts at once.
+    desired = None
+    if reseller_id is None and plan_code != TRIAL_PLAN:
+        desired, plan_code = plan_code, TRIAL_PLAN
     name = (spec.get("newsroom") or cust.get("name") or "").strip()
     with admin.engine.begin() as conn:
         get_plan(conn, plan_code)
+        if desired:
+            get_plan(conn, desired)
         cid, created = upsert_customer(conn, cust, reseller_id)
     room_ref = f"{'r' + str(reseller_id) if reseller_id is not None else 'site'}:{ref}" if ref else None
+    lang = spec.get("language") or i18n.current()
     res = newsrooms.create(admin, {"name": name, "owner_email": spec.get("owner_email") or cust["email"],
-                                   "owner_name": spec.get("owner_name"), "external_ref": room_ref}, by, core)
+                                   "owner_name": spec.get("owner_name"), "external_ref": room_ref,
+                                   "language": lang}, by, core)
     tid = res["tenant_id"]
     if res["created"] or subscription(admin, tid) is None:
         provider = "reseller" if reseller_id is not None else "manual"
-        start(admin, tid, plan_code, cid, provider, spec.get("interval") or "month", core=core, now=now)
+        start(admin, tid, plan_code, cid, provider, interval, core=core, now=now)
+    if desired:
+        with admin.engine.begin() as conn:
+            conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tid, m.subscriptions.c.status == "trialing")
+                         .values(desired_plan=desired, desired_interval=interval))
+    sub = subscription(admin, tid)
     return {"customer_id": cid, "customer_created": created, "tenant_id": tid, "created": res["created"],
-            "owner_email": res["owner_email"], "invite": res["invite"], "warning": res["warning"]}
+            "owner_email": res["owner_email"], "invite": res["invite"], "warning": res["warning"],
+            "plan": sub["plan_code"] if sub else None, "status": sub["status"] if sub else None,
+            "desired_plan": sub.get("desired_plan") if sub else None}
 
 
 # --- payments through a gateway ------------------------------------------------------
@@ -540,27 +566,27 @@ def checkout(admin, gateway, tenant_id: str, plan_code: str, interval: str, redi
     """Start paying a plan: the address of the gateway's payment page. The
     first payment also authorises the renewals (a mandate)."""
     if gateway is None:
-        raise BillingError("pagamenti online non configurati: contatta chi ti ha venduto il servizio")
+        raise BillingError(t("pagamenti online non configurati: contatta chi ti ha venduto il servizio"))
     if interval not in INTERVALS:
-        raise BillingError("l'intervallo è month o year")
+        raise BillingError(t("l'intervallo è month o year"))
     sub = subscription(admin, tenant_id)
     if sub is not None and sub["provider"] == "reseller":
-        raise BillingError("questa redazione è fatturata dal tuo rivenditore")
+        raise BillingError(t("questa redazione è fatturata dal tuo rivenditore"))
     c = customer_of(admin, tenant_id)
     if c is None:
-        raise BillingError("prima servono i dati di fatturazione")
+        raise BillingError(t("prima servono i dati di fatturazione"))
     with accounts._read(admin) as conn:
         plan = get_plan(conn, plan_code)
     amount = price(plan, interval)
     if not amount:
-        raise BillingError("questo piano non si paga online")
+        raise BillingError(t("questo piano non si paga online"))
     cust_id = c["provider_customer_id"]
     if not cust_id:
         cust_id = gateway.create_customer(c["name"], c["email"], {"customer_id": c["id"]})
         with admin.engine.begin() as conn:
             conn.execute(update(m.customers).where(m.customers.c.id == c["id"]).values(provider_customer_id=cust_id))
     meta = {"tenant_id": tenant_id, "plan": plan.code, "interval": interval}
-    period = "anno" if interval == "year" else "mese"
+    period = t("anno") if interval == "year" else t("mese")
     pay_id, url = gateway.first_payment(cust_id, amount, plan.currency, f"EuLLM Editor {plan.name} ({period}) · {tenant_id}",
                                         redirect_url, webhook_url, meta)
     with admin.engine.begin() as conn:

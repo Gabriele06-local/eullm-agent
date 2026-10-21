@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="{{ lang() }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,51 +9,52 @@
 </head>
 <body>
 <div class="shell">
-<nav class="nav" aria-label="Sezioni">
+<nav class="nav" aria-label="{{ _('Sezioni') }}">
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
   {% if newsrooms|length > 1 %}
   <form method="get" action="/newsroom" class="switch">
-    <label for="room-pick">Redazione</label>
+    <label for="room-pick">{{ _('Redazione') }}</label>
     <select id="room-pick" name="t" onchange="this.form.submit()">
       {% for x in newsrooms %}<option value="{{ x.tenant_id }}" {% if x.tenant_id == caller.tenant_id %}selected{% endif %}>{{ x.name }}</option>{% endfor %}
       {% if caller.tenant_id not in newsrooms|map(attribute='tenant_id') %}<option value="{{ caller.tenant_id }}" selected>{{ caller.tenant_id }}</option>{% endif %}
     </select>
-    <noscript><button class="btn sm" type="submit">Vai</button></noscript>
+    <noscript><button class="btn sm" type="submit">{{ _('Vai') }}</button></noscript>
   </form>
   {% endif %}
-  {% if caller.can('owner') and sites %}<a href="/settings#h-sites" style="font-size: 12px; padding-top: 0;">+ Aggiungi un sito</a>{% endif %}
+  {% if caller.can('owner') and sites %}<a href="/settings#h-sites" style="font-size: 12px; padding-top: 0;">{{ _('+ Aggiungi un sito') }}</a>{% endif %}
   {% if sites %}
   <form method="get" action="/switch" class="switch">
-    <label for="site-pick">Sito</label>
+    <label for="site-pick">{{ _('Sito') }}</label>
     <select id="site-pick" name="site" onchange="this.form.submit()">
       {% for x in sites %}<option value="{{ x.id }}" {% if site and x.id == site.id %}selected{% endif %}>{{ x.domain }}</option>{% endfor %}
     </select>
     <input type="hidden" name="back" value="{{ request.url.path }}">
-    <noscript><button class="btn sm" type="submit">Vai</button></noscript>
+    <noscript><button class="btn sm" type="submit">{{ _('Vai') }}</button></noscript>
   </form>
   {% endif %}
-  <a href="/" {% if active == 'today' %}class="on" aria-current="page"{% endif %}>Oggi</a>
-  <a href="/site" {% if active == 'site' %}class="on" aria-current="page"{% endif %}>Sito e profilo</a>
-  <a href="/sources" {% if active == 'sources' %}class="on" aria-current="page"{% endif %}>Fonti</a>
-  <a href="/trends" {% if active == 'trends' %}class="on" aria-current="page"{% endif %}>Trend e piano</a>
-  <a href="/drafts" {% if active == 'drafts' %}class="on" aria-current="page"{% endif %}>Bozze</a>
-  <a href="/publications" {% if active == 'publications' %}class="on" aria-current="page"{% endif %}>Pubblicazioni</a>
+  <a href="/" {% if active == 'today' %}class="on" aria-current="page"{% endif %}>{{ _('Oggi') }}</a>
+  <a href="/site" {% if active == 'site' %}class="on" aria-current="page"{% endif %}>{{ _('Sito e profilo') }}</a>
+  <a href="/sources" {% if active == 'sources' %}class="on" aria-current="page"{% endif %}>{{ _('Fonti') }}</a>
+  <a href="/trends" {% if active == 'trends' %}class="on" aria-current="page"{% endif %}>{{ _('Trend e piano') }}</a>
+  <a href="/drafts" {% if active == 'drafts' %}class="on" aria-current="page"{% endif %}>{{ _('Bozze') }}</a>
+  <a href="/publications" {% if active == 'publications' %}class="on" aria-current="page"{% endif %}>{{ _('Pubblicazioni') }}</a>
   <span class="grow"></span>
-  <a href="/settings" {% if active == 'settings' %}class="on" aria-current="page"{% endif %}>Impostazioni</a>
-  {% if caller.operator %}<a href="/admin">Amministrazione</a>{% endif %}
+  <a href="/settings" {% if active == 'settings' %}class="on" aria-current="page"{% endif %}>{{ _('Impostazioni') }}</a>
+  {% if caller.operator %}<a href="/admin">{{ _('Amministrazione') }}</a>{% endif %}
   <div class="who">
-    <span>{{ caller.name }} · {{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}[caller.role] }}</span>
-    <form method="post" action="/logout"><button class="link" type="submit">Esci</button></form>
+    <span>{{ caller.name }} · {{ {'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}[caller.role] }}</span>
+    <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
   </div>
-  <small class="hint" style="font-size: 11px; padding: 0 10px; overflow-wrap: anywhere;">{% if version %}EuLLM Editor {{ version }}{% endif %}{% if model %}<br>Modello: {{ model }}{% endif %}</small>
+  {% include "_lang.html.j2" %}
+  <small class="hint" style="font-size: 11px; padding: 0 10px; overflow-wrap: anywhere;">{% if version %}EuLLM Editor {{ version }}{% endif %}{% if model %}<br>{{ _('Modello: {model}', model=model) }}{% endif %}</small>
 </nav>
 <main class="main">
   {% if plan_state and plan_state.status in ('trialing', 'past_due', 'canceled') %}
   <p class="notice" role="status" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-    <span>{% if plan_state.status == 'trialing' %}Prova gratuita: {{ plan_state.days_left }} {{ 'giorno rimasto' if plan_state.days_left == 1 else 'giorni rimasti' }}.
-    {% elif plan_state.status == 'past_due' %}L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.
-    {% else %}Abbonamento disdetto: la redazione si ferma {% if plan_state.current_period_end %}il {{ plan_state.current_period_end.strftime('%d/%m') }}{% else %}a fine periodo{% endif %}.{% endif %}</span>
-    <a href="/account">{{ 'Scegli il piano' if plan_state.status != 'past_due' else 'Vedi l\'abbonamento' }}</a>
+    <span>{% if plan_state.status == 'trialing' %}{{ _('Prova gratuita: {n} giorno rimasto.', n=plan_state.days_left) if plan_state.days_left == 1 else _('Prova gratuita: {n} giorni rimasti.', n=plan_state.days_left) }}
+    {% elif plan_state.status == 'past_due' %}{{ _("L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.") }}
+    {% else %}{% if plan_state.current_period_end %}{{ _('Abbonamento disdetto: la redazione si ferma il {date}.', date=plan_state.current_period_end.strftime('%d/%m')) }}{% else %}{{ _('Abbonamento disdetto: la redazione si ferma a fine periodo.') }}{% endif %}{% endif %}</span>
+    <a href="/account">{{ _('Scegli il piano') if plan_state.status != 'past_due' else _("Vedi l'abbonamento") }}</a>
   </p>
   {% endif %}
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

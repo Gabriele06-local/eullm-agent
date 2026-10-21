@@ -594,6 +594,8 @@ subscriptions = Table(
     Column("trial_ends_at", _ts()),
     Column("current_period_end", _ts()),
     Column("reminded_at", _ts()),
+    Column("desired_plan", Text),
+    Column("desired_interval", Text),
     Column("created_at", _ts()),
     Column("updated_at", _ts()),
 )

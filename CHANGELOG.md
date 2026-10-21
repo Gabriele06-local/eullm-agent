@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.9.0
+
+### Added
+
+- The Editor Mode dashboard, the account page and the console in five
+  languages: English, Italian, German, French and Spanish. The language
+  comes from the selector at the bottom of every page (kept a year in a
+  cookie), else from the browser, else `EDITOR_LANGUAGE` (English by
+  default). Notices, errors, the invite and password emails follow it;
+  the trial reminder follows the newsroom's language.
+- Signup from the public site: `"language"` in the body (or
+  `Accept-Language`) sets the language of the error messages, of the
+  owner's invite and of the newsroom.
+- Signup from the public site: the plan the visitor picked is kept as
+  `desired_plan`/`desired_interval` while the newsroom is on trial, and is
+  already selected in `/account`. A paid plan never starts without its
+  payment from the site's key (it did before when `plan` was sent).
+  A payment recorded by bank transfer clears the wish too.
+
+### Fixed
+
+- Local installation (SQLite): the queue no longer runs the work of a
+  suspended newsroom.
+- Core: the delegate limits of a token whose tenant is itself nested
+  (`parent/child`) apply to its sub-tenants.
+- Account page: billing data for a newsroom that does not exist give a
+  message instead of an error.
+- A payment recorded outside the gateway (bank transfer) cancels the
+  automatic renewals at Mollie, so the customer is not charged twice. If
+  Mollie does not confirm the cancellation, or online payment is not
+  configured, nothing is recorded and the console says why, instead of
+  leaving the renewals running.
+
+### Upgrading from 0.8.3
+
+- Migration 0016 adds two columns to `editor.subscriptions`; it runs by
+  itself when the containers start.
+## 0.8.3
+
+### Changed
+
+- A proposal can also come from one strong news item: a topic with an
+  opportunity of at least 50/100 from a source scored 0.60 or more. Two
+  items from two different sources still make a story at any score.
+- The day's proposals no longer stop at the first topics that fail the
+  rules: the next ones are tried until the day's number is reached.
+
+### Added
+
+- "Proponi adesso" in Trend e piano: the day's proposals now, without
+  waiting for the briefing, up to the number a day set in the profile.
+- Sources page: how many news items each source brought in the last 7 days.
 ## 0.8.2
 
 ### Fixed

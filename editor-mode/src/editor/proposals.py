@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -26,6 +26,10 @@ FORMATS = ["news", "analysis", "guide", "tutorial", "review", "comparison", "opi
 MIN_OPPORTUNITY = 35.0
 MIN_ITEMS = 2
 MIN_SOURCES = 2  # the items come from at least two different sources
+# ... unless one news item is strong enough on its own: a topic this close to
+# the site, from a source this reliable, is worth an article the same day.
+STRONG_OPPORTUNITY = 50.0
+STRONG_SOURCE = 0.6
 
 SYSTEM = (
     "You are the editorial planner of a website. Using ONLY the items listed (each has an id), propose one "
@@ -69,7 +73,7 @@ def _items_for(s, topic_id: int, limit: int = 12):
     si = m.source_items
     return s.execute(
         select(si.c.id, si.c.title, si.c.url, si.c.summary, si.c.published_at, si.c.source_id,
-               m.sources.c.name.label("source"))
+               m.sources.c.name.label("source"), m.sources.c.score.label("source_score"))
         .join(m.topic_items, m.topic_items.c.item_id == si.c.id)
         .join(m.sources, m.sources.c.id == si.c.source_id)
         .where(m.topic_items.c.topic_id == topic_id, si.c.duplicate_of.is_(None))
@@ -95,6 +99,18 @@ def _prompt(profile: dict, label: str, items) -> str:
     return "\n".join(lines)
 
 
+def is_story(opportunity: float, items) -> bool:
+    """Two items from two sources, or one strong item from a reliable source."""
+    if len(items) >= MIN_ITEMS and len({it.source_id for it in items}) >= MIN_SOURCES:
+        return True
+    return bool(items) and opportunity >= STRONG_OPPORTUNITY and max(it.source_score or 0 for it in items) >= STRONG_SOURCE
+
+
+def made_today(s, site_id: int, since: datetime) -> int:
+    return s.execute(select(func.count()).select_from(m.proposals).where(
+        m.proposals.c.site_id == site_id, m.proposals.c.created_at >= since)).scalar() or 0
+
+
 def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], core: CoreClient | None = None,
             limit: int | None = None) -> list[int]:
     """Create proposals for the best opportunities; returns their ids."""
@@ -105,15 +121,17 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
         if prof is None:
             return []
         limit = limit or prof.body.get("settings", {}).get("proposals_per_day", 3)
-        picks = [o for o in opportunities if o.score >= MIN_OPPORTUNITY and o.components.get("not_repeated", 1)][:limit]
+        picks = [o for o in opportunities if o.score >= MIN_OPPORTUNITY and o.components.get("not_repeated", 1)]
         work = []
         for o in picks:
+            if len(work) >= limit:
+                break
             label = s.execute(select(m.topics.c.label).where(m.topics.c.id == o.topic_id)).scalar()
             items = _items_for(s, o.topic_id)
-            # A single item (one new repository, one post) is not yet a story,
-            # nor are two items from the same source (the same repository
-            # found by two searches): a story is told by more than one source.
-            if len(items) >= MIN_ITEMS and len({it.source_id for it in items}) >= MIN_SOURCES:
+            # A single weak item (one new repository, one post) is not yet a
+            # story, nor are two items from the same source (the same
+            # repository found by two searches).
+            if is_story(o.score, items):
                 work.append((o, label, items))
     for o, label, items in work:
         allowed = {it.id for it in items}
@@ -163,3 +181,19 @@ def record_feedback(s, tenant_id: str, target: str, target_id: int, verdict: str
     s.execute(insert(m.feedback).values(
         tenant_id=tenant_id, site_id=site_id, target=target, target_id=target_id, verdict=verdict,
         note=note, given_by=by, given_at=datetime.now(UTC)))
+
+
+def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient | None = None,
+           now: datetime | None = None) -> list[int]:
+    """Proposals now, on request, up to the day's number still left."""
+    from . import opportunity
+
+    with db.tenant(tenant_id) as s:
+        body = s.execute(select(m.editorial_profiles.c.body).where(
+            m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+        if body is None:
+            return []
+        left = body.get("settings", {}).get("proposals_per_day", 3) - made_today(s, site_id, since)
+    if left <= 0:
+        return []
+    return propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=left)

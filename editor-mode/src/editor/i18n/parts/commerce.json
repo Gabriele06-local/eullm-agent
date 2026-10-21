@@ -1,0 +1,1226 @@
+{
+ "Abbonamento": {
+  "en": "Subscription",
+  "de": "Abonnement",
+  "fr": "Abonnement",
+  "es": "Suscripción"
+ },
+ "Abbonamento di {tenant} aggiornato.": {
+  "en": "Subscription of {tenant} updated.",
+  "de": "Abonnement von {tenant} aktualisiert.",
+  "fr": "Abonnement de {tenant} mis à jour.",
+  "es": "Suscripción de {tenant} actualizada."
+ },
+ "Abbonamento disdetto: niente più rinnovi.": {
+  "en": "Subscription cancelled: no more renewals.",
+  "de": "Abonnement gekündigt: keine Verlängerungen mehr.",
+  "fr": "Abonnement résilié : plus de renouvellements.",
+  "es": "Suscripción cancelada: no habrá más renovaciones."
+ },
+ "Abbonamento non cambiato: {error}.": {
+  "en": "Subscription not changed: {error}.",
+  "de": "Abonnement nicht geändert: {error}.",
+  "fr": "Abonnement non modifié : {error}.",
+  "es": "Suscripción no modificada: {error}."
+ },
+ "Aggiungi rivenditore": {
+  "en": "Add reseller",
+  "de": "Wiederverkäufer hinzufügen",
+  "fr": "Ajouter un revendeur",
+  "es": "Añadir revendedor"
+ },
+ "Al mese (€)": {
+  "en": "Per month (€)",
+  "de": "Pro Monat (€)",
+  "fr": "Par mois (€)",
+  "es": "Al mes (€)"
+ },
+ "All'anno (€)": {
+  "en": "Per year (€)",
+  "de": "Pro Jahr (€)",
+  "fr": "Par an (€)",
+  "es": "Al año (€)"
+ },
+ "Amministrazione": {
+  "en": "Administration",
+  "de": "Verwaltung",
+  "fr": "Administration",
+  "es": "Administración"
+ },
+ "Annuale": {
+  "en": "Yearly",
+  "de": "Jährlich",
+  "fr": "Annuel",
+  "es": "Anual"
+ },
+ "Apri questo link entro {days} giorni per entrare:": {
+  "en": "Open this link within {days} days to join:",
+  "de": "Öffnen Sie diesen Link innerhalb von {days} Tagen, um beizutreten:",
+  "fr": "Ouvrez ce lien dans les {days} jours pour entrer :",
+  "es": "Abre este enlace en un plazo de {days} días para entrar:"
+ },
+ "Articoli al mese": {
+  "en": "Articles per month",
+  "de": "Artikel pro Monat",
+  "fr": "Articles par mois",
+  "es": "Artículos al mes"
+ },
+ "Attenzione: {warning}": {
+  "en": "Warning: {warning}",
+  "de": "Achtung: {warning}",
+  "fr": "Attention : {warning}",
+  "es": "Atención: {warning}"
+ },
+ "Attiva": {
+  "en": "Active",
+  "de": "Aktiv",
+  "fr": "Active",
+  "es": "Activa"
+ },
+ "Attivo": {
+  "en": "Active",
+  "de": "Aktiv",
+  "fr": "Actif",
+  "es": "Activa"
+ },
+ "Bozze al mese": {
+  "en": "Drafts per month",
+  "de": "Entwürfe pro Monat",
+  "fr": "Brouillons par mois",
+  "es": "Borradores al mes"
+ },
+ "Bozze nel mese": {
+  "en": "Drafts this month",
+  "de": "Entwürfe im Monat",
+  "fr": "Brouillons du mois",
+  "es": "Borradores del mes"
+ },
+ "CF": {
+  "en": "Tax code",
+  "de": "Steuernr.",
+  "fr": "Code fiscal",
+  "es": "Cód. fiscal"
+ },
+ "Cancella la redazione": {
+  "en": "Delete the newsroom",
+  "de": "Redaktion löschen",
+  "fr": "Supprimer la rédaction",
+  "es": "Eliminar la redacción"
+ },
+ "Cancella siti, profili, fonti, articoli, bozze, pubblicazioni e persone della redazione. Non si torna indietro: prima scarica i dati da Impostazioni della redazione.": {
+  "en": "Deletes the newsroom's sites, profiles, sources, articles, drafts, publications and people. There's no going back: first download the data from the newsroom's Settings.",
+  "de": "Löscht Websites, Profile, Quellen, Artikel, Entwürfe, Veröffentlichungen und Personen der Redaktion. Das lässt sich nicht rückgängig machen: Laden Sie die Daten vorher in den Einstellungen der Redaktion herunter.",
+  "fr": "Supprime les sites, profils, sources, articles, brouillons, publications et personnes de la rédaction. Impossible de revenir en arrière : téléchargez d'abord les données depuis les Paramètres de la rédaction.",
+  "es": "Elimina sitios, perfiles, fuentes, artículos, borradores, publicaciones y personas de la redacción. No hay vuelta atrás: antes descarga los datos desde Ajustes de la redacción."
+ },
+ "Cancella tutto": {
+  "en": "Delete everything",
+  "de": "Alles löschen",
+  "fr": "Tout supprimer",
+  "es": "Eliminar todo"
+ },
+ "Chiave API «{name}» creata": {
+  "en": "API key “{name}” created",
+  "de": "API-Schlüssel „{name}“ erstellt",
+  "fr": "Clé API « {name} » créée",
+  "es": "Clave API «{name}» creada"
+ },
+ "Chiave già revocata.": {
+  "en": "Key already revoked.",
+  "de": "Schlüssel bereits widerrufen.",
+  "fr": "Clé déjà révoquée.",
+  "es": "Clave ya revocada."
+ },
+ "Chiave revocata.": {
+  "en": "Key revoked.",
+  "de": "Schlüssel widerrufen.",
+  "fr": "Clé révoquée.",
+  "es": "Clave revocada."
+ },
+ "Chiavi API": {
+  "en": "API keys",
+  "de": "API-Schlüssel",
+  "fr": "Clés API",
+  "es": "Claves API"
+ },
+ "Cliente": {
+  "en": "Customer",
+  "de": "Kunde",
+  "fr": "Client",
+  "es": "Cliente"
+ },
+ "Clienti": {
+  "en": "Customers",
+  "de": "Kunden",
+  "fr": "Clients",
+  "es": "Clientes"
+ },
+ "Con un importo registra un pagamento ricevuto (bonifico) e, senza data, allunga di un mese o un anno. Senza importo cambia solo il piano; senza data il piano non scade. I limiti del piano sostituiscono quelli della redazione.": {
+  "en": "With an amount it records a payment received (bank transfer) and, without a date, extends by a month or a year. Without an amount it only changes the plan; without a date the plan doesn't expire. The plan's limits replace the newsroom's.",
+  "de": "Mit einem Betrag wird eine erhaltene Zahlung (Überweisung) erfasst und ohne Datum um einen Monat oder ein Jahr verlängert. Ohne Betrag ändert sich nur der Tarif; ohne Datum läuft der Tarif nicht ab. Die Limits des Tarifs ersetzen die der Redaktion.",
+  "fr": "Avec un montant, enregistre un paiement reçu (virement) et, sans date, prolonge d'un mois ou d'un an. Sans montant, seule l'offre change ; sans date, l'offre n'expire pas. Les limites de l'offre remplacent celles de la rédaction.",
+  "es": "Con un importe registra un pago recibido (transferencia) y, sin fecha, amplía un mes o un año. Sin importe solo cambia el plan; sin fecha el plan no caduca. Los límites del plan sustituyen a los de la redacción."
+ },
+ "Copiala adesso: non verrà più mostrata. Va nell'intestazione <code>Authorization: Bearer …</code> delle chiamate a <code>/api/operator/</code>.": {
+  "en": "Copy it now: it won't be shown again. It goes in the <code>Authorization: Bearer …</code> header of calls to <code>/api/operator/</code>.",
+  "de": "Jetzt kopieren: Er wird nicht wieder angezeigt. Er gehört in den Header <code>Authorization: Bearer …</code> der Aufrufe von <code>/api/operator/</code>.",
+  "fr": "Copiez-la maintenant : elle ne sera plus affichée. Elle va dans l'en-tête <code>Authorization: Bearer …</code> des appels à <code>/api/operator/</code>.",
+  "es": "Cópiala ahora: no se volverá a mostrar. Va en la cabecera <code>Authorization: Bearer …</code> de las llamadas a <code>/api/operator/</code>."
+ },
+ "Costo modello al mese (€)": {
+  "en": "Model cost per month (€)",
+  "de": "Modellkosten pro Monat (€)",
+  "fr": "Coût du modèle par mois (€)",
+  "es": "Coste del modelo al mes (€)"
+ },
+ "Costo modello nel mese": {
+  "en": "Model cost this month",
+  "de": "Modellkosten im Monat",
+  "fr": "Coût du modèle du mois",
+  "es": "Coste del modelo del mes"
+ },
+ "Crea chiave": {
+  "en": "Create key",
+  "de": "Schlüssel erstellen",
+  "fr": "Créer une clé",
+  "es": "Crear clave"
+ },
+ "Crea l'invito": {
+  "en": "Create the invite",
+  "de": "Einladung erstellen",
+  "fr": "Créer l'invitation",
+  "es": "Crear la invitación"
+ },
+ "Crea la redazione": {
+  "en": "Create the newsroom",
+  "de": "Redaktion anlegen",
+  "fr": "Créer la rédaction",
+  "es": "Crear la redacción"
+ },
+ "Dati di fatturazione salvati.": {
+  "en": "Billing details saved.",
+  "de": "Rechnungsdaten gespeichert.",
+  "fr": "Données de facturation enregistrées.",
+  "es": "Datos de facturación guardados."
+ },
+ "Dati non salvati: {error}.": {
+  "en": "Details not saved: {error}.",
+  "de": "Daten nicht gespeichert: {error}.",
+  "fr": "Données non enregistrées : {error}.",
+  "es": "Datos no guardados: {error}."
+ },
+ "Descrizione": {
+  "en": "Description",
+  "de": "Beschreibung",
+  "fr": "Description",
+  "es": "Descripción"
+ },
+ "Disattiva": {
+  "en": "Deactivate",
+  "de": "Deaktivieren",
+  "fr": "Désactiver",
+  "es": "Desactivar"
+ },
+ "Disattivato": {
+  "en": "Deactivated",
+  "de": "Deaktiviert",
+  "fr": "Désactivé",
+  "es": "Desactivado"
+ },
+ "Disdetto": {
+  "en": "Cancelled",
+  "de": "Gekündigt",
+  "fr": "Résilié",
+  "es": "Cancelada"
+ },
+ "Editor": {
+  "en": "Editor",
+  "de": "Redakteur",
+  "fr": "Éditeur",
+  "es": "Editor"
+ },
+ "Email": {
+  "en": "Email",
+  "de": "E-Mail",
+  "fr": "E-mail",
+  "es": "Email"
+ },
+ "Email del proprietario": {
+  "en": "Owner's email",
+  "de": "E-Mail des Inhabers",
+  "fr": "E-mail du propriétaire",
+  "es": "Email del propietario"
+ },
+ "Email di un account": {
+  "en": "An account's email",
+  "de": "E-Mail eines Kontos",
+  "fr": "E-mail d'un compte",
+  "es": "Email de una cuenta"
+ },
+ "Entra": {
+  "en": "Enter",
+  "de": "Öffnen",
+  "fr": "Entrer",
+  "es": "Entrar"
+ },
+ "Esci": {
+  "en": "Sign out",
+  "de": "Abmelden",
+  "fr": "Se déconnecter",
+  "es": "Cerrar sesión"
+ },
+ "Ferma: piano da pagare": {
+  "en": "On hold: plan to be paid",
+  "de": "Pausiert: Tarif zu bezahlen",
+  "fr": "En pause : offre à payer",
+  "es": "En pausa: plan pendiente de pago"
+ },
+ "Fiscale": {
+  "en": "Tax",
+  "de": "Steuerdaten",
+  "fr": "Fiscal",
+  "es": "Fiscal"
+ },
+ "Fonti attive": {
+  "en": "Active sources",
+  "de": "Aktive Quellen",
+  "fr": "Sources actives",
+  "es": "Fuentes activas"
+ },
+ "Giorni di prova": {
+  "en": "Trial days",
+  "de": "Testtage",
+  "fr": "Jours d'essai",
+  "es": "Días de prueba"
+ },
+ "Grazie. Il pagamento è in verifica: la redazione si attiva appena il circuito lo conferma, di solito entro un minuto.": {
+  "en": "Thank you. The payment is being checked: the newsroom becomes active as soon as the payment network confirms it, usually within a minute.",
+  "de": "Vielen Dank. Die Zahlung wird geprüft: Die Redaktion wird aktiviert, sobald der Zahlungsdienst sie bestätigt, meist innerhalb einer Minute.",
+  "fr": "Merci. Le paiement est en cours de vérification : la rédaction s'active dès que le réseau de paiement le confirme, généralement en moins d'une minute.",
+  "es": "Gracias. El pago se está verificando: la redacción se activa en cuanto la red de pago lo confirma, normalmente en un minuto."
+ },
+ "I limiti sono numeri di zero o più; vuoto vuol dire senza limite.": {
+  "en": "Limits are numbers of zero or more; empty means no limit.",
+  "de": "Limits sind Zahlen ab null; leer bedeutet unbegrenzt.",
+  "fr": "Les limites sont des nombres supérieurs ou égaux à zéro ; vide signifie sans limite.",
+  "es": "Los límites son números de cero o más; vacío significa sin límite."
+ },
+ "Il link è partito per email a {email}.": {
+  "en": "The link was emailed to {email}.",
+  "de": "Der Link wurde per E-Mail an {email} gesendet.",
+  "fr": "Le lien a été envoyé par e-mail à {email}.",
+  "es": "El enlace se ha enviado por email a {email}."
+ },
+ "Il proprietario riceve un invito per scegliere la sua password (o se ha già un account la trova fra le sue redazioni).": {
+  "en": "The owner receives an invite to choose a password (or, with an account already, finds it among their newsrooms).",
+  "de": "Der Inhaber erhält eine Einladung, um sein Passwort zu wählen (oder findet sie, wenn er schon ein Konto hat, unter seinen Redaktionen).",
+  "fr": "Le propriétaire reçoit une invitation pour choisir son mot de passe (ou, s'il a déjà un compte, la trouve parmi ses rédactions).",
+  "es": "El propietario recibe una invitación para elegir su contraseña (o, si ya tiene cuenta, la encuentra entre sus redacciones)."
+ },
+ "Il sito pubblico legge i piani da <code>/api/public/plans</code>. Il piano \"Prova\" è quello di chi si iscrive.": {
+  "en": "The public site reads the plans from <code>/api/public/plans</code>. The \"Trial\" plan is the one new signups get.",
+  "de": "Die öffentliche Website liest die Tarife aus <code>/api/public/plans</code>. Der Tarif „Testphase“ ist der für Neuanmeldungen.",
+  "fr": "Le site public lit les offres sur <code>/api/public/plans</code>. L'offre « Essai » est celle des nouveaux inscrits.",
+  "es": "El sitio público lee los planes de <code>/api/public/plans</code>. El plan \"Prueba\" es el de quien se registra."
+ },
+ "Importo ricevuto (€)": {
+  "en": "Amount received (€)",
+  "de": "Erhaltener Betrag (€)",
+  "fr": "Montant reçu (€)",
+  "es": "Importe recibido (€)"
+ },
+ "In prova": {
+  "en": "On trial",
+  "de": "In der Testphase",
+  "fr": "En essai",
+  "es": "En prueba"
+ },
+ "Indirizzo": {
+  "en": "Address",
+  "de": "Adresse",
+  "fr": "Adresse",
+  "es": "Dirección"
+ },
+ "Invita un operatore": {
+  "en": "Invite an operator",
+  "de": "Betreiber einladen",
+  "fr": "Inviter un opérateur",
+  "es": "Invitar a un operador"
+ },
+ "Invita una persona": {
+  "en": "Invite someone",
+  "de": "Person einladen",
+  "fr": "Inviter une personne",
+  "es": "Invitar a una persona"
+ },
+ "Invitato, scade {date}": {
+  "en": "Invited, expires {date}",
+  "de": "Eingeladen, läuft ab am {date}",
+  "fr": "Invité, expire le {date}",
+  "es": "Invitado, caduca el {date}"
+ },
+ "Invito a {newsroom} per {email}": {
+  "en": "Invite to {newsroom} for {email}",
+  "de": "Einladung in {newsroom} für {email}",
+  "fr": "Invitation à {newsroom} pour {email}",
+  "es": "Invitación a {newsroom} para {email}"
+ },
+ "Invito a {where}": {
+  "en": "Invitation to {where}",
+  "de": "Einladung in {where}",
+  "fr": "Invitation à {where}",
+  "es": "Invitación a {where}"
+ },
+ "Invito come operatore per {email}": {
+  "en": "Operator invite for {email}",
+  "de": "Betreiber-Einladung für {email}",
+  "fr": "Invitation d'opérateur pour {email}",
+  "es": "Invitación como operador para {email}"
+ },
+ "Invito non accettato": {
+  "en": "Invite not accepted",
+  "de": "Einladung nicht angenommen",
+  "fr": "Invitation non acceptée",
+  "es": "Invitación no aceptada"
+ },
+ "Invito non creato: {error}.": {
+  "en": "Invite not created: {error}.",
+  "de": "Einladung nicht erstellt: {error}.",
+  "fr": "Invitation non créée : {error}.",
+  "es": "Invitación no creada: {error}."
+ },
+ "La prova di {name} finisce il {date}": {
+  "en": "The trial of {name} ends on {date}",
+  "de": "Die Testphase von {name} endet am {date}",
+  "fr": "L'essai de {name} se termine le {date}",
+  "es": "La prueba de {name} termina el {date}"
+ },
+ "La prova gratuita della redazione {name} finisce il {date}.": {
+  "en": "The free trial of the newsroom {name} ends on {date}.",
+  "de": "Die kostenlose Testphase der Redaktion {name} endet am {date}.",
+  "fr": "L'essai gratuit de la rédaction {name} se termine le {date}.",
+  "es": "La prueba gratuita de la redacción {name} termina el {date}."
+ },
+ "La redazione resta attiva fino al {date}.": {
+  "en": "The newsroom stays active until {date}.",
+  "de": "Die Redaktion bleibt bis {date} aktiv.",
+  "fr": "La rédaction reste active jusqu'au {date}.",
+  "es": "La redacción sigue activa hasta el {date}."
+ },
+ "Le tue redazioni": {
+  "en": "Your newsrooms",
+  "de": "Ihre Redaktionen",
+  "fr": "Vos rédactions",
+  "es": "Tus redacciones"
+ },
+ "Lettura": {
+  "en": "Read-only",
+  "de": "Nur Lesen",
+  "fr": "Lecture seule",
+  "es": "Solo lectura"
+ },
+ "Lingue per sito": {
+  "en": "Languages per site",
+  "de": "Sprachen pro Website",
+  "fr": "Langues par site",
+  "es": "Idiomas por sitio"
+ },
+ "Link per nuova password": {
+  "en": "New password link",
+  "de": "Link für neues Passwort",
+  "fr": "Lien pour nouveau mot de passe",
+  "es": "Enlace para nueva contraseña"
+ },
+ "Link per reimpostare la password di {email}": {
+  "en": "Password reset link for {email}",
+  "de": "Link zum Zurücksetzen des Passworts von {email}",
+  "fr": "Lien de réinitialisation du mot de passe de {email}",
+  "es": "Enlace para restablecer la contraseña de {email}"
+ },
+ "Mensile": {
+  "en": "Monthly",
+  "de": "Monatlich",
+  "fr": "Mensuel",
+  "es": "Mensual"
+ },
+ "Nessun abbonamento da disdire.": {
+  "en": "No subscription to cancel.",
+  "de": "Kein Abonnement zu kündigen.",
+  "fr": "Aucun abonnement à résilier.",
+  "es": "No hay ninguna suscripción que cancelar."
+ },
+ "Nessun account per {email}.": {
+  "en": "No account for {email}.",
+  "de": "Kein Konto für {email}.",
+  "fr": "Aucun compte pour {email}.",
+  "es": "No hay ninguna cuenta para {email}."
+ },
+ "Nessun cliente: arrivano dal sito con <code>POST /api/operator/signup</code>, o dai rivenditori.": {
+  "en": "No customers: they come from the site through <code>POST /api/operator/signup</code>, or from resellers.",
+  "de": "Keine Kunden: Sie kommen von der Website über <code>POST /api/operator/signup</code> oder von Wiederverkäufern.",
+  "fr": "Aucun client : ils arrivent du site via <code>POST /api/operator/signup</code>, ou des revendeurs.",
+  "es": "Ningún cliente: llegan desde el sitio con <code>POST /api/operator/signup</code> o desde los revendedores."
+ },
+ "Nessuna redazione: creane una qui sotto, oppure lasciala creare al sistema di pagamento con l'API.": {
+  "en": "No newsrooms: create one below, or let the billing system create it through the API.",
+  "de": "Keine Redaktionen: Legen Sie unten eine an oder lassen Sie sie vom Abrechnungssystem über die API anlegen.",
+  "fr": "Aucune rédaction : créez-en une ci-dessous, ou laissez le système de paiement la créer via l'API.",
+  "es": "Ninguna redacción: crea una aquí abajo o deja que la cree el sistema de pago con la API."
+ },
+ "No": {
+  "en": "No",
+  "de": "Nein",
+  "fr": "Non",
+  "es": "No"
+ },
+ "Nome": {
+  "en": "Name",
+  "de": "Name",
+  "fr": "Nom",
+  "es": "Nombre"
+ },
+ "Notizie al giorno": {
+  "en": "News per day",
+  "de": "Meldungen pro Tag",
+  "fr": "Actualités par jour",
+  "es": "Noticias al día"
+ },
+ "Notizie oggi": {
+  "en": "News today",
+  "de": "Meldungen heute",
+  "fr": "Actualités du jour",
+  "es": "Noticias de hoy"
+ },
+ "Nuova chiave": {
+  "en": "New key",
+  "de": "Neuer Schlüssel",
+  "fr": "Nouvelle clé",
+  "es": "Nueva clave"
+ },
+ "Nuova chiave API per {name}": {
+  "en": "New API key for {name}",
+  "de": "Neuer API-Schlüssel für {name}",
+  "fr": "Nouvelle clé API pour {name}",
+  "es": "Nueva clave API para {name}"
+ },
+ "Nuova redazione": {
+  "en": "New newsroom",
+  "de": "Neue Redaktion",
+  "fr": "Nouvelle rédaction",
+  "es": "Nueva redacción"
+ },
+ "Operatori": {
+  "en": "Operators",
+  "de": "Betreiber",
+  "fr": "Opérateurs",
+  "es": "Operadores"
+ },
+ "Owner": {
+  "en": "Owner",
+  "de": "Inhaber",
+  "fr": "Propriétaire",
+  "es": "Propietario"
+ },
+ "P.IVA": {
+  "en": "VAT",
+  "de": "USt-IdNr.",
+  "fr": "N° TVA",
+  "es": "NIF-IVA"
+ },
+ "PEC non valida": {
+  "en": "invalid PEC",
+  "de": "ungültige PEC",
+  "fr": "PEC non valide",
+  "es": "PEC no válida"
+ },
+ "Pagamenti": {
+  "en": "Payments",
+  "de": "Zahlungen",
+  "fr": "Paiements",
+  "es": "Pagos"
+ },
+ "Pagamenti online attivi (Mollie): il cliente sceglie il piano e paga dalla pagina Abbonamento; i rinnovi sono automatici.": {
+  "en": "Online payments on (Mollie): the customer chooses the plan and pays from the Subscription page; renewals are automatic.",
+  "de": "Online-Zahlungen aktiv (Mollie): Der Kunde wählt den Tarif und zahlt auf der Seite Abonnement; Verlängerungen erfolgen automatisch.",
+  "fr": "Paiements en ligne actifs (Mollie) : le client choisit l'offre et paie depuis la page Abonnement ; les renouvellements sont automatiques.",
+  "es": "Pagos online activos (Mollie): el cliente elige el plan y paga desde la página Suscripción; las renovaciones son automáticas."
+ },
+ "Pagamenti online non configurati: registra i bonifici da \"Abbonamento\" di ogni redazione. Per attivarli metti <code>EDITOR_MOLLIE_API_KEY</code> nel <code>.env</code>.": {
+  "en": "Online payments not set up: record bank transfers from each newsroom's \"Subscription\". To turn them on, put <code>EDITOR_MOLLIE_API_KEY</code> in <code>.env</code>.",
+  "de": "Online-Zahlungen nicht eingerichtet: Erfassen Sie Überweisungen unter „Abonnement“ der jeweiligen Redaktion. Zum Aktivieren <code>EDITOR_MOLLIE_API_KEY</code> in die <code>.env</code> eintragen.",
+  "fr": "Paiements en ligne non configurés : enregistrez les virements depuis « Abonnement » de chaque rédaction. Pour les activer, mettez <code>EDITOR_MOLLIE_API_KEY</code> dans le <code>.env</code>.",
+  "es": "Pagos online no configurados: registra las transferencias desde \"Suscripción\" de cada redacción. Para activarlos pon <code>EDITOR_MOLLIE_API_KEY</code> en el <code>.env</code>."
+ },
+ "Pagamento non avviato: errore interno, riprova tra poco.": {
+  "en": "Payment not started: internal error, try again shortly.",
+  "de": "Zahlung nicht gestartet: interner Fehler, bitte versuchen Sie es gleich noch einmal.",
+  "fr": "Paiement non lancé : erreur interne, réessayez dans un instant.",
+  "es": "Pago no iniciado: error interno, vuelve a intentarlo en un momento."
+ },
+ "Pagamento non avviato: {error}.": {
+  "en": "Payment not started: {error}.",
+  "de": "Zahlung nicht gestartet: {error}.",
+  "fr": "Paiement non lancé : {error}.",
+  "es": "Pago no iniciado: {error}."
+ },
+ "Pagamento non riuscito": {
+  "en": "Payment failed",
+  "de": "Zahlung fehlgeschlagen",
+  "fr": "Paiement échoué",
+  "es": "Pago fallido"
+ },
+ "Pagato fino al": {
+  "en": "Paid until",
+  "de": "Bezahlt bis",
+  "fr": "Payé jusqu'au",
+  "es": "Pagado hasta el"
+ },
+ "Per cancellare scrivi l'id della redazione ({tenant}): niente è stato cancellato.": {
+  "en": "To delete, type the newsroom's id ({tenant}): nothing was deleted.",
+  "de": "Zum Löschen die ID der Redaktion ({tenant}) eingeben: Nichts wurde gelöscht.",
+  "fr": "Pour supprimer, saisissez l'id de la rédaction ({tenant}) : rien n'a été supprimé.",
+  "es": "Para eliminar escribe el id de la redacción ({tenant}): no se ha eliminado nada."
+ },
+ "Per continuare senza interruzioni scegli un piano:": {
+  "en": "To carry on without interruption, choose a plan:",
+  "de": "Um ohne Unterbrechung weiterzumachen, wählen Sie einen Tarif:",
+  "fr": "Pour continuer sans interruption, choisissez une offre :",
+  "es": "Para seguir sin interrupciones elige un plan:"
+ },
+ "Per il sistema di pagamento: con una chiave crea, aggiorna e sospende le redazioni da <code>/api/operator/tenants</code>.": {
+  "en": "For the billing system: with a key it creates, updates and suspends newsrooms through <code>/api/operator/tenants</code>.",
+  "de": "Für das Abrechnungssystem: Mit einem Schlüssel legt es Redaktionen über <code>/api/operator/tenants</code> an, ändert und pausiert sie.",
+  "fr": "Pour le système de paiement : avec une clé, il crée, met à jour et suspend les rédactions via <code>/api/operator/tenants</code>.",
+  "es": "Para el sistema de pago: con una clave crea, actualiza y suspende las redacciones desde <code>/api/operator/tenants</code>."
+ },
+ "Per scegliere una nuova password apri questo link entro {hours} ore:": {
+  "en": "To choose a new password, open this link within {hours} hours:",
+  "de": "Um ein neues Passwort zu wählen, öffnen Sie diesen Link innerhalb von {hours} Stunden:",
+  "fr": "Pour choisir un nouveau mot de passe, ouvrez ce lien dans les {hours} heures :",
+  "es": "Para elegir una nueva contraseña abre este enlace en un plazo de {hours} horas:"
+ },
+ "Piani": {
+  "en": "Plans",
+  "de": "Tarife",
+  "fr": "Offres",
+  "es": "Planes"
+ },
+ "Piano": {
+  "en": "Plan",
+  "de": "Tarif",
+  "fr": "Offre",
+  "es": "Plan"
+ },
+ "Piano di {tenant} aggiornato.": {
+  "en": "Plan of {tenant} updated.",
+  "de": "Tarif von {tenant} aktualisiert.",
+  "fr": "Offre de {tenant} mise à jour.",
+  "es": "Plan de {tenant} actualizado."
+ },
+ "Piano e limiti": {
+  "en": "Plan and limits",
+  "de": "Tarif und Limits",
+  "fr": "Offre et limites",
+  "es": "Plan y límites"
+ },
+ "Piano non salvato: {error}.": {
+  "en": "Plan not saved: {error}.",
+  "de": "Tarif nicht gespeichert: {error}.",
+  "fr": "Offre non enregistrée : {error}.",
+  "es": "Plan no guardado: {error}."
+ },
+ "Piano {name} salvato. Le redazioni già su questo piano prendono i nuovi limiti al prossimo pagamento.": {
+  "en": "Plan {name} saved. Newsrooms already on this plan get the new limits at their next payment.",
+  "de": "Tarif {name} gespeichert. Redaktionen mit diesem Tarif erhalten die neuen Limits mit der nächsten Zahlung.",
+  "fr": "Offre {name} enregistrée. Les rédactions déjà sur cette offre reçoivent les nouvelles limites au prochain paiement.",
+  "es": "Plan {name} guardado. Las redacciones que ya tienen este plan reciben los nuevos límites en el próximo pago."
+ },
+ "Questo server non manda email: manda tu questo link a {email}. Si usa una volta.": {
+  "en": "This server doesn't send email: send this link to {email} yourself. It works once.",
+  "de": "Dieser Server versendet keine E-Mails: Senden Sie diesen Link selbst an {email}. Er gilt einmal.",
+  "fr": "Ce serveur n'envoie pas d'e-mails : envoyez vous-même ce lien à {email}. Il ne sert qu'une fois.",
+  "es": "Este servidor no envía emails: envía tú este enlace a {email}. Solo se usa una vez."
+ },
+ "Redazione i3k": {
+  "en": "i3k Newsroom",
+  "de": "Redaktion i3k",
+  "fr": "Rédaction i3k",
+  "es": "Redacción i3k"
+ },
+ "Redazione non creata: {error}.": {
+  "en": "Newsroom not created: {error}.",
+  "de": "Redaktion nicht angelegt: {error}.",
+  "fr": "Rédaction non créée : {error}.",
+  "es": "Redacción no creada: {error}."
+ },
+ "Redazione non trovata.": {
+  "en": "Newsroom not found.",
+  "de": "Redaktion nicht gefunden.",
+  "fr": "Rédaction introuvable.",
+  "es": "Redacción no encontrada."
+ },
+ "Redazione {name} creata (id {tenant})": {
+  "en": "Newsroom {name} created (id {tenant})",
+  "de": "Redaktion {name} angelegt (ID {tenant})",
+  "fr": "Rédaction {name} créée (id {tenant})",
+  "es": "Redacción {name} creada (id {tenant})"
+ },
+ "Redazione {tenant} cancellata con tutti i suoi dati.": {
+  "en": "Newsroom {tenant} deleted with all its data.",
+  "de": "Redaktion {tenant} mit allen Daten gelöscht.",
+  "fr": "Rédaction {tenant} supprimée avec toutes ses données.",
+  "es": "Redacción {tenant} eliminada con todos sus datos."
+ },
+ "Redazione {tenant} riattivata.": {
+  "en": "Newsroom {tenant} reactivated.",
+  "de": "Redaktion {tenant} reaktiviert.",
+  "fr": "Rédaction {tenant} réactivée.",
+  "es": "Redacción {tenant} reactivada."
+ },
+ "Redazione {tenant} sospesa: le persone non entrano e il lavoro programmato si ferma, i dati restano.": {
+  "en": "Newsroom {tenant} suspended: people can't sign in and scheduled work stops; the data stay.",
+  "de": "Redaktion {tenant} pausiert: Niemand kann sich anmelden, geplante Aufgaben stoppen, die Daten bleiben erhalten.",
+  "fr": "Rédaction {tenant} suspendue : personne ne peut se connecter et les tâches planifiées s'arrêtent, les données restent.",
+  "es": "Redacción {tenant} suspendida: nadie puede entrar y el trabajo programado se detiene; los datos se conservan."
+ },
+ "Redazioni": {
+  "en": "Newsrooms",
+  "de": "Redaktionen",
+  "fr": "Rédactions",
+  "es": "Redacciones"
+ },
+ "Reimposta la password di EuLLM Editor": {
+  "en": "Reset your EuLLM Editor password",
+  "de": "Passwort für EuLLM Editor zurücksetzen",
+  "fr": "Réinitialisez votre mot de passe EuLLM Editor",
+  "es": "Restablece tu contraseña de EuLLM Editor"
+ },
+ "Revoca": {
+  "en": "Revoke",
+  "de": "Widerrufen",
+  "fr": "Révoquer",
+  "es": "Revocar"
+ },
+ "Revocata": {
+  "en": "Revoked",
+  "de": "Widerrufen",
+  "fr": "Révoquée",
+  "es": "Revocada"
+ },
+ "Riattiva": {
+  "en": "Reactivate",
+  "de": "Reaktivieren",
+  "fr": "Réactiver",
+  "es": "Reactivar"
+ },
+ "Rinnovo": {
+  "en": "Renewal",
+  "de": "Verlängerung",
+  "fr": "Renouvellement",
+  "es": "Renovación"
+ },
+ "Rivenditore": {
+  "en": "Reseller",
+  "de": "Wiederverkäufer",
+  "fr": "Revendeur",
+  "es": "Revendedor"
+ },
+ "Rivenditore disattivato: le sue chiavi non valgono più, i suoi clienti restano.": {
+  "en": "Reseller deactivated: its keys no longer work, its customers stay.",
+  "de": "Wiederverkäufer deaktiviert: Seine Schlüssel gelten nicht mehr, seine Kunden bleiben.",
+  "fr": "Revendeur désactivé : ses clés ne fonctionnent plus, ses clients restent.",
+  "es": "Revendedor desactivado: sus claves ya no sirven, sus clientes se mantienen."
+ },
+ "Rivenditore non creato: {error}.": {
+  "en": "Reseller not created: {error}.",
+  "de": "Wiederverkäufer nicht angelegt: {error}.",
+  "fr": "Revendeur non créé : {error}.",
+  "es": "Revendedor no creado: {error}."
+ },
+ "Rivenditore non trovato o disattivato.": {
+  "en": "Reseller not found or deactivated.",
+  "de": "Wiederverkäufer nicht gefunden oder deaktiviert.",
+  "fr": "Revendeur introuvable ou désactivé.",
+  "es": "Revendedor no encontrado o desactivado."
+ },
+ "Rivenditore non trovato.": {
+  "en": "Reseller not found.",
+  "de": "Wiederverkäufer nicht gefunden.",
+  "fr": "Revendeur introuvable.",
+  "es": "Revendedor no encontrado."
+ },
+ "Rivenditore riattivato.": {
+  "en": "Reseller reactivated.",
+  "de": "Wiederverkäufer reaktiviert.",
+  "fr": "Revendeur réactivé.",
+  "es": "Revendedor reactivado."
+ },
+ "Rivenditore {name} creato con la sua chiave API": {
+  "en": "Reseller {name} created with its API key",
+  "de": "Wiederverkäufer {name} mit eigenem API-Schlüssel angelegt",
+  "fr": "Revendeur {name} créé avec sa clé API",
+  "es": "Revendedor {name} creado con su clave API"
+ },
+ "Rivenditori": {
+  "en": "Resellers",
+  "de": "Wiederverkäufer",
+  "fr": "Revendeurs",
+  "es": "Revendedores"
+ },
+ "Ruolo": {
+  "en": "Role",
+  "de": "Rolle",
+  "fr": "Rôle",
+  "es": "Rol"
+ },
+ "Salva": {
+  "en": "Save",
+  "de": "Speichern",
+  "fr": "Enregistrer",
+  "es": "Guardar"
+ },
+ "Scaduto": {
+  "en": "Expired",
+  "de": "Abgelaufen",
+  "fr": "Expiré",
+  "es": "Caducada"
+ },
+ "Sconto (%)": {
+  "en": "Discount (%)",
+  "de": "Rabatt (%)",
+  "fr": "Remise (%)",
+  "es": "Descuento (%)"
+ },
+ "Scrivi <span class=\"num\">{id}</span> per confermare": {
+  "en": "Type <span class=\"num\">{id}</span> to confirm",
+  "de": "Geben Sie <span class=\"num\">{id}</span> zur Bestätigung ein",
+  "fr": "Saisissez <span class=\"num\">{id}</span> pour confirmer",
+  "es": "Escribe <span class=\"num\">{id}</span> para confirmar"
+ },
+ "Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima.": {
+  "en": "If you didn't ask for this, ignore this email: your password stays the same.",
+  "de": "Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail: Ihr Passwort bleibt unverändert.",
+  "fr": "Si vous ne l'avez pas demandé, ignorez cet e-mail : votre mot de passe reste inchangé.",
+  "es": "Si no lo has pedido tú, ignora este email: la contraseña sigue siendo la misma."
+ },
+ "Se non scegli un piano la redazione si ferma, ma i tuoi dati restano e puoi riattivarla quando vuoi.": {
+  "en": "If you don't choose a plan the newsroom stops, but your data stay and you can reactivate it whenever you like.",
+  "de": "Wenn Sie keinen Tarif wählen, wird die Redaktion pausiert, Ihre Daten bleiben aber erhalten und Sie können sie jederzeit reaktivieren.",
+  "fr": "Si vous ne choisissez pas d'offre, la rédaction s'arrête, mais vos données restent et vous pouvez la réactiver quand vous voulez.",
+  "es": "Si no eliges un plan la redacción se detiene, pero tus datos se conservan y puedes reactivarla cuando quieras."
+ },
+ "Sezioni": {
+  "en": "Sections",
+  "de": "Bereiche",
+  "fr": "Sections",
+  "es": "Secciones"
+ },
+ "Siti": {
+  "en": "Sites",
+  "de": "Websites",
+  "fr": "Sites",
+  "es": "Sitios"
+ },
+ "Sospendi": {
+  "en": "Suspend",
+  "de": "Pausieren",
+  "fr": "Suspendre",
+  "es": "Suspender"
+ },
+ "Sospesa": {
+  "en": "Suspended",
+  "de": "Pausiert",
+  "fr": "Suspendue",
+  "es": "Suspendida"
+ },
+ "Sul sito": {
+  "en": "On the site",
+  "de": "Auf der Website",
+  "fr": "Sur le site",
+  "es": "En el sitio"
+ },
+ "Sì": {
+  "en": "Yes",
+  "de": "Ja",
+  "fr": "Oui",
+  "es": "Sí"
+ },
+ "Un rivenditore iscrive e gestisce i suoi clienti con la sua chiave API e li fattura lui: vede solo i suoi.": {
+  "en": "A reseller signs up and manages its customers with its own API key and bills them itself: it sees only its own.",
+  "de": "Ein Wiederverkäufer meldet seine Kunden mit seinem API-Schlüssel an, verwaltet sie und rechnet selbst mit ihnen ab: Er sieht nur seine eigenen.",
+  "fr": "Un revendeur inscrit et gère ses clients avec sa clé API et les facture lui-même : il ne voit que les siens.",
+  "es": "Un revendedor da de alta y gestiona a sus clientes con su clave API y los factura él: solo ve los suyos."
+ },
+ "Vuoto vuol dire senza limite. Il costo del modello diventa anche il limite della redazione nel Core.": {
+  "en": "Empty means no limit. The model cost also becomes the newsroom's limit in the Core.",
+  "de": "Leer bedeutet unbegrenzt. Die Modellkosten werden auch zum Limit der Redaktion im Core.",
+  "fr": "Vide signifie sans limite. Le coût du modèle devient aussi la limite de la rédaction dans le Core.",
+  "es": "Vacío significa sin límite. El coste del modelo pasa a ser también el límite de la redacción en el Core."
+ },
+ "anno": {
+  "en": "year",
+  "de": "Jahr",
+  "fr": "an",
+  "es": "año"
+ },
+ "cliente": {
+  "en": "customer",
+  "de": "Kunde",
+  "fr": "client",
+  "es": "cliente"
+ },
+ "clienti": {
+  "en": "customers",
+  "de": "Kunden",
+  "fr": "clients",
+  "es": "clientes"
+ },
+ "dal {date}": {
+  "en": "since {date}",
+  "de": "seit {date}",
+  "fr": "depuis le {date}",
+  "es": "desde el {date}"
+ },
+ "diretto": {
+  "en": "direct",
+  "de": "direkt",
+  "fr": "direct",
+  "es": "directo"
+ },
+ "il codice destinatario SDI ha 7 caratteri (6 per la pubblica amministrazione)": {
+  "en": "the SDI recipient code has 7 characters (6 for public administration)",
+  "de": "der SDI-Empfängercode hat 7 Zeichen (6 für öffentliche Verwaltungen)",
+  "fr": "le code destinataire SDI a 7 caractères (6 pour l'administration publique)",
+  "es": "el código de destinatario SDI tiene 7 caracteres (6 para la administración pública)"
+ },
+ "il codice fiscale ha 16 caratteri (11 cifre per un'azienda)": {
+  "en": "the tax code has 16 characters (11 digits for a company)",
+  "de": "die Steuernummer (codice fiscale) hat 16 Zeichen (11 Ziffern bei Unternehmen)",
+  "fr": "le code fiscal a 16 caractères (11 chiffres pour une entreprise)",
+  "es": "el código fiscal tiene 16 caracteres (11 cifras para una empresa)"
+ },
+ "il link non è valido o è scaduto": {
+  "en": "the link is invalid or has expired",
+  "de": "der Link ist ungültig oder abgelaufen",
+  "fr": "le lien n'est pas valide ou a expiré",
+  "es": "el enlace no es válido o ha caducado"
+ },
+ "il link non è valido, è scaduto o l'amministratore esiste già": {
+  "en": "the link is invalid, has expired or the administrator already exists",
+  "de": "der Link ist ungültig, abgelaufen oder der Administrator existiert bereits",
+  "fr": "le lien n'est pas valide, a expiré ou l'administrateur existe déjà",
+  "es": "el enlace no es válido, ha caducado o el administrador ya existe"
+ },
+ "il link è già stato usato": {
+  "en": "the link has already been used",
+  "de": "der Link wurde bereits verwendet",
+  "fr": "le lien a déjà été utilisé",
+  "es": "el enlace ya se ha usado"
+ },
+ "il paese è un codice di due lettere (IT, DE, FR...)": {
+  "en": "the country is a two-letter code (IT, DE, FR...)",
+  "de": "das Land ist ein Code aus zwei Buchstaben (IT, DE, FR...)",
+  "fr": "le pays est un code de deux lettres (IT, DE, FR...)",
+  "es": "el país es un código de dos letras (IT, DE, FR...)"
+ },
+ "il piano ha bisogno di un nome": {
+  "en": "the plan needs a name",
+  "de": "der Tarif braucht einen Namen",
+  "fr": "l'offre a besoin d'un nom",
+  "es": "el plan necesita un nombre"
+ },
+ "il rivenditore ha bisogno di un nome": {
+  "en": "the reseller needs a name",
+  "de": "der Wiederverkäufer braucht einen Namen",
+  "fr": "le revendeur a besoin d'un nom",
+  "es": "el revendedor necesita un nombre"
+ },
+ "indirizzo email non valido": {
+  "en": "invalid email address",
+  "de": "ungültige E-Mail-Adresse",
+  "fr": "adresse e-mail non valide",
+  "es": "dirección de email no válida"
+ },
+ "kind è company o person": {
+  "en": "kind is company or person",
+  "de": "kind ist company oder person",
+  "fr": "kind vaut company ou person",
+  "es": "kind es company o person"
+ },
+ "l'intervallo è month o year": {
+  "en": "the interval is month or year",
+  "de": "das Intervall ist month oder year",
+  "fr": "l'intervalle vaut month ou year",
+  "es": "el intervalo es month o year"
+ },
+ "la console di EuLLM Editor": {
+  "en": "the EuLLM Editor console",
+  "de": "die Konsole von EuLLM Editor",
+  "fr": "la console d'EuLLM Editor",
+  "es": "la consola de EuLLM Editor"
+ },
+ "la partita IVA italiana ha 11 cifre": {
+  "en": "an Italian VAT number has 11 digits",
+  "de": "die italienische USt-IdNr. hat 11 Ziffern",
+  "fr": "le numéro de TVA italien a 11 chiffres",
+  "es": "el número de IVA italiano tiene 11 cifras"
+ },
+ "la password deve avere almeno {n} caratteri": {
+  "en": "the password must have at least {n} characters",
+  "de": "das Passwort muss mindestens {n} Zeichen haben",
+  "fr": "le mot de passe doit comporter au moins {n} caractères",
+  "es": "la contraseña debe tener al menos {n} caracteres"
+ },
+ "la redazione deve avere almeno un owner": {
+  "en": "the newsroom must have at least one owner",
+  "de": "die Redaktion muss mindestens einen Inhaber haben",
+  "fr": "la rédaction doit avoir au moins un propriétaire",
+  "es": "la redacción debe tener al menos un propietario"
+ },
+ "la redazione {newsroom}": {
+  "en": "the newsroom {newsroom}",
+  "de": "die Redaktion {newsroom}",
+  "fr": "la rédaction {newsroom}",
+  "es": "la redacción {newsroom}"
+ },
+ "lo sconto è una percentuale da 0 a 100": {
+  "en": "the discount is a percentage from 0 to 100",
+  "de": "der Rabatt ist ein Prozentsatz von 0 bis 100",
+  "fr": "la remise est un pourcentage de 0 à 100",
+  "es": "el descuento es un porcentaje de 0 a 100"
+ },
+ "manca il campo {field}": {
+  "en": "the field {field} is missing",
+  "de": "das Feld {field} fehlt",
+  "fr": "le champ {field} manque",
+  "es": "falta el campo {field}"
+ },
+ "mese": {
+  "en": "month",
+  "de": "Monat",
+  "fr": "mois",
+  "es": "mes"
+ },
+ "nessuna": {
+  "en": "none",
+  "de": "keine",
+  "fr": "aucune",
+  "es": "ninguna"
+ },
+ "nessuno": {
+  "en": "none",
+  "de": "keiner",
+  "fr": "aucun",
+  "es": "ninguno"
+ },
+ "numeri di zero o più": {
+  "en": "numbers of zero or more",
+  "de": "Zahlen ab null",
+  "fr": "des nombres supérieurs ou égaux à zéro",
+  "es": "números de cero o más"
+ },
+ "operatore": {
+  "en": "operator",
+  "de": "Betreiber",
+  "fr": "opérateur",
+  "es": "operador"
+ },
+ "pagamenti": {
+  "en": "payments",
+  "de": "Zahlungen",
+  "fr": "paiements",
+  "es": "pagos"
+ },
+ "pagamenti online non configurati: contatta chi ti ha venduto il servizio": {
+  "en": "online payments not set up: contact whoever sold you the service",
+  "de": "Online-Zahlungen nicht eingerichtet: Wenden Sie sich an Ihren Anbieter des Dienstes",
+  "fr": "paiements en ligne non configurés : contactez qui vous a vendu le service",
+  "es": "pagos online no configurados: contacta con quien te vendió el servicio"
+ },
+ "pagato fino al {date}": {
+  "en": "paid until {date}",
+  "de": "bezahlt bis {date}",
+  "fr": "payé jusqu'au {date}",
+  "es": "pagado hasta el {date}"
+ },
+ "password sbagliata: usa quella del tuo account": {
+  "en": "wrong password: use your account's password",
+  "de": "falsches Passwort: Verwenden Sie das Passwort Ihres Kontos",
+  "fr": "mot de passe incorrect : utilisez celui de votre compte",
+  "es": "contraseña incorrecta: usa la de tu cuenta"
+ },
+ "password troppo lunga": {
+  "en": "password too long",
+  "de": "Passwort zu lang",
+  "fr": "mot de passe trop long",
+  "es": "contraseña demasiado larga"
+ },
+ "persona": {
+  "en": "person",
+  "de": "Person",
+  "fr": "personne",
+  "es": "persona"
+ },
+ "persona non trovata in questa redazione": {
+  "en": "person not found in this newsroom",
+  "de": "Person in dieser Redaktion nicht gefunden",
+  "fr": "personne introuvable dans cette rédaction",
+  "es": "persona no encontrada en esta redacción"
+ },
+ "persone": {
+  "en": "people",
+  "de": "Personen",
+  "fr": "personnes",
+  "es": "personas"
+ },
+ "piano sconosciuto: {code}": {
+  "en": "unknown plan: {code}",
+  "de": "unbekannter Tarif: {code}",
+  "fr": "offre inconnue : {code}",
+  "es": "plan desconocido: {code}"
+ },
+ "piano {plan}": {
+  "en": "plan {plan}",
+  "de": "Tarif {plan}",
+  "fr": "offre {plan}",
+  "es": "plan {plan}"
+ },
+ "prezzi IVA esclusa": {
+  "en": "prices excluding VAT",
+  "de": "Preise zzgl. MwSt.",
+  "fr": "prix HT",
+  "es": "precios sin IVA"
+ },
+ "prima servono i dati di fatturazione": {
+  "en": "billing details are needed first",
+  "de": "zuerst werden die Rechnungsdaten benötigt",
+  "fr": "il faut d'abord les données de facturation",
+  "es": "primero hacen falta los datos de facturación"
+ },
+ "prova fino al {date}": {
+  "en": "trial until {date}",
+  "de": "Testphase bis {date}",
+  "fr": "essai jusqu'au {date}",
+  "es": "prueba hasta el {date}"
+ },
+ "provider: uno di {names}": {
+  "en": "provider: one of {names}",
+  "de": "provider: einer von {names}",
+  "fr": "provider : l'un de {names}",
+  "es": "provider: uno de {names}"
+ },
+ "questa redazione è fatturata dal tuo rivenditore": {
+  "en": "this newsroom is billed by your reseller",
+  "de": "diese Redaktion wird von Ihrem Wiederverkäufer abgerechnet",
+  "fr": "cette rédaction est facturée par votre revendeur",
+  "es": "esta redacción la factura tu revendedor"
+ },
+ "questo piano non si paga online": {
+  "en": "this plan can't be paid online",
+  "de": "dieser Tarif kann nicht online bezahlt werden",
+  "fr": "cette offre ne se paie pas en ligne",
+  "es": "este plan no se paga online"
+ },
+ "redazione": {
+  "en": "newsroom",
+  "de": "Redaktion",
+  "fr": "rédaction",
+  "es": "redacción"
+ },
+ "redazioni": {
+  "en": "newsrooms",
+  "de": "Redaktionen",
+  "fr": "rédactions",
+  "es": "redacciones"
+ },
+ "rif.": {
+  "en": "ref.",
+  "de": "Ref.",
+  "fr": "réf.",
+  "es": "ref."
+ },
+ "rivenditore": {
+  "en": "reseller",
+  "de": "Wiederverkäufer",
+  "fr": "revendeur",
+  "es": "revendedor"
+ },
+ "ruolo non valido": {
+  "en": "invalid role",
+  "de": "ungültige Rolle",
+  "fr": "rôle non valide",
+  "es": "rol no válido"
+ },
+ "sconto {pct}%": {
+  "en": "{pct}% discount",
+  "de": "{pct} % Rabatt",
+  "fr": "remise {pct} %",
+  "es": "descuento {pct}%"
+ },
+ "senza limite": {
+  "en": "no limit",
+  "de": "unbegrenzt",
+  "fr": "sans limite",
+  "es": "sin límite"
+ },
+ "serve un nome": {
+  "en": "a name is required",
+  "de": "ein Name ist erforderlich",
+  "fr": "un nom est requis",
+  "es": "hace falta un nombre"
+ },
+ "serve un nome o una ragione sociale": {
+  "en": "a name or company name is required",
+  "de": "ein Name oder Firmenname ist erforderlich",
+  "fr": "un nom ou une raison sociale est requis",
+  "es": "hace falta un nombre o una razón social"
+ },
+ "troppi tentativi sbagliati: riprova fra qualche minuto": {
+  "en": "too many failed attempts: try again in a few minutes",
+  "de": "zu viele Fehlversuche: Versuchen Sie es in einigen Minuten erneut",
+  "fr": "trop de tentatives échouées : réessayez dans quelques minutes",
+  "es": "demasiados intentos fallidos: vuelve a intentarlo en unos minutos"
+ },
+ "un invito è per una redazione o per un operatore": {
+  "en": "an invite is for a newsroom or for an operator",
+  "de": "eine Einladung gilt für eine Redaktion oder einen Betreiber",
+  "fr": "une invitation est pour une rédaction ou pour un opérateur",
+  "es": "una invitación es para una redacción o para un operador"
+ },
+ "{by} ti ha invitato in {where} su EuLLM Editor.": {
+  "en": "{by} invited you to {where} on EuLLM Editor.",
+  "de": "{by} hat Sie in {where} auf EuLLM Editor eingeladen.",
+  "fr": "{by} vous a invité à rejoindre {where} sur EuLLM Editor.",
+  "es": "{by} te ha invitado a {where} en EuLLM Editor."
+ },
+ "{email} ha già un account: la trova fra le sue redazioni.": {
+  "en": "{email} already has an account: they'll find it among their newsrooms.",
+  "de": "{email} hat bereits ein Konto und findet sie unter den eigenen Redaktionen.",
+  "fr": "{email} a déjà un compte : il la trouvera parmi ses rédactions.",
+  "es": "{email} ya tiene cuenta: la encontrará entre sus redacciones."
+ },
+ "{field}: un numero di zero o più": {
+  "en": "{field}: a number of zero or more",
+  "de": "{field}: eine Zahl ab null",
+  "fr": "{field} : un nombre supérieur ou égal à zéro",
+  "es": "{field}: un número de cero o más"
+ },
+ "{n} gg": {
+  "en": "{n} d",
+  "de": "{n} T.",
+  "fr": "{n} j",
+  "es": "{n} d"
+ },
+ "il pagamento online non è configurato: i rinnovi su Mollie restano attivi": {
+  "en": "online payment is not configured: the automatic renewals at Mollie are still active",
+  "de": "die Online-Zahlung ist nicht eingerichtet: die automatischen Verlängerungen bei Mollie bleiben aktiv",
+  "fr": "le paiement en ligne n'est pas configuré : les renouvellements automatiques chez Mollie restent actifs",
+  "es": "el pago en línea no está configurado: las renovaciones automáticas en Mollie siguen activas"
+ },
+ "i rinnovi automatici su Mollie non sono stati annullati, riprova": {
+  "en": "the automatic renewals at Mollie were not cancelled, try again",
+  "de": "die automatischen Verlängerungen bei Mollie wurden nicht storniert, bitte erneut versuchen",
+  "fr": "les renouvellements automatiques chez Mollie n'ont pas été annulés, réessayez",
+  "es": "las renovaciones automáticas en Mollie no se han cancelado, inténtalo de nuevo"
+ }
+}

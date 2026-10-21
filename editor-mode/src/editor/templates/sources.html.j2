@@ -1,55 +1,55 @@
 {% extends "base.html.j2" %}
-{% block title %}Fonti{% endblock %}
+{% block title %}{{ _('Fonti') }}{% endblock %}
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker">Fonti{% if site %} · {{ site.domain }}{% endif %}</span>
-    <h1>Fonti scoperte dall'agente</h1>
-    <p class="lead">Nessuna lista fissa. L'agente trova le fonti in tre modi: le testate che gli articoli del sito citano, le ricerche fatte con le parole chiave dei temi del profilo (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per quei temi. Ogni fonte viene letta e giudicata su cosa pubblica; da 0,50 entra attiva, tra 0,35 e 0,50 resta candidata. Ogni lunedì vengono rivalutate.</p>
+    <span class="kicker">{{ _('Fonti') }}{% if site %} · {{ site.domain }}{% endif %}</span>
+    <h1>{{ _("Fonti scoperte dall'agente") }}</h1>
+    <p class="lead">{{ _("Nessuna lista fissa. L'agente trova le fonti in tre modi: le testate che gli articoli del sito citano, le ricerche fatte con le parole chiave dei temi del profilo (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per quei temi. Ogni fonte viene letta e giudicata su cosa pubblica; da 0,50 entra attiva, tra 0,35 e 0,50 resta candidata. Ogni lunedì vengono rivalutate.") }}</p>
   </div>
   {% if site and caller.can('owner') %}
-  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn pri" type="submit">Cerca nuove fonti</button></form>
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn pri" type="submit">{{ _('Cerca nuove fonti') }}</button></form>
   {% endif %}
 </header>
 
 {% if not site %}
-<section class="card pad"><h2>Nessun sito</h2><p class="lead">Aggiungi un dominio da <a href="/site">Sito e profilo</a> per far partire la scoperta delle fonti.</p></section>
+<section class="card pad"><h2>{{ _('Nessun sito') }}</h2><p class="lead">{{ _('Aggiungi un dominio da <a href="/site">Sito e profilo</a> per far partire la scoperta delle fonti.') }}</p></section>
 {% else %}
 {% set cap = usage.plan.get('max_active_sources') if usage else none %}
-<section class="stats" aria-label="Riepilogo fonti">
-  <div class="card stat"><span class="label">Attive</span><span class="value">{{ counts.get('active', 0) }}{% if cap %} <small>/ {{ cap }}</small>{% endif %}</span>
-    {% if cap %}<div class="bar thin"><i style="width: {{ [100, 100 * counts.get('active', 0) / cap]|min }}%"></i></div>{% else %}<span class="note">nessun tetto nel piano</span>{% endif %}</div>
-  <div class="card stat"><span class="label">Candidate</span><span class="value">{{ counts.get('candidate', 0) }}</span><span class="note">sotto la soglia o in attesa di quota</span></div>
-  <div class="card stat"><span class="label">Sospese</span><span class="value">{{ counts.get('suspended', 0) }}</span><span class="note {% if counts.get('suspended') %}warn{% endif %}">errori ripetuti o fonte ferma</span></div>
-  <div class="card stat"><span class="label">Scartate</span><span class="value">{{ counts.get('rejected', 0) }}</span><span class="note">poco pertinenti al profilo</span></div>
+<section class="stats" aria-label="{{ _('Riepilogo fonti') }}">
+  <div class="card stat"><span class="label">{{ _('Attive') }}</span><span class="value">{{ counts.get('active', 0) }}{% if cap %} <small>/ {{ cap }}</small>{% endif %}</span>
+    {% if cap %}<div class="bar thin"><i style="width: {{ [100, 100 * counts.get('active', 0) / cap]|min }}%"></i></div>{% else %}<span class="note">{{ _('nessun tetto nel piano') }}</span>{% endif %}</div>
+  <div class="card stat"><span class="label">{{ _('Candidate') }}</span><span class="value">{{ counts.get('candidate', 0) }}</span><span class="note">{{ _('sotto la soglia o in attesa di quota') }}</span></div>
+  <div class="card stat"><span class="label">{{ _('Sospese') }}</span><span class="value">{{ counts.get('suspended', 0) }}</span><span class="note {% if counts.get('suspended') %}warn{% endif %}">{{ _('errori ripetuti o fonte ferma') }}</span></div>
+  <div class="card stat"><span class="label">{{ _('Scartate') }}</span><span class="value">{{ counts.get('rejected', 0) }}</span><span class="note">{{ _('poco pertinenti al profilo') }}</span></div>
 </section>
 
-<nav class="tabs" aria-label="Filtra per stato">
-  {% for key, label in [('active', 'Attive'), ('candidate', 'Candidate'), ('suspended', 'Sospese'), ('rejected', 'Scartate'), ('all', 'Tutte')] %}
+<nav class="tabs" aria-label="{{ _('Filtra per stato') }}">
+  {% for key, label in [('active', _('Attive')), ('candidate', _('Candidate')), ('suspended', _('Sospese')), ('rejected', _('Scartate')), ('all', _('Tutte'))] %}
   <a href="/sources?status={{ key }}" {% if status == key %}class="on" aria-current="page"{% endif %}>{{ label }} <span class="num">{{ total if key == 'all' else counts.get(key, 0) }}</span></a>
   {% endfor %}
 </nav>
 
-<section class="card" aria-label="Elenco fonti">
+<section class="card" aria-label="{{ _('Elenco fonti') }}">
   {% if rows %}
   <div class="scroll">
     <table style="min-width: 760px;">
-      <thead><tr><th>Fonte</th><th>Origine</th><th>Punteggio</th><th>Pertinenza</th><th>Ultima notizia</th><th>Stato</th>{% if caller.can('owner') %}<th><span class="sr">Azioni</span></th>{% endif %}</tr></thead>
+      <thead><tr><th>{{ _('Fonte') }}</th><th>{{ _('Origine') }}</th><th>{{ _('Punteggio') }}</th><th>{{ _('Pertinenza') }}</th><th>{{ _('Ultima notizia') }}</th><th>{{ _('Notizie in 7 giorni') }}</th><th>{{ _('Stato') }}</th>{% if caller.can('owner') %}<th><span class="sr">{{ _('Azioni') }}</span></th>{% endif %}</tr></thead>
       <tbody>
       {% for r in rows %}
       {% set comp = (r.evaluation or {}).get('components') or {} %}
       <tr {% if r.status in ('suspended', 'rejected') %}class="off"{% endif %}>
-        <td style="max-width: 280px; overflow-wrap: anywhere;"><strong>{{ r.name }}</strong> <span class="chip">{{ kinds.get(r.kind, r.kind) }}</span><small>{{ r.url|replace('https://', '')|replace('http://', '') }}</small></td>
+        <td style="max-width: 280px; overflow-wrap: anywhere;"><strong>{{ r.name }}</strong> <span class="chip">{{ _(kinds.get(r.kind, r.kind)) }}</span><small>{{ r.url|replace('https://', '')|replace('http://', '') }}</small></td>
         {% set evd = r.evidence or {} %}
-        <td style="max-width: 300px;">{{ origins.get(r.origin, r.origin or '–') }}
-          <small>{% if r.origin == 'site_outbound' %}citata {{ evd.get('cited_by_site', 0) }} {{ 'volta' if evd.get('cited_by_site') == 1 else 'volte' }} negli articoli del sito
-          {% elif r.origin == 'api_query' and evd.get('query') %}trovata cercando «{{ evd.get('query') }}» su {{ kinds.get(r.kind, r.kind) }}
-          {% elif r.origin == 'api_query' and evd.get('categories') %}categorie arXiv dei temi: {{ evd.get('categories')|join(', ') }}
-          {% elif r.origin == 'api_query' and evd.get('matched') %}i temi parlano di {{ evd.get('matched')|join(', ') }}
-          {% elif r.origin == 'model_suggestion' %}indicata dal modello per i temi del sito{% if evd.get('domain') %} ({{ evd.get('domain') }}){% endif %}, feed letto e verificato
+        <td style="max-width: 300px;">{{ _(origins.get(r.origin, r.origin or '–')) }}
+          <small>{% if r.origin == 'site_outbound' %}{{ _('citata {n} volta negli articoli del sito', n=evd.get('cited_by_site', 0)) if evd.get('cited_by_site') == 1 else _('citata {n} volte negli articoli del sito', n=evd.get('cited_by_site', 0)) }}
+          {% elif r.origin == 'api_query' and evd.get('query') %}{{ _('trovata cercando «{query}» su {kind}', query=evd.get('query'), kind=_(kinds.get(r.kind, r.kind))) }}
+          {% elif r.origin == 'api_query' and evd.get('categories') %}{{ _('categorie arXiv dei temi: {categories}', categories=evd.get('categories')|join(', ')) }}
+          {% elif r.origin == 'api_query' and evd.get('matched') %}{{ _('i temi parlano di {topics}', topics=evd.get('matched')|join(', ')) }}
+          {% elif r.origin == 'model_suggestion' %}{% if evd.get('domain') %}{{ _('indicata dal modello per i temi del sito ({domain}), feed letto e verificato', domain=evd.get('domain')) }}{% else %}{{ _('indicata dal modello per i temi del sito, feed letto e verificato') }}{% endif %}
           {% endif %}</small>
           {% set ex = latest.get(r.id) or (r.evaluation or {}).get('examples') or [] %}
-          {% if ex %}<details><summary class="hint">{{ 'Ultime notizie' if latest.get(r.id) else 'Cosa pubblicava alla valutazione' }}</summary>
+          {% if ex %}<details><summary class="hint">{{ _('Ultime notizie') if latest.get(r.id) else _('Cosa pubblicava alla valutazione') }}</summary>
             {% for e in ex %}<small style="display: block;"><a href="{{ e.url }}" rel="noopener noreferrer" target="_blank">{{ e.title }}</a></small>{% endfor %}
           </details>{% endif %}
         </td>
@@ -60,27 +60,28 @@
         </td>
         <td class="num">{% if comp.get('relevance') is not none %}{{ comp.get('relevance')|num }}{% else %}–{% endif %}</td>
         <td>{{ when(r.last_item_at, 'day') }}</td>
+        <td class="num">{{ week.get(r.id, 0) }}</td>
         <td>
-          {% set st = {'active': ('green', 'Attiva'), 'candidate': ('blue', 'Candidata'), 'suspended': ('teal', 'Sospesa'), 'rejected': ('', 'Scartata')}.get(r.status, ('', r.status)) %}
+          {% set st = {'active': ('green', _('Attiva')), 'candidate': ('blue', _('Candidata')), 'suspended': ('teal', _('Sospesa')), 'rejected': ('', _('Scartata'))}.get(r.status, ('', r.status)) %}
           <span class="chip {{ st[0] }}">{{ st[1] }}</span>
           {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason|problem }}</small>
-          {% elif r.status == 'rejected' and comp.get('relevance') is not none and comp.get('relevance') < 0.1 %}<small>parla poco dei temi del sito</small>
-          {% elif r.status == 'rejected' %}<small>punteggio sotto 0,35</small>{% endif %}
-          {% if comp %}<details><summary class="hint">Perché questo punteggio</summary>
-            <small style="display: block;">pertinenza {{ comp.get('relevance', 0)|num }} · frequenza {{ comp.get('frequency', 0)|num }} · freschezza {{ comp.get('freshness', 0)|num }} · originalità {{ comp.get('originality', 0)|num }} · qualità {{ comp.get('quality', 0)|num }} · affidabilità {{ comp.get('reliability', 0)|num }}</small>
+          {% elif r.status == 'rejected' and comp.get('relevance') is not none and comp.get('relevance') < 0.1 %}<small>{{ _('parla poco dei temi del sito') }}</small>
+          {% elif r.status == 'rejected' %}<small>{{ _('punteggio sotto 0,35') }}</small>{% endif %}
+          {% if comp %}<details><summary class="hint">{{ _('Perché questo punteggio') }}</summary>
+            <small style="display: block;">{{ _('pertinenza {relevance} · frequenza {frequency} · freschezza {freshness} · originalità {originality} · qualità {quality} · affidabilità {reliability}', relevance=comp.get('relevance', 0)|num, frequency=comp.get('frequency', 0)|num, freshness=comp.get('freshness', 0)|num, originality=comp.get('originality', 0)|num, quality=comp.get('quality', 0)|num, reliability=comp.get('reliability', 0)|num) }}</small>
           </details>{% endif %}
         </td>
         {% if caller.can('owner') %}
         <td>
           <div class="row" style="flex-wrap: nowrap; justify-content: flex-end;">
             {% if r.status != 'active' %}
-            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="active"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">Attiva</button></form>
+            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="active"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">{{ _('Attiva') }}</button></form>
             {% endif %}
             {% if r.status == 'active' %}
-            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="suspended"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">Sospendi</button></form>
+            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="suspended"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">{{ _('Sospendi') }}</button></form>
             {% endif %}
             {% if r.status != 'rejected' %}
-            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="rejected"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">Scarta</button></form>
+            <form class="inline" method="post" action="/ui/sources/{{ r.id }}/status"><input type="hidden" name="status" value="rejected"><input type="hidden" name="back" value="/sources?status={{ status }}"><button class="btn sm" type="submit">{{ _('Scarta') }}</button></form>
             {% endif %}
           </div>
         </td>
@@ -91,10 +92,10 @@
     </table>
   </div>
   {% else %}
-  <p class="empty">Nessuna fonte in questo stato per {{ site.domain }}.
-    {% if elsewhere %}Ce ne sono su: {% for e in elsewhere %}<a href="/switch?site={{ e.id }}&amp;back={{ ('/sources?status=' ~ status)|urlencode }}">{{ e.domain }}</a> ({{ e.count }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
+  <p class="empty">{{ _('Nessuna fonte in questo stato per {domain}.', domain=site.domain) }}
+    {% if elsewhere %}{{ _('Ce ne sono su:') }} {% for e in elsewhere %}<a href="/switch?site={{ e.id }}&amp;back={{ ('/sources?status=' ~ status)|urlencode }}">{{ e.domain }}</a> ({{ e.count }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}</p>
   {% endif %}
 </section>
-<p class="hint">Il punteggio pesa pertinenza ai temi del profilo (35%), frequenza (15%), freschezza (15%), qualità (15%), originalità (10%) e affidabilità (10%). Pertinenza: quante notizie della fonte contengono le parole chiave dei temi.</p>
+<p class="hint">{{ _('Il punteggio pesa pertinenza ai temi del profilo (35%), frequenza (15%), freschezza (15%), qualità (15%), originalità (10%) e affidabilità (10%). Pertinenza: quante notizie della fonte contengono le parole chiave dei temi.') }}</p>
 {% endif %}
 {% endblock %}

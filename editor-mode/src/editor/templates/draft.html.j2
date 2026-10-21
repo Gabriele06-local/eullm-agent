@@ -3,17 +3,17 @@
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker"><a href="/drafts">Bozze</a> · versione {{ d.version }} · {{ when(d.created_at) }}</span>
+    <span class="kicker"><a href="/drafts">{{ _('Bozze') }}</a> · {{ _('versione {n}', n=d.version) }} · {{ when(d.created_at) }}</span>
     <div class="row">
-      {% set st = {'draft': ('blue', 'Pronta da leggere'), 'needs_review': ('amber', 'Da rivedere a mano'), 'approved': ('green', 'Approvata'), 'rejected': ('', 'Rifiutata')}.get(d.status, ('', d.status)) %}
+      {% set st = {'draft': ('blue', _('Pronta da leggere')), 'needs_review': ('amber', _('Da rivedere a mano')), 'approved': ('green', _('Approvata')), 'rejected': ('', _('Rifiutata'))}.get(d.status, ('', d.status)) %}
       <span class="chip {{ st[0] }}">{{ st[1] }}</span>
-      {% if d.decided_by %}<span class="hint">{{ 'Approvata' if d.status == 'approved' else 'Decisa' }} da {{ d.decided_by }} il {{ when(d.decided_at, 'day') }}</span>{% endif %}
+      {% if d.decided_by %}<span class="hint">{{ _('Approvata da {who} il {date}', who=d.decided_by, date=when(d.decided_at, 'day')) if d.status == 'approved' else _('Decisa da {who} il {date}', who=d.decided_by, date=when(d.decided_at, 'day')) }}</span>{% endif %}
     </div>
   </div>
   {% if d.status in ('draft', 'needs_review') and caller.can('editor') %}
   <div class="row">
-    <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="0"><button class="btn" type="submit">Rifiuta</button></form>
-    <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">Approva la bozza</button></form>
+    <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="0"><button class="btn" type="submit">{{ _('Rifiuta') }}</button></form>
+    <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">{{ _('Approva la bozza') }}</button></form>
   </div>
   {% endif %}
 </header>
@@ -24,31 +24,31 @@
     {% if d.subtitle %}<p class="sub">{{ d.subtitle }}</p>{% endif %}
     {% for sec in sections %}
       {% if sec.title %}<h2>{{ sec.title }}</h2>{% endif %}
-      <p>{% for cl in sec.claims %}<span {% if cl.flagged %}class="flagged" title="Da rivedere"{% endif %}>{{ cl.text }}</span>{% for n in cl.refs %}<sup><a href="#src-{{ n }}" aria-label="Fonte {{ n }}">{{ n }}</a></sup>{% endfor %}{{ ' ' if not loop.last }}{% endfor %}</p>
+      <p>{% for cl in sec.claims %}<span {% if cl.flagged %}class="flagged" title="{{ _('Da rivedere') }}"{% endif %}>{{ cl.text }}</span>{% for n in cl.refs %}<sup><a href="#src-{{ n }}" aria-label="{{ _('Fonte {n}', n=n) }}">{{ n }}</a></sup>{% endfor %}{{ ' ' if not loop.last }}{% endfor %}</p>
     {% else %}
-      <p class="hint">Questa bozza non ha frasi registrate.</p>
+      <p class="hint">{{ _('Questa bozza non ha frasi registrate.') }}</p>
     {% endfor %}
   </article>
 
   <div class="col-side">
     <section class="card pad" aria-labelledby="h-checks">
-      <h2 id="h-checks">Controlli automatici</h2>
+      <h2 id="h-checks">{{ _('Controlli automatici') }}</h2>
       <ul class="checks">
         {% for ch in checks %}
-        <li><span class="{{ 'up' if ch.ok else 'down' }}" aria-hidden="true">{{ '✓' if ch.ok else '✕' }}</span><span>{{ ch.label }}{% if not ch.ok %} <span class="sr">non superato</span>{% endif %}</span></li>
+        <li><span class="{{ 'up' if ch.ok else 'down' }}" aria-hidden="true">{{ '✓' if ch.ok else '✕' }}</span><span>{{ _(ch.label) }}{% if not ch.ok %} <span class="sr">{{ _('non superato') }}</span>{% endif %}</span></li>
         {% endfor %}
       </ul>
       {% if flags %}
       <div class="dashed">
-        <strong>Frasi da rivedere</strong>
+        <strong>{{ _('Frasi da rivedere') }}</strong>
         {% for f in flags[:8] %}<span class="hint">«{{ f.text|truncate(90) }}»: {{ f.problems|join('; ') }}</span>{% endfor %}
       </div>
       {% endif %}
     </section>
 
     <section class="card pad" aria-labelledby="h-src">
-      <h2 id="h-src">Fonti · {{ sources|length }}</h2>
-      <p class="hint">Clicca un numero nel testo per vedere da dove viene la frase.</p>
+      <h2 id="h-src">{{ _('Fonti') }} · {{ sources|length }}</h2>
+      <p class="hint">{{ _('Clicca un numero nel testo per vedere da dove viene la frase.') }}</p>
       <ol class="srclist">
         {% for x in sources %}
         <li id="src-{{ x.n }}"><span class="n">{{ x.n }}</span><div><a href="{{ x.url }}" rel="noopener noreferrer" target="_blank">{{ x.title }}</a><small class="hint">{{ x.source }}{% if x.published_at %} · {{ when(x.published_at, 'day') }}{% endif %}</small></div></li>
@@ -57,27 +57,27 @@
     </section>
 
     <section class="card pad" aria-labelledby="h-pub">
-      <h2 id="h-pub">Pubblicazione</h2>
+      <h2 id="h-pub">{{ _('Pubblicazione') }}</h2>
       {% for p in pubs %}
       <div class="list-row">
-        <span>{{ p.name }} · {{ 'bozza' if p.mode == 'draft' else 'subito' }}</span>
-        {% set ps = {'pending_approval': ('amber', 'In attesa di owner'), 'approved': ('blue', 'In invio'), 'published': ('green', 'Pubblicata'), 'rejected': ('', 'Rifiutata'), 'failed': ('red', 'Non riuscita')}.get(p.status, ('', p.status)) %}
+        <span>{{ p.name }} · {{ _('bozza') if p.mode == 'draft' else _('subito') }}</span>
+        {% set ps = {'pending_approval': ('amber', _('In attesa di owner')), 'approved': ('blue', _('In invio')), 'published': ('green', _('Pubblicata')), 'rejected': ('', _('Rifiutata')), 'failed': ('red', _('Non riuscita'))}.get(p.status, ('', p.status)) %}
         {% if p.external_url %}<a class="chip {{ ps[0] }}" href="{{ p.external_url }}" rel="noopener noreferrer" target="_blank">{{ ps[1] }}</a>{% else %}<span class="chip {{ ps[0] }}">{{ ps[1] }}</span>{% endif %}
       </div>
       {% endfor %}
       {% if d.status == 'approved' and caller.can('editor') %}
         {% if targets %}
         <form method="post" action="/ui/drafts/{{ d.id }}/publish" class="form-grid">
-          <label class="field">Destinazione<select name="target_id">{% for t in targets %}<option value="{{ t.id }}">{{ t.name }} · {{ kinds.get(t.kind, t.kind) }}</option>{% endfor %}</select></label>
-          <label class="field">Modo<select name="mode"><option value="draft">Come bozza nel CMS</option><option value="publish">Pubblica subito</option></select></label>
-          <div><button class="btn pri" type="submit">Chiedi la pubblicazione</button></div>
+          <label class="field">{{ _('Destinazione') }}<select name="target_id">{% for t in targets %}<option value="{{ t.id }}">{{ t.name }} · {{ _(kinds.get(t.kind, t.kind)) }}</option>{% endfor %}</select></label>
+          <label class="field">{{ _('Modo') }}<select name="mode"><option value="draft">{{ _('Come bozza nel CMS') }}</option><option value="publish">{{ _('Pubblica subito') }}</option></select></label>
+          <div><button class="btn pri" type="submit">{{ _('Chiedi la pubblicazione') }}</button></div>
         </form>
-        <p class="hint">Parte solo dopo il sì di un owner.</p>
+        <p class="hint">{{ _('Parte solo dopo il sì di un owner.') }}</p>
         {% else %}
-        <p class="hint">Nessuna destinazione per questo sito: aggiungila da <a href="/publications">Pubblicazioni</a>.</p>
+        <p class="hint">{{ _('Nessuna destinazione per questo sito: aggiungila da <a href="/publications">Pubblicazioni</a>.') }}</p>
         {% endif %}
       {% elif not pubs %}
-      <p class="hint">Si può pubblicare dopo aver approvato la bozza.</p>
+      <p class="hint">{{ _('Si può pubblicare dopo aver approvato la bozza.') }}</p>
       {% endif %}
     </section>
   </div>

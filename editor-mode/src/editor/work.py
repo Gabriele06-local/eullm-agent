@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from . import drafts, profile as prof, sources
+from . import drafts, profile as prof, proposals, sources
 from .queue import Handlers
 from .site import SiteCrawler
 
@@ -42,6 +42,9 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
         with http_factory() as client:
             drafts.write_draft(db, tenant, args["proposal_id"], core_for(tenant), client)
 
+    def propose(tenant: str, subject: str, args: dict) -> None:
+        proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant))
+
     def publish(tenant: str, subject: str, args: dict) -> None:
         res = need(publisher, "publisher").run(db, tenant, args["publication_id"])
         if res.get("status") == "failed":
@@ -53,4 +56,5 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
         if failed:
             raise RuntimeError("; ".join(failed))
 
-    return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick}
+    return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
+            "proposals": propose}

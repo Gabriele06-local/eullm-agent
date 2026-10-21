@@ -17,6 +17,9 @@ import pytest
 from editor import migrate
 from editor.db import Database
 
+# The pages are checked in Italian, the language their texts are written in.
+os.environ.setdefault("EDITOR_LANGUAGE", "it")
+
 FIXTURES = Path(__file__).parent / "fixtures"
 APP_PASSWORD = "editor_app_test"
 

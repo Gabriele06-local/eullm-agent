@@ -137,3 +137,15 @@ def test_suspended_source_of_another_site_opens_on_its_site(db, tenant):
     r = c.get(link.replace("&amp;", "&"), follow_redirects=False)
     assert r.headers["location"] == "/sources?status=suspended"
     assert "news" in c.get("/sources?status=suspended").text
+
+
+def test_propose_now_queues_the_work(db, tenant):
+    approved_draft(db, tenant)
+    c = logged_in(db, tenant, "editor")
+    assert "Proponi adesso" in c.get("/trends").text
+    page = c.post("/ui/proposals/now")
+    assert "Ricerca delle proposte avviata" in page.text or "già state fatte" in page.text
+    with db.tenant(tenant) as s:
+        kinds = list(s.execute(text("SELECT kind FROM editor.jobs")).scalars())
+    assert "proposals" in kinds or "già state fatte" in page.text
+    assert "Notizie in 7 giorni" in c.get("/sources").text

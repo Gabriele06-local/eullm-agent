@@ -1,35 +1,35 @@
 {% extends "base.html.j2" %}
-{% block title %}Bozze{% endblock %}
+{% block title %}{{ _('Bozze') }}{% endblock %}
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker">Bozze{% if site %} · {{ site.domain }}{% endif %}</span>
-    <h1>Bozze scritte dall'agente</h1>
-    <p class="lead">Ogni frase porta le sue fonti. Le bozze con controlli non superati restano da rivedere a mano.</p>
+    <span class="kicker">{{ _('Bozze') }}{% if site %} · {{ site.domain }}{% endif %}</span>
+    <h1>{{ _("Bozze scritte dall'agente") }}</h1>
+    <p class="lead">{{ _('Ogni frase porta le sue fonti. Le bozze con controlli non superati restano da rivedere a mano.') }}</p>
   </div>
-  <a class="btn" href="/trends">Torna al piano</a>
+  <a class="btn" href="/trends">{{ _('Torna al piano') }}</a>
 </header>
 
-<section class="card" aria-label="Elenco bozze">
+<section class="card" aria-label="{{ _('Elenco bozze') }}">
   {% if rows %}
   <div class="scroll">
     <table style="min-width: 640px;">
-      <thead><tr><th>Titolo</th><th>Frasi con fonte</th><th>Controlli</th><th>Creata</th><th>Stato</th></tr></thead>
+      <thead><tr><th>{{ _('Titolo') }}</th><th>{{ _('Frasi con fonte') }}</th><th>{{ _('Controlli') }}</th><th>{{ _('Creata') }}</th><th>{{ _('Stato') }}</th></tr></thead>
       <tbody>
       {% for r in rows %}
       <tr {% if r.status == 'rejected' %}class="off"{% endif %}>
-        <td style="max-width: 380px;"><a href="/drafts/{{ r.id }}"><strong>{{ r.title }}</strong></a>{% if r.version > 1 %}<small>versione {{ r.version }}</small>{% endif %}</td>
+        <td style="max-width: 380px;"><a href="/drafts/{{ r.id }}"><strong>{{ r.title }}</strong></a>{% if r.version > 1 %}<small>{{ _('versione {n}', n=r.version) }}</small>{% endif %}</td>
         <td class="num">{{ r.claims }}</td>
-        <td>{% if r.flags %}<span class="chip amber">{{ r.flags|length }} frasi da rivedere</span>{% else %}<span class="chip green">Superati</span>{% endif %}</td>
+        <td>{% if r.flags %}<span class="chip amber">{{ _('{n} frasi da rivedere', n=r.flags|length) }}</span>{% else %}<span class="chip green">{{ _('Superati') }}</span>{% endif %}</td>
         <td>{{ when(r.created_at) }}</td>
-        <td>{% set st = {'draft': ('blue', 'Pronta'), 'needs_review': ('amber', 'Da rivedere'), 'approved': ('green', 'Approvata'), 'rejected': ('', 'Rifiutata')}.get(r.status, ('', r.status)) %}<span class="chip {{ st[0] }}">{{ st[1] }}</span></td>
+        <td>{% set st = {'draft': ('blue', _('Pronta')), 'needs_review': ('amber', _('Da rivedere')), 'approved': ('green', _('Approvata')), 'rejected': ('', _('Rifiutata'))}.get(r.status, ('', r.status)) %}<span class="chip {{ st[0] }}">{{ st[1] }}</span></td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
   {% else %}
-  <p class="empty">Nessuna bozza ancora. Accetta una proposta da <a href="/trends">Trend e piano</a> e l'agente la scrive.</p>
+  <p class="empty">{{ _("Nessuna bozza ancora. Accetta una proposta da <a href='/trends'>Trend e piano</a> e l'agente la scrive.") }}</p>
   {% endif %}
 </section>
 {% endblock %}

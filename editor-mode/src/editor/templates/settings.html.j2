@@ -1,78 +1,78 @@
 {% extends "base.html.j2" %}
-{% block title %}Impostazioni{% endblock %}
+{% block title %}{{ _('Impostazioni') }}{% endblock %}
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker">Impostazioni</span>
-    <h1>{{ usage.plan.get('name') if usage else 'Account' }}</h1>
+    <span class="kicker">{{ _('Impostazioni') }}</span>
+    <h1>{{ usage.plan.get('name') if usage else _('Account') }}</h1>
   </div>
-  {% if usage and usage.plan.get('plan') %}<span class="chip dark">Piano {{ usage.plan.get('plan') }}</span>{% endif %}
+  {% if usage and usage.plan.get('plan') %}<span class="chip dark">{{ _('Piano {plan}', plan=usage.plan.get('plan')) }}</span>{% endif %}
 </header>
 
 {% if new_token %}
 <section class="card pad" aria-labelledby="h-token" style="border-color: var(--accent);">
-  <h2 id="h-token">Nuovo accesso creato</h2>
-  <p class="lead">Copialo adesso: non verrà più mostrato.</p>
+  <h2 id="h-token">{{ _('Nuovo accesso creato') }}</h2>
+  <p class="lead">{{ _('Copialo adesso: non verrà più mostrato.') }}</p>
   <div class="token">{{ new_token }}</div>
 </section>
 {% endif %}
 
 <div class="cols">
   <section class="card pad col-wide" aria-labelledby="h-plan">
-    <h2 id="h-plan">Uso del piano</h2>
-    {% if plan_state %}<p class="hint">Piano {{ plan_state.plan_name }} · {{ plan_state.label|lower }}. <a href="/account">Abbonamento e fatturazione</a></p>{% endif %}
+    <h2 id="h-plan">{{ _('Uso del piano') }}</h2>
+    {% if plan_state %}<p class="hint">{{ _('Piano {plan} · {state}.', plan=plan_state.plan_name, state=_(plan_state.label)|lower) }} <a href="/account">{{ _('Abbonamento e fatturazione') }}</a></p>{% endif %}
     {% for mt in meters %}
     <div class="meter">
-      <span>{{ mt.label }}</span>
+      <span>{{ _(mt.label) }}</span>
       {% if mt.limit %}
       <div class="bar" role="img" aria-label="{{ mt.pct }}%"><i {% if mt.pct >= 90 %}class="hype"{% endif %} style="width: {{ mt.pct }}%"></i></div>
-      {% else %}<span class="hint">senza limite</span>{% endif %}
+      {% else %}<span class="hint">{{ _('senza limite') }}</span>{% endif %}
       <span class="num" style="text-align: right;">{% if mt.money %}€ {{ mt.used|num }}{% if mt.limit %} / {{ mt.limit|num(0) }}{% endif %}{% else %}{{ mt.used|int }}{% if mt.limit %} / {{ mt.limit|int }}{% endif %}{% endif %}</span>
     </div>
     {% else %}
-    <p class="hint">Nessun dato d'uso disponibile.</p>
+    <p class="hint">{{ _("Nessun dato d'uso disponibile.") }}</p>
     {% endfor %}
-    <p class="hint">Il piano lo imposta chi gestisce il servizio. Quando un limite è raggiunto l'agente si ferma su quella voce e te lo dice, senza costi a sorpresa.</p>
+    <p class="hint">{{ _("Il piano lo imposta chi gestisce il servizio. Quando un limite è raggiunto l'agente si ferma su quella voce e te lo dice, senza costi a sorpresa.") }}</p>
   </section>
 
   <section class="card pad col-side" aria-labelledby="h-prefs">
-    <h2 id="h-prefs">Preferenze</h2>
+    <h2 id="h-prefs">{{ _('Preferenze') }}</h2>
     {% if usage %}
-    <div class="list-row"><span>Fuso orario</span><span class="num">{{ usage.plan.get('timezone') or 'UTC' }}</span></div>
-    <div class="list-row"><span>Ora del briefing</span><span class="num">{% if usage.plan.get('briefing_hour') is not none %}{{ '%02d'|format(usage.plan.get('briefing_hour')) }}:00{% else %}–{% endif %}</span></div>
-    <div class="list-row"><span>Lingua</span><span class="num">{{ usage.plan.get('language') or '–' }}</span></div>
+    <div class="list-row"><span>{{ _('Fuso orario') }}</span><span class="num">{{ usage.plan.get('timezone') or 'UTC' }}</span></div>
+    <div class="list-row"><span>{{ _('Ora del briefing') }}</span><span class="num">{% if usage.plan.get('briefing_hour') is not none %}{{ '%02d'|format(usage.plan.get('briefing_hour')) }}:00{% else %}–{% endif %}</span></div>
+    <div class="list-row"><span>{{ _('Lingua') }}</span><span class="num">{{ usage.plan.get('language') or '–' }}</span></div>
     {% endif %}
-    <p class="hint">Le cambia chi gestisce il servizio.</p>
+    <p class="hint">{{ _('Le cambia chi gestisce il servizio.') }}</p>
   </section>
 </div>
 
 {% if caller.can('owner') %}
 <section class="card pad" aria-labelledby="h-sites">
-  <h2 id="h-sites">Siti della redazione</h2>
-  {% for x in sites %}<div class="list-row"><span>{{ x.domain }}</span><a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px;">Profilo</a></div>{% endfor %}
+  <h2 id="h-sites">{{ _('Siti della redazione') }}</h2>
+  {% for x in sites %}<div class="list-row"><span>{{ x.domain }}</span><a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px;">{{ _('Profilo') }}</a></div>{% endfor %}
   <form method="post" action="/ui/sites" class="form-grid">
-    <label class="field">Aggiungi un dominio<input name="domain" placeholder="esempio.it" required></label>
-    <div><button class="btn" type="submit">Analizza il sito</button></div>
+    <label class="field">{{ _('Aggiungi un dominio') }}<input name="domain" placeholder="{{ _('esempio.it') }}" required></label>
+    <div><button class="btn" type="submit">{{ _('Analizza il sito') }}</button></div>
   </form>
-  <p class="hint">L'analisi parte in coda; quando finisce il profilo arriva da approvare in Sito e profilo.</p>
+  <p class="hint">{{ _("L'analisi parte in coda; quando finisce il profilo arriva da approvare in Sito e profilo.") }}</p>
 </section>
 {% endif %}
 
 <section class="card pad" aria-labelledby="h-rec">
-  <h2 id="h-rec">Chi riceve il briefing</h2>
+  <h2 id="h-rec">{{ _('Chi riceve il briefing') }}</h2>
   {% for r in recipients %}
   <div class="list-row">
-    <span><span class="chip">{{ 'Email' if r.channel == 'email' else 'Telegram' }}</span> <span class="num">{{ r.address }}</span>{% if r.enabled is sameas false %} <span class="hint">disattivato</span>{% endif %}</span>
-    {% if caller.can('owner') %}<form class="inline" method="post" action="/ui/recipients/{{ r.id }}/delete"><button class="btn sm" type="submit">Rimuovi</button></form>{% endif %}
+    <span><span class="chip">{{ _('Email') if r.channel == 'email' else 'Telegram' }}</span> <span class="num">{{ r.address }}</span>{% if r.enabled is sameas false %} <span class="hint">{{ _('disattivato') }}</span>{% endif %}</span>
+    {% if caller.can('owner') %}<form class="inline" method="post" action="/ui/recipients/{{ r.id }}/delete"><button class="btn sm" type="submit">{{ _('Rimuovi') }}</button></form>{% endif %}
   </div>
   {% else %}
-  <p class="hint">Nessun destinatario: il briefing si prepara ma non parte.</p>
+  <p class="hint">{{ _('Nessun destinatario: il briefing si prepara ma non parte.') }}</p>
   {% endfor %}
   {% if caller.can('owner') %}
   <form method="post" action="/ui/recipients" class="form-grid" style="margin-top: 8px;">
-    <label class="field">Canale<select name="channel"><option value="email">Email</option><option value="telegram">Telegram</option></select></label>
-    <label class="field">Indirizzo o chat id<input name="address" required placeholder="redazione@esempio.it"></label>
-    <div><button class="btn" type="submit">Aggiungi</button></div>
+    <label class="field">{{ _('Canale') }}<select name="channel"><option value="email">{{ _('Email') }}</option><option value="telegram">Telegram</option></select></label>
+    <label class="field">{{ _('Indirizzo o chat id') }}<input name="address" required placeholder="{{ _('redazione@esempio.it') }}"></label>
+    <div><button class="btn" type="submit">{{ _('Aggiungi') }}</button></div>
   </form>
   {% endif %}
 </section>
@@ -81,82 +81,82 @@
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 {% if new_link %}
 <section class="card pad" aria-labelledby="h-link" style="border-color: var(--accent);">
-  <h2 id="h-link">Invito per {{ new_link.email }}</h2>
-  {% if new_link.sent %}<p class="lead">L'invito è partito per email. Il link vale 7 giorni.</p>
-  {% else %}<p class="lead">Mandagli questo link: vale 7 giorni e si usa una volta.</p>
+  <h2 id="h-link">{{ _('Invito per {email}', email=new_link.email) }}</h2>
+  {% if new_link.sent %}<p class="lead">{{ _("L'invito è partito per email. Il link vale 7 giorni.") }}</p>
+  {% else %}<p class="lead">{{ _('Mandagli questo link: vale 7 giorni e si usa una volta.') }}</p>
   <div class="token">{{ new_link.url }}</div>{% endif %}
 </section>
 {% endif %}
 <section class="card pad" aria-labelledby="h-people">
-  <h2 id="h-people">Persone della redazione</h2>
-  <p class="hint">Ognuno entra con la sua email e la sua password. Lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni e gestisce le persone.</p>
+  <h2 id="h-people">{{ _('Persone della redazione') }}</h2>
+  <p class="hint">{{ _('Ognuno entra con la sua email e la sua password. Lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni e gestisce le persone.') }}</p>
   <div class="scroll">
     <table style="min-width: 560px;">
-      <thead><tr><th>Persona</th><th>Ruolo</th><th>Da</th><th><span class="sr">Azioni</span></th></tr></thead>
+      <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Ruolo') }}</th><th>{{ _('Da') }}</th><th><span class="sr">{{ _('Azioni') }}</span></th></tr></thead>
       <tbody>
       {% for p in people %}
       <tr>
-        <td>{{ p.name or p.email }}{% if p.name %} <span class="hint">{{ p.email }}</span>{% endif %}{% if not p.active %} <span class="chip amber">Invito non ancora accettato</span>{% endif %}</td>
+        <td>{{ p.name or p.email }}{% if p.name %} <span class="hint">{{ p.email }}</span>{% endif %}{% if not p.active %} <span class="chip amber">{{ _('Invito non ancora accettato') }}</span>{% endif %}</td>
         <td>
           <form class="inline" method="post" action="/ui/people/{{ p.id }}/role">
-            <select name="role" onchange="this.form.submit()" aria-label="Ruolo di {{ p.email }}">
-              {% for r, label in [('viewer', 'Lettura'), ('editor', 'Editor'), ('owner', 'Owner')] %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            <select name="role" onchange="this.form.submit()" aria-label="{{ _('Ruolo di {email}', email=p.email) }}">
+              {% for r, label in [('viewer', _('Lettura')), ('editor', _('Editor')), ('owner', _('Owner'))] %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}
             </select>
-            <noscript><button class="btn sm" type="submit">Cambia</button></noscript>
+            <noscript><button class="btn sm" type="submit">{{ _('Cambia') }}</button></noscript>
           </form>
         </td>
         <td>{{ when(p.created_at, 'day') }}</td>
-        <td style="text-align: right;">{% if p.id != caller.user_id %}<form class="inline" method="post" action="/ui/people/{{ p.id }}/remove"><button class="btn sm" type="submit">Rimuovi</button></form>{% endif %}</td>
+        <td style="text-align: right;">{% if p.id != caller.user_id %}<form class="inline" method="post" action="/ui/people/{{ p.id }}/remove"><button class="btn sm" type="submit">{{ _('Rimuovi') }}</button></form>{% endif %}</td>
       </tr>
       {% else %}
-      <tr><td colspan="4" class="hint">Nessuna persona con un account: invita qualcuno qui sotto.</td></tr>
+      <tr><td colspan="4" class="hint">{{ _('Nessuna persona con un account: invita qualcuno qui sotto.') }}</td></tr>
       {% endfor %}
       {% for i in invited %}
       <tr>
-        <td>{{ i.email }} <span class="chip">Invitato</span></td>
-        <td>{{ {'owner': 'Owner', 'editor': 'Editor', 'viewer': 'Lettura'}.get(i.role, i.role) }}</td>
-        <td>scade {{ when(i.expires_at, 'day') }}</td>
-        <td style="text-align: right;"><form class="inline" method="post" action="/ui/invites/{{ i.token_sha256 }}/revoke"><button class="btn sm" type="submit">Annulla</button></form></td>
+        <td>{{ i.email }} <span class="chip">{{ _('Invitato') }}</span></td>
+        <td>{{ {'owner': _('Owner'), 'editor': _('Editor'), 'viewer': _('Lettura')}.get(i.role, i.role) }}</td>
+        <td>{{ _('scade {date}', date=when(i.expires_at, 'day')) }}</td>
+        <td style="text-align: right;"><form class="inline" method="post" action="/ui/invites/{{ i.token_sha256 }}/revoke"><button class="btn sm" type="submit">{{ _('Annulla') }}</button></form></td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
   <form method="post" action="/ui/people/invite" class="form-grid" style="margin-top: 8px;">
-    <label class="field">Email<input name="email" type="email" required placeholder="giulia@esempio.it"></label>
-    <label class="field">Ruolo<select name="role"><option value="viewer">Lettura</option><option value="editor" selected>Editor</option><option value="owner">Owner</option></select></label>
-    <div><button class="btn" type="submit">Invita</button></div>
+    <label class="field">{{ _('Email') }}<input name="email" type="email" required placeholder="{{ _('giulia@esempio.it') }}"></label>
+    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Editor') }}</option><option value="owner">{{ _('Owner') }}</option></select></label>
+    <div><button class="btn" type="submit">{{ _('Invita') }}</button></div>
   </form>
 </section>
 <section class="card pad" aria-labelledby="h-tok">
-  <h2 id="h-tok">Token per integrazioni</h2>
-  <p class="hint">Per programmi e integrazioni che usano l'API: ogni token ha il suo ruolo e si revoca da qui.</p>
+  <h2 id="h-tok">{{ _('Token per integrazioni') }}</h2>
+  <p class="hint">{{ _("Per programmi e integrazioni che usano l'API: ogni token ha il suo ruolo e si revoca da qui.") }}</p>
   <div class="scroll">
     <table style="min-width: 520px;">
-      <thead><tr><th>Nome</th><th>Ruolo</th><th>Creato</th><th>Stato</th><th><span class="sr">Azioni</span></th></tr></thead>
+      <thead><tr><th>{{ _('Nome') }}</th><th>{{ _('Ruolo') }}</th><th>{{ _('Creato') }}</th><th>{{ _('Stato') }}</th><th><span class="sr">{{ _('Azioni') }}</span></th></tr></thead>
       <tbody>
       {% for t in tokens %}
       <tr {% if t.revoked_at %}class="off"{% endif %}>
         <td>{{ t.name }}</td>
-        <td>{{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}.get(t.role, t.role) }}</td>
+        <td>{{ {'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}.get(t.role, t.role) }}</td>
         <td>{{ when(t.created_at, 'day') }}</td>
-        <td>{% if t.revoked_at %}<span class="chip">Revocato {{ when(t.revoked_at, 'day') }}</span>{% else %}<span class="chip green">Attivo</span>{% endif %}</td>
-        <td style="text-align: right;">{% if not t.revoked_at %}<form class="inline" method="post" action="/ui/tokens/{{ t.id }}/revoke"><button class="btn sm" type="submit">Revoca</button></form>{% endif %}</td>
+        <td>{% if t.revoked_at %}<span class="chip">{{ _('Revocato {date}', date=when(t.revoked_at, 'day')) }}</span>{% else %}<span class="chip green">{{ _('Attivo') }}</span>{% endif %}</td>
+        <td style="text-align: right;">{% if not t.revoked_at %}<form class="inline" method="post" action="/ui/tokens/{{ t.id }}/revoke"><button class="btn sm" type="submit">{{ _('Revoca') }}</button></form>{% endif %}</td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
   <form method="post" action="/ui/tokens" class="form-grid" style="margin-top: 8px;">
-    <label class="field">Nome<input name="name" required placeholder="WordPress, automazioni"></label>
-    <label class="field">Ruolo<select name="role"><option value="viewer">Lettura</option><option value="editor" selected>Editor</option><option value="owner">Owner</option></select></label>
-    <div><button class="btn" type="submit">Crea token</button></div>
+    <label class="field">{{ _('Nome') }}<input name="name" required placeholder="{{ _('WordPress, automazioni') }}"></label>
+    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Editor') }}</option><option value="owner">{{ _('Owner') }}</option></select></label>
+    <div><button class="btn" type="submit">{{ _('Crea token') }}</button></div>
   </form>
 </section>
 <section class="card pad" aria-labelledby="h-data">
-  <h2 id="h-data">I tuoi dati</h2>
-  <p class="hint">Tutti i dati della redazione in un file JSON: siti, profili, fonti, articoli raccolti, bozze, pubblicazioni, consumi. Credenziali e accessi sono esclusi.</p>
-  <a class="btn" href="/ui/export">Scarica i dati</a>
+  <h2 id="h-data">{{ _('I tuoi dati') }}</h2>
+  <p class="hint">{{ _('Tutti i dati della redazione in un file JSON: siti, profili, fonti, articoli raccolti, bozze, pubblicazioni, consumi. Credenziali e accessi sono esclusi.') }}</p>
+  <a class="btn" href="/ui/export">{{ _('Scarica i dati') }}</a>
 </section>
 {% endif %}
 {% endblock %}

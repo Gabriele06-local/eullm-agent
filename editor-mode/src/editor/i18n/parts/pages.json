@@ -1,0 +1,1202 @@
+{
+ "+ Aggiungi un sito": {
+  "en": "+ Add a site",
+  "de": "+ Website hinzufügen",
+  "fr": "+ Ajouter un site",
+  "es": "+ Añadir un sitio"
+ },
+ "<strong>La redazione è ferma</strong>: la prova o il periodo pagato è finito. I tuoi siti, profili, fonti e bozze sono conservati: scegli un piano e riparte da dove era.": {
+  "en": "<strong>The newsroom is stopped</strong>: the trial or paid period has ended. Your sites, profiles, sources and drafts are kept: choose a plan and it picks up where it left off.",
+  "de": "<strong>Die Redaktion ist gestoppt</strong>: Die Testphase oder der bezahlte Zeitraum ist abgelaufen. Ihre Websites, Profile, Quellen und Entwürfe bleiben erhalten: Wählen Sie einen Tarif, und es geht dort weiter, wo es aufgehört hat.",
+  "fr": "<strong>La rédaction est à l'arrêt</strong> : l'essai ou la période payée est terminé. Vos sites, profils, sources et brouillons sont conservés : choisissez une offre et elle reprend là où elle s'était arrêtée.",
+  "es": "<strong>La redacción está detenida</strong>: la prueba o el periodo pagado ha terminado. Tus sitios, perfiles, fuentes y borradores se conservan: elige un plan y continúa donde lo dejó."
+ },
+ "Abbonamento": {
+  "en": "Subscription",
+  "de": "Abonnement",
+  "fr": "Abonnement",
+  "es": "Suscripción"
+ },
+ "Abbonamento disdetto: la redazione resta attiva fino al {date}, poi si ferma. Puoi riattivarla scegliendo un piano.": {
+  "en": "Subscription cancelled: the newsroom stays active until {date}, then stops. You can reactivate it by choosing a plan.",
+  "de": "Abonnement gekündigt: Die Redaktion bleibt bis {date} aktiv und stoppt dann. Sie können sie durch Wahl eines Tarifs reaktivieren.",
+  "fr": "Abonnement résilié : la rédaction reste active jusqu'au {date}, puis s'arrête. Vous pouvez la réactiver en choisissant une offre.",
+  "es": "Suscripción cancelada: la redacción sigue activa hasta el {date} y luego se detiene. Puedes reactivarla eligiendo un plan."
+ },
+ "Abbonamento disdetto: la redazione resta attiva, poi si ferma. Puoi riattivarla scegliendo un piano.": {
+  "en": "Subscription cancelled: the newsroom stays active, then stops. You can reactivate it by choosing a plan.",
+  "de": "Abonnement gekündigt: Die Redaktion bleibt vorerst aktiv und stoppt dann. Sie können sie durch Wahl eines Tarifs reaktivieren.",
+  "fr": "Abonnement résilié : la rédaction reste active, puis s'arrête. Vous pouvez la réactiver en choisissant une offre.",
+  "es": "Suscripción cancelada: la redacción sigue activa y luego se detiene. Puedes reactivarla eligiendo un plan."
+ },
+ "Abbonamento disdetto: la redazione si ferma a fine periodo.": {
+  "en": "Subscription cancelled: the newsroom stops at the end of the period.",
+  "de": "Abonnement gekündigt: Die Redaktion stoppt zum Ende des Zeitraums.",
+  "fr": "Abonnement résilié : la rédaction s'arrête en fin de période.",
+  "es": "Suscripción cancelada: la redacción se detiene al final del periodo."
+ },
+ "Abbonamento disdetto: la redazione si ferma il {date}.": {
+  "en": "Subscription cancelled: the newsroom stops on {date}.",
+  "de": "Abonnement gekündigt: Die Redaktion stoppt am {date}.",
+  "fr": "Abonnement résilié : la rédaction s'arrête le {date}.",
+  "es": "Suscripción cancelada: la redacción se detiene el {date}."
+ },
+ "Accedi": {
+  "en": "Sign in",
+  "de": "Anmelden",
+  "fr": "Connexion",
+  "es": "Iniciar sesión"
+ },
+ "Accetta l'invito": {
+  "en": "Accept the invitation",
+  "de": "Einladung annehmen",
+  "fr": "Accepter l'invitation",
+  "es": "Aceptar la invitación"
+ },
+ "Aggiungi": {
+  "en": "Add",
+  "de": "Hinzufügen",
+  "fr": "Ajouter",
+  "es": "Añadir"
+ },
+ "Amministrazione": {
+  "en": "Administration",
+  "de": "Verwaltung",
+  "fr": "Administration",
+  "es": "Administración"
+ },
+ "Ancora nessuna pubblicazione.": {
+  "en": "No publications yet.",
+  "de": "Noch keine Veröffentlichungen.",
+  "fr": "Aucune publication pour le moment.",
+  "es": "Aún no hay publicaciones."
+ },
+ "Annuale": {
+  "en": "Yearly",
+  "de": "Jährlich",
+  "fr": "Annuel",
+  "es": "Anual"
+ },
+ "Approva e invia": {
+  "en": "Approve and send",
+  "de": "Freigeben und senden",
+  "fr": "Approuver et envoyer",
+  "es": "Aprobar y enviar"
+ },
+ "Approva la bozza": {
+  "en": "Approve the draft",
+  "de": "Entwurf freigeben",
+  "fr": "Approuver le brouillon",
+  "es": "Aprobar el borrador"
+ },
+ "Approvata": {
+  "en": "Approved",
+  "de": "Freigegeben",
+  "fr": "Approuvé",
+  "es": "Aprobado"
+ },
+ "Approvata da {who} il {date}": {
+  "en": "Approved by {who} on {date}",
+  "de": "Freigegeben von {who} am {date}",
+  "fr": "Approuvé par {who} le {date}",
+  "es": "Aprobado por {who} el {date}"
+ },
+ "Articolo": {
+  "en": "Article",
+  "de": "Artikel",
+  "fr": "Article",
+  "es": "Artículo"
+ },
+ "Azienda o professionista": {
+  "en": "Company or professional",
+  "de": "Unternehmen oder Selbstständige",
+  "fr": "Entreprise ou professionnel",
+  "es": "Empresa o profesional"
+ },
+ "Blog principale": {
+  "en": "Main blog",
+  "de": "Haupt-Blog",
+  "fr": "Blog principal",
+  "es": "Blog principal"
+ },
+ "Bozze": {
+  "en": "Drafts",
+  "de": "Entwürfe",
+  "fr": "Brouillons",
+  "es": "Borradores"
+ },
+ "Bozze scritte dall'agente": {
+  "en": "Drafts written by the agent",
+  "de": "Vom Agenten verfasste Entwürfe",
+  "fr": "Brouillons rédigés par l'agent",
+  "es": "Borradores escritos por el agente"
+ },
+ "CAP": {
+  "en": "Postcode",
+  "de": "PLZ",
+  "fr": "Code postal",
+  "es": "Código postal"
+ },
+ "Chiedi la pubblicazione": {
+  "en": "Request publication",
+  "de": "Veröffentlichung anfordern",
+  "fr": "Demander la publication",
+  "es": "Solicitar la publicación"
+ },
+ "Chiesta da": {
+  "en": "Requested by",
+  "de": "Angefordert von",
+  "fr": "Demandé par",
+  "es": "Solicitado por"
+ },
+ "Città": {
+  "en": "City",
+  "de": "Ort",
+  "fr": "Ville",
+  "es": "Ciudad"
+ },
+ "Clicca un numero nel testo per vedere da dove viene la frase.": {
+  "en": "Click a number in the text to see where the sentence comes from.",
+  "de": "Klicken Sie im Text auf eine Zahl, um zu sehen, woher der Satz stammt.",
+  "fr": "Cliquez sur un numéro dans le texte pour voir d'où vient la phrase.",
+  "es": "Haz clic en un número del texto para ver de dónde viene la frase."
+ },
+ "Codice destinatario SDI": {
+  "en": "SDI recipient code",
+  "de": "SDI-Empfängercode",
+  "fr": "Code destinataire SDI",
+  "es": "Código de destinatario SDI"
+ },
+ "Codice fiscale": {
+  "en": "Tax code",
+  "de": "Steuernummer",
+  "fr": "Code fiscal",
+  "es": "Código fiscal"
+ },
+ "Come bozza nel CMS": {
+  "en": "As a draft in the CMS",
+  "de": "Als Entwurf im CMS",
+  "fr": "En brouillon dans le CMS",
+  "es": "Como borrador en el CMS"
+ },
+ "Console del servizio": {
+  "en": "Service console",
+  "de": "Dienstkonsole",
+  "fr": "Console du service",
+  "es": "Consola del servicio"
+ },
+ "Controlli": {
+  "en": "Checks",
+  "de": "Prüfungen",
+  "fr": "Contrôles",
+  "es": "Comprobaciones"
+ },
+ "Controlli automatici": {
+  "en": "Automatic checks",
+  "de": "Automatische Prüfungen",
+  "fr": "Contrôles automatiques",
+  "es": "Comprobaciones automáticas"
+ },
+ "Cosa esce, e dove": {
+  "en": "What goes out, and where",
+  "de": "Was erscheint, und wo",
+  "fr": "Ce qui sort, et où",
+  "es": "Qué sale, y dónde"
+ },
+ "Crea ed entra": {
+  "en": "Create and sign in",
+  "de": "Erstellen und anmelden",
+  "fr": "Créer et entrer",
+  "es": "Crear y entrar"
+ },
+ "Crea l'account ed entra": {
+  "en": "Create account and sign in",
+  "de": "Konto erstellen und anmelden",
+  "fr": "Créer le compte et entrer",
+  "es": "Crear la cuenta y entrar"
+ },
+ "Crea l'amministratore": {
+  "en": "Create the administrator",
+  "de": "Administrator anlegen",
+  "fr": "Créer l'administrateur",
+  "es": "Crea el administrador"
+ },
+ "Creata": {
+  "en": "Created",
+  "de": "Erstellt",
+  "fr": "Créé",
+  "es": "Creado"
+ },
+ "Credenziale": {
+  "en": "Credential",
+  "de": "Zugangsdaten",
+  "fr": "Identifiant",
+  "es": "Credencial"
+ },
+ "Da rivedere": {
+  "en": "To review",
+  "de": "Zu prüfen",
+  "fr": "À revoir",
+  "es": "Por revisar"
+ },
+ "Da rivedere a mano": {
+  "en": "Needs manual review",
+  "de": "Manuell zu prüfen",
+  "fr": "À revoir à la main",
+  "es": "Por revisar a mano"
+ },
+ "Dati di fatturazione": {
+  "en": "Billing details",
+  "de": "Rechnungsdaten",
+  "fr": "Informations de facturation",
+  "es": "Datos de facturación"
+ },
+ "Decisa da": {
+  "en": "Decided by",
+  "de": "Entschieden von",
+  "fr": "Décidé par",
+  "es": "Decidido por"
+ },
+ "Decisa da {who} il {date}": {
+  "en": "Decided by {who} on {date}",
+  "de": "Entschieden von {who} am {date}",
+  "fr": "Décidé par {who} le {date}",
+  "es": "Decidido por {who} el {date}"
+ },
+ "Destinazione": {
+  "en": "Destination",
+  "de": "Ziel",
+  "fr": "Destination",
+  "es": "Destino"
+ },
+ "Destinazioni di {domain}": {
+  "en": "Destinations for {domain}",
+  "de": "Ziele für {domain}",
+  "fr": "Destinations de {domain}",
+  "es": "Destinos de {domain}"
+ },
+ "Disdici": {
+  "en": "Cancel",
+  "de": "Kündigen",
+  "fr": "Résilier",
+  "es": "Cancelar"
+ },
+ "Disdici l'abbonamento": {
+  "en": "Cancel subscription",
+  "de": "Abonnement kündigen",
+  "fr": "Résilier l'abonnement",
+  "es": "Cancelar la suscripción"
+ },
+ "Elenco bozze": {
+  "en": "Draft list",
+  "de": "Liste der Entwürfe",
+  "fr": "Liste des brouillons",
+  "es": "Lista de borradores"
+ },
+ "Email": {
+  "en": "Email",
+  "de": "E-Mail",
+  "fr": "E-mail",
+  "es": "Correo electrónico"
+ },
+ "Email per le fatture": {
+  "en": "Email for invoices",
+  "de": "E-Mail für Rechnungen",
+  "fr": "E-mail pour les factures",
+  "es": "Correo para las facturas"
+ },
+ "Entra": {
+  "en": "Enter",
+  "de": "Betreten",
+  "fr": "Entrer",
+  "es": "Entrar"
+ },
+ "Entra con il token": {
+  "en": "Sign in with token",
+  "de": "Mit Token anmelden",
+  "fr": "Se connecter avec le jeton",
+  "es": "Entrar con el token"
+ },
+ "Entra con un token di accesso": {
+  "en": "Sign in with an access token",
+  "de": "Mit einem Zugangstoken anmelden",
+  "fr": "Se connecter avec un jeton d'accès",
+  "es": "Entrar con un token de acceso"
+ },
+ "Entra in {newsroom}": {
+  "en": "Join {newsroom}",
+  "de": "{newsroom} beitreten",
+  "fr": "Rejoindre {newsroom}",
+  "es": "Únete a {newsroom}"
+ },
+ "Errore {status}": {
+  "en": "Error {status}",
+  "de": "Fehler {status}",
+  "fr": "Erreur {status}",
+  "es": "Error {status}"
+ },
+ "Esci": {
+  "en": "Sign out",
+  "de": "Abmelden",
+  "fr": "Se déconnecter",
+  "es": "Cerrar sesión"
+ },
+ "Esito": {
+  "en": "Outcome",
+  "de": "Ergebnis",
+  "fr": "Résultat",
+  "es": "Resultado"
+ },
+ "Esito sconosciuto: l'invio si è interrotto. Controlla sul CMS prima di riprovare.": {
+  "en": "Unknown outcome: sending was interrupted. Check the CMS before retrying.",
+  "de": "Ergebnis unbekannt: Das Senden wurde unterbrochen. Prüfen Sie das CMS, bevor Sie es erneut versuchen.",
+  "fr": "Résultat inconnu : l'envoi a été interrompu. Vérifiez dans le CMS avant de réessayer.",
+  "es": "Resultado desconocido: el envío se interrumpió. Comprueba el CMS antes de reintentarlo."
+ },
+ "Fonte {n}": {
+  "en": "Source {n}",
+  "de": "Quelle {n}",
+  "fr": "Source {n}",
+  "es": "Fuente {n}"
+ },
+ "Fonti": {
+  "en": "Sources",
+  "de": "Quellen",
+  "fr": "Sources",
+  "es": "Fuentes"
+ },
+ "Frasi con fonte": {
+  "en": "Sourced sentences",
+  "de": "Belegte Sätze",
+  "fr": "Phrases sourcées",
+  "es": "Frases con fuente"
+ },
+ "Frasi da rivedere": {
+  "en": "Sentences to review",
+  "de": "Zu prüfende Sätze",
+  "fr": "Phrases à revoir",
+  "es": "Frases por revisar"
+ },
+ "Il link è scaduto o è già stato usato. Chiedine uno nuovo a chi te l'ha mandato.": {
+  "en": "The link has expired or has already been used. Ask whoever sent it for a new one.",
+  "de": "Der Link ist abgelaufen oder wurde bereits verwendet. Bitten Sie den Absender um einen neuen.",
+  "fr": "Le lien a expiré ou a déjà été utilisé. Demandez-en un nouveau à la personne qui vous l'a envoyé.",
+  "es": "El enlace ha caducado o ya se ha usado. Pide uno nuevo a quien te lo envió."
+ },
+ "Il link è scaduto, è già stato usato o l'amministratore esiste già. Per un link nuovo, sul server: <code>docker compose exec editor-web editor setup-link</code>.": {
+  "en": "The link has expired, has already been used, or the administrator already exists. For a new link, on the server: <code>docker compose exec editor-web editor setup-link</code>.",
+  "de": "Der Link ist abgelaufen, wurde bereits verwendet oder der Administrator existiert schon. Für einen neuen Link auf dem Server: <code>docker compose exec editor-web editor setup-link</code>.",
+  "fr": "Le lien a expiré, a déjà été utilisé ou l'administrateur existe déjà. Pour un nouveau lien, sur le serveur : <code>docker compose exec editor-web editor setup-link</code>.",
+  "es": "El enlace ha caducado, ya se ha usado o el administrador ya existe. Para un enlace nuevo, en el servidor: <code>docker compose exec editor-web editor setup-link</code>."
+ },
+ "Il pagamento online non è ancora attivo: per attivare il piano contatta l'assistenza, lo registriamo noi.": {
+  "en": "Online payment isn't active yet: to activate the plan, contact support and we'll set it up for you.",
+  "de": "Die Online-Zahlung ist noch nicht aktiv: Wenden Sie sich zur Aktivierung des Tarifs an den Support, wir erfassen ihn für Sie.",
+  "fr": "Le paiement en ligne n'est pas encore actif : pour activer l'offre, contactez l'assistance, nous l'enregistrons pour vous.",
+  "es": "El pago online aún no está activo: para activar el plan, contacta con soporte y lo registramos nosotros."
+ },
+ "Il tuo account": {
+  "en": "Your account",
+  "de": "Ihr Konto",
+  "fr": "Votre compte",
+  "es": "Tu cuenta"
+ },
+ "Impostazioni": {
+  "en": "Settings",
+  "de": "Einstellungen",
+  "fr": "Paramètres",
+  "es": "Ajustes"
+ },
+ "In attesa di approvazione": {
+  "en": "Awaiting approval",
+  "de": "Wartet auf Freigabe",
+  "fr": "En attente d'approbation",
+  "es": "Pendiente de aprobación"
+ },
+ "In attesa di owner": {
+  "en": "Awaiting owner",
+  "de": "Wartet auf Inhaber",
+  "fr": "En attente du propriétaire",
+  "es": "Pendiente del propietario"
+ },
+ "In invio": {
+  "en": "Sending",
+  "de": "Wird gesendet",
+  "fr": "En cours d'envoi",
+  "es": "Enviando"
+ },
+ "Indirizzo": {
+  "en": "Address",
+  "de": "Adresse",
+  "fr": "Adresse",
+  "es": "Dirección"
+ },
+ "Invito": {
+  "en": "Invitation",
+  "de": "Einladung",
+  "fr": "Invitation",
+  "es": "Invitación"
+ },
+ "L'ultimo pagamento non è riuscito. Il circuito riprova nei prossimi giorni; se vuoi, paga di nuovo qui sotto.": {
+  "en": "The last payment failed. The card network will retry in the next few days; if you like, pay again below.",
+  "de": "Die letzte Zahlung ist fehlgeschlagen. Sie wird in den nächsten Tagen erneut versucht; wenn Sie möchten, zahlen Sie unten erneut.",
+  "fr": "Le dernier paiement a échoué. Une nouvelle tentative aura lieu dans les prochains jours ; si vous le souhaitez, payez à nouveau ci-dessous.",
+  "es": "El último pago no se ha completado. Se volverá a intentar en los próximos días; si quieres, paga de nuevo aquí abajo."
+ },
+ "L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.": {
+  "en": "The last payment failed: the card network will retry in the next few days.",
+  "de": "Die letzte Zahlung ist fehlgeschlagen: Sie wird in den nächsten Tagen erneut versucht.",
+  "fr": "Le dernier paiement a échoué : une nouvelle tentative aura lieu dans les prochains jours.",
+  "es": "El último pago no se ha completado: se volverá a intentar en los próximos días."
+ },
+ "La credenziale (password applicativa di WordPress, chiave del webhook, token del bot Telegram) viene salvata cifrata e non viene più mostrata: puoi solo sostituirla. In alternativa lasciala vuota e l'amministratore del server imposta la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;.": {
+  "en": "The credential (WordPress application password, webhook key, Telegram bot token) is stored encrypted and never shown again: you can only replace it. Alternatively leave it empty and the server administrator sets the variable EDITOR_SECRET_&lt;TENANT&gt;__&lt;NAME&gt;.",
+  "de": "Die Zugangsdaten (WordPress-Anwendungspasswort, Webhook-Schlüssel, Telegram-Bot-Token) werden verschlüsselt gespeichert und nicht mehr angezeigt: Sie können sie nur ersetzen. Alternativ leer lassen, dann setzt der Server-Administrator die Variable EDITOR_SECRET_&lt;TENANT&gt;__&lt;NAME&gt;.",
+  "fr": "L'identifiant (mot de passe d'application WordPress, clé du webhook, jeton du bot Telegram) est enregistré chiffré et n'est plus affiché : vous pouvez seulement le remplacer. Sinon, laissez-le vide et l'administrateur du serveur définit la variable EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOM&gt;.",
+  "es": "La credencial (contraseña de aplicación de WordPress, clave del webhook, token del bot de Telegram) se guarda cifrada y no se vuelve a mostrar: solo puedes sustituirla. Si no, déjala vacía y el administrador del servidor define la variable EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOMBRE&gt;."
+ },
+ "La password del tuo account": {
+  "en": "Your account password",
+  "de": "Das Passwort Ihres Kontos",
+  "fr": "Le mot de passe de votre compte",
+  "es": "La contraseña de tu cuenta"
+ },
+ "Leggi": {
+  "en": "Read",
+  "de": "Lesen",
+  "fr": "Lire",
+  "es": "Leer"
+ },
+ "Limite del piano raggiunto": {
+  "en": "Plan limit reached",
+  "de": "Tariflimit erreicht",
+  "fr": "Limite de l'offre atteinte",
+  "es": "Límite del plan alcanzado"
+ },
+ "Lingua": {
+  "en": "Language",
+  "de": "Sprache",
+  "fr": "Langue",
+  "es": "Idioma"
+ },
+ "Link non valido": {
+  "en": "Invalid link",
+  "de": "Ungültiger Link",
+  "fr": "Lien non valide",
+  "es": "Enlace no válido"
+ },
+ "Manda il link": {
+  "en": "Send the link",
+  "de": "Link senden",
+  "fr": "Envoyer le lien",
+  "es": "Enviar el enlace"
+ },
+ "Mensile": {
+  "en": "Monthly",
+  "de": "Monatlich",
+  "fr": "Mensuel",
+  "es": "Mensual"
+ },
+ "Modello: {model}": {
+  "en": "Model: {model}",
+  "de": "Modell: {model}",
+  "fr": "Modèle : {model}",
+  "es": "Modelo: {model}"
+ },
+ "Modo": {
+  "en": "Mode",
+  "de": "Modus",
+  "fr": "Mode",
+  "es": "Modo"
+ },
+ "Nessun abbonamento registrato per questa redazione.": {
+  "en": "No subscription on record for this newsroom.",
+  "de": "Für diese Redaktion ist kein Abonnement hinterlegt.",
+  "fr": "Aucun abonnement enregistré pour cette rédaction.",
+  "es": "No hay ninguna suscripción registrada para esta redacción."
+ },
+ "Nessuna bozza ancora. Accetta una proposta da <a href='/trends'>Trend e piano</a> e l'agente la scrive.": {
+  "en": "No drafts yet. Accept a proposal from <a href='/trends'>Trends and plan</a> and the agent writes it.",
+  "de": "Noch keine Entwürfe. Nehmen Sie einen Vorschlag unter <a href='/trends'>Trends und Plan</a> an, und der Agent schreibt ihn.",
+  "fr": "Aucun brouillon pour l'instant. Acceptez une proposition dans <a href='/trends'>Tendances et plan</a> et l'agent la rédige.",
+  "es": "Aún no hay borradores. Acepta una propuesta en <a href='/trends'>Tendencias y plan</a> y el agente la escribe."
+ },
+ "Nessuna destinazione per questo sito: aggiungila da <a href=\"/publications\">Pubblicazioni</a>.": {
+  "en": "No destination for this site: add one from <a href=\"/publications\">Publications</a>.",
+  "de": "Kein Ziel für diese Website: Fügen Sie eines unter <a href=\"/publications\">Veröffentlichungen</a> hinzu.",
+  "fr": "Aucune destination pour ce site : ajoutez-en une depuis <a href=\"/publications\">Publications</a>.",
+  "es": "No hay ningún destino para este sitio: añádelo desde <a href=\"/publications\">Publicaciones</a>."
+ },
+ "Nessuna destinazione: le bozze approvate restano qui finché non ne aggiungi una.": {
+  "en": "No destination: approved drafts stay here until you add one.",
+  "de": "Kein Ziel: Freigegebene Entwürfe bleiben hier, bis Sie eines hinzufügen.",
+  "fr": "Aucune destination : les brouillons approuvés restent ici jusqu'à ce que vous en ajoutiez une.",
+  "es": "Ningún destino: los borradores aprobados se quedan aquí hasta que añadas uno."
+ },
+ "Nessuna richiesta in attesa.": {
+  "en": "No pending requests.",
+  "de": "Keine offenen Anfragen.",
+  "fr": "Aucune demande en attente.",
+  "es": "No hay solicitudes pendientes."
+ },
+ "Niente più rinnovi. La redazione resta attiva fino alla fine del periodo già pagato (o della prova), poi si ferma; i dati restano.": {
+  "en": "No more renewals. The newsroom stays active until the end of the period already paid (or the trial), then stops; your data is kept.",
+  "de": "Keine weiteren Verlängerungen. Die Redaktion bleibt bis zum Ende des bereits bezahlten Zeitraums (oder der Testphase) aktiv und stoppt dann; die Daten bleiben erhalten.",
+  "fr": "Plus de renouvellements. La rédaction reste active jusqu'à la fin de la période déjà payée (ou de l'essai), puis s'arrête ; les données sont conservées.",
+  "es": "No habrá más renovaciones. La redacción sigue activa hasta el final del periodo ya pagado (o de la prueba) y luego se detiene; los datos se conservan."
+ },
+ "Nome": {
+  "en": "Name",
+  "de": "Name",
+  "fr": "Nom",
+  "es": "Nombre"
+ },
+ "Nome della credenziale": {
+  "en": "Credential name",
+  "de": "Name der Zugangsdaten",
+  "fr": "Nom de l'identifiant",
+  "es": "Nombre de la credencial"
+ },
+ "Non c'è ancora un amministratore. Sul server, nella cartella dell'installazione, lancia <code>docker compose exec editor-web editor setup-link</code> e apri il link che stampa: lì crei il tuo account.": {
+  "en": "There is no administrator yet. On the server, in the installation folder, run <code>docker compose exec editor-web editor setup-link</code> and open the link it prints: that is where you create your account.",
+  "de": "Es gibt noch keinen Administrator. Führen Sie auf dem Server im Installationsordner <code>docker compose exec editor-web editor setup-link</code> aus und öffnen Sie den ausgegebenen Link: Dort legen Sie Ihr Konto an.",
+  "fr": "Il n'y a pas encore d'administrateur. Sur le serveur, dans le dossier d'installation, lancez <code>docker compose exec editor-web editor setup-link</code> et ouvrez le lien affiché : vous y créerez votre compte.",
+  "es": "Todavía no hay ningún administrador. En el servidor, en la carpeta de instalación, ejecuta <code>docker compose exec editor-web editor setup-link</code> y abre el enlace que muestra: ahí creas tu cuenta."
+ },
+ "Non hai il permesso per questa azione": {
+  "en": "You don't have permission for this action",
+  "de": "Sie haben keine Berechtigung für diese Aktion",
+  "fr": "Vous n'avez pas l'autorisation pour cette action",
+  "es": "No tienes permiso para esta acción"
+ },
+ "Non riuscita": {
+  "en": "Failed",
+  "de": "Fehlgeschlagen",
+  "fr": "Échoué",
+  "es": "Fallido"
+ },
+ "Non sei proprietario di nessuna redazione: l'abbonamento lo gestisce chi ti ha invitato.": {
+  "en": "You don't own any newsroom: the subscription is managed by whoever invited you.",
+  "de": "Sie sind Inhaber keiner Redaktion: Das Abonnement verwaltet die Person, die Sie eingeladen hat.",
+  "fr": "Vous n'êtes propriétaire d'aucune rédaction : l'abonnement est géré par la personne qui vous a invité.",
+  "es": "No eres propietario de ninguna redacción: la suscripción la gestiona quien te invitó."
+ },
+ "Non trovato": {
+  "en": "Not found",
+  "de": "Nicht gefunden",
+  "fr": "Introuvable",
+  "es": "No encontrado"
+ },
+ "Non è stata pubblicata": {
+  "en": "It wasn't published",
+  "de": "Wurde nicht veröffentlicht",
+  "fr": "N'a pas été publié",
+  "es": "No se ha publicado"
+ },
+ "Nuova credenziale {name}": {
+  "en": "New credential {name}",
+  "de": "Neue Zugangsdaten {name}",
+  "fr": "Nouvel identifiant {name}",
+  "es": "Nueva credencial {name}"
+ },
+ "Nuova password": {
+  "en": "New password",
+  "de": "Neues Passwort",
+  "fr": "Nouveau mot de passe",
+  "es": "Nueva contraseña"
+ },
+ "Oggi": {
+  "en": "Today",
+  "de": "Heute",
+  "fr": "Aujourd'hui",
+  "es": "Hoy"
+ },
+ "Ogni frase porta le sue fonti. Le bozze con controlli non superati restano da rivedere a mano.": {
+  "en": "Every sentence carries its sources. Drafts that fail checks stay for manual review.",
+  "de": "Jeder Satz trägt seine Quellen. Entwürfe mit nicht bestandenen Prüfungen müssen von Hand geprüft werden.",
+  "fr": "Chaque phrase porte ses sources. Les brouillons dont les contrôles échouent restent à revoir à la main.",
+  "es": "Cada frase lleva sus fuentes. Los borradores que no superan las comprobaciones quedan para revisar a mano."
+ },
+ "PEC": {
+  "en": "PEC (certified email)",
+  "de": "PEC (zertifizierte E-Mail)",
+  "fr": "PEC (e-mail certifié)",
+  "es": "PEC (correo certificado)"
+ },
+ "Paese": {
+  "en": "Country",
+  "de": "Land",
+  "fr": "Pays",
+  "es": "País"
+ },
+ "Parte solo dopo il sì di un owner.": {
+  "en": "It goes out only after an owner says yes.",
+  "de": "Wird erst nach Zustimmung eines Inhabers gesendet.",
+  "fr": "Ne part qu'après l'accord d'un propriétaire.",
+  "es": "Solo sale tras el sí de un propietario."
+ },
+ "Partita IVA": {
+  "en": "VAT number",
+  "de": "USt-IdNr.",
+  "fr": "Numéro de TVA",
+  "es": "NIF-IVA"
+ },
+ "Password": {
+  "en": "Password",
+  "de": "Passwort",
+  "fr": "Mot de passe",
+  "es": "Contraseña"
+ },
+ "Password (almeno {min} caratteri)": {
+  "en": "Password (at least {min} characters)",
+  "de": "Passwort (mindestens {min} Zeichen)",
+  "fr": "Mot de passe (au moins {min} caractères)",
+  "es": "Contraseña (al menos {min} caracteres)"
+ },
+ "Password dimenticata": {
+  "en": "Forgotten password",
+  "de": "Passwort vergessen",
+  "fr": "Mot de passe oublié",
+  "es": "Contraseña olvidada"
+ },
+ "Password dimenticata?": {
+  "en": "Forgot your password?",
+  "de": "Passwort vergessen?",
+  "fr": "Mot de passe oublié ?",
+  "es": "¿Has olvidado la contraseña?"
+ },
+ "Password dimenticata? Chiedi un nuovo link a chi gestisce il servizio.": {
+  "en": "Forgot your password? Ask whoever runs the service for a new link.",
+  "de": "Passwort vergessen? Bitten Sie den Betreiber des Dienstes um einen neuen Link.",
+  "fr": "Mot de passe oublié ? Demandez un nouveau lien à la personne qui gère le service.",
+  "es": "¿Has olvidado la contraseña? Pide un enlace nuevo a quien gestiona el servicio."
+ },
+ "Piano {plan}, annuale.": {
+  "en": "{plan} plan, yearly.",
+  "de": "Tarif {plan}, jährlich.",
+  "fr": "Offre {plan}, annuelle.",
+  "es": "Plan {plan}, anual."
+ },
+ "Piano {plan}, mensile.": {
+  "en": "{plan} plan, monthly.",
+  "de": "Tarif {plan}, monatlich.",
+  "fr": "Offre {plan}, mensuelle.",
+  "es": "Plan {plan}, mensual."
+ },
+ "Prezzi IVA esclusa. Il primo pagamento autorizza i rinnovi automatici, che puoi disdire quando vuoi da questa pagina.": {
+  "en": "Prices exclude VAT. The first payment authorises automatic renewals, which you can cancel at any time from this page.",
+  "de": "Preise zzgl. MwSt. Die erste Zahlung autorisiert automatische Verlängerungen, die Sie jederzeit auf dieser Seite kündigen können.",
+  "fr": "Prix hors TVA. Le premier paiement autorise les renouvellements automatiques, que vous pouvez résilier à tout moment depuis cette page.",
+  "es": "Precios sin IVA. El primer pago autoriza las renovaciones automáticas, que puedes cancelar cuando quieras desde esta página."
+ },
+ "Prima compila i dati di fatturazione qui sotto.": {
+  "en": "First fill in the billing details below.",
+  "de": "Füllen Sie zuerst unten die Rechnungsdaten aus.",
+  "fr": "Remplissez d'abord les informations de facturation ci-dessous.",
+  "es": "Primero rellena los datos de facturación aquí abajo."
+ },
+ "Prima configurazione": {
+  "en": "First setup",
+  "de": "Ersteinrichtung",
+  "fr": "Première configuration",
+  "es": "Configuración inicial"
+ },
+ "Privato": {
+  "en": "Private individual",
+  "de": "Privatperson",
+  "fr": "Particulier",
+  "es": "Particular"
+ },
+ "Pronta": {
+  "en": "Ready",
+  "de": "Bereit",
+  "fr": "Prêt",
+  "es": "Listo"
+ },
+ "Pronta da leggere": {
+  "en": "Ready to read",
+  "de": "Bereit zum Lesen",
+  "fr": "Prêt à lire",
+  "es": "Listo para leer"
+ },
+ "Prova gratuita: {n} giorni rimasti.": {
+  "en": "Free trial: {n} days left.",
+  "de": "Kostenlose Testphase: noch {n} Tage.",
+  "fr": "Essai gratuit : {n} jours restants.",
+  "es": "Prueba gratuita: quedan {n} días."
+ },
+ "Prova gratuita: {n} giorno rimasto.": {
+  "en": "Free trial: {n} day left.",
+  "de": "Kostenlose Testphase: noch {n} Tag.",
+  "fr": "Essai gratuit : {n} jour restant.",
+  "es": "Prueba gratuita: queda {n} día."
+ },
+ "Provincia": {
+  "en": "Province",
+  "de": "Provinz",
+  "fr": "Province",
+  "es": "Provincia"
+ },
+ "Pubblica subito": {
+  "en": "Publish immediately",
+  "de": "Sofort veröffentlichen",
+  "fr": "Publier immédiatement",
+  "es": "Publicar ahora"
+ },
+ "Pubblicata": {
+  "en": "Published",
+  "de": "Veröffentlicht",
+  "fr": "Publié",
+  "es": "Publicado"
+ },
+ "Pubblicazione": {
+  "en": "Publication",
+  "de": "Veröffentlichung",
+  "fr": "Publication",
+  "es": "Publicación"
+ },
+ "Pubblicazioni": {
+  "en": "Publications",
+  "de": "Veröffentlichungen",
+  "fr": "Publications",
+  "es": "Publicaciones"
+ },
+ "Qualcosa non è andato": {
+  "en": "Something went wrong",
+  "de": "Etwas ist schiefgelaufen",
+  "fr": "Une erreur s'est produite",
+  "es": "Algo ha salido mal"
+ },
+ "Questa bozza non ha frasi registrate.": {
+  "en": "This draft has no recorded sentences.",
+  "de": "Dieser Entwurf enthält keine erfassten Sätze.",
+  "fr": "Ce brouillon n'a aucune phrase enregistrée.",
+  "es": "Este borrador no tiene frases registradas."
+ },
+ "Questa redazione è fatturata dal tuo rivenditore: per cambiare piano scrivi a lui.": {
+  "en": "This newsroom is billed by your reseller: contact them to change plan.",
+  "de": "Diese Redaktion wird über Ihren Wiederverkäufer abgerechnet: Wenden Sie sich für einen Tarifwechsel an ihn.",
+  "fr": "Cette rédaction est facturée par votre revendeur : contactez-le pour changer d'offre.",
+  "es": "Esta redacción la factura tu revendedor: escríbele para cambiar de plan."
+ },
+ "Questo server non manda email: chiedi un nuovo link a chi gestisce il servizio.": {
+  "en": "This server doesn't send email: ask whoever runs the service for a new link.",
+  "de": "Dieser Server versendet keine E-Mails: Bitten Sie den Betreiber des Dienstes um einen neuen Link.",
+  "fr": "Ce serveur n'envoie pas d'e-mails : demandez un nouveau lien à la personne qui gère le service.",
+  "es": "Este servidor no envía correos: pide un enlace nuevo a quien gestiona el servicio."
+ },
+ "Ragione sociale o nome": {
+  "en": "Company name or full name",
+  "de": "Firmenname oder Name",
+  "fr": "Raison sociale ou nom",
+  "es": "Razón social o nombre"
+ },
+ "Redazione": {
+  "en": "Newsroom",
+  "de": "Redaktion",
+  "fr": "Rédaction",
+  "es": "Redacción"
+ },
+ "Resti collegato su questo browser per 30 giorni, finché non esci.": {
+  "en": "You stay signed in on this browser for 30 days, until you sign out.",
+  "de": "Sie bleiben in diesem Browser 30 Tage angemeldet, bis Sie sich abmelden.",
+  "fr": "Vous restez connecté sur ce navigateur pendant 30 jours, sauf si vous vous déconnectez.",
+  "es": "Seguirás conectado en este navegador durante 30 días, hasta que cierres sesión."
+ },
+ "Rifiuta": {
+  "en": "Reject",
+  "de": "Ablehnen",
+  "fr": "Refuser",
+  "es": "Rechazar"
+ },
+ "Rifiutata": {
+  "en": "Rejected",
+  "de": "Abgelehnt",
+  "fr": "Refusé",
+  "es": "Rechazado"
+ },
+ "Rinnovo": {
+  "en": "Renewal",
+  "de": "Verlängerung",
+  "fr": "Renouvellement",
+  "es": "Renovación"
+ },
+ "Rinnovo il {date}.": {
+  "en": "Renews on {date}.",
+  "de": "Verlängerung am {date}.",
+  "fr": "Renouvellement le {date}.",
+  "es": "Se renueva el {date}."
+ },
+ "Ripeti la password": {
+  "en": "Repeat the password",
+  "de": "Passwort wiederholen",
+  "fr": "Répétez le mot de passe",
+  "es": "Repite la contraseña"
+ },
+ "Salva ed entra": {
+  "en": "Save and sign in",
+  "de": "Speichern und anmelden",
+  "fr": "Enregistrer et entrer",
+  "es": "Guardar y entrar"
+ },
+ "Salva i dati": {
+  "en": "Save details",
+  "de": "Daten speichern",
+  "fr": "Enregistrer les informations",
+  "es": "Guardar los datos"
+ },
+ "Scegli il piano": {
+  "en": "Choose a plan",
+  "de": "Tarif wählen",
+  "fr": "Choisir une offre",
+  "es": "Elige un plan"
+ },
+ "Scegli la nuova password di {email}.": {
+  "en": "Choose the new password for {email}.",
+  "de": "Legen Sie das neue Passwort für {email} fest.",
+  "fr": "Choisissez le nouveau mot de passe de {email}.",
+  "es": "Elige la nueva contraseña de {email}."
+ },
+ "Se l'indirizzo ha un account, è partita un'email con il link per scegliere una nuova password. Il link vale 24 ore.": {
+  "en": "If the address has an account, an email has been sent with a link to choose a new password. The link is valid for 24 hours.",
+  "de": "Falls zu dieser Adresse ein Konto existiert, wurde eine E-Mail mit einem Link zum Festlegen eines neuen Passworts gesendet. Der Link ist 24 Stunden gültig.",
+  "fr": "Si cette adresse correspond à un compte, un e-mail vient d'être envoyé avec un lien pour choisir un nouveau mot de passe. Le lien est valable 24 heures.",
+  "es": "Si la dirección tiene una cuenta, se ha enviado un correo con un enlace para elegir una contraseña nueva. El enlace es válido durante 24 horas."
+ },
+ "Sei in prova fino al <strong>{date}</strong> ({n} giorni). Scegli un piano prima di allora per continuare senza interruzioni.": {
+  "en": "You're on a trial until <strong>{date}</strong> ({n} days). Choose a plan before then to continue without interruption.",
+  "de": "Ihre Testphase läuft bis <strong>{date}</strong> ({n} Tage). Wählen Sie vorher einen Tarif, um ohne Unterbrechung weiterzumachen.",
+  "fr": "Vous êtes en essai jusqu'au <strong>{date}</strong> ({n} jours). Choisissez une offre d'ici là pour continuer sans interruption.",
+  "es": "Estás en prueba hasta el <strong>{date}</strong> ({n} días). Elige un plan antes para continuar sin interrupciones."
+ },
+ "Sei in prova fino al <strong>{date}</strong> ({n} giorno). Scegli un piano prima di allora per continuare senza interruzioni.": {
+  "en": "You're on a trial until <strong>{date}</strong> ({n} day). Choose a plan before then to continue without interruption.",
+  "de": "Ihre Testphase läuft bis <strong>{date}</strong> ({n} Tag). Wählen Sie vorher einen Tarif, um ohne Unterbrechung weiterzumachen.",
+  "fr": "Vous êtes en essai jusqu'au <strong>{date}</strong> ({n} jour). Choisissez une offre d'ici là pour continuer sans interruption.",
+  "es": "Estás en prueba hasta el <strong>{date}</strong> ({n} día). Elige un plan antes para continuar sin interrupciones."
+ },
+ "Sezioni": {
+  "en": "Sections",
+  "de": "Bereiche",
+  "fr": "Sections",
+  "es": "Secciones"
+ },
+ "Si può pubblicare dopo aver approvato la bozza.": {
+  "en": "You can publish after approving the draft.",
+  "de": "Veröffentlichen ist nach Freigabe des Entwurfs möglich.",
+  "fr": "Vous pouvez publier après avoir approuvé le brouillon.",
+  "es": "Se puede publicar tras aprobar el borrador."
+ },
+ "Sito": {
+  "en": "Site",
+  "de": "Website",
+  "fr": "Site",
+  "es": "Sitio"
+ },
+ "Sito e profilo": {
+  "en": "Site and profile",
+  "de": "Website und Profil",
+  "fr": "Site et profil",
+  "es": "Sitio y perfil"
+ },
+ "Sostituisci": {
+  "en": "Replace",
+  "de": "Ersetzen",
+  "fr": "Remplacer",
+  "es": "Sustituir"
+ },
+ "Stato": {
+  "en": "Status",
+  "de": "Status",
+  "fr": "Statut",
+  "es": "Estado"
+ },
+ "Storico": {
+  "en": "History",
+  "de": "Verlauf",
+  "fr": "Historique",
+  "es": "Historial"
+ },
+ "Superati": {
+  "en": "Passed",
+  "de": "Bestanden",
+  "fr": "Réussis",
+  "es": "Superadas"
+ },
+ "Telefono": {
+  "en": "Phone",
+  "de": "Telefon",
+  "fr": "Téléphone",
+  "es": "Teléfono"
+ },
+ "Ti mandiamo un link per scegliere una nuova password.": {
+  "en": "We'll send you a link to choose a new password.",
+  "de": "Wir senden Ihnen einen Link, um ein neues Passwort festzulegen.",
+  "fr": "Nous vous envoyons un lien pour choisir un nouveau mot de passe.",
+  "es": "Te enviamos un enlace para elegir una contraseña nueva."
+ },
+ "Tipo": {
+  "en": "Type",
+  "de": "Typ",
+  "fr": "Type",
+  "es": "Tipo"
+ },
+ "Titolo": {
+  "en": "Title",
+  "de": "Titel",
+  "fr": "Titre",
+  "es": "Título"
+ },
+ "Token": {
+  "en": "Token",
+  "de": "Token",
+  "fr": "Jeton",
+  "es": "Token"
+ },
+ "Torna a Oggi": {
+  "en": "Back to Today",
+  "de": "Zurück zu Heute",
+  "fr": "Retour à Aujourd'hui",
+  "es": "Volver a Hoy"
+ },
+ "Torna al piano": {
+  "en": "Back to the plan",
+  "de": "Zurück zum Plan",
+  "fr": "Retour au plan",
+  "es": "Volver al plan"
+ },
+ "Torna all'accesso": {
+  "en": "Back to sign in",
+  "de": "Zurück zur Anmeldung",
+  "fr": "Retour à la connexion",
+  "es": "Volver al inicio de sesión"
+ },
+ "Torna alla redazione": {
+  "en": "Back to the newsroom",
+  "de": "Zurück zur Redaktion",
+  "fr": "Retour à la rédaction",
+  "es": "Volver a la redacción"
+ },
+ "Trend e piano": {
+  "en": "Trends and plan",
+  "de": "Trends und Plan",
+  "fr": "Tendances et plan",
+  "es": "Tendencias y plan"
+ },
+ "Un editor chiede, un owner approva. Nulla viene inviato al CMS o al canale senza quel sì.": {
+  "en": "An editor requests, an owner approves. Nothing is sent to the CMS or the channel without that yes.",
+  "de": "Ein Redakteur fragt an, ein Inhaber gibt frei. Ohne diese Zustimmung wird nichts an das CMS oder den Kanal gesendet.",
+  "fr": "Un éditeur demande, un propriétaire approuve. Rien n'est envoyé au CMS ou au canal sans cet accord.",
+  "es": "Un editor solicita, un propietario aprueba. No se envía nada al CMS ni al canal sin ese sí."
+ },
+ "Utente (WordPress)": {
+  "en": "User (WordPress)",
+  "de": "Benutzer (WordPress)",
+  "fr": "Utilisateur (WordPress)",
+  "es": "Usuario (WordPress)"
+ },
+ "Vai": {
+  "en": "Go",
+  "de": "Los",
+  "fr": "OK",
+  "es": "Ir"
+ },
+ "Vai al pagamento": {
+  "en": "Go to payment",
+  "de": "Zur Zahlung",
+  "fr": "Passer au paiement",
+  "es": "Ir al pago"
+ },
+ "Vai all'accesso": {
+  "en": "Go to sign in",
+  "de": "Zur Anmeldung",
+  "fr": "Aller à la connexion",
+  "es": "Ir al inicio de sesión"
+ },
+ "Vedi l'abbonamento": {
+  "en": "View subscription",
+  "de": "Abonnement ansehen",
+  "fr": "Voir l'abonnement",
+  "es": "Ver la suscripción"
+ },
+ "Verso {target}": {
+  "en": "To {target}",
+  "de": "An {target}",
+  "fr": "Vers {target}",
+  "es": "Hacia {target}"
+ },
+ "al mese": {
+  "en": "per month",
+  "de": "pro Monat",
+  "fr": "par mois",
+  "es": "al mes"
+ },
+ "bozza": {
+  "en": "draft",
+  "de": "Entwurf",
+  "fr": "brouillon",
+  "es": "borrador"
+ },
+ "chiesta da {who} {when}": {
+  "en": "requested by {who} {when}",
+  "de": "angefordert von {who} {when}",
+  "fr": "demandé par {who} {when}",
+  "es": "solicitado por {who} {when}"
+ },
+ "come bozza nel CMS": {
+  "en": "as a draft in the CMS",
+  "de": "als Entwurf im CMS",
+  "fr": "en brouillon dans le CMS",
+  "es": "como borrador en el CMS"
+ },
+ "credenziale in {var}": {
+  "en": "credential in {var}",
+  "de": "Zugangsdaten in {var}",
+  "fr": "identifiant dans {var}",
+  "es": "credencial en {var}"
+ },
+ "credenziale {name} salvata cifrata": {
+  "en": "credential {name} stored encrypted",
+  "de": "Zugangsdaten {name} verschlüsselt gespeichert",
+  "fr": "identifiant {name} enregistré chiffré",
+  "es": "credencial {name} guardada cifrada"
+ },
+ "disattivata": {
+  "en": "disabled",
+  "de": "deaktiviert",
+  "fr": "désactivée",
+  "es": "desactivado"
+ },
+ "editor": {
+  "en": "editor",
+  "de": "Redakteur",
+  "fr": "éditeur",
+  "es": "editor"
+ },
+ "https://… oppure @canale": {
+  "en": "https://… or @channel",
+  "de": "https://… oder @kanal",
+  "fr": "https://… ou @canal",
+  "es": "https://… o @canal"
+ },
+ "lettura": {
+  "en": "read-only",
+  "de": "nur Lesen",
+  "fr": "lecture seule",
+  "es": "solo lectura"
+ },
+ "non superato": {
+  "en": "failed",
+  "de": "nicht bestanden",
+  "fr": "échoué",
+  "es": "no superada"
+ },
+ "oppure {price} all'anno": {
+  "en": "or {price} per year",
+  "de": "oder {price} pro Jahr",
+  "fr": "ou {price} par an",
+  "es": "o {price} al año"
+ },
+ "owner": {
+  "en": "owner",
+  "de": "Inhaber",
+  "fr": "propriétaire",
+  "es": "propietario"
+ },
+ "password applicativa, chiave o token": {
+  "en": "application password, key or token",
+  "de": "Anwendungspasswort, Schlüssel oder Token",
+  "fr": "mot de passe d'application, clé ou jeton",
+  "es": "contraseña de aplicación, clave o token"
+ },
+ "pubblicata subito": {
+  "en": "published immediately",
+  "de": "sofort veröffentlicht",
+  "fr": "publié immédiatement",
+  "es": "publicado al momento"
+ },
+ "redazione": {
+  "en": "newsroom",
+  "de": "redaktion",
+  "fr": "redaction",
+  "es": "redaccion"
+ },
+ "subito": {
+  "en": "immediately",
+  "de": "sofort",
+  "fr": "immédiat",
+  "es": "inmediato"
+ },
+ "utente {user}": {
+  "en": "user {user}",
+  "de": "Benutzer {user}",
+  "fr": "utilisateur {user}",
+  "es": "usuario {user}"
+ },
+ "versione {n}": {
+  "en": "version {n}",
+  "de": "Version {n}",
+  "fr": "version {n}",
+  "es": "versión {n}"
+ },
+ "{n} articoli al mese": {
+  "en": "{n} articles per month",
+  "de": "{n} Artikel pro Monat",
+  "fr": "{n} articles par mois",
+  "es": "{n} artículos al mes"
+ },
+ "{n} fonti attive": {
+  "en": "{n} active sources",
+  "de": "{n} aktive Quellen",
+  "fr": "{n} sources actives",
+  "es": "{n} fuentes activas"
+ },
+ "{n} frasi da rivedere": {
+  "en": "{n} sentences to review",
+  "de": "{n} Sätze zu prüfen",
+  "fr": "{n} phrases à revoir",
+  "es": "{n} frases por revisar"
+ },
+ "{n} siti": {
+  "en": "{n} sites",
+  "de": "{n} Websites",
+  "fr": "{n} sites",
+  "es": "{n} sitios"
+ },
+ "{n} sito": {
+  "en": "{n} site",
+  "de": "{n} Website",
+  "fr": "{n} site",
+  "es": "{n} sitio"
+ },
+ "{who} ha invitato {email} come operatore del servizio.": {
+  "en": "{who} invited {email} as a service operator.",
+  "de": "{who} hat {email} als Betreiber des Dienstes eingeladen.",
+  "fr": "{who} a invité {email} en tant qu'opérateur du service.",
+  "es": "{who} ha invitado a {email} como operador del servicio."
+ },
+ "{who} ha invitato {email} come {role} come operatore del servizio.": {
+  "en": "{who} invited {email} as {role} and as a service operator.",
+  "de": "{who} hat {email} als {role} und als Betreiber des Dienstes eingeladen.",
+  "fr": "{who} a invité {email} en tant que {role} et opérateur du service.",
+  "es": "{who} ha invitado a {email} como {role} y como operador del servicio."
+ },
+ "{who} ha invitato {email} come {role}.": {
+  "en": "{who} invited {email} as {role}.",
+  "de": "{who} hat {email} als {role} eingeladen.",
+  "fr": "{who} a invité {email} en tant que {role}.",
+  "es": "{who} ha invitado a {email} como {role}."
+ },
+ "{who} ha invitato {email}.": {
+  "en": "{who} invited {email}.",
+  "de": "{who} hat {email} eingeladen.",
+  "fr": "{who} a invité {email}.",
+  "es": "{who} ha invitado a {email}."
+ },
+ "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": {
+  "en": "This is the account of whoever runs the service: it creates newsrooms, sets their plans and limits, and invites their managers.",
+  "de": "Das ist das Konto des Dienstbetreibers: Es legt Redaktionen an, bestimmt deren Tarife und Limits und lädt ihre Verantwortlichen ein.",
+  "fr": "C'est le compte de la personne qui gère le service : il crée les rédactions, définit leurs offres et limites, et invite leurs responsables.",
+  "es": "Es la cuenta de quien gestiona el servicio: crea las redacciones, define sus planes y límites e invita a sus responsables."
+ }
+}

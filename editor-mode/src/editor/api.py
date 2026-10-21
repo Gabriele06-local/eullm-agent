@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, console, drafts, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
+from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -104,6 +104,23 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
         return Response(_STATIC[name][1], media_type=_STATIC[name][0],
                         headers={"Cache-Control": "public, max-age=86400"})
     pages = Jinja2Templates(env=_BRIEF_TEMPLATES)
+    i18n.install(pages.env)
+
+    @app.middleware("http")
+    async def language(request: Request, call_next):
+        # Every page, notice and error of this request in the chosen language.
+        token = i18n.use(i18n.pick(request.cookies.get(i18n.COOKIE), request.headers.get("accept-language")))
+        try:
+            return await call_next(request)
+        finally:
+            i18n._current.reset(token)
+
+    @app.get("/lang", include_in_schema=False)
+    def set_language(l: str, back: str = "/"):
+        resp = RedirectResponse(ui.safe_path(back), status_code=303)
+        if l in i18n.LANGS:
+            resp.set_cookie(i18n.COOKIE, l, httponly=True, samesite="lax", max_age=365 * 86400)
+        return resp
 
     def caller(request: Request) -> auth.Caller:
         header = request.headers.get("authorization", "")
@@ -140,6 +157,9 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
 
     def run_draft(tenant: str, proposal_id: int):
         queue.enqueue(db, tenant, "draft", f"proposal {proposal_id}", {"proposal_id": proposal_id})
+
+    def run_proposals(tenant: str, site_id: int, since: datetime):
+        queue.enqueue(db, tenant, "proposals", f"site {site_id}", {"site_id": site_id, "since": since.isoformat()})
 
     def run_publication(tenant: str, pub_id: int):
         queue.enqueue(db, tenant, "publish", f"publication {pub_id}", {"publication_id": pub_id})
@@ -407,6 +427,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     ui.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, need=need, core=core, mail=mail,
                                      public_url=public_url,
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
+                                     run_proposals=run_proposals,
                                      run_publication=run_publication))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))
