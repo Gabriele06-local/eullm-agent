@@ -61,9 +61,9 @@
         <td class="num">{% if comp.get('relevance') is not none %}{{ comp.get('relevance')|num }}{% else %}–{% endif %}</td>
         <td>{{ when(r.last_item_at, 'day') }}</td>
         <td>
-          {% set st = {'active': ('green', 'Attiva'), 'candidate': ('blue', 'Candidata'), 'suspended': ('red', 'Sospesa'), 'rejected': ('', 'Scartata')}.get(r.status, ('', r.status)) %}
+          {% set st = {'active': ('green', 'Attiva'), 'candidate': ('blue', 'Candidata'), 'suspended': ('teal', 'Sospesa'), 'rejected': ('', 'Scartata')}.get(r.status, ('', r.status)) %}
           <span class="chip {{ st[0] }}">{{ st[1] }}</span>
-          {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason }}</small>
+          {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason|problem }}</small>
           {% elif r.status == 'rejected' and comp.get('relevance') is not none and comp.get('relevance') < 0.1 %}<small>parla poco dei temi del sito</small>
           {% elif r.status == 'rejected' %}<small>punteggio sotto 0,35</small>{% endif %}
           {% if comp %}<details><summary class="hint">Perché questo punteggio</summary>

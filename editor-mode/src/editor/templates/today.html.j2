@@ -66,13 +66,8 @@
     <div class="item">
       <span class="chip amber">Profilo</span>
       <div class="what">
-        {% if p.origin == 'reanalysis' %}
-        <strong>La linea di {{ p.domain }} si sta spostando</strong>
-        <span>La rianalisi propone la versione {{ p.version }} del profilo{% if p.changes %} con {{ p.changes|length }} cambiamenti{% endif %}.</span>
-        {% else %}
-        <strong>Profilo editoriale di {{ p.domain }} da approvare</strong>
-        <span>Versione {{ p.version }} · {{ {'analysis': 'prima analisi', 'manual': 'modifica manuale'}.get(p.origin, p.origin) }}</span>
-        {% endif %}
+        <strong>{{ p.domain }}</strong>
+        <span>v{{ p.version }} da approvare · {% if lines.get(p.site_id) %}in uso la v{{ lines.get(p.site_id) }}{% if p.changes %}, {{ p.changes|length|plural('cambiamento', 'cambiamenti') }}{% endif %}{% else %}nessuna versione in uso{% endif %}</span>
       </div>
       <a class="btn pri" href="/switch?site={{ p.site_id }}&amp;back=/site">Vedi il profilo</a>
     </div>
@@ -112,10 +107,10 @@
 
     {% for x in stopped %}
     <div class="item">
-      <span class="chip red">Fonte</span>
+      <span class="chip teal">Fonte</span>
       <div class="what">
         <strong>{{ x.name }} sospesa</strong>
-        <span>{{ x.status_reason or 'Sospesa dalla manutenzione automatica.' }}</span>
+        <span>{{ x.status_reason|problem if x.status_reason else 'Sospesa dalla manutenzione automatica.' }}</span>
       </div>
       <a class="btn" href="/sources?status=suspended">Apri il registro</a>
     </div>
@@ -125,6 +120,21 @@
   </section>
 
   <div class="col-side">
+    <section class="card pad" aria-labelledby="h-sites">
+      <h2 id="h-sites">Siti</h2>
+      {% for x in site_lines %}
+      <div class="row" style="justify-content: space-between; flex-wrap: nowrap; gap: 8px;">
+        <a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px; min-width: 0; overflow-wrap: anywhere;">{{ x.domain }}</a>
+        <span class="row" style="gap: 6px; flex-wrap: nowrap;">
+          {% if x.approved %}<span class="chip">v{{ x.approved }} in uso</span>{% endif %}
+          {% if x.pending %}<span class="chip amber">v{{ x.pending }} da approvare</span>{% elif not x.approved %}<span class="chip">in analisi</span>{% endif %}
+        </span>
+      </div>
+      {% else %}
+      <p class="hint">Nessun sito: aggiungilo da Sito e profilo.</p>
+      {% endfor %}
+    </section>
+
     <section class="card pad" aria-labelledby="h-opp">
       <div class="row" style="justify-content: space-between;"><h2 id="h-opp">Opportunità del giorno</h2><a href="/trends" style="font-size: 14px;">Tutti i trend</a></div>
       <div class="legend"><span><i></i>Opportunità per il sito</span><span><i class="hype"></i>Hype nel settore</span></div>

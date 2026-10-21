@@ -94,7 +94,7 @@ def test_discovery_and_maintenance(db, tenant):
         # Model suggestions: one invented domain without any feed.
         router.get(url__regex=r"https://(wi-fi\.org|starlink\.com|mikrotik\.com|invented-news\.example)/.*").mock(
             return_value=httpx.Response(404))
-        router.get("https://hn.algolia.com/api/v1/search").mock(return_value=httpx.Response(200, content=fixture("hn.json")))
+        router.get("https://hn.algolia.com/api/v1/search_by_date").mock(return_value=httpx.Response(200, content=fixture("hn.json")))
         router.get("https://api.github.com/search/repositories").mock(return_value=httpx.Response(200, content=fixture("github.json")))
         router.get("https://export.arxiv.org/api/query").mock(return_value=httpx.Response(200, content=fixture("arxiv.xml")))
         router.post("http://core.test/v1/llm/chat").mock(return_value=httpx.Response(200, json={
@@ -154,3 +154,20 @@ def test_stale_source_is_suspended(db, tenant):
         s.execute(update(m.sources).where(m.sources.c.id == sid).values(last_item_at=datetime.now(UTC) - timedelta(days=90)))
     rep = src.maintain(db, tenant)
     assert rep.suspended == [(sid, "nothing new for more than 45 days")]
+
+
+def test_old_hacker_news_searches_follow_what_is_new(db, tenant):
+    from editor import repo
+    from editor.sources import HN_RECENT, HN_SEARCH, maintain
+    from sqlalchemy import select, update
+    from editor import models as m
+    with db.tenant(tenant) as s:
+        repo.ensure_tenant(s, tenant, tenant)
+        sid = repo.upsert_source(s, tenant, kind="hackernews", name="Hacker News: eu ai", url=HN_SEARCH,
+                                 config={"query": "eu ai"})
+        s.execute(update(m.sources).where(m.sources.c.id == sid).values(
+            origin="api_query", status="suspended", status_reason="nothing new for more than 45 days"))
+    maintain(db, tenant)
+    with db.tenant(tenant) as s:
+        r = s.execute(select(m.sources).where(m.sources.c.id == sid)).one()
+    assert r.url == HN_RECENT and r.status == "active"

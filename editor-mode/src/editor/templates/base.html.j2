@@ -44,6 +44,7 @@
     <span>{{ caller.name }} · {{ {'owner': 'owner', 'editor': 'editor', 'viewer': 'lettura'}[caller.role] }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">Esci</button></form>
   </div>
+  <small class="hint" style="font-size: 11px; padding: 0 10px; overflow-wrap: anywhere;">{% if version %}EuLLM Editor {{ version }}{% endif %}{% if model %}<br>Modello: {{ model }}{% endif %}</small>
 </nav>
 <main class="main">
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

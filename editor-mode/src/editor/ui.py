@@ -9,6 +9,8 @@ role the action needs. Forms answer with a redirect and a one-shot notice.
 from __future__ import annotations
 
 import json
+import re
+from importlib import metadata
 from datetime import UTC, datetime, time, timedelta
 from urllib.parse import quote, unquote
 from zoneinfo import ZoneInfo
@@ -64,11 +66,45 @@ def safe_path(value: str | None, default: str = "/") -> str:
     return default
 
 
+try:
+    VERSION = metadata.version("eullm-editor-mode")
+except metadata.PackageNotFoundError:
+    VERSION = None
+
+
 def done(path: str, notice: str | None = None) -> RedirectResponse:
     resp = RedirectResponse(path, status_code=303)
     if notice:
         resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
     return resp
+
+
+PROBLEMS = [
+    (r"no RSS or Atom feed found", "Il sito non ha un feed RSS o Atom: gli articoli sono stati trovati da sitemap e pagine."),
+    (r"no usable sitemap", "Nessuna sitemap utilizzabile: gli articoli sono stati trovati seguendo i link."),
+    (r"page budget reached", "Raggiunto il limite di pagine da leggere per un'analisi."),
+    (r"no publication dates found", "Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare."),
+    (r"language not determined", "Lingua non determinata."),
+    (r"home page unreachable", "La home page non risponde."),
+    (r"(\d+) articles read \(at least (\d+) wanted\)", r"Letti \1 articoli (ne servono almeno \2 per un'analisi completa)."),
+    (r"only (\d+) articles readable and no categories.*", r"Solo \1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito."),
+    (r"model analysis failed \((.*)\): .*", r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare."),
+    (r"model analysis not run.*", "Analisi del modello non eseguita: settore, pubblico e stile restano da determinare."),
+    (r"not enough material.*", "Materiale insufficiente: settore, pubblico e stile restano da determinare."),
+    (r"nothing new for more than (\d+) days", r"Nessuna notizia nuova da più di \1 giorni: ritorna in valutazione tra due settimane."),
+    (r"(\d+) failed fetches in a row", r"\1 letture fallite di fila: ritorna in valutazione tra due settimane."),
+    (r"off topic \(relevance ([\d.]+) on the last (\d+) items\)",
+     r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane."),
+]
+
+
+def problem(text) -> str:
+    """The crawler's and profile's notes, in the dashboard's language."""
+    text = str(text)
+    for pattern, it in PROBLEMS:
+        if re.fullmatch(pattern, text, flags=re.S):
+            return re.sub(pattern, it, text, flags=re.S)
+    return text
 
 
 def number(value, digits: int = 2) -> str:
@@ -100,6 +136,8 @@ def register(app, ctx) -> None:
     admin = getattr(ctx, "admin", None) or db
     env = pages.env
     env.filters["num"] = number
+    env.globals["version"] = VERSION
+    env.filters["problem"] = problem
     env.filters["s100"] = score100
     env.filters["plural"] = plural
 
@@ -145,6 +183,7 @@ def register(app, ctx) -> None:
         notice = request.cookies.get(NOTICE_COOKIE)
         rooms = [x for x in accounts.memberships(admin, c.user_id) if x.active] if c.user_id else []
         resp = pages.TemplateResponse(request, name, {
+            "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": DAYS, "months": MONTHS, **data,
         }, status_code=status_code)
@@ -350,6 +389,12 @@ def register(app, ctx) -> None:
                 select(p.c.site_id, p.c.version, p.c.origin, p.c.changes, m.sites.c.domain)
                 .join(m.sites, m.sites.c.id == p.c.site_id).where(p.c.status == "draft")
                 .order_by(p.c.created_at.desc())).all()
+            lines = dict(s.execute(select(p.c.site_id, p.c.version).where(p.c.status == "approved")).all())
+            pending = {}
+            for r in profile_drafts:
+                pending.setdefault(r.site_id, r.version)
+            site_lines = [{"id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id)}
+                          for x in sites]
             proposed = proposal_rows(s, sid, ("proposed",), limit=6)
             pending_pubs = s.execute(
                 select(m.publications.c.id, m.publications.c.mode, m.publications.c.requested_by,
@@ -374,7 +419,8 @@ def register(app, ctx) -> None:
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs) + len(stopped)
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site),
-                          profile_drafts=profile_drafts, proposed=proposed, pending_pubs=pending_pubs,
+                          profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
+                          proposed=proposed, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
@@ -405,7 +451,7 @@ def register(app, ctx) -> None:
                 rows.append({"name": n, "old": old, "new": new or 0.0, "examples": examples,
                              "keywords": now_by.get(n, {}).get("keywords", [])[:6],
                              "delta": None if old is None or new is None else round((new - old) * 100),
-                             "fresh": bool(draft and approved and old is None)})
+                             "fresh": bool(draft and approved and old is None), "current": n in now_by})
         evidence = []
         if shown is not None:
             for key in ("sector", "audience"):
@@ -422,6 +468,7 @@ def register(app, ctx) -> None:
         return render(request, "site.html.j2", c, s, "site", status_code=status_code, _sites=(sites, site),
                       profiles=profiles, approved=approved, draft=draft, shown=shown, analysis=analysis,
                       rows=rows, evidence=ev, editing=editing, error=error,
+                      comparison=prof.compare(approved.body, draft.body) if approved and draft else [],
                       jobs=[j for j in jobs.recent(s, 10) if j["status"] != "done"][:5],
                       body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "")
 
@@ -465,6 +512,34 @@ def register(app, ctx) -> None:
         if not n:
             raise HTTPException(409, "not a draft version")
         return done("/site", f"Proposta v{version} scartata: la linea resta quella approvata.")
+
+    @app.post("/ui/sites/{site_id}/topics/remove")
+    def ui_remove_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            version = prof.remove_topic(s, c.tenant_id, site_id, name, c.name)
+        if version is None:
+            raise HTTPException(404, "topic not found")
+        return done("/site", f"Tema «{name}» tolto (v{version}): non viene più seguito, anche nelle prossime analisi.")
+
+    @app.post("/ui/sites/{site_id}/topics/restore")
+    def ui_restore_topic(site_id: int, name: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            version = prof.restore_topic(s, c.tenant_id, site_id, name, c.name)
+        if version is None:
+            raise HTTPException(404, "topic not found")
+        return done("/site", f"Tema «{name}» rimesso (v{version}).")
+
+    @app.post("/ui/sites/{site_id}/versions/{version}/delete")
+    def ui_delete_version(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            why = prof.delete_version(s, site_id, version)
+        if why == "not found":
+            raise HTTPException(404, "version not found")
+        if why == "approved":
+            return done("/site", f"La v{version} è la linea in uso: approvane un'altra prima di eliminarla.")
+        if why == "used":
+            return done("/site", f"La v{version} ha già prodotto proposte e punteggi: resta nello storico.")
+        return done("/site", f"Versione v{version} eliminata.")
 
     @app.post("/ui/sites/{site_id}/profile")
     def ui_edit_profile(request: Request, site_id: int, body: str = Form(...),

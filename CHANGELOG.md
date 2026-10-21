@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.7.5
+
+### Added
+
+- Topics can be taken out of a site's line ("Togli il tema"): they are no
+  longer followed and later analyses do not propose them again. "Rimetti"
+  brings one back. On a draft the change is made in place; on an approved
+  profile it becomes a new approved version.
+- Profile versions that are not in use can be deleted from the Versions
+  table. The approved one cannot, nor one that already produced proposals
+  and scores.
+
+### Fixed
+
+- A site without an RSS or Atom feed, or without a sitemap, is no longer
+  called partial for that alone: the articles are found anyway. These are
+  shown as notes.
+- The reasons of an incomplete analysis, and why a source was suspended,
+  are shown in Italian.
+- Hacker News searches found by source discovery followed the most popular
+  stories of all time, so they looked silent and were suspended after 45
+  days. They now follow the newest stories; the ones already suspended for
+  this are moved and reactivated by the next source maintenance.
+
+### Changed
+
+- A proposed profile says what changes against the approved one, row by
+  row: sector, audience, tone, languages, each topic (new, leaving, share
+  before and after), and why topics found on every page leave.
+- Home: a Sites card lists every domain with the version in use, and the
+  one to approve highlighted only when there is one. Profiles to approve
+  are listed by domain and version.
+- The sidebar shows the Editor Mode version and the model last used, in
+  small print. Editor Mode's own version now follows the release
+  (`editor-mode/pyproject.toml`, was 0.1.0).
+- Calmer colours: a suspended source is shown in teal; red is kept for
+  errors and blocking problems.
+
 ## 0.7.4
 
 ### Fixed

@@ -248,3 +248,62 @@ def test_a_better_method_proposes_a_new_profile_even_when_approved(db, tenant):
         rows = s.execute(select(m.editorial_profiles.c.status, m.editorial_profiles.c.changes)
                          .order_by(m.editorial_profiles.c.version)).all()
     assert [r.status for r in rows] == ["approved", "draft"] and rows[1].changes == [{"kind": "method"}]
+
+
+def test_owner_takes_a_topic_out_and_it_stays_out(db, tenant):
+    class C:
+        def analyse(self, domain):
+            return snapshot(fakesite.ARTICLES)
+
+    first = prof.analyse_site(db, tenant, "blog.example", C())
+    site_id = first["site_id"]
+    with db.tenant(tenant) as s:
+        body = s.execute(select(m.editorial_profiles.c.body)).scalar()
+        name = body["subtopics"][0]["name"]
+        # On a draft the change is made in place.
+        assert prof.remove_topic(s, tenant, site_id, name, "francesco") == 1
+        assert prof.approve(s, site_id, 1, "francesco")
+        body = s.execute(select(m.editorial_profiles.c.body)).scalar()
+    assert name not in [x["name"] for x in body["subtopics"]]
+    assert [x["name"] for x in body["settings"]["removed"]] == [name]
+
+    # A later analysis finds the topic again: it is not proposed back.
+    prof.analyse_site(db, tenant, "blog.example", C())
+    with db.tenant(tenant) as s:
+        bodies = s.execute(select(m.editorial_profiles.c.body).order_by(m.editorial_profiles.c.version)).scalars().all()
+        assert all(name not in [x["name"] for x in b["subtopics"]] for b in bodies)
+        # On an approved profile the owner's choice is a new approved version.
+        version = prof.restore_topic(s, tenant, site_id, name, "francesco")
+        row = s.execute(select(m.editorial_profiles).where(m.editorial_profiles.c.version == version)).one()
+    assert row.status == "approved" and name in [x["name"] for x in row.body["subtopics"]]
+    assert row.body["settings"]["removed"] == []
+
+
+def test_versions_not_in_use_can_be_deleted(db, tenant):
+    class C:
+        def analyse(self, domain):
+            return snapshot(fakesite.ARTICLES)
+
+    site_id = prof.analyse_site(db, tenant, "blog.example", C())["site_id"]
+    with db.tenant(tenant) as s:
+        assert prof.approve(s, site_id, 1, "francesco")
+        body = s.execute(select(m.editorial_profiles.c.body)).scalar()
+        prof.save_draft(s, tenant, site_id, body, "manual")
+        assert prof.delete_version(s, site_id, 1) == "approved"
+        assert prof.delete_version(s, site_id, 2) is None
+        assert prof.delete_version(s, site_id, 2) == "not found"
+        versions = s.execute(select(m.editorial_profiles.c.version)).scalars().all()
+    assert versions == [1]
+
+
+def test_compare_says_what_changes_against_what():
+    old = {"sector": {"value": None}, "subtopics": [{"name": "EuLLM", "keywords": ["eullm"], "share": 1.0},
+                                                    {"name": "RAG Enterprise", "keywords": ["rag", "enterprise"], "share": 1.0}]}
+    new = {"sector": {"value": "AI enterprise"}, "summary": "s",
+           "subtopics": [{"name": "Branding", "keywords": ["branding", "grafica"], "share": 0.28}]}
+    rows = prof.compare(old, new)
+    by = {r["what"]: r for r in rows}
+    assert by["Settore"]["before"] == "non determinato" and by["Settore"]["after"] == "AI enterprise"
+    assert by["Tema «Branding»"]["before"] == "non c'era"
+    assert by["Tema «EuLLM»"]["after"] == "esce dal profilo"
+    assert any(r.get("note") for r in rows)  # why the 100% topics leave

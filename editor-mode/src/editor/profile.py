@@ -14,6 +14,7 @@ person approves the version that drives proposals.
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 from collections import Counter
@@ -21,7 +22,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -29,7 +30,7 @@ from . import quotas, repo
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
 from .normalize import url_hash
-from .site import SiteSnapshot
+from .site import SiteSnapshot, is_note
 from .text import tokens
 
 log = logging.getLogger(__name__)
@@ -152,7 +153,7 @@ def baseline_subtopics(snap: SiteSnapshot, limit: int = 8) -> list[dict]:
 
 
 def baseline(snap: SiteSnapshot) -> dict:
-    gaps = list(snap.problems)
+    gaps = [p for p in snap.problems if not is_note(p)]
     return {
         "domain": snap.domain,
         "method": METHOD,
@@ -341,6 +342,52 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
     return changes
 
 
+def compare(old: dict, new: dict) -> list[dict]:
+    """Side by side, what a proposed version changes in the approved one:
+    rows of {what, before, after, note} for the profile page."""
+    rows = []
+
+    def value(body, key):
+        return ((body.get(key) or {}).get("value") or "").strip() or None
+
+    for key, label in (("sector", "Settore"), ("audience", "Pubblico")):
+        a, b = value(old, key), value(new, key)
+        if a != b:
+            rows.append({"what": label, "before": a or "non determinato", "after": b or "non determinato"})
+    ta, tb = (old.get("style") or {}).get("tone"), (new.get("style") or {}).get("tone")
+    if ta != tb:
+        rows.append({"what": "Tono", "before": ta or "non determinato", "after": tb or "non determinato"})
+    la = old.get("languages") or ({old["language"]: None} if old.get("language") else {})
+    lb = new.get("languages") or ({new["language"]: None} if new.get("language") else {})
+    if set(la) != set(lb):
+        rows.append({"what": "Lingue", "before": ", ".join(la) or "non determinate", "after": ", ".join(lb) or "non determinate"})
+    if bool(old.get("summary")) != bool(new.get("summary")) and new.get("summary"):
+        rows.append({"what": "Descrizione della linea", "before": "assente", "after": "scritta dal modello sulle pagine lette"})
+    old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
+    pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
+    for t in new_subs:
+        o = _match(t, old_subs)
+        if o is None:
+            rows.append({"what": f"Tema «{t['name']}»", "before": "non c'era",
+                         "after": f"nuovo, {pct(t.get('share'))} degli articoli"})
+        elif abs((t.get("share") or 0) - (o.get("share") or 0)) >= 0.05 or o["name"] != t["name"]:
+            before = pct(o.get("share")) + (f" come «{o['name']}»" if o["name"] != t["name"] else "")
+            rows.append({"what": f"Tema «{t['name']}»", "before": before, "after": pct(t.get("share"))})
+    gone = [o for o in old_subs if _match(o, new_subs) is None]
+    for o in gone:
+        rows.append({"what": f"Tema «{o['name']}»", "before": pct(o.get("share")), "after": "esce dal profilo"})
+    if gone and sum(1 for o in gone if (o.get("share") or 0) >= 0.9) >= 2:
+        rows.append({"what": "Perché quei temi escono", "before": "", "after": "",
+                     "note": "Nella versione precedente erano parole chiave presenti su quasi tutte le pagine del sito "
+                             "(per questo vicine al 100%): descrivono il sito nel suo insieme, non di cosa parlano gli "
+                             "articoli. Ora restano tra le parole chiave del sito e i temi sono misurati sugli articoli."})
+    so, sn = old.get("settings") or {}, new.get("settings") or {}
+    for key, label in (("proposals_per_day", "Proposte al giorno"), ("min_relevance", "Pertinenza minima")):
+        if key in so and key in sn and so[key] != sn[key]:
+            rows.append({"what": label, "before": str(so[key]), "after": str(sn[key])})
+    return rows
+
+
 # --- persistence ---------------------------------------------------------------
 
 
@@ -396,6 +443,93 @@ def edit(s, tenant_id: str, site_id: int, body: dict) -> int:
     return save_draft(s, tenant_id, site_id, body, "manual", based_on=current.version if current else None, changes=changes)
 
 
+def _without_removed(body: dict) -> dict:
+    """The topics the owner took out stay out, also when an analysis finds them again."""
+    removed = (body.get("settings") or {}).get("removed") or []
+    if removed:
+        body["subtopics"] = [x for x in body.get("subtopics", []) if _match(x, removed) is None]
+    return body
+
+
+def _editable(s, site_id: int):
+    p = m.editorial_profiles
+    rows = s.execute(select(p).where(p.c.site_id == site_id, p.c.status.in_(("draft", "approved")))
+                     .order_by(p.c.version.desc())).all()
+    return next((x for x in rows if x.status == "draft"), None), next((x for x in rows if x.status == "approved"), None)
+
+
+def _change_topics(s, tenant_id: str, site_id: int, by: str, change) -> int | None:
+    """Apply an owner's choice of topics to the profile on screen.
+
+    A draft waiting for approval is changed in place; an approved profile
+    becomes a new approved version, since the owner is the one deciding.
+    Returns the version changed, None when there is nothing to change."""
+    draft, approved = _editable(s, site_id)
+    target = draft or approved
+    if target is None:
+        return None
+    body = copy.deepcopy(dict(target.body))
+    body["settings"] = {**DEFAULT_SETTINGS, **(body.get("settings") or {})}
+    if not change(body):
+        return None
+    p = m.editorial_profiles
+    if draft is not None:
+        changes = drift(approved.body, body) if approved else []
+        if draft.origin == "reanalysis" and approved and not changes:
+            changes = list(draft.changes or [])
+        s.execute(update(p).where(p.c.id == draft.id).values(body=body, changes=changes))
+        return draft.version
+    pid = save_draft(s, tenant_id, site_id, body, "manual", based_on=approved.version,
+                     changes=drift(approved.body, body))
+    version = s.execute(select(p.c.version).where(p.c.id == pid)).scalar_one()
+    approve(s, site_id, version, by)
+    return version
+
+
+def remove_topic(s, tenant_id: str, site_id: int, name: str, by: str) -> int | None:
+    def change(body):
+        sub = next((x for x in body.get("subtopics", []) if x.get("name") == name), None)
+        if sub is None:
+            return False
+        body["subtopics"] = [x for x in body["subtopics"] if x is not sub]
+        kept = [r for r in body["settings"].get("removed", []) if r.get("name") != name]
+        body["settings"]["removed"] = kept + [sub]
+        return True
+    return _change_topics(s, tenant_id, site_id, by, change)
+
+
+def restore_topic(s, tenant_id: str, site_id: int, name: str, by: str) -> int | None:
+    def change(body):
+        removed = body["settings"].get("removed", [])
+        sub = next((r for r in removed if r.get("name") == name), None)
+        if sub is None:
+            return False
+        body["settings"]["removed"] = [r for r in removed if r is not sub]
+        if all(x.get("name") != name for x in body.get("subtopics", [])):
+            body["subtopics"] = sorted(body.get("subtopics", []) + [sub], key=lambda x: -(x.get("share") or 0))
+        return True
+    return _change_topics(s, tenant_id, site_id, by, change)
+
+
+def delete_version(s, site_id: int, version: int) -> str | None:
+    """Delete a version that is not the line in use. None when deleted, else why not."""
+    p = m.editorial_profiles
+    row = s.execute(select(p.c.id, p.c.status).where(p.c.site_id == site_id, p.c.version == version)).first()
+    if row is None:
+        return "not found"
+    if row.status == "approved":
+        return "approved"
+    used = s.execute(select(func.count()).select_from(m.proposals).where(m.proposals.c.profile_id == row.id)).scalar()
+    used += s.execute(select(func.count()).select_from(m.opportunity_scores)
+                      .where(m.opportunity_scores.c.profile_id == row.id)).scalar()
+    if used:
+        return "used"
+    s.execute(update(m.profile_reviews).where(m.profile_reviews.c.proposed_profile_id == row.id)
+              .values(proposed_profile_id=None))
+    s.execute(delete(p).where(p.c.id == row.id))
+    return None
+
+
 def store_snapshot(s, tenant_id: str, site_id: int, snap: SiteSnapshot) -> int:
     analysis_id = s.execute(
         insert(m.site_analyses)
@@ -429,6 +563,12 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
             repo.record_llm_usage(s, tenant_id, "site_profile", c.model, c.usage, c.cost)
         analysis_id = store_snapshot(s, tenant_id, site_id, snap)
         current = approved_profile(s, site_id)
+        draft, _ = _editable(s, site_id)
+        previous = current or draft
+        removed = ((previous.body.get("settings") or {}).get("removed") if previous else None) or []
+        if removed:
+            body["settings"] = {**body["settings"], "removed": removed}
+            body = _without_removed(body)
         result = {"site_id": site_id, "analysis_id": analysis_id, "status": snap.status, "problems": snap.problems,
                   "profile_id": None, "changes": [], "significant": False}
         if current is None:
