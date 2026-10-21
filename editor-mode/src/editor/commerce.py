@@ -332,6 +332,8 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             billing.set_tenant_customer(admin, tenant_id, spec)
         except (billing.BillingError, accounts.AccountError) as e:
             return to_account(f"Dati non salvati: {e}.", tenant_id)
+        except LookupError:
+            return to_account("Redazione non trovata.", tenant_id)
         return to_account("Dati di fatturazione salvati.", tenant_id)
 
     @app.post("/account/{tenant_id}/checkout")

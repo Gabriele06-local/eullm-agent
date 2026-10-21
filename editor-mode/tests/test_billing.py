@@ -314,3 +314,15 @@ def test_the_console_shows_customers_resellers_and_plans(db, admin):
     r = c.post("/admin/resellers", data={"name": "Agenzia Verde", "email": "verde@example.com", "discount": "15"})
     assert "edo_" in r.text and "Agenzia Verde" in r.text
     billing.save_plan(admin, "starter", {"price_month_cents": 4900, "price_year_cents": 49000, "max_drafts_month": 30})
+
+
+def test_the_billing_data_of_a_newsroom_that_does_not_exist_are_refused(db, admin):
+    c, _ = client(db)
+    accounts.create_user(Database.from_url(db.admin_url), "op@example.com", "Operatore",
+                         "password lunga", operator=True)
+    assert c.post("/login", data={"email": "op@example.com", "password": "password lunga"}).status_code == 200
+    r = c.post("/account/editor-non-esiste/customer",
+               data={"kind": "company", "name": "Rossi Media srl", "email": "amministrazione@rossi.it"},
+               follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/account")
+    assert "Redazione non trovata" in c.get("/account").text
