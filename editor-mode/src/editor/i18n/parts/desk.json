@@ -1,0 +1,560 @@
+{
+ "Attività": {
+  "en": "Activity",
+  "de": "Aktivität",
+  "fr": "Activité",
+  "es": "Actividad"
+ },
+ "si aggiorna da sola": {
+  "en": "updates by itself",
+  "de": "aktualisiert sich selbst",
+  "fr": "se met à jour toute seule",
+  "es": "se actualiza sola"
+ },
+ "ultime 24 ore": {
+  "en": "last 24 hours",
+  "de": "letzte 24 Stunden",
+  "fr": "dernières 24 heures",
+  "es": "últimas 24 horas"
+ },
+ "appena finite": {
+  "en": "just finished",
+  "de": "gerade beendet",
+  "fr": "tout juste terminées",
+  "es": "recién terminadas"
+ },
+ "Ci sono lavori in coda da più di tre minuti e nessuno sta girando: il servizio che esegue i lavori (editor-worker) sembra fermo. Sul server: docker compose ps, poi docker compose up -d.": {
+  "en": "Jobs have been queued for more than three minutes and none is running: the service that runs them (editor-worker) seems stopped. On the server: docker compose ps, then docker compose up -d.",
+  "de": "Aufträge warten seit mehr als drei Minuten und keiner läuft: Der Dienst, der sie ausführt (editor-worker), scheint angehalten. Auf dem Server: docker compose ps, dann docker compose up -d.",
+  "fr": "Des tâches attendent depuis plus de trois minutes et aucune ne tourne : le service qui les exécute (editor-worker) semble arrêté. Sur le serveur : docker compose ps, puis docker compose up -d.",
+  "es": "Hay trabajos en cola desde hace más de tres minutos y ninguno se está ejecutando: el servicio que los ejecuta (editor-worker) parece detenido. En el servidor: docker compose ps y luego docker compose up -d."
+ },
+ "In corso": {
+  "en": "Running",
+  "de": "Läuft",
+  "fr": "En cours",
+  "es": "En curso"
+ },
+ "In coda": {
+  "en": "Queued",
+  "de": "In der Warteschlange",
+  "fr": "En attente",
+  "es": "En cola"
+ },
+ "Fatto": {
+  "en": "Done",
+  "de": "Erledigt",
+  "fr": "Terminé",
+  "es": "Hecho"
+ },
+ "Non riuscito": {
+  "en": "Failed",
+  "de": "Fehlgeschlagen",
+  "fr": "Échoué",
+  "es": "Fallido"
+ },
+ "Nessun lavoro nelle ultime 24 ore. Lanciane uno qui sopra: lo vedi andare avanti qui.": {
+  "en": "No jobs in the last 24 hours. Start one above: you will see it progress here.",
+  "de": "Keine Aufträge in den letzten 24 Stunden. Starten Sie oben einen: Hier sehen Sie, wie er vorankommt.",
+  "fr": "Aucune tâche ces dernières 24 heures. Lancez-en une ci-dessus : vous la verrez avancer ici.",
+  "es": "Ningún trabajo en las últimas 24 horas. Lanza uno arriba: aquí lo ves avanzar."
+ },
+ "Il punto da cui tieni sotto controllo tutta la redazione, tutti i siti insieme. \"Attività\" mostra i lavori passo per passo e cosa hanno prodotto; la tabella dice a che punto è ogni sito e cosa aspetta; \"Da decidere\" raccoglie ciò che aspetta il tuo sì.": {
+  "en": "Where you keep the whole newsroom under control, all sites together. \"Activity\" shows the jobs step by step and what they produced; the table says where each site stands and what it is waiting for; \"To decide\" gathers what is waiting for your yes.",
+  "de": "Hier haben Sie die ganze Redaktion im Blick, alle Websites zusammen. \"Aktivität\" zeigt die Aufträge Schritt für Schritt und was sie ergeben haben; die Tabelle zeigt, wo jede Website steht und worauf sie wartet; \"Zu entscheiden\" sammelt, was auf Ihr Ja wartet.",
+  "fr": "L'endroit d'où vous gardez toute la rédaction sous contrôle, tous les sites ensemble. « Activité » montre les tâches étape par étape et ce qu'elles ont produit ; le tableau indique où en est chaque site et ce qu'il attend ; « À décider » rassemble ce qui attend votre accord.",
+  "es": "El lugar desde el que controlas toda la redacción, todos los sitios juntos. \"Actividad\" muestra los trabajos paso a paso y lo que han producido; la tabla dice en qué punto está cada sitio y qué espera; \"Por decidir\" reúne lo que espera tu sí."
+ },
+ "Ogni lavoro che lanci compare subito in Attività: in coda, poi in corso con il passo che sta facendo, poi il risultato con il link per aprirlo. Ogni ora la raccolta legge le fonti; ogni mattina all'ora del briefing arrivano le proposte.": {
+  "en": "Every job you start shows up at once in Activity: queued, then running with the step it is on, then the result with a link to open it. Every hour the collection reads the sources; every morning at briefing time the proposals arrive.",
+  "de": "Jeder Auftrag, den Sie starten, erscheint sofort unter Aktivität: wartend, dann laufend mit dem aktuellen Schritt, dann das Ergebnis mit einem Link zum Öffnen. Jede Stunde liest die Sammlung die Quellen; jeden Morgen zur Briefing-Zeit kommen die Vorschläge.",
+  "fr": "Chaque tâche que vous lancez apparaît aussitôt dans Activité : en attente, puis en cours avec l'étape en cours, puis le résultat avec un lien pour l'ouvrir. Chaque heure la collecte lit les sources ; chaque matin à l'heure du briefing arrivent les propositions.",
+  "es": "Cada trabajo que lanzas aparece enseguida en Actividad: en cola, luego en curso con el paso que está haciendo, luego el resultado con el enlace para abrirlo. Cada hora la recogida lee las fuentes; cada mañana a la hora del briefing llegan las propuestas."
+ },
+ "Che i lavori finiscano con un risultato e non restino in coda. Nella tabella guarda \"Prossimo passo\": dice cosa manca a ogni sito. Se le notizie delle 24 ore restano a zero, il sito non ha fonti attive che pubblicano.": {
+  "en": "That jobs end with a result and do not stay queued. In the table look at \"Next step\": it says what each site is missing. If the news in 24 hours stays at zero, the site has no active sources that publish.",
+  "de": "Dass Aufträge mit einem Ergebnis enden und nicht in der Warteschlange bleiben. Achten Sie in der Tabelle auf \"Nächster Schritt\": Er zeigt, was jeder Website fehlt. Bleiben die Meldungen der letzten 24 Stunden bei null, hat die Website keine aktiven Quellen, die veröffentlichen.",
+  "fr": "Que les tâches se terminent avec un résultat et ne restent pas en attente. Dans le tableau, regardez « Prochaine étape » : elle indique ce qui manque à chaque site. Si les actualités sur 24 heures restent à zéro, le site n'a pas de sources actives qui publient.",
+  "es": "Que los trabajos terminen con un resultado y no se queden en cola. En la tabla mira \"Próximo paso\": dice qué le falta a cada sitio. Si las noticias de 24 horas siguen en cero, el sitio no tiene fuentes activas que publiquen."
+ },
+ "Desk": {
+  "en": "Desk",
+  "de": "Desk",
+  "fr": "Desk",
+  "es": "Desk"
+ },
+ "Torna al Desk": {
+  "en": "Back to the Desk",
+  "de": "Zurück zum Desk",
+  "fr": "Retour au Desk",
+  "es": "Volver al Desk"
+ },
+ "\"in uso\" accanto al sito, nel Desk": {
+  "en": "\"in use\" next to the site, on the Desk",
+  "de": "\"in Verwendung\" neben der Website, im Desk",
+  "fr": "« en usage » à côté du site, dans le Desk",
+  "es": "\"en uso\" junto al sitio, en el Desk"
+ },
+ "tutti i siti": {
+  "en": "all sites",
+  "de": "alle Websites",
+  "fr": "tous les sites",
+  "es": "todos los sitios"
+ },
+ "La raccolta legge le fonti di tutti i siti insieme. Analisi, fonti e proposte si lanciano sito per sito dalla tabella qui sotto. Ogni lavoro compare in Attività e lo vedi andare avanti passo per passo.": {
+  "en": "The collection reads the sources of all sites together. Analysis, sources and proposals are started site by site from the table below. Every job shows up in Activity and you see it progress step by step.",
+  "de": "Die Sammlung liest die Quellen aller Websites zusammen. Analyse, Quellen und Vorschläge starten Sie Website für Website in der Tabelle unten. Jeder Auftrag erscheint unter Aktivität, und Sie sehen ihn Schritt für Schritt vorankommen.",
+  "fr": "La collecte lit les sources de tous les sites ensemble. Analyse, sources et propositions se lancent site par site depuis le tableau ci-dessous. Chaque tâche apparaît dans Activité et vous la voyez avancer étape par étape.",
+  "es": "La recogida lee las fuentes de todos los sitios a la vez. Análisis, fuentes y propuestas se lanzan sitio por sitio desde la tabla de abajo. Cada trabajo aparece en Actividad y lo ves avanzar paso a paso."
+ },
+ "Raccogli le notizie e il trend": {
+  "en": "Collect the news and the trend",
+  "de": "Meldungen und Trend sammeln",
+  "fr": "Collecter les actualités et la tendance",
+  "es": "Recoger las noticias y la tendencia"
+ },
+ "1 sito": {
+  "en": "1 site",
+  "de": "1 Website",
+  "fr": "1 site",
+  "es": "1 sitio"
+ },
+ "Notizie 24 ore": {
+  "en": "News in 24 hours",
+  "de": "Meldungen in 24 Stunden",
+  "fr": "Actualités sur 24 heures",
+  "es": "Noticias en 24 horas"
+ },
+ "Prossimo passo": {
+  "en": "Next step",
+  "de": "Nächster Schritt",
+  "fr": "Prochaine étape",
+  "es": "Próximo paso"
+ },
+ "Lancia": {
+  "en": "Start",
+  "de": "Starten",
+  "fr": "Lancer",
+  "es": "Lanzar"
+ },
+ "al lavoro": {
+  "en": "working",
+  "de": "in Arbeit",
+  "fr": "au travail",
+  "es": "trabajando"
+ },
+ "{n} da valutare": {
+  "en": "{n} to review",
+  "de": "{n} zu prüfen",
+  "fr": "{n} à évaluer",
+  "es": "{n} por valorar"
+ },
+ "Tutto avviato": {
+  "en": "All running",
+  "de": "Alles läuft",
+  "fr": "Tout est lancé",
+  "es": "Todo en marcha"
+ },
+ "Analizza": {
+  "en": "Analyse",
+  "de": "Analysieren",
+  "fr": "Analyser",
+  "es": "Analizar"
+ },
+ "Cerca fonti": {
+  "en": "Find sources",
+  "de": "Quellen suchen",
+  "fr": "Chercher des sources",
+  "es": "Buscar fuentes"
+ },
+ "Proponi": {
+  "en": "Propose",
+  "de": "Vorschlagen",
+  "fr": "Proposer",
+  "es": "Proponer"
+ },
+ "Raccolta delle notizie e del trend": {
+  "en": "News and trend collection",
+  "de": "Sammlung von Meldungen und Trend",
+  "fr": "Collecte des actualités et de la tendance",
+  "es": "Recogida de noticias y tendencia"
+ },
+ "Proposte di articoli": {
+  "en": "Article proposals",
+  "de": "Artikelvorschläge",
+  "fr": "Propositions d'articles",
+  "es": "Propuestas de artículos"
+ },
+ "Titoli per un trend": {
+  "en": "Titles for a trend",
+  "de": "Titel für einen Trend",
+  "fr": "Titres pour une tendance",
+  "es": "Títulos para una tendencia"
+ },
+ "Scrittura della bozza": {
+  "en": "Writing the draft",
+  "de": "Entwurf wird geschrieben",
+  "fr": "Rédaction du brouillon",
+  "es": "Redacción del borrador"
+ },
+ "Giro orario automatico": {
+  "en": "Automatic hourly round",
+  "de": "Automatische stündliche Runde",
+  "fr": "Tour horaire automatique",
+  "es": "Ronda horaria automática"
+ },
+ "{h} h {m} min": {
+  "en": "{h} h {m} min",
+  "de": "{h} Std. {m} Min.",
+  "fr": "{h} h {m} min",
+  "es": "{h} h {m} min"
+ },
+ "{n} s": {
+  "en": "{n} s",
+  "de": "{n} s",
+  "fr": "{n} s",
+  "es": "{n} s"
+ },
+ "{n} min": {
+  "en": "{n} min",
+  "de": "{n} Min.",
+  "fr": "{n} min",
+  "es": "{n} min"
+ },
+ "Bozza pronta: «{title}».": {
+  "en": "Draft ready: “{title}”.",
+  "de": "Entwurf fertig: „{title}“.",
+  "fr": "Brouillon prêt : « {title} ».",
+  "es": "Borrador listo: «{title}»."
+ },
+ "Vedi le fonti": {
+  "en": "See the sources",
+  "de": "Quellen ansehen",
+  "fr": "Voir les sources",
+  "es": "Ver las fuentes"
+ },
+ "{s} fonti lette, {n} notizie nuove, {k} temi nuovi.": {
+  "en": "{s} sources read, {n} new news items, {k} new topics.",
+  "de": "{s} Quellen gelesen, {n} neue Meldungen, {k} neue Themen.",
+  "fr": "{s} sources lues, {n} nouvelles actualités, {k} nouveaux sujets.",
+  "es": "{s} fuentes leídas, {n} noticias nuevas, {k} temas nuevos."
+ },
+ "Vedi i trend": {
+  "en": "See the trends",
+  "de": "Trends ansehen",
+  "fr": "Voir les tendances",
+  "es": "Ver las tendencias"
+ },
+ "Leggi la bozza": {
+  "en": "Read the draft",
+  "de": "Entwurf lesen",
+  "fr": "Lire le brouillon",
+  "es": "Leer el borrador"
+ },
+ "Pubblicata.": {
+  "en": "Published.",
+  "de": "Veröffentlicht.",
+  "fr": "Publiée.",
+  "es": "Publicada."
+ },
+ "In coda da {d}": {
+  "en": "Queued for {d}",
+  "de": "Wartet seit {d}",
+  "fr": "En attente depuis {d}",
+  "es": "En cola desde hace {d}"
+ },
+ "Vedi i dettagli": {
+  "en": "See the details",
+  "de": "Details ansehen",
+  "fr": "Voir les détails",
+  "es": "Ver los detalles"
+ },
+ "Il sito è cambiato: nuova versione del profilo da approvare ({n} differenze).": {
+  "en": "The site has changed: a new profile version to approve ({n} differences).",
+  "de": "Die Website hat sich geändert: neue Profilversion zur Freigabe ({n} Unterschiede).",
+  "fr": "Le site a changé : nouvelle version du profil à approuver ({n} différences).",
+  "es": "El sitio ha cambiado: nueva versión del perfil por aprobar ({n} diferencias)."
+ },
+ "Le fonti si cercano dopo l'approvazione del profilo.": {
+  "en": "Sources are searched for once the profile is approved.",
+  "de": "Quellen werden nach der Freigabe des Profils gesucht.",
+  "fr": "Les sources sont cherchées après l'approbation du profil.",
+  "es": "Las fuentes se buscan después de aprobar el perfil."
+ },
+ "{n} fonti provate: {a} attivate, {c} da valutare, {x} scartate.": {
+  "en": "{n} sources tried: {a} activated, {c} to review, {x} discarded.",
+  "de": "{n} Quellen geprüft: {a} aktiviert, {c} zu prüfen, {x} verworfen.",
+  "fr": "{n} sources essayées : {a} activées, {c} à évaluer, {x} écartées.",
+  "es": "{n} fuentes probadas: {a} activadas, {c} por valorar, {x} descartadas."
+ },
+ "{n} fonti non hanno risposto: riprovano al prossimo giro.": {
+  "en": "{n} sources did not answer: they will be tried again next round.",
+  "de": "{n} Quellen haben nicht geantwortet: Sie werden in der nächsten Runde erneut versucht.",
+  "fr": "{n} sources n'ont pas répondu : nouvel essai au prochain tour.",
+  "es": "{n} fuentes no respondieron: se reintentan en la próxima ronda."
+ },
+ "Decidi": {
+  "en": "Decide",
+  "de": "Entscheiden",
+  "fr": "Décider",
+  "es": "Decide"
+ },
+ "Nessuna proposta nuova: nessun tema ha ancora due notizie di fonti diverse, o una notizia forte di una fonte affidabile. Prova dopo una raccolta.": {
+  "en": "No new proposals: no topic yet has two news items from different sources, or one strong item from a reliable source. Try again after a collection.",
+  "de": "Keine neuen Vorschläge: Noch kein Thema hat zwei Meldungen aus verschiedenen Quellen oder eine starke Meldung aus einer verlässlichen Quelle. Versuchen Sie es nach einer Sammlung erneut.",
+  "fr": "Aucune nouvelle proposition : aucun sujet n'a encore deux actualités de sources différentes, ou une actualité forte d'une source fiable. Réessayez après une collecte.",
+  "es": "Ninguna propuesta nueva: ningún tema tiene aún dos noticias de fuentes distintas, o una noticia fuerte de una fuente fiable. Prueba después de una recogida."
+ },
+ "Alcuni controlli non sono passati: rileggila con attenzione.": {
+  "en": "Some checks did not pass: read it carefully.",
+  "de": "Einige Prüfungen sind nicht bestanden: Lesen Sie ihn sorgfältig.",
+  "fr": "Certains contrôles n'ont pas réussi : relisez-le attentivement.",
+  "es": "Algunas comprobaciones no han pasado: reléelo con atención."
+ },
+ "Segnalata subito a Bing con IndexNow.": {
+  "en": "Reported to Bing at once with IndexNow.",
+  "de": "Sofort per IndexNow an Bing gemeldet.",
+  "fr": "Signalée aussitôt à Bing avec IndexNow.",
+  "es": "Notificada al momento a Bing con IndexNow."
+ },
+ "In corso da {d}": {
+  "en": "Running for {d}",
+  "de": "Läuft seit {d}",
+  "fr": "En cours depuis {d}",
+  "es": "En curso desde hace {d}"
+ },
+ "Il sito non si è potuto leggere.": {
+  "en": "The site could not be read.",
+  "de": "Die Website konnte nicht gelesen werden.",
+  "fr": "Le site n'a pas pu être lu.",
+  "es": "No se ha podido leer el sitio."
+ },
+ "Profilo pronto da approvare.": {
+  "en": "Profile ready to approve.",
+  "de": "Profil bereit zur Freigabe.",
+  "fr": "Profil prêt à approuver.",
+  "es": "Perfil listo para aprobar."
+ },
+ "Nessun cambiamento: la linea del sito è la stessa del profilo in uso.": {
+  "en": "No change: the site's line is the same as the profile in use.",
+  "de": "Keine Änderung: Die Linie der Website entspricht dem verwendeten Profil.",
+  "fr": "Aucun changement : la ligne du site est la même que celle du profil en usage.",
+  "es": "Sin cambios: la línea del sitio es la misma del perfil en uso."
+ },
+ "Fonti: {n} provate, {a} attivate, {c} da valutare.": {
+  "en": "Sources: {n} tried, {a} activated, {c} to review.",
+  "de": "Quellen: {n} geprüft, {a} aktiviert, {c} zu prüfen.",
+  "fr": "Sources : {n} essayées, {a} activées, {c} à évaluer.",
+  "es": "Fuentes: {n} probadas, {a} activadas, {c} por valorar."
+ },
+ "Prima approva il profilo: le fonti si cercano a partire dai suoi temi.": {
+  "en": "Approve the profile first: sources are searched for from its topics.",
+  "de": "Geben Sie zuerst das Profil frei: Quellen werden anhand seiner Themen gesucht.",
+  "fr": "Approuvez d'abord le profil : les sources sont cherchées à partir de ses sujets.",
+  "es": "Aprueba primero el perfil: las fuentes se buscan a partir de sus temas."
+ },
+ "Nessuna fonte nuova da provare: quelle trovate sono già nell'elenco.": {
+  "en": "No new sources to try: those found are already in the list.",
+  "de": "Keine neuen Quellen zu prüfen: Die gefundenen stehen bereits in der Liste.",
+  "fr": "Aucune nouvelle source à essayer : celles trouvées sont déjà dans la liste.",
+  "es": "Ninguna fuente nueva que probar: las encontradas ya están en la lista."
+ },
+ "{n} proposte nuove da decidere.": {
+  "en": "{n} new proposals to decide on.",
+  "de": "{n} neue Vorschläge zu entscheiden.",
+  "fr": "{n} nouvelles propositions à décider.",
+  "es": "{n} propuestas nuevas por decidir."
+ },
+ "Segnalazione IndexNow non riuscita: la pagina resta pubblicata.": {
+  "en": "IndexNow report failed: the page stays published.",
+  "de": "IndexNow-Meldung fehlgeschlagen: Die Seite bleibt veröffentlicht.",
+  "fr": "Signalement IndexNow échoué : la page reste publiée.",
+  "es": "La notificación IndexNow ha fallado: la página sigue publicada."
+ },
+ "Finito alle {time}, in {d}": {
+  "en": "Finished at {time}, in {d}",
+  "de": "Beendet um {time}, in {d}",
+  "fr": "Terminé à {time}, en {d}",
+  "es": "Terminado a las {time}, en {d}"
+ },
+ "Non riuscito alle {time}": {
+  "en": "Failed at {time}",
+  "de": "Fehlgeschlagen um {time}",
+  "fr": "Échoué à {time}",
+  "es": "Fallido a las {time}"
+ },
+ "Era a questo passo: {step}": {
+  "en": "It was at this step: {step}",
+  "de": "Es war bei diesem Schritt: {step}",
+  "fr": "Elle en était à cette étape : {step}",
+  "es": "Estaba en este paso: {step}"
+ },
+ "Lettura degli articoli di {n} notizie collegate": {
+  "en": "Reading the articles of {n} related news items",
+  "de": "Artikel von {n} verwandten Meldungen werden gelesen",
+  "fr": "Lecture des articles de {n} actualités liées",
+  "es": "Lectura de los artículos de {n} noticias relacionadas"
+ },
+ "Il modello scrive la bozza": {
+  "en": "The model is writing the draft",
+  "de": "Das Modell schreibt den Entwurf",
+  "fr": "Le modèle rédige le brouillon",
+  "es": "El modelo escribe el borrador"
+ },
+ "Il modello corregge la bozza: frasi senza fonte o numeri che le fonti non riportano": {
+  "en": "The model is fixing the draft: sentences without a source or numbers the sources do not give",
+  "de": "Das Modell korrigiert den Entwurf: Sätze ohne Quelle oder Zahlen, die die Quellen nicht nennen",
+  "fr": "Le modèle corrige le brouillon : phrases sans source ou chiffres que les sources ne donnent pas",
+  "es": "El modelo corrige el borrador: frases sin fuente o cifras que las fuentes no dan"
+ },
+ "Lettura delle fonti: {n} di {total} ({name})": {
+  "en": "Reading the sources: {n} of {total} ({name})",
+  "de": "Quellen werden gelesen: {n} von {total} ({name})",
+  "fr": "Lecture des sources : {n} sur {total} ({name})",
+  "es": "Lectura de las fuentes: {n} de {total} ({name})"
+ },
+ "Il modello ricava settore, temi, pubblico e tono da {n} articoli letti": {
+  "en": "The model works out sector, topics, audience and tone from {n} articles read",
+  "de": "Das Modell leitet aus {n} gelesenen Artikeln Branche, Themen, Publikum und Ton ab",
+  "fr": "Le modèle déduit secteur, sujets, public et ton de {n} articles lus",
+  "es": "El modelo deduce sector, temas, público y tono de {n} artículos leídos"
+ },
+ "Trend del momento": {
+  "en": "Trend of the moment",
+  "de": "Trend des Moments",
+  "fr": "Tendance du moment",
+  "es": "Tendencia del momento"
+ },
+ "Raggruppo le notizie in temi": {
+  "en": "Grouping the news into topics",
+  "de": "Meldungen werden zu Themen gruppiert",
+  "fr": "Regroupement des actualités en sujets",
+  "es": "Agrupando las noticias en temas"
+ },
+ "Calcolo dell'Hype dei temi": {
+  "en": "Computing the Hype of the topics",
+  "de": "Hype der Themen wird berechnet",
+  "fr": "Calcul du Hype des sujets",
+  "es": "Calculando el Hype de los temas"
+ },
+ "Opportunità dei temi per {domain}": {
+  "en": "Opportunity of the topics for {domain}",
+  "de": "Opportunity der Themen für {domain}",
+  "fr": "Opportunité des sujets pour {domain}",
+  "es": "Oportunidad de los temas para {domain}"
+ },
+ "Lettura della home page, dei feed e della sitemap di {domain}": {
+  "en": "Reading the home page, feeds and sitemap of {domain}",
+  "de": "Startseite, Feeds und Sitemap von {domain} werden gelesen",
+  "fr": "Lecture de la page d'accueil, des flux et du sitemap de {domain}",
+  "es": "Lectura de la página de inicio, los feeds y el sitemap de {domain}"
+ },
+ "Lettura degli articoli del sito: {n} di {total}": {
+  "en": "Reading the site's articles: {n} of {total}",
+  "de": "Artikel der Website werden gelesen: {n} von {total}",
+  "fr": "Lecture des articles du site : {n} sur {total}",
+  "es": "Lectura de los artículos del sitio: {n} de {total}"
+ },
+ "Il modello suggerisce dove cercare le fonti per {domain}": {
+  "en": "The model suggests where to look for sources for {domain}",
+  "de": "Das Modell schlägt vor, wo Quellen für {domain} zu suchen sind",
+  "fr": "Le modèle suggère où chercher des sources pour {domain}",
+  "es": "El modelo sugiere dónde buscar fuentes para {domain}"
+ },
+ "Prova delle fonti candidate: {n} di {total} ({name})": {
+  "en": "Trying candidate sources: {n} of {total} ({name})",
+  "de": "Kandidaten-Quellen werden geprüft: {n} von {total} ({name})",
+  "fr": "Essai des sources candidates : {n} sur {total} ({name})",
+  "es": "Probando fuentes candidatas: {n} de {total} ({name})"
+ },
+ "Analisi di {domain} partita: la segui passo per passo nel riquadro Attività.": {
+  "en": "Analysis of {domain} started: follow it step by step in the Activity box.",
+  "de": "Analyse von {domain} gestartet: Verfolgen Sie sie Schritt für Schritt im Kasten Aktivität.",
+  "fr": "Analyse de {domain} lancée : suivez-la étape par étape dans l'encadré Activité.",
+  "es": "Análisis de {domain} iniciado: síguelo paso a paso en el recuadro Actividad."
+ },
+ "Ricerca delle fonti partita: la segui nel riquadro Attività. Le trovate entrano come candidate.": {
+  "en": "Source search started: follow it in the Activity box. Those found come in as candidates.",
+  "de": "Quellensuche gestartet: Verfolgen Sie sie im Kasten Aktivität. Gefundene Quellen kommen als Kandidaten hinzu.",
+  "fr": "Recherche de sources lancée : suivez-la dans l'encadré Activité. Les sources trouvées arrivent comme candidates.",
+  "es": "Búsqueda de fuentes iniciada: síguela en el recuadro Actividad. Las encontradas entran como candidatas."
+ },
+ "Proposte per {domain} in preparazione: le segui nel riquadro Attività.": {
+  "en": "Proposals for {domain} being prepared: follow them in the Activity box.",
+  "de": "Vorschläge für {domain} in Vorbereitung: Verfolgen Sie sie im Kasten Aktivität.",
+  "fr": "Propositions pour {domain} en préparation : suivez-les dans l'encadré Activité.",
+  "es": "Propuestas para {domain} en preparación: síguelas en el recuadro Actividad."
+ },
+ "Raccolta partita: la segui passo per passo nel riquadro Attività.": {
+  "en": "Collection started: follow it step by step in the Activity box.",
+  "de": "Sammlung gestartet: Verfolgen Sie sie Schritt für Schritt im Kasten Aktivität.",
+  "fr": "Collecte lancée : suivez-la étape par étape dans l'encadré Activité.",
+  "es": "Recogida iniciada: síguela paso a paso en el recuadro Actividad."
+ },
+ "Parte da sola ogni ora dalle fonti attive, oppure subito con \"Raccogli le notizie\".": {
+  "en": "Starts by itself every hour from the active sources, or at once with \"Collect the news\".",
+  "de": "Startet jede Stunde von selbst aus den aktiven Quellen oder sofort mit \"Meldungen sammeln\".",
+  "fr": "Démarre toute seule chaque heure à partir des sources actives, ou tout de suite avec « Collecter les actualités ».",
+  "es": "Arranca sola cada hora desde las fuentes activas, o al momento con \"Recoger las noticias\"."
+ },
+ "Proposta accettata: la bozza è in scrittura, la segui nel riquadro Attività.": {
+  "en": "Proposal accepted: the draft is being written, follow it in the Activity box.",
+  "de": "Vorschlag angenommen: Der Entwurf wird geschrieben, verfolgen Sie ihn im Kasten Aktivität.",
+  "fr": "Proposition acceptée : le brouillon est en rédaction, suivez-le dans l'encadré Activité.",
+  "es": "Propuesta aceptada: el borrador se está escribiendo, síguelo en el recuadro Actividad."
+ },
+ "Scelgo i temi migliori e scrivo le proposte": {
+  "en": "Choosing the best topics and writing the proposals",
+  "de": "Die besten Themen werden ausgewählt und die Vorschläge geschrieben",
+  "fr": "Choix des meilleurs sujets et rédaction des propositions",
+  "es": "Eligiendo los mejores temas y escribiendo las propuestas"
+ },
+ "Il modello scrive i titoli": {
+  "en": "The model is writing the titles",
+  "de": "Das Modell schreibt die Titel",
+  "fr": "Le modèle rédige les titres",
+  "es": "El modelo escribe los títulos"
+ },
+ "Ricerca delle fonti per {domain}": {
+  "en": "Searching for sources for {domain}",
+  "de": "Quellensuche für {domain}",
+  "fr": "Recherche de sources pour {domain}",
+  "es": "Búsqueda de fuentes para {domain}"
+ },
+ "Il tema più vicino è «{label}»: opportunità {o}/100 (ne serve {min}), {n} notizie da {k} fonti.": {
+  "en": "The closest topic is “{label}”: opportunity {o}/100 ({min} needed), {n} news items from {k} sources.",
+  "de": "Das nächstliegende Thema ist „{label}“: Opportunity {o}/100 ({min} nötig), {n} Meldungen aus {k} Quellen.",
+  "fr": "Le sujet le plus proche est « {label} » : opportunité {o}/100 (il en faut {min}), {n} actualités de {k} sources.",
+  "es": "El tema más cercano es «{label}»: oportunidad {o}/100 (hace falta {min}), {n} noticias de {k} fuentes."
+ },
+ "Non ci sono ancora temi con un'opportunità calcolata per questo sito: lancia la raccolta.": {
+  "en": "There are no topics with a computed opportunity for this site yet: start the collection.",
+  "de": "Für diese Website gibt es noch keine Themen mit berechneter Opportunity: Starten Sie die Sammlung.",
+  "fr": "Il n'y a pas encore de sujets avec une opportunité calculée pour ce site : lancez la collecte.",
+  "es": "Aún no hay temas con una oportunidad calculada para este sitio: lanza la recogida."
+ },
+ "Bozza in scrittura": {
+  "en": "Draft being written",
+  "de": "Entwurf wird geschrieben",
+  "fr": "Brouillon en rédaction",
+  "es": "Borrador en redacción"
+ },
+ "Bozza non riuscita": {
+  "en": "Draft failed",
+  "de": "Entwurf fehlgeschlagen",
+  "fr": "Brouillon échoué",
+  "es": "Borrador fallido"
+ },
+ "La bozza non è stata scritta: {error}": {
+  "en": "The draft was not written: {error}",
+  "de": "Der Entwurf wurde nicht geschrieben: {error}",
+  "fr": "Le brouillon n'a pas été rédigé : {error}",
+  "es": "El borrador no se ha escrito: {error}"
+ },
+ "La segui nel riquadro Attività.": {
+  "en": "Follow it in the Activity box.",
+  "de": "Verfolgen Sie ihn im Kasten Aktivität.",
+  "fr": "Suivez-le dans l'encadré Activité.",
+  "es": "Síguelo en el recuadro Actividad."
+ }
+}

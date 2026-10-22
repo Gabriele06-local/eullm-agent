@@ -14,7 +14,7 @@
     <span class="kicker num">{{ _('Errore {status}', status=status) }}</span>
     <h1 style="font-size: 22px;">{{ {403: _('Non hai il permesso per questa azione'), 404: _('Non trovato'), 429: _('Limite del piano raggiunto')}.get(status, _('Qualcosa non è andato')) }}</h1>
     {% if detail %}<p class="lead">{{ detail }}</p>{% endif %}
-    <div class="row"><a class="btn pri" href="/">{{ _('Torna a Oggi') }}</a></div>
+    <div class="row"><a class="btn pri" href="/">{{ _('Torna al Desk') }}</a></div>
   </section>
   {% include "_lang.html.j2" %}
 </main>

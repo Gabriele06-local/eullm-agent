@@ -1,0 +1,23 @@
+{# What the newsroom is doing: refreshed by the script in base.html.j2 while work runs. #}
+<section id="activity" class="card activity" aria-labelledby="h-activity" aria-live="polite" data-active="{{ '1' if activity.active else '0' }}" data-full="{{ '1' if activity.full else '0' }}"{% if not activity['items'] and not activity.full %} hidden{% endif %}>
+  <div class="card-head"><h2 id="h-activity">{{ _('Attività') }}</h2><span class="hint">{% if activity.active %}{{ _('si aggiorna da sola') }}{% elif activity.full %}{{ _('ultime 24 ore') }}{% else %}{{ _('appena finite') }}{% endif %}</span></div>
+  {% if activity.stalled %}
+  <p class="note warn" style="margin: 12px 20px 0;">{{ _("Ci sono lavori in coda da più di tre minuti e nessuno sta girando: il servizio che esegue i lavori (editor-worker) sembra fermo. Sul server: docker compose ps, poi docker compose up -d.") }}</p>
+  {% endif %}
+  {% for x in activity['items'] %}
+  <div class="item">
+    {% if x.status == 'running' %}<span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('In corso') }}</span>
+    {% elif x.status == 'queued' %}<span class="chip">{{ _('In coda') }}</span>
+    {% elif x.status == 'done' %}<span class="chip green">{{ _('Fatto') }}</span>
+    {% else %}<span class="chip red">{{ _('Non riuscito') }}</span>{% endif %}
+    <div class="what">
+      <strong>{{ x.what }}{% if x.where %} · {{ x.where }}{% endif %}</strong>
+      <span>{{ x.state }}{% if x.step %} · {{ x.step }}{% endif %}</span>
+      {% for line in x.lines %}<span style="color: var(--ink-2);">{{ line }}</span>{% endfor %}
+    </div>
+    {% if x.href %}<a class="btn" href="{{ x.href }}">{{ x.link }}</a>{% endif %}
+  </div>
+  {% else %}
+  <p class="empty">{{ _('Nessun lavoro nelle ultime 24 ore. Lanciane uno qui sopra: lo vedi andare avanti qui.') }}</p>
+  {% endfor %}
+</section>

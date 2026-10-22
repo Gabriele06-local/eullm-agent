@@ -144,7 +144,7 @@ def test_propose_now_queues_the_work(db, tenant):
     c = logged_in(db, tenant, "editor")
     assert "Proponi adesso" in c.get("/trends").text
     page = c.post("/ui/proposals/now")
-    assert "Ricerca delle proposte avviata" in page.text or "già state fatte" in page.text
+    assert "in preparazione" in page.text or "già state fatte" in page.text
     with db.tenant(tenant) as s:
         kinds = list(s.execute(text("SELECT kind FROM editor.jobs")).scalars())
     assert "proposals" in kinds or "già state fatte" in page.text

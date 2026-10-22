@@ -27,6 +27,8 @@ from .core_client import CoreClient, CoreError
 from .core_fetch import CoreTrouble
 from .dedup import minhash, similarity
 from .html_extract import parse_html, same_site
+from .i18n import N_
+from .progress import step
 from .site import FEED_PATHS, NOT_SOURCES, RobotsCache
 from .text import tokens
 
@@ -338,6 +340,7 @@ def discover(db, tenant_id: str, site_id: int, client: httpx.Client, core: CoreC
 
     suggestions = {"search_terms": [], "domains": []}
     if core is not None and body.get("subtopics"):
+        step(N_("Il modello suggerisce dove cercare le fonti per {domain}"), domain=domain)
         try:
             prompt = "Profile:\n" + "\n".join(
                 f"- {x['name']}: {', '.join(x.get('keywords', []))}" for x in body["subtopics"]
@@ -358,12 +361,14 @@ def discover(db, tenant_id: str, site_id: int, client: httpx.Client, core: CoreC
     candidates += finder.from_suggestions(suggestions["domains"], domain)
     keywords = profile_keywords(body)
     seen = set()
+    total = len({(c.kind, c.url, str(c.config)) for c in candidates} - existing)
     for cand in candidates:
         key = (cand.kind, cand.url, str(cand.config))
         if key in seen or key in existing:
             continue
         seen.add(key)
         report.candidates += 1
+        step(N_("Prova delle fonti candidate: {n} di {total} ({name})"), n=report.candidates, total=total, name=cand.name)
         try:
             result = COLLECTORS[cand.kind].fetch(client, SourceSpec(cand.kind, cand.url, cand.config))
         except (httpx.HTTPError, ValueError, KeyError) as e:

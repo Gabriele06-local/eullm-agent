@@ -102,9 +102,10 @@
   <p class="hint" style="margin: 0; padding: 0 20px 12px;">{{ _("Ogni riga è l'idea di un articolo, non l'articolo. Le proposte arrivano ogni mattina all'ora del briefing ({hour}:00) da temi con almeno due notizie di due fonti diverse, o da una notizia forte (opportunità da 50) di una fonte affidabile; &quot;Proponi adesso&quot; non aspetta la mattina. <strong>Accetta e scrivi la bozza</strong> fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.", hour='%02d'|format(briefing_hour or 8)) }}</p>
   {% for p in plan %}
   <div class="item">
-    {% if p.status == 'proposed' %}<span class="chip">{{ _('Proposta') }}</span>{% elif p.status == 'accepted' %}<span class="chip blue">{{ _('Accettata') }}</span>{% else %}<span class="chip green">{{ _('Bozza pronta') }}</span>{% endif %}
+    {% if p.status == 'proposed' %}<span class="chip">{{ _('Proposta') }}</span>{% elif p.status == 'accepted' and writing.get(p.id, {}).get('status') in ('queued', 'running') %}<span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('Bozza in scrittura') }}</span>{% elif p.status == 'accepted' and writing.get(p.id, {}).get('status') == 'failed' %}<span class="chip red">{{ _('Bozza non riuscita') }}</span>{% elif p.status == 'accepted' %}<span class="chip blue">{{ _('Accettata') }}</span>{% else %}<span class="chip green">{{ _('Bozza pronta') }}</span>{% endif %}
     <div class="what">
       {% include "_proposal.html.j2" %}
+      {% if writing.get(p.id, {}).get('status') == 'failed' %}<span class="note warn">{{ _('La bozza non è stata scritta: {error}', error=writing[p.id].error) }}</span>{% endif %}
     </div>
     <div class="row">
       {% if p.status == 'proposed' and caller.can('editor') %}
@@ -112,6 +113,8 @@
       <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
       {% elif p.draft_id %}
       <a class="btn" href="/drafts/{{ p.draft_id }}">{{ _('Apri la bozza') }}</a>
+      {% elif p.status == 'accepted' and writing.get(p.id, {}).get('status') in ('queued', 'running') %}
+      <span class="hint">{{ _('La segui nel riquadro Attività.') }}</span>
       {% elif p.status == 'accepted' and caller.can('editor') and can_draft %}
       <form class="inline" method="post" action="/ui/proposals/{{ p.id }}/draft"><button class="btn pri" type="submit">{{ _('Scrivi la bozza') }}</button></form>
       {% elif p.status == 'accepted' %}

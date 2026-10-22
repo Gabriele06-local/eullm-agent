@@ -450,6 +450,8 @@ jobs = Table(
     Column("max_attempts", Integer),
     Column("heartbeat_at", _ts()),
     Column("worker", Text),
+    Column("progress", JSONB),  # the step a running job is on, see progress.py
+    Column("result", JSONB),  # what the job produced, shown when it ends
 )
 
 access_tokens = Table(

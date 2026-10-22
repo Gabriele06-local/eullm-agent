@@ -139,7 +139,7 @@ def test_the_trial_ends_the_owner_pays_by_bank_transfer(db, admin):
     invite = sent[0][2].split("\n")[-2]
     c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
     page = c.get("/")
-    assert "Prova gratuita: 7 giorni rimasti" in page.text and "Primi passi" in page.text
+    assert "Prova gratuita: 7 giorni rimasti" in page.text and "Prossimo passo" in page.text
     now = datetime.now(UTC)
     # Two days before the end: one reminder, once.
     report = billing.lifecycle(admin, now + timedelta(days=5, hours=1), mail=lambda *a: sent.append(a),

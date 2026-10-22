@@ -32,6 +32,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import insert, select, text, update
 
 from . import models as m
+from . import progress
 from .core_fetch import acting_for
 from .quotas import lock
 from .repo import ARCHIVE
@@ -44,8 +45,9 @@ POLL_SECONDS = 2.0
 PRIORITY_PERSON = 10  # asked from the dashboard or the API
 PRIORITY_TICK = 0
 
-# kind -> fn(tenant, subject, args); raises on failure.
-Handlers = dict[str, Callable[[str, str, dict], None]]
+# kind -> fn(tenant, subject, args); raises on failure, may return what it
+# produced (shown on the dashboard when the job ends).
+Handlers = dict[str, Callable[[str, str, dict], dict | None]]
 
 
 @dataclass(frozen=True)
@@ -99,7 +101,8 @@ def claim(db, worker: str, tenant_id: str | None = None) -> Job | None:
         if r is None:
             return None
         conn.execute(update(m.jobs).where(j.id == r.id).values(
-            status="running", started_at=now, heartbeat_at=now, worker=worker, attempts=r.attempts + 1, error=None))
+            status="running", started_at=now, heartbeat_at=now, worker=worker, attempts=r.attempts + 1, error=None,
+            progress=None))
         return Job(r.id, r.tenant_id, r.kind, r.subject, r.args or {}, r.attempts + 1)
 
 
@@ -109,10 +112,10 @@ def heartbeat(db, job: Job) -> None:
                   .values(heartbeat_at=datetime.now(UTC)))
 
 
-def finish(db, job: Job, error: str | None = None) -> None:
+def finish(db, job: Job, error: str | None = None, result: dict | None = None) -> None:
     with db.tenant(job.tenant_id) as s:
         s.execute(update(m.jobs).where(m.jobs.c.id == job.id).values(
-            status="failed" if error else "done", error=error, finished_at=datetime.now(UTC)))
+            status="failed" if error else "done", error=error, finished_at=datetime.now(UTC), result=result))
 
 
 def requeue_stale(db, stale_seconds: int = STALE_SECONDS) -> int:
@@ -156,8 +159,8 @@ def run(db, job: Job, handlers: Handlers) -> bool:
     log.info("%s started for tenant %s (%s), attempt %d", job.kind, job.tenant_id, job.subject, job.attempts)
     started = time.monotonic()
     try:
-        with acting_for(job.tenant_id):
-            fn(job.tenant_id, job.subject, job.args)
+        with acting_for(job.tenant_id), progress.running(db, job.tenant_id, job.id):
+            result = fn(job.tenant_id, job.subject, job.args)
     except Exception as e:
         log.exception("%s failed for tenant %s (%s)", job.kind, job.tenant_id, job.subject)
         finish(db, job, f"{type(e).__name__}: {e}"[:500])
@@ -165,7 +168,7 @@ def run(db, job: Job, handlers: Handlers) -> bool:
     finally:
         stop.set()
         beater.join()
-    finish(db, job)
+    finish(db, job, result=result if isinstance(result, dict) else None)
     log.info("%s done for tenant %s (%s) in %.0fs", job.kind, job.tenant_id, job.subject, time.monotonic() - started)
     return True
 
