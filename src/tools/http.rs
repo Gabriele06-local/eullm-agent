@@ -116,7 +116,8 @@ impl Fetcher {
                 .send()
                 .await
                 .map_err(|e| anyhow::anyhow!("Request failed: {e}"))?;
-            if resp.status().is_redirection() {
+            // 304 Not Modified and 300 are 3xx without a target: answers, not redirects.
+            if matches!(resp.status().as_u16(), 301 | 302 | 303 | 307 | 308) {
                 let location = resp
                     .headers()
                     .get(reqwest::header::LOCATION)

@@ -501,6 +501,11 @@ def register(app, ctx) -> None:
                 (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
                 or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:4] if sid else []
             last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at))).scalar()
+            # Fetches the Core could not make (down, or out of daily fetches) in the last round.
+            troubles = list(s.execute(select(m.sources.c.last_error).where(
+                m.sources.c.status == "active", m.sources.c.last_error.like("CoreTrouble%"),
+                m.sources.c.last_fetched_at > datetime.now(UTC) - timedelta(hours=2))).scalars())
+            core_trouble = {"n": len(troubles), "limit": any("limit" in e for e in troubles)} if troubles else None
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             # A source the maintenance suspended is news, not a decision.
@@ -511,7 +516,7 @@ def register(app, ctx) -> None:
                           proposed=proposed, explained=explained, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
-                          usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
+                          usage=usage, tops=tops, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions)
 
     def first_steps(s, sites, lines, sid=None) -> list[dict] | None:
         """The way from a domain to the first article, step by step, with

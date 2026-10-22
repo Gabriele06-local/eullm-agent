@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.9.3
+
+### Fixed
+
+- Core `/v1/fetch` took a "304 Not Modified" for a redirect and failed
+  with "Redirect without Location". Every feed answering a conditional
+  GET (ETag, Last-Modified) failed from its second read on, so Editor
+  Mode suspended most sources after a few hours and collected almost
+  nothing. Only 301, 302, 303, 307 and 308 are followed now; sources
+  suspended by this error go back to work at the next collection.
+- Editor Mode: a fetch the Core could not make (the newsroom used up its
+  daily fetches, or the Core was down) no longer counts as a failure of
+  the source. Before, a night past the limit suspended every source for
+  "failed fetches in a row". Sources suspended that way go back to work
+  at the next collection; a status set by a person stays as it is.
+
+### Added
+
+- The home page says when the last round could not read sources because
+  the daily fetches ran out or the Core did not answer; the Fonti page
+  shows each source's last read error.
+
+### Changed
+
+- `deploy/server/core.example.yaml`: the default daily fetches of a
+  newsroom go from 2000 to 10000. Hourly collection of 60 sources is
+  already about 1500 a day.
+
 ## 0.9.2
 
 ### Changed

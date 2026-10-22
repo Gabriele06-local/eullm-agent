@@ -69,6 +69,27 @@ def upsert_source(
     ).scalar_one()
 
 
+# Errors of the Core, not of the source, as earlier versions recorded them;
+# before 0.9.3 the Core took a "304 Not Modified" for a redirect.
+CORE_TROUBLE = ("CoreTrouble", "Core unreachable", "Core fetch failed (429)", "limit reached",
+                "Redirect without Location")
+
+
+def rescue_sources(s: Session) -> list[int]:
+    """Sources suspended for failed fetches that were the Core's fault (it
+    was down, or the newsroom was out of daily fetches) go back to work.
+    A status a person chose stays as it is."""
+    src = m.sources
+    back = [r.id for r in s.execute(select(src.c.id, src.c.status_reason, src.c.last_error).where(
+        src.c.status == "suspended", src.c.status_set_by.is_(None))).all()
+        if (r.status_reason or "").endswith("failed fetches in a row")
+        and any(k in (r.last_error or "") for k in CORE_TROUBLE)]
+    if back:
+        s.execute(update(src).where(src.c.id.in_(back)).values(
+            status="active", status_reason=None, status_changed_at=datetime.now(UTC), consecutive_errors=0))
+    return back
+
+
 def active_sources(s: Session) -> list:
     return list(s.execute(select(m.sources).where(m.sources.c.status == "active").order_by(m.sources.c.id)))
 
@@ -82,8 +103,12 @@ def set_source_status(s: Session, source_id: int, status: str, reason: str | Non
 
 
 def mark_source(
-    s: Session, source_id: int, *, etag=None, last_modified=None, error: str | None = None, newest=None
+    s: Session, source_id: int, *, etag=None, last_modified=None, error: str | None = None, newest=None,
+    counted: bool = True,
 ) -> None:
+    """Record a fetch. An error that is not the source's (`counted=False`:
+    the Core was down or out of fetches) is shown but does not bring the
+    source closer to suspension."""
     src = m.sources
     values = {"last_fetched_at": datetime.now(UTC), "last_error": error}
     if error is None:
@@ -92,7 +117,7 @@ def mark_source(
             new = literal(newest, src.c.last_item_at.type)
             values["last_item_at"] = case((or_(src.c.last_item_at.is_(None), src.c.last_item_at < new), new),
                                           else_=src.c.last_item_at)
-    else:
+    elif counted:
         values["consecutive_errors"] = src.c.consecutive_errors + 1
     s.execute(update(src).where(src.c.id == source_id).values(**values))
 

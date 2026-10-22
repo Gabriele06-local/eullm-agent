@@ -82,5 +82,29 @@
   "de": "Ein Artikel, der die Meldungen unten zusammenführt und sie den Lesern Ihrer Website erklärt.",
   "fr": "Un article qui rassemble les actualités ci-dessous et les explique aux lecteurs de votre site.",
   "es": "Un artículo que reúne las noticias de abajo y se las explica a los lectores de tu sitio."
+ },
+ "L'ultimo giro non ha letto {n} fonti perché la redazione ha finito le letture del giorno: riparte domani, oppure alza il limite delle letture.": {
+  "en": "The last round did not read {n} sources because the newsroom used up its reads for the day: it starts again tomorrow, or raise the reads limit.",
+  "de": "Der letzte Durchlauf hat {n} Quellen nicht gelesen, weil die Redaktion ihre Abrufe für heute aufgebraucht hat: Es geht morgen weiter, oder erhöhen Sie das Abruflimit.",
+  "fr": "Le dernier passage n'a pas lu {n} sources car la rédaction a épuisé ses lectures du jour : il reprend demain, ou augmentez la limite de lectures.",
+  "es": "La última ronda no leyó {n} fuentes porque la redacción agotó las lecturas del día: vuelve a empezar mañana, o sube el límite de lecturas."
+ },
+ "L'ultimo giro non ha letto {n} fonti perché il motore dell'agente non rispondeva: riprova da solo al prossimo giro.": {
+  "en": "The last round did not read {n} sources because the agent's engine was not answering: it tries again by itself at the next round.",
+  "de": "Der letzte Durchlauf hat {n} Quellen nicht gelesen, weil die Engine des Agenten nicht antwortete: Beim nächsten Durchlauf versucht er es von selbst erneut.",
+  "fr": "Le dernier passage n'a pas lu {n} sources car le moteur de l'agent ne répondait pas : il réessaie tout seul au prochain passage.",
+  "es": "La última ronda no leyó {n} fuentes porque el motor del agente no respondía: lo vuelve a intentar solo en la próxima ronda."
+ },
+ "Non è colpa delle fonti, che restano attive.": {
+  "en": "The sources are not at fault and stay active.",
+  "de": "Die Quellen trifft keine Schuld, sie bleiben aktiv.",
+  "fr": "Les sources n'y sont pour rien et restent actives.",
+  "es": "No es culpa de las fuentes, que siguen activas."
+ },
+ "Ultimo errore di lettura": {
+  "en": "Last read error",
+  "de": "Letzter Abruffehler",
+  "fr": "Dernière erreur de lecture",
+  "es": "Último error de lectura"
  }
 }

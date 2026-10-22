@@ -170,3 +170,21 @@ def test_a_proposal_says_what_it_is_in_plain_words(db, tenant):
         assert "Rientra in «Satellite»" in page and "Rientra in «Fibra»" in page
         # A single source explains its low Hype.
         assert "per ora ne parla una sola fonte" in page
+
+
+def test_home_says_when_the_reads_of_the_day_ran_out(db, tenant):
+    from datetime import UTC, datetime
+
+    from sqlalchemy import update
+
+    from editor import models as m
+
+    approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        s.execute(update(m.sources).values(
+            status="active", last_fetched_at=datetime.now(UTC),
+            last_error="CoreTrouble: Core fetch limit: daily fetches limit reached (2000 of 2000)"))
+    c = logged_in(db, tenant, "editor")
+    assert "finito le letture del giorno" in c.get("/").text
+    page = c.get("/sources").text
+    assert "Ultimo errore di lettura" in page and "daily fetches limit reached" in page
