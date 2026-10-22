@@ -99,10 +99,21 @@ def store_items(s, tenant_id: str, source_id: int, items: list[Item], report: So
 
 
 def collect_tenant(db: Database, tenant_id: str, client: httpx.Client) -> CollectReport:
+    """Read the archive sources this newsroom follows."""
+    with db.tenant(tenant_id) as s:
+        repo.rescue_sources(s)
+        only = repo.followed_archive(s)
+    return collect_archive(db, repo.archive_of(db, tenant_id), client, only)
+
+
+def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[int] | None = None) -> CollectReport:
+    """Read the active archive sources (those in `only`, when given) once
+    for every newsroom that follows them."""
+    tenant_id = archive
     report = CollectReport(tenant_id)
     with db.tenant(tenant_id) as s:
         repo.rescue_sources(s)
-        sources = repo.active_sources(s)
+        sources = repo.active_sources(s, only)
     for src in sources:
         r = SourceReport(src.id, src.name)
         report.sources.append(r)

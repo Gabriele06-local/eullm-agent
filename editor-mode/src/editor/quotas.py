@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import func, select, text
 
 from . import models as m
+from . import repo
 from .db import is_sqlite
 
 
@@ -59,9 +60,10 @@ def _used(s, t, now: datetime | None = None) -> dict:
         "tenant_id": tid,
         "sites": one(select(func.count()).select_from(m.sites).where(m.sites.c.tenant_id == tid)),
         "active_sources": one(select(func.count()).select_from(m.sources).where(
-            m.sources.c.tenant_id == tid, m.sources.c.status == "active")),
+            m.sources.c.tenant_id == tid, m.sources.c.status == "active", repo.own())),
+        # News of the day from the sources the newsroom follows, in the archive.
         "items_today": one(select(func.count()).select_from(m.source_items).where(
-            m.source_items.c.tenant_id == tid, m.source_items.c.fetched_at >= day)),
+            m.source_items.c.fetched_at >= day, repo.followed_by())),
         "llm_cost_month": one(select(func.coalesce(func.sum(u.c.cost), 0)).where(
             u.c.tenant_id == tid, u.c.at >= month)),
         "llm_tokens_month": one(select(func.coalesce(func.sum(u.c.input_tokens), 0)

@@ -30,7 +30,9 @@ def test_the_export_has_everything_but_credentials(db, tenant, monkeypatch):
     data = json.loads(tenant_data.export_json(db, tenant))
     assert data["tenant"] == tenant and set(data["tables"]) == set(tenant_data.DELETE_ORDER)
     filled = {name for name, rows in data["tables"].items() if rows}
-    assert {"sites", "sources", "source_items", "drafts", "publications", "secrets", "access_tokens"} <= filled
+    # The items are the shared archive's, not the newsroom's (SQLite: its own archive).
+    own = {"source_items"} if db.sqlite else set()
+    assert {"sites", "sources", "drafts", "publications", "secrets", "access_tokens"} | own <= filled
     assert all(r["tenant_id"] == tenant for rows in data["tables"].values() for r in rows)
     assert data["tables"]["secrets"] == [{"tenant_id": tenant, "name": "X", "updated_at": data["tables"]["secrets"][0]["updated_at"]}]
     assert all("token_sha256" not in r for r in data["tables"]["access_tokens"])
@@ -56,7 +58,7 @@ def test_a_deleted_tenant_leaves_nothing(db, tenant, monkeypatch):
         with db.tenant(keep) as s:
             repo.ensure_tenant(s, keep, "B")
     counts = tenant_data.delete_tenant(admin, tenant)
-    assert counts["tenants"] == 1 and counts["source_items"] > 0
+    assert counts["tenants"] == 1 and (counts["source_items"] > 0) == db.sqlite
     with admin.engine.connect() as conn:
         for name in tenant_data.DELETE_ORDER:
             assert conn.execute(text(f"SELECT count(*) FROM editor.{name} WHERE tenant_id = :t"), {"t": tenant}).scalar() == 0, name
@@ -72,25 +74,30 @@ def test_old_uncited_items_and_finished_jobs_are_pruned(db, tenant, monkeypatch)
 
     approved_draft(db, tenant)
     now = datetime.now(UTC)
-    with db.tenant(tenant) as s:
+    # The items are pruned with the archive that holds them; it keeps those a newsroom cites.
+    archive = repo.archive_of(db, tenant)
+    with db.tenant(archive) as s:
         s.execute(update(m.source_items).values(fetched_at=now - timedelta(days=400)))
+        before = set(s.execute(select(m.source_items.c.id).where(m.source_items.c.tenant_id == archive)).scalars())
+    with db.tenant(tenant) as s:
         s.execute(m.jobs.insert().values(tenant_id=tenant, kind="collect", status="done",
                                          started_at=now - timedelta(days=400), finished_at=now - timedelta(days=400)))
         s.execute(m.jobs.insert().values(tenant_id=tenant, kind="collect", status="done",
                                          started_at=now, finished_at=now))
-        before = set(s.execute(select(m.source_items.c.id)).scalars())
         cited = set(s.execute(select(m.draft_claim_sources.c.item_id)).scalars()) | \
             set(s.execute(select(m.proposal_citations.c.item_id)).scalars())
     assert before - cited, "the test needs some uncited items"
-    assert tenant_data.prune(db, tenant, now=now, days=0) == {}  # 0 keeps everything
-    out = tenant_data.prune(db, tenant, now=now, days=365)
+    assert tenant_data.prune(db, archive, now=now, days=0) == {}  # 0 keeps everything
+    out = tenant_data.prune(db, archive, now=now, days=365)
+    pruned_jobs = out["jobs"] if archive == tenant else tenant_data.prune(db, tenant, now=now, days=365)["jobs"]
+    with db.tenant(archive) as s:
+        after = set(s.execute(select(m.source_items.c.id).where(m.source_items.c.tenant_id == archive)).scalars())
     with db.tenant(tenant) as s:
-        after = set(s.execute(select(m.source_items.c.id)).scalars())
-        jobs = s.execute(select(m.jobs.c.finished_at)).scalars().all()
+        jobs = s.execute(select(m.jobs.c.finished_at).where(m.jobs.c.tenant_id == tenant)).scalars().all()
     assert after == before & cited and out["items"] == len(before - after)
-    assert out["jobs"] == 1 and len(jobs) == 1
+    assert pruned_jobs == 1 and len(jobs) == 1
     # Recent items stay.
-    assert tenant_data.prune(db, tenant, now=now - timedelta(days=100), days=365)["items"] == 0
+    assert tenant_data.prune(db, archive, now=now - timedelta(days=100), days=365)["items"] == 0
 
 
 def test_the_owner_downloads_the_data(db, tenant, monkeypatch):
@@ -129,7 +136,7 @@ def test_the_daily_maintenance_prunes(db, tenant, monkeypatch):
     from editor.config import Settings
 
     pruned = []
-    monkeypatch.setattr(schedule, "collect_tenant", lambda *a, **k: None)
+    monkeypatch.setattr(schedule, "collect_archive", lambda *a, **k: None)
     monkeypatch.setattr(sources, "maintain", lambda *a, **k: None)
     monkeypatch.setattr(tenant_data, "prune", lambda db_, t, now=None: pruned.append(t))
     runner = schedule.Runner(db, Settings(), http_factory=lambda: __import__("httpx").Client())

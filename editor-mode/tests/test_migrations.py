@@ -58,10 +58,12 @@ def test_tenants_are_isolated(db: Database):
         repo.upsert_source(s, "iso-a", kind="rss", name="feed", url="https://a.example/feed")
     with db.tenant("iso-b") as s:
         repo.ensure_tenant(s, "iso-b", "B")
-        assert s.execute(text("SELECT count(*) FROM editor.sources")).scalar() == 0
+        # The shared archive is readable by every newsroom; the sources a
+        # newsroom follows are its own.
+        assert s.execute(text("SELECT count(*) FROM editor.sources WHERE shared IS NOT TRUE")).scalar() == 0
         assert s.execute(text("SELECT count(*) FROM editor.tenants")).scalar() == 1
     with db.tenant("iso-a") as s:
-        assert s.execute(text("SELECT count(*) FROM editor.sources")).scalar() == 1
+        assert s.execute(text("SELECT count(*) FROM editor.sources WHERE shared IS NOT TRUE")).scalar() == 1
 
 
 def test_cannot_write_rows_for_another_tenant(db: Database):

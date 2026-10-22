@@ -13,10 +13,10 @@ from editor import repo
 from editor.collectors import Item
 from editor.core_client import CoreClient
 from editor.dedup import minhash
-from editor.ingest import SourceReport, store_items
 from editor.normalize import url_hash
 from editor.scoring import score_topics
 from editor.topics import detect_topics
+from conftest import feed
 
 NOW = datetime.now(UTC)
 PROFILE = {
@@ -38,18 +38,18 @@ def setup_site(db, tenant):
         prof.approve(s, site_id, 1, "francesco")
         sid = repo.upsert_source(s, tenant, kind="rss", name="news", url="https://news.example/feed", site_id=site_id)
         s.execute(text("UPDATE editor.sources SET score = 0.55 WHERE id = :i"), {"i": sid})
-        store_items(s, tenant, sid, [
-            Item(url="https://news.example/1", title="Open Fiber completa la fibra FTTH a Bari", published_at=NOW - timedelta(hours=3)),
-            Item(url="https://news.example/3", title="Starlink abbassa i prezzi del satellite in Italia", published_at=NOW - timedelta(hours=8)),
-            Item(url="https://news.example/4", title="Il calcio in streaming soffre la latenza", published_at=NOW - timedelta(hours=2)),
-            Item(url="https://news.example/5", title="Nuova ricetta della pizza napoletana premiata", published_at=NOW - timedelta(hours=1)),
-        ], SourceReport(sid, "news"))
         # The same story from a second source: one source alone is not a story.
         other = repo.upsert_source(s, tenant, kind="rss", name="rete", url="https://rete.example/feed", site_id=site_id)
         s.execute(text("UPDATE editor.sources SET score = 0.55 WHERE id = :i"), {"i": other})
-        store_items(s, tenant, other, [
-            Item(url="https://rete.example/2", title="Fibra FTTH a Bari: Open Fiber chiude i lavori", published_at=NOW - timedelta(hours=5)),
-        ], SourceReport(other, "rete"))
+    feed(db, tenant, sid, [
+        Item(url="https://news.example/1", title="Open Fiber completa la fibra FTTH a Bari", published_at=NOW - timedelta(hours=3)),
+        Item(url="https://news.example/3", title="Starlink abbassa i prezzi del satellite in Italia", published_at=NOW - timedelta(hours=8)),
+        Item(url="https://news.example/4", title="Il calcio in streaming soffre la latenza", published_at=NOW - timedelta(hours=2)),
+        Item(url="https://news.example/5", title="Nuova ricetta della pizza napoletana premiata", published_at=NOW - timedelta(hours=1)),
+    ])
+    feed(db, tenant, other, [
+        Item(url="https://rete.example/2", title="Fibra FTTH a Bari: Open Fiber chiude i lavori", published_at=NOW - timedelta(hours=5)),
+    ])
     detect_topics(db, tenant)
     score_topics(db, tenant)
     return site_id
@@ -149,9 +149,10 @@ def test_citation_to_missing_item_is_impossible(db, tenant):
 
 def test_one_source_alone_is_not_a_story(db, tenant):
     site_id = setup_site(db, tenant)
-    with db.tenant(tenant) as s:
+    with db.tenant(repo.archive_of(db, tenant)) as s:
         # Both items about Bari now come from the same source.
-        s.execute(text("UPDATE editor.source_items SET source_id = (SELECT id FROM editor.sources WHERE name = 'news')"))
+        s.execute(text("UPDATE editor.source_items SET source_id = (SELECT id FROM editor.sources "
+                       "WHERE name = 'news' AND shared)"))
     ops = opp.score_site(db, tenant, site_id, now=NOW)
     assert ops and props.propose(db, tenant, site_id, ops, None) == []
 

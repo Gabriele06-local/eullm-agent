@@ -34,6 +34,7 @@ from sqlalchemy import insert, select, text, update
 from . import models as m
 from .core_fetch import acting_for
 from .quotas import lock
+from .repo import ARCHIVE
 
 log = logging.getLogger(__name__)
 
@@ -199,6 +200,8 @@ def enqueue_ticks(db, now: datetime | None = None) -> int:
     the previous hour is not queued twice."""
     hour = (now or datetime.now(UTC)).replace(minute=0, second=0, microsecond=0)
     tenants = active_tenants(db)
+    if not db.sqlite:  # the shared archive is read first, once for everyone
+        enqueue(db, ARCHIVE, "archive", "hourly", {"queued_for": hour.isoformat()}, priority=PRIORITY_TICK + 1)
     for tenant in tenants:
         enqueue(db, tenant, "tick", "hourly", {"queued_for": hour.isoformat()}, priority=PRIORITY_TICK)
     return len(tenants)

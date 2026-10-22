@@ -81,22 +81,29 @@ def test_the_cores_trouble_is_not_the_sources_fault(db, tenant):
     add_sources(db, tenant)
     respx.post("http://core.test/v1/fetch").mock(
         return_value=httpx.Response(429, json={"error": "daily fetches limit reached (2000 of 2000)"}))
+    archive = repo.archive_of(db, tenant)
+    suspend = ("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
+               "last_error = :e WHERE name = :n AND shared")
+    with db.tenant(archive) as s:
+        s.execute(text(suspend), {"n": "telecom", "e": "ConnectError: Core fetch failed (502): Redirect without Location"})
+        s.execute(text(suspend), {"n": "mirror", "e": "HTTPStatusError: 404 Not Found"})
     with db.tenant(tenant) as s:
-        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
-                       "last_error = 'ConnectError: Core fetch failed (502): Redirect without Location' "
-                       "WHERE name = 'telecom'"))
-        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
-                       "last_error = 'HTTPStatusError: 404 Not Found' WHERE name = 'mirror'"))
+        # A newsroom's source suspended by an earlier version for failed reads.
+        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row' "
+                       "WHERE name = 'mirror' AND NOT shared"))
     with core_http_client("http://core.test", "tok") as c:
         for _ in range(6):
             report = collect_tenant(db, tenant, c)
     assert all(r.error.startswith("CoreTrouble") for r in report.sources) and len(report.sources) == 2
+    with db.tenant(archive) as s:
+        shared = {r.name: r for r in s.execute(text(
+            "SELECT name, status, consecutive_errors FROM editor.sources WHERE shared"))}
+    assert shared["telecom"].status == "active" and shared["telecom"].consecutive_errors == 0
+    assert shared["hn"].status == "active" and shared["hn"].consecutive_errors == 0
+    # A real failure of the site stays a failure, for everyone.
+    assert shared["mirror"].status == "suspended"
     with db.tenant(tenant) as s:
-        rows = {r.name: r for r in s.execute(text("SELECT name, status, consecutive_errors FROM editor.sources"))}
-    assert rows["telecom"].status == "active" and rows["telecom"].consecutive_errors == 0
-    assert rows["hn"].status == "active" and rows["hn"].consecutive_errors == 0
-    # A real failure of the site stays a failure.
-    assert rows["mirror"].status == "suspended"
+        assert s.execute(text("SELECT status FROM editor.sources WHERE name = 'mirror' AND NOT shared")).scalar() == "active"
 
 
 @respx.mock
@@ -131,6 +138,8 @@ def test_topics_labels_and_scores(db, tenant):
             "SELECT t.label, t.labelled_by, count(*) FROM editor.topics t JOIN editor.topic_items ti ON ti.topic_id = t.id "
             "GROUP BY t.id ORDER BY count(*) DESC, t.id"
         )).all()
+    # The labels are the archive's, paid once for every newsroom.
+    with db.tenant(repo.archive_of(db, tenant)) as s:
         usage = s.execute(text("SELECT count(*), sum(cost) FROM editor.llm_usage")).one()
     assert rows[0][0] == "Open Fiber e FTTH nelle aree bianche" and rows[0][1] == "model"
     assert usage[0] == report.labelled + 1  # the retry is recorded too
@@ -148,15 +157,15 @@ def test_topics_labels_and_scores(db, tenant):
 
 
 def test_topics_without_core_use_keyword_labels(db, tenant):
+    from conftest import feed
+    from editor.collectors import Item
+
     with db.tenant(tenant) as s:
         sid = repo.upsert_source(s, tenant, kind="rss", name="x", url="https://x.example/feed")
-        from editor.ingest import SourceReport, store_items
-        from editor.collectors import Item
-
-        store_items(s, tenant, sid, [
-            Item(url="https://x.example/1", title="Starlink lancia il servizio direct to cell in Italia"),
-            Item(url="https://x.example/2", title="Direct to cell: Starlink arriva in Italia con TIM"),
-        ], SourceReport(sid, "x"))
+    feed(db, tenant, sid, [
+        Item(url="https://x.example/1", title="Starlink lancia il servizio direct to cell in Italia"),
+        Item(url="https://x.example/2", title="Direct to cell: Starlink arriva in Italia con TIM"),
+    ])
     report = detect_topics(db, tenant, None)
     assert report.new_topics == 1 and report.assigned == 2
     with db.tenant(tenant) as s:

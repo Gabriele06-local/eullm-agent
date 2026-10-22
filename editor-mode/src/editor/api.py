@@ -246,7 +246,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     @app.post("/api/sources/{source_id}/status")
     def source_status(source_id: int, body: SourceStatusIn, c: auth.Caller = Depends(need("owner"))):
         with db.tenant(c.tenant_id) as s:
-            if s.execute(select(m.sources.c.id).where(m.sources.c.id == source_id)).scalar() is None:
+            if s.execute(select(m.sources.c.id).where(m.sources.c.id == source_id, repo.own())).scalar() is None:
                 raise HTTPException(404, "source not found")
             repo.set_source_status(s, source_id, body.status, body.reason or f"set by {c.name}", by=c.name)
         return {"status": body.status}
@@ -408,6 +408,11 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                           AND (CAST(:site AS bigint) IS NULL OR o.site_id = :site) ORDER BY computed_at DESC LIMIT 1) AS opportunity,
                        (SELECT count(*) FROM editor.topic_items ti WHERE ti.topic_id = t.id) AS items
                 FROM editor.topics t WHERE t.updated_at > :since
+                  -- Topics of the archive with news from a source the newsroom (or the site) follows.
+                  AND EXISTS (SELECT 1 FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
+                              JOIN editor.sources f ON f.id = si.source_id OR f.archive_id = si.source_id
+                              WHERE ti.topic_id = t.id AND f.status = 'active' AND f.shared IS NOT TRUE
+                                AND (CAST(:site AS bigint) IS NULL OR f.site_id = :site OR f.site_id IS NULL))
                 ORDER BY hype DESC NULLS LAST LIMIT 100""").bindparams(
                 bindparam("since", type_=m.topics.c.updated_at.type)).columns(keywords=m.topics.c.keywords.type)
             rows = s.execute(q, {"site": site_id, "since": datetime.now(UTC) - timedelta(days=7)}).all()

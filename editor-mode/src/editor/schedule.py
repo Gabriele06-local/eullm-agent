@@ -12,8 +12,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select, text
 
-from . import briefing, jobs, models as m, opportunity, proposals, sources, tenant_data
-from .ingest import collect_tenant
+from . import briefing, jobs, models as m, opportunity, proposals, repo, sources, tenant_data
+from .ingest import collect_archive
 from .profile import analyse_site
 from .scoring import score_topics
 from .topics import detect_topics
@@ -74,6 +74,15 @@ class Runner:
     def tick(self, now: datetime | None = None) -> TickReport:
         now = now or datetime.now(UTC)
         report = TickReport()
+        if not self.db.sqlite:  # the shared archive first, once for everyone
+            done, failed = report.tenants.setdefault(repo.ARCHIVE, []), []
+            try:
+                self.archive_tick(now, done, failed)
+            except Exception as e:
+                log.exception("tick failed for the archive")
+                failed.append(f"{type(e).__name__}: {e}")
+            if failed:
+                report.errors[repo.ARCHIVE] = "; ".join(failed)
         for tenant in self.tenants():
             done = report.tenants.setdefault(tenant, [])
             failed: list[str] = []
@@ -123,18 +132,19 @@ class Runner:
         conf = self.tenant_settings(tenant)
         tz = conf["timezone"]
         local = now.astimezone(ZoneInfo(tz))
-        core = self.core_for(tenant)
         with self.db.tenant(tenant) as s:
             last_maintain, last_review = jobs.last_done(s, "maintain"), jobs.last_done(s, "review")
+        # On SQLite the newsroom is its own archive: it reads its sources itself.
+        own_archive = repo.archive_of(self.db, tenant) == tenant
         with self.http_factory() as client:
-            def collect():
-                collect_tenant(self.db, tenant, client)
-                detect_topics(self.db, tenant, core)
-                score_topics(self.db, tenant, now=now)
-            self.step(tenant, "collect", done, failed, collect)
+            if own_archive:
+                self.collect(tenant, client, now, done, failed)
+            else:
+                with self.db.tenant(tenant) as s:
+                    repo.rescue_sources(s)
             if maintenance_due(local, last_maintain):
                 def maintain():
-                    sources.maintain(self.db, tenant, client, now=now)
+                    sources.maintain(self.db, tenant, client, now=now, archive=own_archive)
                     tenant_data.prune(self.db, tenant, now=now)
                 self.step(tenant, "maintain", done, failed, maintain)
             if review_due(local, last_review):
@@ -155,6 +165,35 @@ class Runner:
                 if today is not None and today.send_error and in_window and self.sender is not None:
                     self.step(tenant, "briefing", done, failed, lambda: self.sender.send(self.db, tenant, today.id),
                               f"briefing {today.briefing_date.isoformat()} resent")
+
+    def collect(self, archive: str, client, now: datetime, done: list[str], failed: list[str],
+                only: set[int] | None = None) -> None:
+        """Read the archive sources, then find and score its topics."""
+        def run():
+            collect_archive(self.db, archive, client, only)
+            detect_topics(self.db, archive, self.core_for(archive))
+            score_topics(self.db, archive, now=now)
+        self.step(archive, "collect", done, failed, run)
+
+    def archive_tick(self, now: datetime, done: list[str], failed: list[str]) -> None:
+        """The hour of the shared archive (PostgreSQL): read once every source
+        a newsroom follows, find topics and Hype Scores; once a day suspend
+        the sources that fail or went silent and retry the suspended ones."""
+        archive = repo.ARCHIVE
+        followed: set[int] = set()
+        for tenant in self.tenants():
+            with self.db.tenant(tenant) as s:
+                followed |= repo.followed_archive(s)
+        with self.db.tenant(archive) as s:
+            last_maintain = jobs.last_done(s, "maintain")
+        local = now.astimezone(ZoneInfo(self.settings.timezone))
+        with self.http_factory() as client:
+            self.collect(archive, client, now, done, failed, followed)
+            if maintenance_due(local, last_maintain):
+                def maintain():
+                    sources.maintain_archive(self.db, archive, client, now)
+                    tenant_data.prune(self.db, archive, now=now)
+                self.step(archive, "maintain", done, failed, maintain)
 
     def review(self, tenant: str, client) -> None:
         from .site import SiteCrawler

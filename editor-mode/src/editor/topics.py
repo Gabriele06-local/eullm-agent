@@ -106,6 +106,8 @@ def detect_topics(
 ) -> TopicReport:
     report = TopicReport()
     now = datetime.now(UTC)
+    # Topics are found once, in the archive the newsroom reads.
+    tenant_id = repo.archive_of(db, tenant_id)
     with db.tenant(tenant_id) as s:
         si, ti = m.source_items, m.topic_items
         items = s.execute(

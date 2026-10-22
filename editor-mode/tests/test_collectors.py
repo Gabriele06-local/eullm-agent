@@ -133,3 +133,26 @@ def test_http_errors_raise():
         except httpx.HTTPStatusError:
             return
     raise AssertionError("expected an error")
+
+
+def test_github_trending():
+    with respx.mock() as router:
+        route = router.get("https://github.com/trending").mock(
+            return_value=httpx.Response(200, content=fixture("github_trending.html")))
+        with httpx.Client() as c:
+            res = COLLECTORS["github"].fetch(c, SourceSpec("github", "https://github.com/trending",
+                                                           {"trending": True, "since": "daily"}))
+    assert route.calls.last.request.url.params["since"] == "daily"
+    first, second = res.items
+    assert first.url == "https://github.com/vllm-project/vllm"
+    assert first.title.startswith("vllm-project/vllm: A high-throughput")
+    assert first.metrics == {"stars": 95088, "stars_today": 441, "rank": 1, "language": "Python"}
+    assert "GitHub Trending #1: +441 stars today" in first.summary
+    assert second.title == "someone/tool-x" and second.metrics["stars_today"] == 1100
+
+
+def test_github_trending_without_repositories_is_an_error():
+    with respx.mock:
+        respx.get("https://github.com/trending").mock(return_value=httpx.Response(200, text="<html>login</html>"))
+        with httpx.Client() as c, pytest.raises(ValueError, match="layout"):
+            COLLECTORS["github"].fetch(c, SourceSpec("github", "https://github.com/trending", {"trending": True}))

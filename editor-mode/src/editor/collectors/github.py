@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import httpx
 
 from .base import FetchResult, Item, SourceSpec, from_iso
+from .github_trending import GitHubTrendingCollector
 
 DEFAULT_URL = "https://api.github.com/search/repositories"
 
@@ -14,11 +15,14 @@ class GitHubCollector:
 
     config: query (GitHub search syntax; "{since}" becomes today minus
     since_days), since_days (default 7), sort (default "stars"), per_page.
-    A token in the client headers raises the rate limit.
+    A token in the client headers raises the rate limit. With trending:
+    true the source is GitHub's Trending page instead.
     """
 
     def fetch(self, client: httpx.Client, source: SourceSpec) -> FetchResult:
         cfg = source.config
+        if cfg.get("trending"):
+            return GitHubTrendingCollector().fetch(client, source)
         since = (datetime.now(UTC) - timedelta(days=int(cfg.get("since_days", 7)))).date()
         query = cfg.get("query", "created:>{since}").replace("{since}", since.isoformat())
         if cfg.get("min_stars") and "stars:" not in query:

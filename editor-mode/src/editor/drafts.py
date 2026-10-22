@@ -207,9 +207,12 @@ def fetch_contents(db, tenant_id: str, item_ids: list[int], client: httpx.Client
                 log.info("robots.txt forbids reading %s: drafting from its summary", row.url)
         except httpx.HTTPError as e:
             log.info("cannot read %s: %s", row.url, e)
-        with db.tenant(tenant_id) as s:
-            s.execute(update(m.source_items).where(m.source_items.c.id == row.id).values(
-                content=content, content_fetched_at=datetime.now(UTC)))
+        # Read once for everyone: the item is in the archive, or (collected
+        # before it) the newsroom's own.
+        for tenant in dict.fromkeys((repo.archive_of(db, tenant_id), tenant_id)):
+            with db.tenant(tenant) as s:
+                s.execute(update(m.source_items).where(m.source_items.c.id == row.id).values(
+                    content=content, content_fetched_at=datetime.now(UTC)))
 
 
 def _sources(s, ids: list[int]) -> dict[int, Source]:

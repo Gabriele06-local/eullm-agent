@@ -160,12 +160,14 @@ def test_a_failing_step_does_not_stop_the_briefing_and_is_recorded(db, tenant, m
     def broken(*a, **k):
         raise RuntimeError("feed server down")
 
-    monkeypatch.setattr(schedule, "collect_tenant", broken)
+    monkeypatch.setattr(schedule, "collect_archive", broken)
     runner = Runner(db, Settings(), http_factory=lambda: httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(404))))
     report = runner.tick(datetime(2026, 10, 9, 6, tzinfo=UTC))
     assert "briefing 2026-10-09" in report.tenants[tenant]
-    assert "collect failed" in report.errors[tenant]
-    with db.tenant(tenant) as s:
+    # The collection is the archive's (on SQLite, the newsroom's own).
+    archive = repo.archive_of(db, tenant)
+    assert "collect failed" in report.errors[archive]
+    with db.tenant(archive) as s:
         job = s.execute(text("SELECT status, error FROM editor.jobs WHERE kind = 'collect'")).one()
     assert job.status == "failed" and "feed server down" in job.error
 

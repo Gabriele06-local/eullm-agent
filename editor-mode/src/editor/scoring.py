@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
+from . import repo
 from .db import Database
 
 FORMULA_VERSION = "hype-v1"
@@ -91,6 +92,8 @@ def components(members: list[Member], now: datetime) -> dict[str, float]:
         per_day = 0.0
         for x in gh:
             g = _growth(x.observations, "stars", now)
+            if g is None and "stars_today" in x.metrics:  # the Trending page says it
+                g = x.metrics["stars_today"]
             if g is None:  # one observation: average since creation
                 age_days = max((now - x.at).total_seconds() / 86400, 1)
                 g = x.metrics.get("stars", 0) / age_days
@@ -139,9 +142,11 @@ def load_members(s, topic_id: int) -> list[Member]:
 
 
 def score_topics(db: Database, tenant_id: str, days: int = 7, now: datetime | None = None) -> dict[int, Hype]:
-    """Compute and store the Hype Score of every topic updated in the last days."""
+    """Compute and store the Hype Score of every topic updated in the last
+    days, once, in the archive the newsroom reads."""
     now = now or datetime.now(UTC)
     results = {}
+    tenant_id = repo.archive_of(db, tenant_id)
     with db.tenant(tenant_id) as s:
         topic_ids = s.execute(
             select(m.topics.c.id).where(m.topics.c.updated_at >= now - timedelta(days=days))

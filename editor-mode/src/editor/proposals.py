@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -69,17 +69,23 @@ def _validator(allowed_ids: set[int]):
     return validate
 
 
-def _items_for(s, topic_id: int, limit: int = 12):
+def _items_for(s, topic_id: int, site_id: int | None = None, limit: int = 12):
     si = m.source_items
-    return s.execute(
+    f = m.sources.alias("f")
+    rows = s.execute(
         select(si.c.id, si.c.title, si.c.url, si.c.summary, si.c.published_at, si.c.source_id,
-               m.sources.c.name.label("source"), m.sources.c.score.label("source_score"))
+               func.coalesce(f.c.name, m.sources.c.name).label("source"),
+               func.coalesce(f.c.score, m.sources.c.score).label("source_score"))
         .join(m.topic_items, m.topic_items.c.item_id == si.c.id)
         .join(m.sources, m.sources.c.id == si.c.source_id)
+        # The site's own name and rating of the source, when it follows it.
+        .outerjoin(f, and_(or_(f.c.id == si.c.source_id, f.c.archive_id == si.c.source_id),
+                           f.c.shared.is_not(True), f.c.site_id == site_id))
         .where(m.topic_items.c.topic_id == topic_id, si.c.duplicate_of.is_(None))
-        .order_by(si.c.published_at.desc().nulls_last())
-        .limit(limit)
+        .order_by(si.c.published_at.desc().nulls_last(), si.c.id)
+        .limit(limit * 2)
     ).all()
+    return list({r.id: r for r in rows}.values())[:limit]
 
 
 def _prompt(profile: dict, label: str, items) -> str:
@@ -127,7 +133,7 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
             if len(work) >= limit:
                 break
             label = s.execute(select(m.topics.c.label).where(m.topics.c.id == o.topic_id)).scalar()
-            items = _items_for(s, o.topic_id)
+            items = _items_for(s, o.topic_id, site_id)
             # A single weak item (one new repository, one post) is not yet a
             # story, nor are two items from the same source (the same
             # repository found by two searches).

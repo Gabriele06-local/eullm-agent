@@ -14,10 +14,11 @@ import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
+from . import repo
 from .dedup import minhash, similarity
 from .text import tokens
 
@@ -129,15 +130,26 @@ def score_site(db, tenant_id: str, site_id: int, now: datetime | None = None, da
             .join(m.proposals, (m.feedback.c.target == "proposal") & (m.feedback.c.target_id == m.proposals.c.id))
             .where(m.proposals.c.site_id == site_id)
         ).all()
-        topics = s.execute(select(m.topics).where(m.topics.c.updated_at >= now - timedelta(days=days))).all()
+        # Topics of the archive with news from a source this site follows.
+        mine = (select(m.topic_items.c.topic_id)
+                .join(m.source_items, m.source_items.c.id == m.topic_items.c.item_id)
+                .where(repo.followed_by(site_id)))
+        topics = s.execute(select(m.topics).where(m.topics.c.updated_at >= now - timedelta(days=days),
+                                                  m.topics.c.id.in_(mine))).all()
+        f = m.sources.alias("f")
         out = []
         for t in topics:
             members = s.execute(
-                select(m.source_items.c.title, m.source_items.c.published_at, m.source_items.c.fetched_at, m.sources.c.score)
+                select(m.source_items.c.id, m.source_items.c.title, m.source_items.c.published_at,
+                       m.source_items.c.fetched_at, func.coalesce(f.c.score, m.sources.c.score).label("score"))
                 .join(m.topic_items, m.topic_items.c.item_id == m.source_items.c.id)
                 .join(m.sources, m.sources.c.id == m.source_items.c.source_id)
+                # The site's own rating of the source, when it follows it.
+                .outerjoin(f, and_(or_(f.c.id == m.source_items.c.source_id, f.c.archive_id == m.source_items.c.source_id),
+                                   f.c.shared.is_not(True), f.c.site_id == site_id))
                 .where(m.topic_items.c.topic_id == t.id)
             ).all()
+            members = list({x.id: x for x in members}.values())
             if not members:
                 continue
             titles = [x.title for x in members]
