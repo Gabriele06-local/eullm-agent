@@ -265,8 +265,9 @@ def record_feedback(s, tenant_id: str, target: str, target_id: int, verdict: str
 
 
 def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient | None = None,
-           now: datetime | None = None) -> list[int]:
-    """Proposals now, on request, up to the day's number still left."""
+           now: datetime | None = None, manual: bool = False) -> list[int]:
+    """Proposals now, on request, up to the day's number still left; asked
+    for by a person (`manual`), a full day's number whatever was made."""
     from . import opportunity
 
     with db.tenant(tenant_id) as s:
@@ -274,7 +275,8 @@ def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient |
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
         if body is None:
             return []
-        left = body.get("settings", {}).get("proposals_per_day", 3) - made_today(s, site_id, since)
+        per_day = body.get("settings", {}).get("proposals_per_day", 3)
+        left = per_day if manual else per_day - made_today(s, site_id, since)
     if left <= 0:
         return []
     return propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=left)

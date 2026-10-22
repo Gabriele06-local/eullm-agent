@@ -19,6 +19,21 @@
 </header>
 {% with page="today" %}{% include "_help.html.j2" %}{% endwith %}
 
+{% if site and caller.can('editor') %}
+<section class="card pad" aria-labelledby="h-now">
+  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-now">{{ _('Lancia adesso') }}</h2><span class="hint">{{ _('senza aspettare gli orari automatici') }}</span></div>
+  <p class="hint" style="margin: 0 0 10px;">{{ _("Ogni passo si può lanciare quando vuoi. Il lavoro parte in coda e il risultato compare nella sua pagina dopo qualche minuto.") }}</p>
+  <div class="row" style="flex-wrap: wrap; gap: 8px;">
+    {% if caller.can('owner') %}
+    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn" type="submit">{{ _('1. Analizza il sito') }}</button></form>
+    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn" type="submit">{{ _('2. Cerca le fonti') }}</button></form>
+    {% endif %}
+    <form class="inline" method="post" action="/ui/collect"><button class="btn" type="submit">{{ _('3. Raccogli le notizie e il trend') }}</button></form>
+    <form class="inline" method="post" action="/ui/proposals/now?back=/"><button class="btn pri" type="submit">{{ _('4. Proponi gli articoli') }}</button></form>
+  </div>
+</section>
+{% endif %}
+
 {% if guide %}
 <section class="card pad" aria-labelledby="h-steps">
   <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-steps">{{ _('Primi passi') }}</h2><span class="hint">{{ _('{done} di {total}', done=guide|selectattr('done')|list|length, total=guide|length) }}</span></div>

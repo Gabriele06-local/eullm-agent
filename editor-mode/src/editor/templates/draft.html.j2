@@ -46,6 +46,25 @@
       {% endif %}
     </section>
 
+    {% if sd %}
+    <section class="card pad" aria-labelledby="h-seo">
+      <h2 id="h-seo">{{ _('Google e risposte AI') }} · {{ seo_checks|selectattr('ok')|list|length }}/{{ seo_checks|length }}</h2>
+      <dl class="kv" style="margin: 0; display: grid; gap: 6px;">
+        <div><dt class="hint">{{ _('Frase chiave') }}</dt><dd>{{ sd.keyphrase or '–' }}</dd></div>
+        <div><dt class="hint">{{ _('Titolo per Google') }} ({{ (sd.title or '')|length }})</dt><dd>{{ sd.title or '–' }}</dd></div>
+        <div><dt class="hint">{{ _('Descrizione per Google') }} ({{ (sd.description or '')|length }})</dt><dd>{{ sd.description or '–' }}</dd></div>
+        <div><dt class="hint">{{ _('Indirizzo') }}</dt><dd><code>/{{ sd.slug }}</code></dd></div>
+        {% if sd.links %}<div><dt class="hint">{{ _('Link ad altri articoli del sito') }}</dt><dd>{% for x in sd.links %}<a href="{{ x.url }}" rel="noopener noreferrer" target="_blank">{{ x.title }}</a>{{ '; ' if not loop.last }}{% endfor %}</dd></div>{% endif %}
+      </dl>
+      <ul class="checks">
+        {% for ch in seo_checks %}
+        <li><span class="{{ 'up' if ch.ok else 'down' }}" aria-hidden="true">{{ '✓' if ch.ok else '✕' }}</span><span>{{ ch.label }}{% if not ch.ok %} <span class="sr">{{ _('non superato') }}</span>{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+      <p class="hint">{{ _("Alla pubblicazione titolo, descrizione, indirizzo e dati strutturati (articolo, fonti, domande frequenti) vanno al sito insieme al testo.") }}</p>
+    </section>
+    {% endif %}
+
     <section class="card pad" aria-labelledby="h-src">
       <h2 id="h-src">{{ _('Fonti') }} · {{ sources|length }}</h2>
       <p class="hint">{{ _('Clicca un numero nel testo per vedere da dove viene la frase.') }}</p>

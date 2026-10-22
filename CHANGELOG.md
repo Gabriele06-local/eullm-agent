@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.11.0
+
+### Added
+
+- Editor Mode, articles written for search engines and AI answers: the
+  first lines answer the reader's main question; the headings are the
+  questions people search for; two to four frequently asked questions
+  close the article, each answered with sourced claims checked like the
+  rest; a key phrase is chosen and used in the title and the first
+  sentence; a "Read more" section links up to three of the site's own
+  articles on the same subject.
+- Every draft carries its search fields (key phrase, a title for Google
+  within 60 characters, a description within 160, the address words)
+  and a checklist on its page, "Google and AI answers", that says what is
+  in place and what is missing.
+- Publishing: WordPress gets the address words and the description as the
+  excerpt; with the new option, the post also carries schema.org JSON-LD
+  (NewsArticle with its sources, FAQPage) that says what the page says.
+  The webhook sends the same fields. With an IndexNow key on the target,
+  every published article is reported at once to Bing and the engines
+  that share IndexNow (the key file goes at the site's root); a failed
+  report is logged and the article stays published. Google has no such
+  call for articles: it finds them through the sitemap and internal links.
+
+## 0.10.1
+
+### Added
+
+- Editor Mode: "Lancia adesso" on the home page runs every step on
+  request, without waiting for the schedule: analyse the site, find
+  sources, collect the news (then topics, Hype, a fresh trend of the
+  moment and Opportunity) and propose articles. Proposals asked for by a
+  person are no longer held back by the day's number; the automatic ones
+  still are.
+
+### Changed
+
+- CI: main is not checked again after a merge (the branch merged was
+  checked by its own push); only the release cache is built there. The
+  release page is created as soon as the tag is pushed and each platform
+  adds its files when its build ends, so a queued Windows or macOS runner
+  holds up nothing. Every job has a time limit: a hung step fails in
+  minutes instead of running for hours.
+
 ## 0.10.0
 
 ### Added

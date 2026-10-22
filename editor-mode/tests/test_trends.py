@@ -86,3 +86,51 @@ def test_without_a_model_the_titles_are_the_latest_headlines(db, tenant):
                                      f"SELECT title FROM editor.proposals WHERE id IN ({','.join(map(str, ids))})"),
                                 {"i": ids} if not db.sqlite else {}).scalars())
     assert len(ids) == 2 and any("Bari" in t for t in titles)
+
+
+def test_proposals_asked_by_a_person_are_not_held_back_by_the_day(db, tenant):
+    from datetime import timedelta
+
+    site_id = setup_site(db, tenant)
+    since = datetime.now(UTC) - timedelta(hours=12)
+    assert len(props.top_up(db, tenant, site_id, since)) == 1
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.sources SET score = 0.8"))
+    assert len(props.top_up(db, tenant, site_id, since)) == 1
+    assert props.top_up(db, tenant, site_id, since) == []  # the day's 2 are made
+    # A person asks again: a full day's number, from the topics not yet proposed.
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.proposals SET status = 'rejected'"))
+    assert props.top_up(db, tenant, site_id, since, manual=True) is not None
+
+
+def test_collect_now_reads_scores_and_keeps_the_trend(db, tenant):
+    import httpx
+
+    from editor.config import Settings
+    from editor.schedule import Runner
+
+    site_id = setup_site(db, tenant)
+    runner = Runner(db, Settings(), http_factory=lambda: httpx.Client(
+        transport=httpx.MockTransport(lambda r: httpx.Response(404))))
+    done, failed = [], []
+    runner.collect_now(tenant, datetime.now(UTC), done, failed)
+    assert not failed and {"collect", "trend", "opportunity"} <= set(done)
+    archive = repo.archive_of(db, tenant)
+    with db.tenant(archive) as s:
+        assert trends.latest(s, archive) is not None
+    with db.tenant(tenant) as s:
+        assert s.execute(text("SELECT count(*) FROM editor.opportunity_scores WHERE site_id = :s"),
+                         {"s": site_id}).scalar() > 0
+
+
+def test_the_home_page_launches_every_step(db, tenant):
+    setup_site(db, tenant)
+    c = logged_in(db, tenant, "owner")
+    page = c.get("/").text
+    assert "Lancia adesso" in page and "/ui/collect" in page and "/ui/proposals/now?back=/" in page
+    assert c.post("/ui/collect", follow_redirects=False).status_code == 303
+    assert c.post("/ui/proposals/now?back=/", follow_redirects=False).headers["location"] == "/"
+    with db.tenant(tenant) as s:
+        kinds = set(s.execute(text("SELECT kind FROM editor.jobs")).scalars())
+    assert {"collect", "proposals"} <= kinds

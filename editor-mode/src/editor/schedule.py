@@ -167,7 +167,7 @@ class Runner:
                               f"briefing {today.briefing_date.isoformat()} resent")
 
     def collect(self, archive: str, client, now: datetime, done: list[str], failed: list[str],
-                only: set[int] | None = None, tz: str | None = None) -> None:
+                only: set[int] | None = None, tz: str | None = None, take_trend: bool = True) -> None:
         """Read the archive sources, then find and score its topics; from
         07:00 every three hours keep the trend of the moment."""
         def run():
@@ -175,6 +175,8 @@ class Runner:
             detect_topics(self.db, archive, self.core_for(archive))
             score_topics(self.db, archive, now=now)
         self.step(archive, "collect", done, failed, run)
+        if not take_trend:
+            return
         tz = tz or self.settings.timezone
         with self.db.tenant(archive) as s:
             take = trends.due(s, now, tz)
@@ -183,6 +185,25 @@ class Runner:
                 with self.db.tenant(archive) as s:
                     trends.snapshot(s, archive, now)
             self.step(archive, "trend", done, failed, keep)
+
+    def collect_now(self, tenant: str, now: datetime, done: list[str], failed: list[str]) -> None:
+        """A newsroom's collection on request: its sources are read now, then
+        topics, Hype, a fresh trend of the moment and each site's Opportunity."""
+        archive = repo.archive_of(self.db, tenant)
+        with self.db.tenant(tenant) as s:
+            repo.rescue_sources(s)
+            followed = repo.followed_archive(s)
+            sites = list(s.execute(select(m.sites.c.id)).scalars())
+        with self.http_factory() as client:
+            self.collect(archive, client, now, done, failed, followed, take_trend=False)
+
+        def keep():
+            with self.db.tenant(archive) as s:
+                trends.snapshot(s, archive, now)
+        self.step(archive, "trend", done, failed, keep)
+        for site_id in sites:
+            self.step(tenant, "opportunity", done, failed,
+                      lambda site_id=site_id: opportunity.score_site(self.db, tenant, site_id, now=now))
 
     def archive_tick(self, now: datetime, done: list[str], failed: list[str]) -> None:
         """The hour of the shared archive (PostgreSQL): read once every source

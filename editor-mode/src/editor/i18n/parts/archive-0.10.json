@@ -94,5 +94,53 @@
   "de": "Die Titel werden vorbereitet: Sie erscheinen hier in einigen Minuten.",
   "fr": "Je prépare les titres : ils apparaissent ici dans quelques minutes.",
   "es": "Estoy preparando los títulos: aparecen aquí en unos minutos."
+ },
+ "Lancia adesso": {
+  "en": "Run now",
+  "de": "Jetzt starten",
+  "fr": "Lancer maintenant",
+  "es": "Lanzar ahora"
+ },
+ "senza aspettare gli orari automatici": {
+  "en": "without waiting for the automatic schedule",
+  "de": "ohne auf die automatischen Zeiten zu warten",
+  "fr": "sans attendre les horaires automatiques",
+  "es": "sin esperar a los horarios automáticos"
+ },
+ "Ogni passo si può lanciare quando vuoi. Il lavoro parte in coda e il risultato compare nella sua pagina dopo qualche minuto.": {
+  "en": "Every step can be run whenever you like. The work is queued and the result appears on its page a few minutes later.",
+  "de": "Jeder Schritt lässt sich jederzeit starten. Die Arbeit kommt in die Warteschlange, das Ergebnis erscheint nach einigen Minuten auf der zugehörigen Seite.",
+  "fr": "Chaque étape peut être lancée quand vous voulez. Le travail passe en file d'attente et le résultat apparaît sur sa page après quelques minutes.",
+  "es": "Cada paso se puede lanzar cuando quieras. El trabajo entra en cola y el resultado aparece en su página al cabo de unos minutos."
+ },
+ "1. Analizza il sito": {
+  "en": "1. Analyse the site",
+  "de": "1. Website analysieren",
+  "fr": "1. Analyser le site",
+  "es": "1. Analizar el sitio"
+ },
+ "2. Cerca le fonti": {
+  "en": "2. Find sources",
+  "de": "2. Quellen suchen",
+  "fr": "2. Chercher des sources",
+  "es": "2. Buscar fuentes"
+ },
+ "3. Raccogli le notizie e il trend": {
+  "en": "3. Collect news and the trend",
+  "de": "3. Nachrichten und Trend sammeln",
+  "fr": "3. Collecter les actualités et la tendance",
+  "es": "3. Recoger noticias y tendencia"
+ },
+ "4. Proponi gli articoli": {
+  "en": "4. Propose articles",
+  "de": "4. Artikel vorschlagen",
+  "fr": "4. Proposer des articles",
+  "es": "4. Proponer artículos"
+ },
+ "Raccolta avviata: notizie, temi e trend si aggiornano tra qualche minuto.": {
+  "en": "Collection started: news, topics and the trend update in a few minutes.",
+  "de": "Sammlung gestartet: Nachrichten, Themen und Trend werden in einigen Minuten aktualisiert.",
+  "fr": "Collecte lancée : actualités, sujets et tendance se mettent à jour dans quelques minutes.",
+  "es": "Recogida iniciada: noticias, temas y tendencia se actualizan en unos minutos."
  }
 }
