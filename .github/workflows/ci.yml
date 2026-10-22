@@ -16,9 +16,13 @@ concurrency:
 jobs:
   check:
     # A pull request from a branch of this repository was already checked by
-    # its push; only pull requests from forks need their own run.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # its push; only pull requests from forks need their own run. main only
+    # receives merges of branches already checked: it is not checked again.
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    # A hung step (apt once waited two hours) fails the run instead of
+    # holding it for GitHub's six-hour limit.
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:18
@@ -43,6 +47,7 @@ jobs:
       - name: bubblewrap sandbox
         # The sandbox tests run programs through bwrap. Ubuntu runners
         # restrict unprivileged user namespaces through AppArmor.
+        timeout-minutes: 3
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q bubblewrap
@@ -78,6 +83,7 @@ jobs:
   release-cache:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -89,8 +95,9 @@ jobs:
       - run: cargo build --locked --release --target x86_64-unknown-linux-gnu
 
   editor-mode:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:18
