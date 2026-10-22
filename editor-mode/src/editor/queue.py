@@ -6,10 +6,11 @@ publications) and the hourly tick of every tenant is written as a 'queued'
 row before anything runs, so a restart of the dashboard or of the worker
 loses nothing: the worker picks it up when it is back.
 
-Fairness: a tenant runs one job at a time and, among the tenants with work
+Fairness: on PostgreSQL a tenant runs two jobs at a time (never two of the same
+work, never the tick and a collection together) and, among the tenants with work
 waiting, the one served least recently goes first; within a tenant, work a
 person asked for comes before the hourly tick. A tenant with fifty drafts
-waiting takes one worker slot and the others keep going.
+waiting takes at most two worker slots and the others keep going.
 
 A running job refreshes its heartbeat. One whose heartbeat stops (worker
 killed, machine restarted) is queued again until max_attempts, then failed.

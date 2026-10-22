@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, repo, ui, vault
+from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, quotas, repo, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -148,6 +148,9 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     # Background work is queued, never run in this process: the worker runs
     # it (work.py), and a restart of the dashboard loses nothing.
     def run_analysis(tenant: str, domain: str):
+        """Raises quotas.QuotaExceeded when the plan has no room for a new site."""
+        with db.tenant(tenant) as s:
+            repo.add_site(s, tenant, domain)
         queue.enqueue(db, tenant, "analysis", domain)
 
     def run_discovery(tenant: str, site_id: int):
@@ -201,7 +204,10 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     @app.post("/api/sites", status_code=202)
     def add_site(body: SiteIn, c: auth.Caller = Depends(need("owner"))):
         domain = normalise_domain(body.domain)
-        run_analysis(c.tenant_id, domain)
+        try:
+            run_analysis(c.tenant_id, domain)
+        except quotas.QuotaExceeded as e:
+            raise HTTPException(409, str(e)) from None
         return {"domain": domain, "status": "analysis started"}
 
     @app.post("/api/sites/{site_id}/review", status_code=202)

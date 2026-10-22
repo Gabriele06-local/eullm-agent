@@ -106,6 +106,7 @@ PROBLEMS = [
     (r"no publication dates found", N_("Non ho trovato le date di pubblicazione: il ritmo del sito non si può misurare.")),
     (r"language not determined", N_("Lingua non determinata.")),
     (r"home page unreachable", N_("La home page non risponde.")),
+    (r"robots\.txt unreachable.*", N_("Il sito non risponde: nemmeno robots.txt si può leggere. Controlla che il dominio sia scritto giusto e che il sito sia online.")),
     (r"(\d+) articles read \(at least (\d+) wanted\)", N_(r"Letti \1 articoli (ne servono almeno \2 per un'analisi completa).")),
     (r"only (\d+) articles readable and no categories.*", N_(r"Solo \1 articoli leggibili e nessuna categoria: troppo poco per descrivere il sito.")),
     (r"model analysis failed \((.*)\): .*", N_(r"Il modello non ha completato l'analisi (\1): settore, pubblico e stile restano da determinare.")),
@@ -702,8 +703,15 @@ def register(app, ctx) -> None:
                     c: auth.Caller = Depends(ctx.need("owner"))):
         from .api import normalise_domain
         d = normalise_domain(domain)
-        ctx.run_analysis(c.tenant_id, d)
-        return done("/site", t("Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.", d=d))
+        try:
+            ctx.run_analysis(c.tenant_id, d)
+        except quotas.QuotaExceeded:
+            return done("/settings#h-sites", t("Il piano non ha posto per un altro sito: scegline uno più grande in Abbonamento."))
+        with db.tenant(c.tenant_id) as s:
+            sid = s.execute(select(m.sites.c.id).where(m.sites.c.domain == d)).scalar()
+        resp = done("/", t("Analisi di {domain} partita: la segui passo per passo nel riquadro Attività.", domain=d))
+        resp.set_cookie(SITE_COOKIE, str(sid), httponly=True, samesite="strict", max_age=365 * 86400)
+        return resp
 
     @app.post("/ui/sites/{site_id}/review")
     def ui_review(site_id: int, back: str = "/site", c: auth.Caller = Depends(ctx.need("owner"))):

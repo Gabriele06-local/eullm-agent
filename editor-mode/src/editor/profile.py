@@ -560,7 +560,9 @@ def store_snapshot(s, tenant_id: str, site_id: int, snap: SiteSnapshot) -> int:
 def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | None = None) -> dict:
     """First analysis or periodic review of a site. Returns what happened."""
     snap = crawler.analyse(domain)
-    step(N_("Il modello ricava settore, temi, pubblico e tono da {n} articoli letti"), n=len(snap.posts))
+    if snap.status not in ("failed", "insufficient") and core is not None:
+        step(N_("Il modello ricava settore, temi, pubblico e tono da {n} articoli letti (di solito 1-3 minuti)"),
+             n=len(snap.posts))
     body, calls = build_profile(snap, core)
     with db.tenant(tenant_id) as s:
         repo.ensure_tenant(s, tenant_id, tenant_id)
