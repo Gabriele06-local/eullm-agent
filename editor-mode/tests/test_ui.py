@@ -37,7 +37,7 @@ def test_every_page_renders_for_every_role(db, tenant):
 def test_forms_check_the_role_and_leave_a_notice(db, tenant):
     setup = approved_draft(db, tenant)
     with db.tenant(tenant) as s:
-        source = s.execute(text("SELECT id FROM editor.sources LIMIT 1")).scalar()
+        source = s.execute(text("SELECT id FROM editor.sources WHERE shared IS NOT TRUE LIMIT 1")).scalar()
     viewer = logged_in(db, tenant, "viewer")
     r = viewer.post(f"/ui/sources/{source}/status", data={"status": "suspended"})
     assert r.status_code == 403 and "permesso" in r.text
@@ -123,7 +123,7 @@ def test_suspended_source_of_another_site_opens_on_its_site(db, tenant):
     from editor import repo
     _, site_id = approved_draft(db, tenant)
     with db.tenant(tenant) as s:
-        source = s.execute(text("SELECT id FROM editor.sources LIMIT 1")).scalar()
+        source = s.execute(text("SELECT id FROM editor.sources WHERE shared IS NOT TRUE LIMIT 1")).scalar()
         # Sorted first, so it is the site in view: the source is not its own.
         repo.ensure_site(s, tenant, "aaa.example", "Primo")
     c = logged_in(db, tenant, "owner")
@@ -179,9 +179,12 @@ def test_home_says_when_the_reads_of_the_day_ran_out(db, tenant):
 
     from editor import models as m
 
+    from editor import repo
+
     approved_draft(db, tenant)
-    with db.tenant(tenant) as s:
-        s.execute(update(m.sources).values(
+    # The archive reads the sources the newsroom follows.
+    with db.tenant(repo.archive_of(db, tenant)) as s:
+        s.execute(update(m.sources).where(m.sources.c.shared.is_(True)).values(
             status="active", last_fetched_at=datetime.now(UTC),
             last_error="CoreTrouble: Core fetch limit: daily fetches limit reached (2000 of 2000)"))
     c = logged_in(db, tenant, "editor")

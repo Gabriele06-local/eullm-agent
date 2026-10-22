@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from sqlalchemy import func, select, update
@@ -29,10 +29,14 @@ from .core_client import CoreClient, CoreError
 from .html_extract import parse_html
 from .site import RobotsCache
 from .normalize import normalize_text
+from .text import item_terms, tokens
 
 log = logging.getLogger(__name__)
 
 MAX_CONTENT = 20_000
+RELATED = 8  # more items on the same subject, for context
+RELATED_DAYS = 30
+TARGET_WORDS = 700  # when the site's own length is unknown
 COPY_RUN = 12  # words in a row taken from a source count as copying
 _NUMBER = re.compile(r"(?<![\w.,])\d+(?:[.,]\d+)*(?:%|‰)?")
 
@@ -174,7 +178,11 @@ SYSTEM = (
     "the source items, each with an id and its text. Write the article as claims: every claim is one or two "
     "sentences and lists the ids of the items that support it. Use only facts found in the cited items; do not "
     "add facts, numbers or quotes from elsewhere, and do not copy sentences from the sources: write in your own "
-    "words, in the site's language and tone. Reply with JSON only: "
+    "words, in the site's language and tone. Write a full article, not a summary of one source: what happened, "
+    "the context and background the other items give (earlier releases, competitors, the market, regulation), "
+    "why it matters to the site's audience and what they can do with it. Use every item that is relevant and "
+    "skip those that are not. Reach the target length when the items allow it; never pad with vague sentences. "
+    "Reply with JSON only: "
     '{"title": "...", "subtitle": "...", "sections": [{"heading": "<or null>", "claims": '
     '[{"text": "...", "sources": [<ids>]}]}]}'
 )
@@ -199,9 +207,12 @@ def fetch_contents(db, tenant_id: str, item_ids: list[int], client: httpx.Client
                 log.info("robots.txt forbids reading %s: drafting from its summary", row.url)
         except httpx.HTTPError as e:
             log.info("cannot read %s: %s", row.url, e)
-        with db.tenant(tenant_id) as s:
-            s.execute(update(m.source_items).where(m.source_items.c.id == row.id).values(
-                content=content, content_fetched_at=datetime.now(UTC)))
+        # Read once for everyone: the item is in the archive, or (collected
+        # before it) the newsroom's own.
+        for tenant in dict.fromkeys((repo.archive_of(db, tenant_id), tenant_id)):
+            with db.tenant(tenant) as s:
+                s.execute(update(m.source_items).where(m.source_items.c.id == row.id).values(
+                    content=content, content_fetched_at=datetime.now(UTC)))
 
 
 def _sources(s, ids: list[int]) -> dict[int, Source]:
@@ -213,20 +224,44 @@ def _sources(s, ids: list[int]) -> dict[int, Source]:
                          r.published_at.date().isoformat() if r.published_at else None) for r in rows}
 
 
-def _prompt(profile: dict, proposal, sources: dict[int, Source]) -> str:
+def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] | None = None) -> str:
     style = profile.get("style", {})
+    target = max(400, min(style.get("typical_words") or TARGET_WORDS, 1500))
     lines = [
         f"Site: {profile.get('name')} ({profile.get('domain')}), language: {profile.get('language')}",
         f"Audience: {(profile.get('audience') or {}).get('value') or 'not determined'}",
-        f"Tone: {style.get('tone') or 'not determined'}; typical length: {style.get('typical_words') or 'unknown'} words",
+        f"Tone: {style.get('tone') or 'not determined'}; target length: about {target} words",
         f"Proposal: {proposal.title}",
         f"Angle: {proposal.angle}",
         f"Format: {proposal.format}",
-        "Items:",
+        "Items (those marked MAIN are the news the article is about; the others give context):",
     ]
     for src in sources.values():
-        lines.append(f"[{src.id}] {src.title} ({src.name}, {src.published or 'undated'})\n{(src.summary + ' ' + src.content)[:6000]}")
+        mark = " MAIN" if main and src.id in main else ""
+        lines.append(f"[{src.id}]{mark} {src.title} ({src.name}, {src.published or 'undated'})\n"
+                     f"{(src.summary + ' ' + src.content)[:6000 if mark else 2500]}")
     return "\n".join(lines)
+
+
+def related_items(s, ids: list[int], limit: int = RELATED, now: datetime | None = None) -> list[int]:
+    """Other recent items on the same subject (sharing at least two words
+    with the news the article is about), so the article has context and
+    not only one source to retell."""
+    si = m.source_items
+    base = s.execute(select(si.c.title, si.c.summary).where(si.c.id.in_(ids))).all()
+    terms = set().union(*(item_terms(r.title, r.summary or "") for r in base)) if base else set()
+    if not terms:
+        return []
+    since = (now or datetime.now(UTC)) - timedelta(days=RELATED_DAYS)
+    rows = s.execute(select(si.c.id, si.c.title, si.c.summary).where(
+        si.c.duplicate_of.is_(None), si.c.fetched_at > since, si.c.id.not_in(ids))
+        .order_by(si.c.id.desc()).limit(3000)).all()
+    scored = []
+    for r in rows:
+        shared = len(terms & (set(tokens(r.title)) | set(tokens(r.summary or ""))))
+        if shared >= 2:
+            scored.append((shared, r.id))
+    return [i for _, i in sorted(scored, reverse=True)[:limit]]
 
 
 def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: httpx.Client | None = None) -> int:
@@ -241,13 +276,14 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
         more = list(s.execute(select(m.topic_items.c.item_id).where(m.topic_items.c.topic_id == prop.topic_id)
                               .limit(12)).scalars())
         ids = list(dict.fromkeys(cited + more))
+        ids += related_items(s, ids)
         profile = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.id == prop.profile_id)).scalar()
     fetch_contents(db, tenant_id, ids, client)
     with db.tenant(tenant_id) as s:
         sources = _sources(s, ids)
 
     allowed = set(sources)
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": _prompt(profile, prop, sources)}]
+    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": _prompt(profile, prop, sources, set(cited))}]
     article, calls = None, []
     from .core_client import extract_json
 

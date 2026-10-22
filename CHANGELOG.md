@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.10.0
+
+### Added
+
+- Editor Mode, shared archive: every public source is read once for all
+  newsrooms, not once per newsroom. Items, topics, topic labels and Hype
+  Scores live in a reserved tenant, `_archive`, that newsrooms can read
+  but not change (row level security, read-only policies); the hourly
+  collection reads only the sources at least one newsroom follows. Each
+  newsroom keeps its own choices: which sources each site follows and
+  their status, the site's rating of each source, Opportunity, proposals,
+  drafts and feedback. A newsroom that starts following a source already
+  in the archive sees its history at once. A source that stops answering
+  is suspended in the archive for everyone; a source off topic is
+  suspended only for the site that follows it. The archive's pruning
+  keeps every item a newsroom cites. On SQLite (local installation) the
+  only newsroom is its own archive. The migration moves existing sources
+  into the archive without duplicates and keeps them followed; items and
+  topics collected so far stay where they are and age out.
+- The trend of the day: from 07:00, every three hours (eight times a
+  day), the archive keeps the topics rising most with their latest news.
+  "Trend e piano" opens with the trend of the moment for the site: the
+  rising topics close to its profile, their sources and news, and the
+  titles proposed for each, with a short summary and "Scrivi questo" to
+  have the draft written. "Proponimi tre titoli" asks the model for three
+  different articles on the same trend. The day's snapshots, hour by
+  hour, are listed below.
+- GitHub Trending: GitHub sources read the Trending page (repositories
+  developers are starring today, with stars gained today) instead of
+  word searches, which found new repositories nobody used. A newsroom's
+  automatic GitHub searches are suspended and replaced by GitHub Trending
+  for the same site; a status a person chose stays as it is. A trending
+  repository's summary says its rank and the stars gained, and its stars
+  of the day count towards the topic's Hype.
+
+### Changed
+
+- Drafts are richer: besides the proposal's citations, the model gets
+  other recent news on the same subject as context, and a target length
+  taken from the articles of the site.
+- Proposals use the site's own rating and name of a source, not the
+  archive's.
+- The daily items limit of a plan counts the new items of the sources a
+  newsroom follows; it no longer stops the shared collection.
+
 ## 0.9.3
 
 ### Fixed

@@ -10,6 +10,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from . import models as m
+from .db import is_sqlite
+
+# The reserved tenant holding the shared archive on PostgreSQL. On SQLite the
+# only newsroom is its own archive.
+ARCHIVE = "_archive"
 
 
 def ensure_tenant(s: Session, tenant_id: str, name: str) -> None:
@@ -44,29 +49,79 @@ def upsert_source(
     origin: str = "manual",
     evidence: dict | None = None,
 ) -> int:
-    """Insert a source, or update name and weight of the same (site, kind,
-    url, config). Status and evaluation of an existing source are kept."""
+    """Insert a source a site follows, or update name and weight of the same
+    (site, kind, url, config). Status and evaluation of an existing source
+    are kept. The source it follows in the shared archive is created when
+    missing."""
     config = config or {}
     src = m.sources
+    aid = archive_source(s, kind=kind, name=name, url=url, config=config, origin=origin)
     existing = s.execute(
         select(src.c.id).where(
             src.c.kind == kind,
             src.c.url == url,
             src.c.config == config,
+            own(),
             src.c.site_id.is_(None) if site_id is None else src.c.site_id == site_id,
         )
     ).scalar()
     if existing is not None:
-        s.execute(update(src).where(src.c.id == existing).values(name=name, weight=weight))
+        s.execute(update(src).where(src.c.id == existing).values(name=name, weight=weight, archive_id=aid))
         return existing
     return s.execute(
         insert(src)
         .values(
             tenant_id=tenant_id, kind=kind, name=name, url=url, config=config, weight=weight,
-            site_id=site_id, status=status, origin=origin, evidence=evidence or {},
+            site_id=site_id, status=status, origin=origin, evidence=evidence or {}, shared=False, archive_id=aid,
         )
         .returning(src.c.id)
     ).scalar_one()
+
+
+def archive_of(db, tenant_id: str) -> str:
+    """The tenant whose rows are the archive a newsroom reads."""
+    return tenant_id if db.sqlite else ARCHIVE
+
+
+def archive_tenant(s: Session) -> str:
+    return s.info["tenant_id"] if is_sqlite(s) else ARCHIVE
+
+
+def own():
+    """The newsroom's own sources, not those of the shared archive."""
+    return m.sources.c.shared.is_not(True)
+
+
+def archive_source(s: Session, *, kind: str, name: str, url: str, config: dict | None = None,
+                   origin: str = "manual") -> int:
+    """The archive source for (kind, url, config), created when missing."""
+    config = config or {}
+    src = m.sources
+    tenant = archive_tenant(s)
+
+    def find():
+        return s.execute(select(src.c.id).where(
+            src.c.tenant_id == tenant, src.c.shared.is_(True), src.c.kind == kind, src.c.url == url,
+            src.c.config == config)).scalar()
+
+    found = find()
+    if found is None:
+        s.execute(insert(src).values(
+            tenant_id=tenant, kind=kind, name=name, url=url, config=config, status="active", origin=origin,
+            evidence={}, shared=True).on_conflict_do_nothing())
+        found = find()
+    return found
+
+
+def followed_by(site_id: int | None = None):
+    """SQL condition on an item: one of the newsroom's active sources (for
+    one site, or any) is its source or follows it in the archive."""
+    f = m.sources.alias("f")
+    cond = [f.c.status == "active", f.c.shared.is_not(True),
+            or_(f.c.id == m.source_items.c.source_id, f.c.archive_id == m.source_items.c.source_id)]
+    if site_id is not None:
+        cond.append(or_(f.c.site_id == site_id, f.c.site_id.is_(None)))
+    return select(f.c.id).where(*cond).exists()
 
 
 # Errors of the Core, not of the source, as earlier versions recorded them;
@@ -80,18 +135,32 @@ def rescue_sources(s: Session) -> list[int]:
     was down, or the newsroom was out of daily fetches) go back to work.
     A status a person chose stays as it is."""
     src = m.sources
-    back = [r.id for r in s.execute(select(src.c.id, src.c.status_reason, src.c.last_error).where(
+    # A newsroom's source no longer reads anything itself (the archive does),
+    # so failed reads never keep it suspended.
+    back = [r.id for r in s.execute(select(src.c.id, src.c.status_reason, src.c.last_error, src.c.shared).where(
         src.c.status == "suspended", src.c.status_set_by.is_(None))).all()
         if (r.status_reason or "").endswith("failed fetches in a row")
-        and any(k in (r.last_error or "") for k in CORE_TROUBLE)]
+        and (not r.shared or any(k in (r.last_error or "") for k in CORE_TROUBLE))]
     if back:
         s.execute(update(src).where(src.c.id.in_(back)).values(
             status="active", status_reason=None, status_changed_at=datetime.now(UTC), consecutive_errors=0))
     return back
 
 
-def active_sources(s: Session) -> list:
-    return list(s.execute(select(m.sources).where(m.sources.c.status == "active").order_by(m.sources.c.id)))
+def active_sources(s: Session, only: set[int] | None = None) -> list:
+    """The archive sources to read: active ones, and with `only` those a
+    newsroom follows."""
+    q = select(m.sources).where(m.sources.c.status == "active", m.sources.c.shared.is_(True))
+    if only is not None:
+        q = q.where(m.sources.c.id.in_(only))
+    return list(s.execute(q.order_by(m.sources.c.id)))
+
+
+def followed_archive(s: Session) -> set[int]:
+    """The archive sources this newsroom's active sources follow."""
+    src = m.sources
+    return set(s.execute(select(src.c.archive_id).where(
+        src.c.status == "active", own(), src.c.archive_id.is_not(None))).scalars())
 
 
 def set_source_status(s: Session, source_id: int, status: str, reason: str | None = None, by: str | None = None) -> None:

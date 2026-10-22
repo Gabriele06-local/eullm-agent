@@ -205,6 +205,12 @@ HN_RECENT = HN_SEARCH + "_by_date"
 # A new repository with a few stars is news; one with none is often just a
 # namesake (searching "eullm" found someone else's empty "eullm").
 GITHUB_MIN_STARS = 10
+GITHUB_TRENDING = {"kind": "github", "name": "GitHub Trending", "url": "https://github.com/trending",
+                   "config": {"trending": True, "since": "daily"}}
+# Words of a profile for which the repositories developers star today are news.
+CODE_TERMS = HF_TERMS | {"software", "code", "coding", "developer", "developers", "github", "open", "source",
+                         "programming", "cloud", "devops", "security", "agent", "agents", "ml", "data",
+                         "kubernetes", "python", "rust", "javascript", "framework", "api", "tech", "on-premise"}
 
 
 def _recent_searches(s, now: datetime) -> None:
@@ -230,6 +236,18 @@ def _recent_searches(s, now: datetime) -> None:
                                                 src.c.url == r.url, src.c.config == cfg)).first()
         if twin is None:
             s.execute(update(src).where(src.c.id == r.id).values(config=cfg))
+    # A word search on GitHub finds repositories nobody uses; the Trending
+    # page says what developers star today. The newsroom's automatic
+    # searches give way to it, site by site.
+    searches = s.execute(select(src).where(
+        src.c.kind == "github", src.c.origin == "api_query", src.c.shared.is_not(True),
+        src.c.status.in_(("active", "candidate")), src.c.status_set_by.is_(None))).all()
+    searches = [r for r in searches if not (r.config or {}).get("trending")]
+    for site_id in {r.site_id for r in searches}:
+        repo.upsert_source(s, s.info["tenant_id"], **GITHUB_TRENDING, site_id=site_id,
+                           origin="api_query", evidence={"replaces": "GitHub searches"})
+    for r in searches:
+        repo.set_source_status(s, r.id, "suspended", "replaced by GitHub Trending")
 
 
 def api_candidates(body: dict) -> list[Candidate]:
@@ -242,10 +260,10 @@ def api_candidates(body: dict) -> list[Candidate]:
     for q in queries[:8]:
         out.append(Candidate("hackernews", f"Hacker News: {q}", HN_RECENT,
                              {"query": q, "min_points": 20}, "api_query", {"query": q}))
-        topic = "-".join(q.lower().split()[:2])
-        out.append(Candidate("github", f"GitHub: {q}", "", {"query": f"{q} created:>{{since}}", "since_days": 30, "min_stars": GITHUB_MIN_STARS},
-                             "api_query", {"query": q, "topic": topic}))
     words = {t for q in queries for t in tokens(q)} | profile_keywords(body)
+    if words & CODE_TERMS:
+        out.append(Candidate("github", GITHUB_TRENDING["name"], GITHUB_TRENDING["url"], GITHUB_TRENDING["config"],
+                             "api_query", {"matched": sorted(words & CODE_TERMS)}))
     cats = [c for c, terms in ARXIV_CATEGORIES.items() if words & terms]
     if cats:
         query = " OR ".join(f"cat:{c}" for c in cats[:3])
@@ -378,54 +396,51 @@ class MaintenanceReport:
 
 
 def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: datetime | None = None,
-             error_limit: int = 5, stale_days: int = 45, retry_days: int = 14) -> MaintenanceReport:
-    """Suspend sources that fail, go silent or drift off topic; give
-    suspended and candidate sources another look after a while."""
+             error_limit: int = 5, stale_days: int = 45, retry_days: int = 14, archive: bool = True) -> MaintenanceReport:
+    """Suspend the newsroom's sources that drift off topic and give its
+    suspended and candidate sources another look after a while; with
+    `archive`, maintain the archive sources it reads too (the scheduler
+    does that once for everyone)."""
     now = now or datetime.now(UTC)
-    rep = MaintenanceReport()
+    rep = maintain_archive(db, repo.archive_of(db, tenant_id), client, now, error_limit, stale_days, retry_days) \
+        if archive else MaintenanceReport()
     with db.tenant(tenant_id) as s:
         _recent_searches(s, now)
-        rows = s.execute(select(m.sources)).all()
+        rows = s.execute(select(m.sources).where(repo.own())).all()
         profiles = {}
         for r in rows:
             if r.site_id and r.site_id not in profiles:
                 p = _profile_for(s, r.site_id)
                 profiles[r.site_id] = profile_keywords(p.body) if p else set()
         for r in rows:
-            if r.status != "active":
+            if r.status != "active" or not r.site_id or not profiles.get(r.site_id) or r.status_set_by:
                 continue
-            reason = None
-            if r.consecutive_errors >= error_limit:
-                reason = f"{r.consecutive_errors} failed fetches in a row"
-            elif r.last_item_at and r.last_item_at < now - timedelta(days=stale_days):
-                reason = f"nothing new for more than {stale_days} days"
-            elif r.site_id and profiles.get(r.site_id) and not r.status_set_by:
-                recent = s.execute(
-                    select(m.source_items.c.title, m.source_items.c.summary)
-                    .where(m.source_items.c.source_id == r.id).order_by(m.source_items.c.id.desc()).limit(50)
-                ).all()
-                if len(recent) >= 20:
-                    rel = relevance([Item(url="", title=t.title, summary=t.summary or "") for t in recent], profiles[r.site_id])
-                    if rel < MIN_RELEVANCE:
-                        reason = f"off topic (relevance {rel:.2f} on the last {len(recent)} items)"
-            if reason:
-                repo.set_source_status(s, r.id, "suspended", reason)
-                rep.suspended.append((r.id, reason))
+            recent = _stored(s, r, 50)
+            if len(recent) >= 20:
+                rel = relevance(recent, profiles[r.site_id])
+                if rel < MIN_RELEVANCE:
+                    reason = f"off topic (relevance {rel:.2f} on the last {len(recent)} items)"
+                    repo.set_source_status(s, r.id, "suspended", reason)
+                    rep.suspended.append((r.id, reason))
         # A status a person decided stays as it is.
         due = [r for r in rows if r.status in ("suspended", "candidate") and not r.status_set_by
                and (r.evaluated_at or r.status_changed_at) < now - timedelta(days=retry_days)]
-    if client is None:
-        return rep
+        # What the archive already read stands in for a fetch.
+        stored = {r.id: _stored(s, r, 50, since=now - timedelta(days=30)) for r in due}
     for r in due:
-        try:
-            result = COLLECTORS[r.kind].fetch(client, SourceSpec(r.kind, r.url, r.config or {}))
-        except CoreTrouble:
-            continue  # the Core's trouble, not the source's: try again next time
-        except (httpx.HTTPError, ValueError, KeyError):
-            with db.tenant(tenant_id) as s:
-                s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now))
-            continue
-        ev = rate(result.items, profiles.get(r.site_id, set()), cited_by_site=(r.evidence or {}).get("cited_by_site", 0), now=now)
+        items = stored[r.id]
+        if len(items) < 10:
+            if client is None:
+                continue
+            try:
+                items = COLLECTORS[r.kind].fetch(client, SourceSpec(r.kind, r.url, r.config or {})).items
+            except CoreTrouble:
+                continue  # the Core's trouble, not the source's: try again next time
+            except (httpx.HTTPError, ValueError, KeyError):
+                with db.tenant(tenant_id) as s:
+                    s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now))
+                continue
+        ev = rate(items, profiles.get(r.site_id, set()), cited_by_site=(r.evidence or {}).get("cited_by_site", 0), now=now)
         rep.reevaluated += 1
         with db.tenant(tenant_id) as s:
             s.execute(update(m.sources).where(m.sources.c.id == r.id).values(
@@ -435,4 +450,61 @@ def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: dateti
                 rep.reactivated.append(r.id)
             elif r.status == "candidate" and ev["status"] == "rejected":
                 repo.set_source_status(s, r.id, "rejected", "re-evaluated")
+    return rep
+
+
+def _stored(s, r, limit: int, since: datetime | None = None) -> list[Item]:
+    """The latest items read for a source: in the archive, or by itself before it."""
+    si = m.source_items
+    ids = [r.id] + ([r.archive_id] if r.archive_id else [])
+    q = select(si.c.url, si.c.title, si.c.summary, si.c.author, si.c.published_at, si.c.metrics).where(
+        si.c.source_id.in_(ids))
+    if since is not None:
+        q = q.where(si.c.fetched_at >= since)
+    return [Item(url=x.url, title=x.title, summary=x.summary or "", author=x.author, published_at=x.published_at,
+                 metrics=x.metrics or {}) for x in s.execute(q.order_by(si.c.id.desc()).limit(limit))]
+
+
+def maintain_archive(db, archive: str, client: httpx.Client | None = None, now: datetime | None = None,
+                     error_limit: int = 5, stale_days: int = 45, retry_days: int = 14) -> MaintenanceReport:
+    """Suspend archive sources that fail or go silent, for every newsroom;
+    read the suspended ones again after a while and bring back those that
+    answer with news."""
+    now = now or datetime.now(UTC)
+    rep = MaintenanceReport()
+    with db.tenant(archive) as s:
+        _recent_searches(s, now)
+        rows = s.execute(select(m.sources).where(m.sources.c.shared.is_(True))).all()
+        for r in rows:
+            if r.status != "active":
+                continue
+            reason = None
+            if r.consecutive_errors >= error_limit:
+                reason = f"{r.consecutive_errors} failed fetches in a row"
+            elif r.last_item_at and r.last_item_at < now - timedelta(days=stale_days):
+                reason = f"nothing new for more than {stale_days} days"
+            if reason:
+                repo.set_source_status(s, r.id, "suspended", reason)
+                rep.suspended.append((r.id, reason))
+        due = [r for r in rows if r.status == "suspended" and not r.status_set_by
+               and (r.evaluated_at or r.status_changed_at) < now - timedelta(days=retry_days)]
+    if client is None:
+        return rep
+    for r in due:
+        try:
+            result = COLLECTORS[r.kind].fetch(client, SourceSpec(r.kind, r.url, r.config or {}))
+        except CoreTrouble:
+            continue
+        except (httpx.HTTPError, ValueError, KeyError):
+            with db.tenant(archive) as s:
+                s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now))
+            continue
+        dates = [i.published_at for i in result.items if i.published_at]
+        fresh = not dates or max(dates) >= now - timedelta(days=stale_days)
+        with db.tenant(archive) as s:
+            s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now, consecutive_errors=0))
+            if result.items and fresh:
+                repo.set_source_status(s, r.id, "active", "re-evaluated")
+                rep.reactivated.append(r.id)
+        rep.reevaluated += 1
     return rep

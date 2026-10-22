@@ -89,6 +89,12 @@ def tenant(db) -> str:
     from editor import repo
 
     tid = f"t-{uuid.uuid4().hex[:8]}"
+    if not db.sqlite:
+        # The shared archive outlives a test on the session's database: each
+        # test starts from an empty one, as a fresh installation does.
+        with psycopg.connect(db.admin_url, autocommit=True) as conn:
+            conn.execute("TRUNCATE editor.sources, editor.source_items, editor.observations, editor.topics, "
+                         "editor.topic_items, editor.trend_scores, editor.jobs, editor.llm_usage CASCADE")
     with db.tenant(tid) as s:
         repo.ensure_tenant(s, tid, name=tid)
     return tid
@@ -117,3 +123,20 @@ def pause(s, seconds: float) -> None:
         time.sleep(seconds)
     else:
         s.execute(text("SELECT pg_sleep(:s)"), {"s": seconds})
+
+
+def feed(db, tenant, source_id, items):
+    """Store items as the hourly collection does: in the archive, under the
+    archive source that `source_id` (a source a newsroom follows) follows."""
+    from sqlalchemy import text
+
+    from editor import repo
+    from editor.ingest import SourceReport, store_items
+
+    with db.tenant(tenant) as s:
+        aid = s.execute(text("SELECT archive_id FROM editor.sources WHERE id = :i"), {"i": source_id}).scalar()
+    archive = repo.archive_of(db, tenant)
+    report = SourceReport(aid, "test")
+    with db.tenant(archive) as s:
+        store_items(s, archive, aid, items, report)
+    return report

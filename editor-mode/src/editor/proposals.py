@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -69,17 +69,23 @@ def _validator(allowed_ids: set[int]):
     return validate
 
 
-def _items_for(s, topic_id: int, limit: int = 12):
+def _items_for(s, topic_id: int, site_id: int | None = None, limit: int = 12):
     si = m.source_items
-    return s.execute(
+    f = m.sources.alias("f")
+    rows = s.execute(
         select(si.c.id, si.c.title, si.c.url, si.c.summary, si.c.published_at, si.c.source_id,
-               m.sources.c.name.label("source"), m.sources.c.score.label("source_score"))
+               func.coalesce(f.c.name, m.sources.c.name).label("source"),
+               func.coalesce(f.c.score, m.sources.c.score).label("source_score"))
         .join(m.topic_items, m.topic_items.c.item_id == si.c.id)
         .join(m.sources, m.sources.c.id == si.c.source_id)
+        # The site's own name and rating of the source, when it follows it.
+        .outerjoin(f, and_(or_(f.c.id == si.c.source_id, f.c.archive_id == si.c.source_id),
+                           f.c.shared.is_not(True), f.c.site_id == site_id))
         .where(m.topic_items.c.topic_id == topic_id, si.c.duplicate_of.is_(None))
-        .order_by(si.c.published_at.desc().nulls_last())
-        .limit(limit)
+        .order_by(si.c.published_at.desc().nulls_last(), si.c.id)
+        .limit(limit * 2)
     ).all()
+    return list({r.id: r for r in rows}.values())[:limit]
 
 
 def _prompt(profile: dict, label: str, items) -> str:
@@ -127,7 +133,7 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
             if len(work) >= limit:
                 break
             label = s.execute(select(m.topics.c.label).where(m.topics.c.id == o.topic_id)).scalar()
-            items = _items_for(s, o.topic_id)
+            items = _items_for(s, o.topic_id, site_id)
             # A single weak item (one new repository, one post) is not yet a
             # story, nor are two items from the same source (the same
             # repository found by two searches).
@@ -162,6 +168,79 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
             ).returning(m.proposals.c.id)).scalar_one()
             s.execute(insert(m.proposal_citations).values(
                 [{"tenant_id": tenant_id, "proposal_id": pid, "item_id": i} for i in value["citations"]]))
+            created.append(pid)
+    return created
+
+
+TITLES_SYSTEM = (
+    "You are the editorial planner of a website. The items listed (each has an id) are the trend of the moment "
+    "in the site's sector. Using ONLY these items, propose {n} different articles the site could write on it: "
+    "different angles, not the same headline reworded. Write in the site's language. Reply with JSON only: "
+    '{{"options": [{{"title": "<headline, max 120 chars>", "angle": "<what the article says, for this site, '
+    '1-3 sentences>", "why_now": "<why this matters now, from the items>", "format": "<one of: '
+    + ", ".join(FORMATS) + '>", "citations": [<ids of the items it relies on>]}}]}}. '
+    "Cite at least one id in each option; cite only ids from the list."
+)
+
+
+def _options_validator(allowed_ids: set[int], n: int):
+    one = _validator(allowed_ids)
+
+    def validate(v) -> list[dict]:
+        if not isinstance(v, dict) or not isinstance(v.get("options"), list) or not v["options"]:
+            raise ValueError('expected {"options": [...]}')
+        out, seen = [], set()
+        for o in v["options"][:n]:
+            o = one(o)
+            if o["title"].lower() not in seen:
+                seen.add(o["title"].lower())
+                out.append(o)
+        return out
+
+    return validate
+
+
+def propose_titles(db, tenant_id: str, site_id: int, topic_id: int, core: CoreClient | None = None,
+                   n: int = 3) -> list[int]:
+    """Titles to choose from for one trend, asked for by a person: they
+    become proposals of the site, each with a short summary (its angle)."""
+    from . import opportunity
+
+    p = m.editorial_profiles
+    with db.tenant(tenant_id) as s:
+        prof = s.execute(select(p).where(p.c.site_id == site_id, p.c.status == "approved")).first()
+        if prof is None:
+            return []
+        label = s.execute(select(m.topics.c.label).where(m.topics.c.id == topic_id)).scalar()
+        items = _items_for(s, topic_id, site_id)
+    if label is None or not items:
+        return []
+    score = next((o.score for o in opportunity.score_site(db, tenant_id, site_id) if o.topic_id == topic_id), None)
+    allowed = {it.id for it in items}
+    options, calls, by = None, [], "heuristic"
+    if core is not None:
+        try:
+            options, calls = core.chat_json(TITLES_SYSTEM.format(n=n), _prompt(prof.body, label, items),
+                                            _options_validator(allowed, n))
+            by = "model"
+        except CoreError as e:
+            log.warning("titles for topic %s failed: %s", topic_id, e)
+    if options is None:
+        # Without the model, the latest headlines of the trend.
+        options = [{"title": it.title[:160], "angle": "", "why_now": "", "format": "news", "citations": [it.id]}
+                   for it in items[:n]]
+    created = []
+    with db.tenant(tenant_id) as s:
+        for c in calls:
+            repo.record_llm_usage(s, tenant_id, "proposal", c.model, c.usage, c.cost)
+        for o in options:
+            pid = s.execute(insert(m.proposals).values(
+                tenant_id=tenant_id, site_id=site_id, topic_id=topic_id, profile_id=prof.id,
+                opportunity=score or 0.0, title=o["title"], angle=o["angle"], why_now=o["why_now"],
+                format=o["format"], generated_by=by,
+            ).returning(m.proposals.c.id)).scalar_one()
+            s.execute(insert(m.proposal_citations).values(
+                [{"tenant_id": tenant_id, "proposal_id": pid, "item_id": i} for i in o["citations"]]))
             created.append(pid)
     return created
 

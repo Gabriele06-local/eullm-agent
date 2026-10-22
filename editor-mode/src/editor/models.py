@@ -120,6 +120,10 @@ sources = Table(
     Column("last_modified", Text),
     Column("last_fetched_at", _ts()),
     Column("last_error", Text),
+    # An archive source (read once for every newsroom) or a newsroom's
+    # source that follows one.
+    Column("shared", Boolean),
+    Column("archive_id", BigInteger),
 )
 
 source_items = Table(
@@ -174,6 +178,15 @@ topic_items = Table(
     _tenant(),
     Column("topic_id", BigInteger, primary_key=True),
     Column("item_id", BigInteger, primary_key=True),
+)
+
+trend_snapshots = Table(
+    "trend_snapshots",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    _tenant(),
+    Column("taken_at", _ts()),
+    Column("topics", JSONB, nullable=False),
 )
 
 trend_scores = Table(

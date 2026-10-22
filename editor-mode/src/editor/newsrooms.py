@@ -15,7 +15,7 @@ import unicodedata
 from sqlalchemy import func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, models as m, quotas, tenant_data
+from . import accounts, models as m, quotas, repo, tenant_data
 from .publishing import TENANT_ID
 
 LIMITS = ("max_sites", "max_active_sources", "max_items_per_day", "max_llm_cost_month", "max_drafts_month")
@@ -142,7 +142,7 @@ def _describe(row, used: dict, members: int) -> dict:
 
 def listing(admin, db, tenant_id: str | None = None, external_ref: str | None = None) -> list[dict]:
     """Every newsroom (or one) with its plan, usage and number of people."""
-    q = select(m.tenants).order_by(m.tenants.c.name)
+    q = select(m.tenants).where(m.tenants.c.tenant_id != repo.ARCHIVE).order_by(m.tenants.c.name)
     if tenant_id is not None:
         q = q.where(m.tenants.c.tenant_id == tenant_id)
     if external_ref is not None:

@@ -107,7 +107,8 @@ def test_discovery_and_maintenance(db, tenant):
 
     with db.tenant(tenant) as s:
         c = m.sources.c
-        rows = s.execute(select(c.kind, c.name, c.origin, c.status, c.score, c.evidence).order_by(c.id)).all()
+        rows = s.execute(select(c.kind, c.name, c.origin, c.status, c.score, c.evidence).where(repo.own())
+                         .order_by(c.id)).all()
     by_origin = {(r.kind, r.origin): r for r in rows}
     agcom = by_origin[("rss", "site_outbound")]
     assert agcom.status == "active" and agcom.evidence["cited_by_site"] >= 1
@@ -118,7 +119,9 @@ def test_discovery_and_maintenance(db, tenant):
 
     # Maintenance: repeated failures suspend; a later re-evaluation reactivates.
     with db.tenant(tenant) as s:
-        sid = s.execute(text("SELECT id FROM editor.sources WHERE origin = 'site_outbound'")).scalar()
+        sid = s.execute(text("SELECT archive_id FROM editor.sources WHERE origin = 'site_outbound' "
+                             "AND shared IS NOT TRUE")).scalar()
+    with db.tenant(repo.archive_of(db, tenant)) as s:
         s.execute(text("UPDATE editor.sources SET consecutive_errors = 5 WHERE id = :i"), {"i": sid})
     m1 = src.maintain(db, tenant)
     assert (sid, "5 failed fetches in a row") in m1.suspended
@@ -136,24 +139,28 @@ def test_discovery_and_maintenance(db, tenant):
 
     # A source a person suspended stays suspended.
     with db.tenant(tenant) as s:
-        repo.set_source_status(s, sid, "suspended", "set by francesco", by="francesco")
+        fid = s.execute(text("SELECT id FROM editor.sources WHERE archive_id = :i"), {"i": sid}).scalar()
+        repo.set_source_status(s, fid, "suspended", "set by francesco", by="francesco")
     with respx.mock(assert_all_called=False) as router:
         router.get("https://agcom.it/rss").mock(return_value=httpx.Response(200, text=feed(
             [f"Fibra FTTH e Wi-Fi: relazione {i}" for i in range(10)])))
         with httpx.Client() as c:
             m3 = src.maintain(db, tenant, c, now=later + timedelta(days=30))
-    assert sid not in m3.reactivated
+    assert fid not in m3.reactivated
     with db.tenant(tenant) as s:
-        assert s.execute(text("SELECT status FROM editor.sources WHERE id = :i"), {"i": sid}).scalar() == "suspended"
+        assert s.execute(text("SELECT status FROM editor.sources WHERE id = :i"), {"i": fid}).scalar() == "suspended"
 
 
 def test_stale_source_is_suspended(db, tenant):
     from editor import repo
     with db.tenant(tenant) as s:
         sid = repo.upsert_source(s, tenant, kind="rss", name="old", url="https://old.example/feed")
-        s.execute(update(m.sources).where(m.sources.c.id == sid).values(last_item_at=datetime.now(UTC) - timedelta(days=90)))
+        aid = s.execute(select(m.sources.c.archive_id).where(m.sources.c.id == sid)).scalar()
+    # Silence is the source's, for everyone: it is suspended in the archive.
+    with db.tenant(repo.archive_of(db, tenant)) as s:
+        s.execute(update(m.sources).where(m.sources.c.id == aid).values(last_item_at=datetime.now(UTC) - timedelta(days=90)))
     rep = src.maintain(db, tenant)
-    assert rep.suspended == [(sid, "nothing new for more than 45 days")]
+    assert rep.suspended == [(aid, "nothing new for more than 45 days")]
 
 
 def test_old_hacker_news_searches_follow_what_is_new(db, tenant):

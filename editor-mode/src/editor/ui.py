@@ -17,10 +17,10 @@ from zoneinfo import ZoneInfo
 
 from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from sqlalchemy import bindparam, func, select, text, update
+from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, tenant_data, vault
+from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -101,6 +101,8 @@ PROBLEMS = [
     (r"(\d+) failed fetches in a row", N_(r"\1 letture fallite di fila: ritorna in valutazione tra due settimane.")),
     (r"off topic \(relevance ([\d.]+) on the last (\d+) items\)",
      N_(r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane.")),
+    (r"replaced by GitHub Trending",
+     N_("Sostituita da GitHub Trending: conta quali repository gli sviluppatori premiano oggi, non quali contengono una parola.")),
 ]
 
 
@@ -372,6 +374,11 @@ def register(app, ctx) -> None:
                    (SELECT max(src.score) FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
                      JOIN editor.sources src ON src.id = si.source_id WHERE ti.topic_id = t.id) AS best_source
             FROM editor.topics t WHERE t.updated_at > :since
+              -- Topics of the archive with news from a source the site follows.
+              AND EXISTS (SELECT 1 FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
+                          JOIN editor.sources f ON f.id = si.source_id OR f.archive_id = si.source_id
+                          WHERE ti.topic_id = t.id AND f.status = 'active' AND f.shared IS NOT TRUE
+                            AND (f.site_id = :site OR f.site_id IS NULL))
             ORDER BY opportunity DESC NULLS LAST, hype DESC NULLS LAST LIMIT :lim""").bindparams(
             bindparam("since", type_=m.topics.c.updated_at.type)),
             {"site": site_id, "lim": limit, "since": datetime.now(UTC) - timedelta(days=7)}).all()
@@ -484,12 +491,18 @@ def register(app, ctx) -> None:
                 .join(m.drafts, m.drafts.c.id == m.publications.c.draft_id)
                 .join(m.publish_targets, m.publish_targets.c.id == m.publications.c.target_id)
                 .where(m.publications.c.status == "pending_approval").order_by(m.publications.c.id)).all()
+            # Suspended in the last week: by the maintenance for this newsroom,
+            # or in the archive for everyone (a feed that stopped answering).
+            a = m.sources.alias("a")
+            week_ago = datetime.now(UTC) - timedelta(days=7)
             stopped = s.execute(
-                select(m.sources.c.id, m.sources.c.name, m.sources.c.status_reason, m.sources.c.site_id,
-                       m.sites.c.domain)
+                select(m.sources.c.id, func.coalesce(a.c.status_reason, m.sources.c.status_reason).label("status_reason"),
+                       m.sources.c.name, m.sources.c.site_id, m.sites.c.domain)
                 .join(m.sites, m.sites.c.id == m.sources.c.site_id)
-                .where(m.sources.c.status == "suspended",
-                       m.sources.c.status_changed_at > datetime.now(UTC) - timedelta(days=7))).all()
+                .outerjoin(a, a.c.id == m.sources.c.archive_id)
+                .where(or_(and_(m.sources.c.status == "suspended", m.sources.c.status_changed_at > week_ago),
+                           and_(m.sources.c.status == "active", a.c.status == "suspended",
+                                a.c.status_changed_at > week_ago)))).all()
             draft_counts = dict(s.execute(
                 select(m.drafts.c.status, func.count()).where(m.drafts.c.status.in_(("draft", "needs_review")))
                 .group_by(m.drafts.c.status)).all())
@@ -500,10 +513,13 @@ def register(app, ctx) -> None:
             tops = [t for t in topic_scores(s, sid, 40) if t.opportunity is not None and (
                 (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
                 or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:4] if sid else []
-            last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at))).scalar()
-            # Fetches the Core could not make (down, or out of daily fetches) in the last round.
+            # The archive sources this newsroom follows: when they were last read,
+            # and fetches the Core could not make (down, or out of daily fetches).
+            followed = list(repo.followed_archive(s))
+            last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at)).where(
+                m.sources.c.id.in_(followed))).scalar()
             troubles = list(s.execute(select(m.sources.c.last_error).where(
-                m.sources.c.status == "active", m.sources.c.last_error.like("CoreTrouble%"),
+                m.sources.c.id.in_(followed), m.sources.c.status == "active", m.sources.c.last_error.like("CoreTrouble%"),
                 m.sources.c.last_fetched_at > datetime.now(UTC) - timedelta(hours=2))).scalars())
             core_trouble = {"n": len(troubles), "limit": any("limit" in e for e in troubles)} if troubles else None
             briefing = s.execute(select(m.briefings).where(
@@ -525,7 +541,7 @@ def register(app, ctx) -> None:
         def count(table, *where):
             return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
         of_site = m.sources.c.site_id == sid
-        site_items = m.source_items.c.source_id.in_(select(m.sources.c.id).where(of_site))
+        site_items = repo.followed_by(sid)
         working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
         steps = [
             {"title": t("Aggiungi il sito"), "past": t("Sito aggiunto"), "done": bool(sites), "href": None,
@@ -709,9 +725,15 @@ def register(app, ctx) -> None:
             rows, counts = [], {}
             if site:
                 src = m.sources
+                a = m.sources.alias("a")
                 counts = dict(s.execute(select(src.c.status, func.count()).where(src.c.site_id == site.id)
                                         .group_by(src.c.status)).all())
-                q = select(src).where(src.c.site_id == site.id).order_by(src.c.score.desc().nulls_last())
+                # Each source with what the shared archive knows of it: when it
+                # last brought news, its last read error, a suspension for everyone.
+                q = (select(src, a.c.last_item_at.label("shared_last_item_at"), a.c.last_error.label("shared_error"),
+                            a.c.status.label("shared_status"), a.c.status_reason.label("shared_reason"))
+                     .outerjoin(a, a.c.id == src.c.archive_id)
+                     .where(src.c.site_id == site.id).order_by(src.c.score.desc().nulls_last()))
                 if status != "all":
                     q = q.where(src.c.status == status)
                 rows = s.execute(q.limit(500)).all()
@@ -727,21 +749,28 @@ def register(app, ctx) -> None:
                 elsewhere = [{"id": i, "domain": d, "count": n} for i, d, n in s.execute(q)]
             # How much each source brought in the last week: one that brings
             # nothing is easy to spot.
+            # A source's news are in the archive (and, collected before it, its own).
+            reads: dict[int, int] = {}
+            for r in rows:
+                reads[r.id] = r.id
+                if r.archive_id:
+                    reads[r.archive_id] = r.id
             week: dict[int, int] = {}
             if rows:
                 it = m.source_items
-                week = dict(s.execute(select(it.c.source_id, func.count()).where(
-                    it.c.source_id.in_([r.id for r in rows]), it.c.fetched_at >= datetime.now(UTC) - timedelta(days=7))
-                    .group_by(it.c.source_id)).all())
+                for sid, n in s.execute(select(it.c.source_id, func.count()).where(
+                        it.c.source_id.in_(list(reads)), it.c.fetched_at >= datetime.now(UTC) - timedelta(days=7))
+                        .group_by(it.c.source_id)):
+                    week[reads[sid]] = week.get(reads[sid], 0) + n
             # The latest news of each source shown: what it actually brings.
             latest: dict[int, list] = {}
             if rows:
                 it = m.source_items
                 for r in s.execute(select(it.c.source_id, it.c.title, it.c.url)
-                                   .where(it.c.source_id.in_([r.id for r in rows]))
+                                   .where(it.c.source_id.in_(list(reads)))
                                    .order_by(it.c.published_at.desc().nulls_last()).limit(3000)):
-                    if len(latest.setdefault(r.source_id, [])) < 3:
-                        latest[r.source_id].append({"title": r.title, "url": r.url})
+                    if len(latest.setdefault(reads[r.source_id], [])) < 3:
+                        latest[reads[r.source_id]].append({"title": r.title, "url": r.url})
             return render(request, "sources.html.j2", c, s, "sources", _sites=(sites, site), rows=rows,
                           counts=counts, total=sum(counts.values()), status=status, origins=ORIGINS, kinds=KINDS,
                           usage=quotas.usage(s), latest=latest, elsewhere=elsewhere, week=week)
@@ -753,7 +782,7 @@ def register(app, ctx) -> None:
         if status not in ("active", "suspended", "rejected"):
             raise HTTPException(400, "unknown status")
         with db.tenant(c.tenant_id) as s:
-            name = s.execute(select(m.sources.c.name).where(m.sources.c.id == source_id)).scalar()
+            name = s.execute(select(m.sources.c.name).where(m.sources.c.id == source_id, repo.own())).scalar()
             if name is None:
                 raise HTTPException(404, "source not found")
             if status == "active":
@@ -783,10 +812,39 @@ def register(app, ctx) -> None:
             # Written drafts stay in the plan for a week, then live under Bozze.
             week = datetime.now(UTC) - timedelta(days=7)
             plan = [p for p in plan if p.status != "drafted" or p.created_at > week]
+            # The trend of the moment: the archive's latest snapshot, the
+            # topics in it that suit this site, and titles to choose from.
+            archive = repo.archive_of(db, c.tenant_id)
+            snap = trends.latest(s, archive)
+            day = trends.today(s, archive, start_of_day(s))
+            moment = []
+            if site and snap:
+                fit = {x.id: x.opportunity for x in topics}
+                for x in snap.topics:
+                    if (fit.get(x["topic_id"]) or 0) >= props.MIN_OPPORTUNITY and len(moment) < 3:
+                        moment.append(dict(x, opportunity=fit[x["topic_id"]]))
+                offered = proposal_rows(s, site.id, ("proposed",), 60)
+                for x in moment:
+                    x["titles"] = [p for p in offered if p.topic_id == x["topic_id"]]
+                shown = {p.id for x in moment for p in x["titles"]}
+                plan = [p for p in plan if p.id not in shown]
             explained = proposal_details(s, plan)
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,
-                          dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None)
+                          dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None,
+                          snap=snap, day=day, moment=moment, local=lambda at: at.astimezone(zone(s)))
+
+    @app.post("/ui/trends/{topic_id}/titles")
+    def ui_titles(request: Request, topic_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        """Titles to choose from for one trend of the moment."""
+        with db.tenant(c.tenant_id) as s:
+            _, site = current_site(s, request)
+            if site is None:
+                return done("/trends", t("Aggiungi prima un sito."))
+            if s.execute(select(m.topics.c.id).where(m.topics.c.id == topic_id)).scalar() is None:
+                raise HTTPException(404, "topic not found")
+        ctx.run_titles(c.tenant_id, site.id, topic_id)
+        return done("/trends#moment", t("Sto preparando i titoli: compaiono qui tra qualche minuto."))
 
     @app.post("/ui/proposals/now")
     def ui_propose_now(request: Request, c: auth.Caller = Depends(ctx.need("editor"))):

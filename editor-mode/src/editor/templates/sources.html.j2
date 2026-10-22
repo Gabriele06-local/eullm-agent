@@ -60,15 +60,17 @@
           {% else %}<span class="flat">–</span>{% endif %}
         </td>
         <td class="num">{% if comp.get('relevance') is not none %}{{ comp.get('relevance')|num }}{% else %}–{% endif %}</td>
-        <td>{{ when(r.last_item_at, 'day') }}</td>
+        <td>{{ when(r.shared_last_item_at or r.last_item_at, 'day') }}</td>
         <td class="num">{{ week.get(r.id, 0) }}</td>
         <td>
           {% set st = {'active': ('green', _('Attiva')), 'candidate': ('blue', _('Candidata')), 'suspended': ('teal', _('Sospesa')), 'rejected': ('', _('Scartata'))}.get(r.status, ('', r.status)) %}
           <span class="chip {{ st[0] }}">{{ st[1] }}</span>
-          {% if r.status_reason and r.status != 'active' %}<small>{{ r.status_reason|problem }}</small>
+          {% if r.status == 'active' and r.shared_status == 'suspended' %}<small>{{ _('Non si legge per nessuna redazione:') }} {{ r.shared_reason|problem if r.shared_reason else '' }}</small>
+          {% elif r.status_reason and r.status != 'active' %}<small>{{ r.status_reason|problem }}</small>
           {% elif r.status == 'rejected' and comp.get('relevance') is not none and comp.get('relevance') < 0.1 %}<small>{{ _('parla poco dei temi del sito') }}</small>
           {% elif r.status == 'rejected' %}<small>{{ _('punteggio sotto 0,35') }}</small>{% endif %}
-          {% if r.last_error %}<details><summary class="hint">{{ _('Ultimo errore di lettura') }}</summary><small style="display: block; overflow-wrap: anywhere;">{{ r.last_error }}</small></details>{% endif %}
+          {% set err = r.shared_error or r.last_error %}
+          {% if err %}<details><summary class="hint">{{ _('Ultimo errore di lettura') }}</summary><small style="display: block; overflow-wrap: anywhere;">{{ err }}</small></details>{% endif %}
           {% if comp %}<details><summary class="hint">{{ _('Perché questo punteggio') }}</summary>
             <small style="display: block;">{{ _('pertinenza {relevance} · frequenza {frequency} · freschezza {freshness} · originalità {originality} · qualità {quality} · affidabilità {reliability}', relevance=comp.get('relevance', 0)|num, frequency=comp.get('frequency', 0)|num, freshness=comp.get('freshness', 0)|num, originality=comp.get('originality', 0)|num, quality=comp.get('quality', 0)|num, reliability=comp.get('reliability', 0)|num) }}</small>
           </details>{% endif %}

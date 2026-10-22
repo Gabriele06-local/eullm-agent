@@ -14,7 +14,7 @@ from sqlalchemy import text
 from editor import auth, briefing, quotas, repo
 from editor.collectors import Item
 from editor.core_client import CoreClient, CoreError
-from editor.ingest import SourceReport, store_items
+from conftest import feed
 from editor.quotas import QuotaExceeded
 
 from conftest import pause, set_plan
@@ -116,12 +116,14 @@ def test_site_and_item_limits(db, tenant):
             repo.ensure_site(s, tenant, "b.example", "B")
     with db.tenant(tenant) as s:
         sid = repo.upsert_source(s, tenant, kind="rss", name="x", url="https://x.example/f")
-        rep = SourceReport(sid, "x")
-        store_items(s, tenant, sid, [Item(url=f"https://x.example/{i}", title=f"Titolo numero {i} diverso {i * 7}") for i in range(5)], rep)
-    assert (rep.new, rep.over_quota) == (3, 2)
+    rep = feed(db, tenant, sid, [Item(url=f"https://x.example/{i}", title=f"Titolo numero {i} diverso {i * 7}") for i in range(5)])
+    # The shared archive reads for every newsroom, so one newsroom's limit
+    # does not stop it; a newsroom that is its own archive (SQLite) stops.
+    stored = 3 if db.sqlite else 5
+    assert (rep.new, rep.over_quota) == (stored, 5 - stored)
     with db.tenant(tenant) as s:
         u = quotas.usage(s)
-    assert u.used["items_today"] == 3 and u.remaining("items") == 0
+    assert u.used["items_today"] == stored and u.remaining("items") == 0
 
 
 def test_model_budget_stops_calls_before_they_reach_the_core(db, tenant):
@@ -167,7 +169,7 @@ def test_active_source_limit_keeps_new_ones_as_candidates(db, tenant, monkeypatc
     assert (rep.active, rep.candidate) == (0, 1)
     assert any("limit reached" in n for n in rep.notes)
     with db.tenant(tenant) as s:
-        st = s.execute(text("SELECT status FROM editor.sources WHERE kind = 'hackernews'")).scalar()
+        st = s.execute(text("SELECT status FROM editor.sources WHERE kind = 'hackernews' AND shared IS NOT TRUE")).scalar()
     assert st == "candidate"
 
 
