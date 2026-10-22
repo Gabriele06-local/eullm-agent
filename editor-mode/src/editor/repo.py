@@ -35,6 +35,23 @@ def ensure_site(s: Session, tenant_id: str, domain: str, name: str, language: st
     return s.execute(stmt).scalar_one()
 
 
+def add_site(s: Session, tenant_id: str, domain: str) -> int:
+    """The site as soon as a person adds it, before its analysis: it shows
+    in the menus and on the Desk while it is read. The analysis fills in
+    its name and language; the plan's number of sites is checked here."""
+    sid = s.execute(select(m.sites.c.id).where(m.sites.c.domain == domain)).scalar()
+    if sid is not None:
+        return sid
+    from .quotas import check
+
+    ensure_tenant(s, tenant_id, tenant_id)
+    check(s, "sites")
+    return s.execute(insert(m.sites).values(tenant_id=tenant_id, domain=domain, name=domain, language="und")
+                     .on_conflict_do_nothing(index_elements=["tenant_id", "domain"])
+                     .returning(m.sites.c.id)).scalar() or s.execute(
+        select(m.sites.c.id).where(m.sites.c.domain == domain)).scalar_one()
+
+
 def upsert_source(
     s: Session,
     tenant_id: str,

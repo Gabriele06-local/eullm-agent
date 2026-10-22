@@ -9,6 +9,7 @@
     {% if x.status == 'running' %}<span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('In corso') }}</span>
     {% elif x.status == 'queued' %}<span class="chip">{{ _('In coda') }}</span>
     {% elif x.status == 'done' %}<span class="chip green">{{ _('Fatto') }}</span>
+    {% elif x.status == 'partial' %}<span class="chip amber">{{ _('Da completare') }}</span>
     {% else %}<span class="chip red">{{ _('Non riuscito') }}</span>{% endif %}
     <div class="what">
       <strong>{{ x.what }}{% if x.where %} · {{ x.where }}{% endif %}</strong>

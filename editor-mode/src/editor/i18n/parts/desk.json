@@ -413,12 +413,6 @@
   "fr": "Lecture des sources : {n} sur {total} ({name})",
   "es": "Lectura de las fuentes: {n} de {total} ({name})"
  },
- "Il modello ricava settore, temi, pubblico e tono da {n} articoli letti": {
-  "en": "The model works out sector, topics, audience and tone from {n} articles read",
-  "de": "Das Modell leitet aus {n} gelesenen Artikeln Branche, Themen, Publikum und Ton ab",
-  "fr": "Le modèle déduit secteur, sujets, public et ton de {n} articles lus",
-  "es": "El modelo deduce sector, temas, público y tono de {n} artículos leídos"
- },
  "Trend del momento": {
   "en": "Trend of the moment",
   "de": "Trend des Moments",
@@ -556,5 +550,41 @@
   "de": "Verfolgen Sie ihn im Kasten Aktivität.",
   "fr": "Suivez-le dans l'encadré Activité.",
   "es": "Síguelo en el recuadro Actividad."
+ },
+ "Da completare": {
+  "en": "To complete",
+  "de": "Zu vervollständigen",
+  "fr": "À compléter",
+  "es": "Por completar"
+ },
+ "Profilo da approvare, ma incompleto: il modello non ha ricavato settore, pubblico e stile. Rianalizza, oppure completali tu prima di approvare.": {
+  "en": "Profile to approve, but incomplete: the model did not work out sector, audience and style. Analyse again, or fill them in yourself before approving.",
+  "de": "Profil zur Freigabe, aber unvollständig: Das Modell hat Branche, Publikum und Stil nicht ermittelt. Analysieren Sie erneut oder ergänzen Sie sie selbst vor der Freigabe.",
+  "fr": "Profil à approuver, mais incomplet : le modèle n'a pas déduit secteur, public et style. Relancez l'analyse, ou complétez-les vous-même avant d'approuver.",
+  "es": "Perfil por aprobar, pero incompleto: el modelo no ha deducido sector, público y estilo. Vuelve a analizar, o complétalos tú antes de aprobar."
+ },
+ "Motivo: {why}": {
+  "en": "Reason: {why}",
+  "de": "Grund: {why}",
+  "fr": "Motif : {why}",
+  "es": "Motivo: {why}"
+ },
+ "Il modello ricava settore, temi, pubblico e tono da {n} articoli letti (di solito 1-3 minuti)": {
+  "en": "The model works out sector, topics, audience and tone from {n} articles read (usually 1-3 minutes)",
+  "de": "Das Modell leitet aus {n} gelesenen Artikeln Branche, Themen, Publikum und Ton ab (meist 1-3 Minuten)",
+  "fr": "Le modèle déduit secteur, sujets, public et ton de {n} articles lus (en général 1 à 3 minutes)",
+  "es": "El modelo deduce sector, temas, público y tono de {n} artículos leídos (normalmente 1-3 minutos)"
+ },
+ "Il sito non risponde: nemmeno robots.txt si può leggere. Controlla che il dominio sia scritto giusto e che il sito sia online.": {
+  "en": "The site does not answer: not even robots.txt can be read. Check that the domain is spelled right and the site is online.",
+  "de": "Die Website antwortet nicht: Nicht einmal robots.txt lässt sich lesen. Prüfen Sie, ob die Domain richtig geschrieben und die Website online ist.",
+  "fr": "Le site ne répond pas : même robots.txt ne peut pas être lu. Vérifiez que le domaine est bien écrit et que le site est en ligne.",
+  "es": "El sitio no responde: ni siquiera se puede leer robots.txt. Comprueba que el dominio esté bien escrito y que el sitio esté en línea."
+ },
+ "Il piano non ha posto per un altro sito: scegline uno più grande in Abbonamento.": {
+  "en": "The plan has no room for another site: choose a bigger one in Subscription.",
+  "de": "Der Tarif hat keinen Platz für eine weitere Website: Wählen Sie unter Abonnement einen größeren.",
+  "fr": "Le forfait n'a pas de place pour un autre site : choisissez-en un plus grand dans Abonnement.",
+  "es": "El plan no tiene sitio para otro sitio web: elige uno mayor en Suscripción."
  }
 }

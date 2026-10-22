@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.12.1
+
+### Fixed
+
+- Editor Mode: a site added from the dashboard is listed at once, in the
+  sidebar and on the Desk, while its analysis waits or runs; before it
+  appeared only when the analysis ended.
+- Activity: an analysis that could not read the site shows as failed, in
+  red, with the reason (for example a domain that does not answer, not even
+  robots.txt), instead of "Done". A profile the model could not complete
+  says so ("Da completare") and why; a search for sources before the
+  profile is approved says that sources come after the approval.
+- A newsroom runs two jobs at a time instead of one, so a second site's
+  analysis no longer waits minutes behind the first one's model step; the
+  same work on the same subject, and two collections, never run together.
+  The model step says it usually takes 1-3 minutes, and it is skipped when
+  the site could not be read.
+
 ## 0.12.0
 
 ### Added

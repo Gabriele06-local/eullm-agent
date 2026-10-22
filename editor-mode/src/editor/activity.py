@@ -44,14 +44,20 @@ def _site_link(site_id, back: str) -> str:
     return f"/switch?site={site_id}&back={quote(back, safe='')}" if site_id else back
 
 
-def _result(kind: str, r: dict, site_id) -> tuple[list[str], str | None, str | None]:
+def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tuple[list[str], str | None, str | None]:
     """Sentences on what the job produced, and a link to it."""
     if kind == "analysis":
         if r.get("status") == "failed":
-            return [t("Il sito non si è potuto leggere.")], _site_link(site_id, "/site"), t("Vedi i dettagli")
+            return [t("Il sito non si è potuto leggere.")] + [humanize(p) for p in r.get("problems") or []], \
+                _site_link(site_id, "/site"), t("Vedi i dettagli")
         out = []
         if r.get("profile_id") and r.get("changes"):
             out.append(t("Il sito è cambiato: nuova versione del profilo da approvare ({n} differenze).", n=r["changes"]))
+        elif r.get("profile_id") and "incomplete" in r:
+            out.append(t("Profilo da approvare, ma incompleto: il modello non ha ricavato settore, pubblico e stile. "
+                         "Rianalizza, oppure completali tu prima di approvare."))
+            if r["incomplete"]:
+                out.append(t("Motivo: {why}", why=humanize(r["incomplete"])))
         elif r.get("profile_id"):
             out.append(t("Profilo pronto da approvare."))
         else:
@@ -151,7 +157,12 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
         elif r.status == "done":
             item["state"] = t("Finito alle {time}, in {d}", time=_aware(r.finished_at, now).astimezone(tz).strftime("%H:%M"),
                               d=_duration(_aware(r.finished_at, now) - _aware(r.started_at, now)))
-            item["lines"], item["href"], item["link"] = _result(r.kind, res, site_id)
+            item["lines"], item["href"], item["link"] = _result(r.kind, res, site_id, humanize)
+            item["step"] = None
+            if r.kind == "analysis" and res.get("status") == "failed":
+                item["status"] = "failed"  # the work ran, but the site could not be read
+            elif "incomplete" in res:
+                item["status"] = "partial"
         else:
             item["state"] = t("Non riuscito alle {time}", time=_aware(r.finished_at or now, now).astimezone(tz).strftime("%H:%M"))
             item["lines"] = [humanize(r.error or "")]

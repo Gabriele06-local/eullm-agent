@@ -62,14 +62,28 @@ def test_unknown_kind_fails_instead_of_staying_queued(db, tenant):
     assert status(db, tenant, j).status == "failed"
 
 
-def test_one_job_at_a_time_per_tenant(db, tenant):
-    queue.enqueue(db, tenant, "draft", "proposal 1", {"proposal_id": 1})
-    queue.enqueue(db, tenant, "draft", "proposal 2", {"proposal_id": 2})
+def test_jobs_at_a_time_per_tenant(db, tenant):
+    # SQLite runs one job at a time; on PostgreSQL a tenant runs two.
+    for n in (1, 2, 3):
+        queue.enqueue(db, tenant, "draft", f"proposal {n}", {"proposal_id": n})
     first = queue.claim(db, "w1", tenant)
     assert first is not None and first.args == {"proposal_id": 1}
-    assert queue.claim(db, "w2", tenant) is None  # the tenant is busy
+    if not db.sqlite:
+        assert queue.claim(db, "w2", tenant).args == {"proposal_id": 2}
+    assert queue.claim(db, "w3", tenant) is None  # the tenant is busy
     queue.finish(db, first)
-    assert queue.claim(db, "w2", tenant).args == {"proposal_id": 2}
+    assert queue.claim(db, "w3", tenant).args == {"proposal_id": 2 if db.sqlite else 3}
+
+
+@pytest.mark.postgres
+def test_the_same_work_and_two_collections_never_run_together(db, tenant):
+    tick = queue.enqueue(db, tenant, "tick", "hourly", priority=queue.PRIORITY_TICK)
+    running = queue.claim(db, "w1", tenant)
+    assert running.id == tick
+    queue.enqueue(db, tenant, "collect", "now")
+    assert queue.claim(db, "w2", tenant) is None  # reads the same sources as the tick
+    queue.enqueue(db, tenant, "analysis", "blog.example")
+    assert queue.claim(db, "w2", tenant).kind == "analysis"
 
 
 def test_a_dead_workers_job_is_queued_again_then_failed(db, tenant):
@@ -129,14 +143,14 @@ def test_tenants_are_served_in_turn(db, tenant):
 
 
 @pytest.mark.postgres
-def test_two_workers_never_run_two_jobs_of_one_tenant(db, tenant):
+def test_workers_never_run_more_than_two_jobs_of_one_tenant(db, tenant):
     from concurrent.futures import ThreadPoolExecutor
 
     for n in range(6):
         queue.enqueue(db, tenant, "draft", f"proposal {n}", {"proposal_id": n})
     with ThreadPoolExecutor(6) as pool:
         got = [j for j in pool.map(lambda i: queue.claim(db, f"w{i}", tenant), range(6)) if j is not None]
-    assert len(got) == 1
+    assert len(got) == 2
 
 
 def test_an_inactive_tenants_work_waits(db, tenant):

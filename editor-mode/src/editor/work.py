@@ -30,13 +30,22 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
 
     def found(rep) -> dict:
         return {"candidates": rep.candidates, "active": rep.active, "candidate": rep.candidate,
-                "rejected": rep.rejected, "failed": rep.failed}
+                "rejected": rep.rejected, "failed": rep.failed,
+                "no_profile": any("no approved profile" in n for n in rep.notes)}
 
     def analysis(tenant: str, domain: str, args: dict) -> dict:
         with need(http_factory, "web access")() as client:
             res = prof.analyse_site(db, tenant, domain, SiteCrawler(client), core_for(tenant))
             out = {"site_id": res["site_id"], "domain": domain, "status": res["status"],
                    "profile_id": res["profile_id"], "changes": len(res["changes"]), "problems": res["problems"][:3]}
+            if res["profile_id"]:
+                with db.tenant(tenant) as s:
+                    body = s.execute(select(m.editorial_profiles.c.body)
+                                     .where(m.editorial_profiles.c.id == res["profile_id"])).scalar() or {}
+                if not (body.get("sector") or {}).get("value"):
+                    # What the model could not say, and why (its error, if any).
+                    out["incomplete"] = next((g for g in body.get("gaps", []) if "model" in g),
+                                             (body.get("gaps") or [""])[0])
             if res["status"] != "failed":
                 step(N_("Ricerca delle fonti per {domain}"), domain=domain)
                 rep = sources.discover(db, tenant, res["site_id"], client, core_for(tenant))
@@ -46,7 +55,7 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
     def discovery(tenant: str, subject: str, args: dict) -> dict:
         with need(http_factory, "web access")() as client:
             rep = sources.discover(db, tenant, args["site_id"], client, core_for(tenant))
-        return {"site_id": args["site_id"], **found(rep), "no_profile": any("no approved profile" in n for n in rep.notes)}
+        return {"site_id": args["site_id"], **found(rep)}
 
     def draft(tenant: str, subject: str, args: dict) -> dict:
         need(core, "model (Core)")
