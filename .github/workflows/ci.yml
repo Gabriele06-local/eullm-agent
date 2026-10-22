@@ -16,8 +16,9 @@ concurrency:
 jobs:
   check:
     # A pull request from a branch of this repository was already checked by
-    # its push; only pull requests from forks need their own run.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # its push; only pull requests from forks need their own run. main only
+    # receives merges of branches already checked: it is not checked again.
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -89,7 +90,7 @@ jobs:
       - run: cargo build --locked --release --target x86_64-unknown-linux-gnu
 
   editor-mode:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     services:
       postgres:

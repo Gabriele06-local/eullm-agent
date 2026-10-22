@@ -9,11 +9,38 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # The release page exists at once; each build adds its files when done,
+  # so a platform whose runner is queued (Windows, macOS) holds up nobody.
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+
+      - name: Notify Telegram on release published
+        continue-on-error: true
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="✅ <b>Release published</b>: <code>${{ github.ref_name }}</code>%0A${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+
   build:
     name: build-${{ matrix.target }}
+    needs: release
     runs-on: ${{ matrix.os }}
     permissions:
-      contents: read
+      contents: write
       packages: write
     strategy:
       fail-fast: false
@@ -120,12 +147,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.binary }}
-          path: |
-            ${{ matrix.binary }}
-            ${{ matrix.binary }}.sha256
+      - name: Add to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --clobber \
+            "${{ matrix.binary }}" "${{ matrix.binary }}.sha256"
 
       - name: Notify Telegram on build failure
         if: failure()
@@ -187,47 +215,3 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          merge-multiple: true
-          path: artifacts
-
-      - uses: softprops/action-gh-release@v3
-        id: gh_release
-        with:
-          files: artifacts/**
-          fail_on_unmatched_files: false
-          generate_release_notes: true
-
-      - name: Notify Telegram on release published
-        if: success()
-        continue-on-error: true
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ -z "$TELEGRAM_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-            -d chat_id="${TELEGRAM_CHAT_ID}" \
-            -d parse_mode="HTML" \
-            -d text="✅ <b>Release published</b>: <code>${{ github.ref_name }}</code>%0A${{ steps.gh_release.outputs.url }}"
-
-      - name: Notify Telegram on release failure
-        if: failure()
-        continue-on-error: true
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ -z "$TELEGRAM_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-            -d chat_id="${TELEGRAM_CHAT_ID}" \
-            -d parse_mode="HTML" \
-            -d text="❌ <b>Release job failed</b> for tag <code>${{ github.ref_name }}</code>%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
