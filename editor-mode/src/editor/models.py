@@ -180,6 +180,15 @@ topic_items = Table(
     Column("item_id", BigInteger, primary_key=True),
 )
 
+trend_snapshots = Table(
+    "trend_snapshots",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    _tenant(),
+    Column("taken_at", _ts()),
+    Column("topics", JSONB, nullable=False),
+)
+
 trend_scores = Table(
     "trend_scores",
     metadata,

@@ -45,6 +45,9 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
     def propose(tenant: str, subject: str, args: dict) -> None:
         proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant))
 
+    def titles(tenant: str, subject: str, args: dict) -> None:
+        proposals.propose_titles(db, tenant, args["site_id"], args["topic_id"], core_for(tenant))
+
     def publish(tenant: str, subject: str, args: dict) -> None:
         res = need(publisher, "publisher").run(db, tenant, args["publication_id"])
         if res.get("status") == "failed":
@@ -63,4 +66,4 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
             raise RuntimeError("; ".join(failed))
 
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
-            "proposals": propose, "archive": archive}
+            "proposals": propose, "titles": titles, "archive": archive}

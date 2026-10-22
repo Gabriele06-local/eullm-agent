@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select, text
 
-from . import briefing, jobs, models as m, opportunity, proposals, repo, sources, tenant_data
+from . import briefing, jobs, models as m, opportunity, proposals, repo, sources, tenant_data, trends
 from .ingest import collect_archive
 from .profile import analyse_site
 from .scoring import score_topics
@@ -138,7 +138,7 @@ class Runner:
         own_archive = repo.archive_of(self.db, tenant) == tenant
         with self.http_factory() as client:
             if own_archive:
-                self.collect(tenant, client, now, done, failed)
+                self.collect(tenant, client, now, done, failed, tz=tz)
             else:
                 with self.db.tenant(tenant) as s:
                     repo.rescue_sources(s)
@@ -167,13 +167,22 @@ class Runner:
                               f"briefing {today.briefing_date.isoformat()} resent")
 
     def collect(self, archive: str, client, now: datetime, done: list[str], failed: list[str],
-                only: set[int] | None = None) -> None:
-        """Read the archive sources, then find and score its topics."""
+                only: set[int] | None = None, tz: str | None = None) -> None:
+        """Read the archive sources, then find and score its topics; from
+        07:00 every three hours keep the trend of the moment."""
         def run():
             collect_archive(self.db, archive, client, only)
             detect_topics(self.db, archive, self.core_for(archive))
             score_topics(self.db, archive, now=now)
         self.step(archive, "collect", done, failed, run)
+        tz = tz or self.settings.timezone
+        with self.db.tenant(archive) as s:
+            take = trends.due(s, now, tz)
+        if take:
+            def keep():
+                with self.db.tenant(archive) as s:
+                    trends.snapshot(s, archive, now)
+            self.step(archive, "trend", done, failed, keep)
 
     def archive_tick(self, now: datetime, done: list[str], failed: list[str]) -> None:
         """The hour of the shared archive (PostgreSQL): read once every source

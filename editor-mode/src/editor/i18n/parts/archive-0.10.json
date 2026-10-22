@@ -10,5 +10,89 @@
   "de": "Ersetzt durch GitHub Trending: Entscheidend ist, welche Repositories Entwickler heute mit Sternen versehen, nicht welche ein Wort enthalten.",
   "fr": "Remplacée par GitHub Trending : ce qui compte, ce sont les dépôts que les développeurs récompensent aujourd'hui, pas ceux qui contiennent un mot.",
   "es": "Sustituida por GitHub Trending: importa qué repositorios premian hoy los desarrolladores, no cuáles contienen una palabra."
+ },
+ "Il trend del momento": {
+  "en": "The trend of the moment",
+  "de": "Der Trend des Moments",
+  "fr": "La tendance du moment",
+  "es": "La tendencia del momento"
+ },
+ "aggiornato alle {time}": {
+  "en": "updated at {time}",
+  "de": "aktualisiert um {time}",
+  "fr": "mise à jour à {time}",
+  "es": "actualizada a las {time}"
+ },
+ "Ogni giorno alle 7:00, e poi ogni tre ore, l'archivio fissa i temi che crescono di più nel settore. Qui vedi quelli adatti a questo sito: scegli un titolo e l'agente scrive la bozza, oppure chiedi tre titoli tra cui scegliere.": {
+  "en": "Every day at 7:00, and then every three hours, the archive records the topics growing most in the sector. Here you see the ones that suit this site: pick a title and the agent writes the draft, or ask for three titles to choose from.",
+  "de": "Jeden Tag um 7:00 Uhr und danach alle drei Stunden hält das Archiv die Themen fest, die in der Branche am stärksten wachsen. Hier sehen Sie die, die zu dieser Website passen: Wählen Sie einen Titel, und der Agent schreibt den Entwurf, oder fordern Sie drei Titel zur Auswahl an.",
+  "fr": "Chaque jour à 7h00, puis toutes les trois heures, l'archive retient les sujets qui montent le plus dans le secteur. Vous voyez ici ceux qui conviennent à ce site : choisissez un titre et l'agent écrit le brouillon, ou demandez trois titres au choix.",
+  "es": "Cada día a las 7:00, y luego cada tres horas, el archivo fija los temas que más crecen en el sector. Aquí ves los que encajan con este sitio: elige un título y el agente escribe el borrador, o pide tres títulos para elegir."
+ },
+ "Hype {n}": {
+  "en": "Hype {n}",
+  "de": "Hype {n}",
+  "fr": "Hype {n}",
+  "es": "Hype {n}"
+ },
+ "opportunità {n}": {
+  "en": "opportunity {n}",
+  "de": "Chance {n}",
+  "fr": "opportunité {n}",
+  "es": "oportunidad {n}"
+ },
+ "Titoli proposti: quale vuoi che scriva?": {
+  "en": "Proposed titles: which one should I write?",
+  "de": "Vorgeschlagene Titel: Welchen soll ich schreiben?",
+  "fr": "Titres proposés : lequel voulez-vous que j'écrive ?",
+  "es": "Títulos propuestos: ¿cuál quieres que escriba?"
+ },
+ "Scrivi questo": {
+  "en": "Write this one",
+  "de": "Diesen schreiben",
+  "fr": "Écrire celui-ci",
+  "es": "Escribe este"
+ },
+ "Altri titoli": {
+  "en": "More titles",
+  "de": "Weitere Titel",
+  "fr": "Autres titres",
+  "es": "Más títulos"
+ },
+ "Proponimi tre titoli": {
+  "en": "Suggest three titles",
+  "de": "Drei Titel vorschlagen",
+  "fr": "Proposez-moi trois titres",
+  "es": "Proponme tres títulos"
+ },
+ "Nel trend del momento non c'è un tema abbastanza vicino a questo sito. Il prossimo aggiornamento arriva entro tre ore.": {
+  "en": "The trend of the moment has no topic close enough to this site. The next update comes within three hours.",
+  "de": "Im Trend des Moments gibt es kein Thema, das nah genug an dieser Website ist. Die nächste Aktualisierung kommt innerhalb von drei Stunden.",
+  "fr": "La tendance du moment ne contient aucun sujet assez proche de ce site. La prochaine mise à jour arrive dans les trois heures.",
+  "es": "En la tendencia del momento no hay ningún tema lo bastante cercano a este sitio. La próxima actualización llega en menos de tres horas."
+ },
+ "Il primo trend arriva con la prossima raccolta: dalle 7:00, ogni tre ore.": {
+  "en": "The first trend comes with the next collection: from 7:00, every three hours.",
+  "de": "Der erste Trend kommt mit der nächsten Sammlung: ab 7:00 Uhr alle drei Stunden.",
+  "fr": "La première tendance arrive avec la prochaine collecte : à partir de 7h00, toutes les trois heures.",
+  "es": "La primera tendencia llega con la próxima recogida: desde las 7:00, cada tres horas."
+ },
+ "Il trend di oggi, ora per ora": {
+  "en": "Today's trend, hour by hour",
+  "de": "Der Trend von heute, Stunde für Stunde",
+  "fr": "La tendance du jour, heure par heure",
+  "es": "La tendencia de hoy, hora a hora"
+ },
+ "nessun tema": {
+  "en": "no topic",
+  "de": "kein Thema",
+  "fr": "aucun sujet",
+  "es": "ningún tema"
+ },
+ "Sto preparando i titoli: compaiono qui tra qualche minuto.": {
+  "en": "Preparing the titles: they appear here in a few minutes.",
+  "de": "Die Titel werden vorbereitet: Sie erscheinen hier in einigen Minuten.",
+  "fr": "Je prépare les titres : ils apparaissent ici dans quelques minutes.",
+  "es": "Estoy preparando los títulos: aparecen aquí en unos minutos."
  }
 }

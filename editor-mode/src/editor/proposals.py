@@ -172,6 +172,79 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
     return created
 
 
+TITLES_SYSTEM = (
+    "You are the editorial planner of a website. The items listed (each has an id) are the trend of the moment "
+    "in the site's sector. Using ONLY these items, propose {n} different articles the site could write on it: "
+    "different angles, not the same headline reworded. Write in the site's language. Reply with JSON only: "
+    '{{"options": [{{"title": "<headline, max 120 chars>", "angle": "<what the article says, for this site, '
+    '1-3 sentences>", "why_now": "<why this matters now, from the items>", "format": "<one of: '
+    + ", ".join(FORMATS) + '>", "citations": [<ids of the items it relies on>]}}]}}. '
+    "Cite at least one id in each option; cite only ids from the list."
+)
+
+
+def _options_validator(allowed_ids: set[int], n: int):
+    one = _validator(allowed_ids)
+
+    def validate(v) -> list[dict]:
+        if not isinstance(v, dict) or not isinstance(v.get("options"), list) or not v["options"]:
+            raise ValueError('expected {"options": [...]}')
+        out, seen = [], set()
+        for o in v["options"][:n]:
+            o = one(o)
+            if o["title"].lower() not in seen:
+                seen.add(o["title"].lower())
+                out.append(o)
+        return out
+
+    return validate
+
+
+def propose_titles(db, tenant_id: str, site_id: int, topic_id: int, core: CoreClient | None = None,
+                   n: int = 3) -> list[int]:
+    """Titles to choose from for one trend, asked for by a person: they
+    become proposals of the site, each with a short summary (its angle)."""
+    from . import opportunity
+
+    p = m.editorial_profiles
+    with db.tenant(tenant_id) as s:
+        prof = s.execute(select(p).where(p.c.site_id == site_id, p.c.status == "approved")).first()
+        if prof is None:
+            return []
+        label = s.execute(select(m.topics.c.label).where(m.topics.c.id == topic_id)).scalar()
+        items = _items_for(s, topic_id, site_id)
+    if label is None or not items:
+        return []
+    score = next((o.score for o in opportunity.score_site(db, tenant_id, site_id) if o.topic_id == topic_id), None)
+    allowed = {it.id for it in items}
+    options, calls, by = None, [], "heuristic"
+    if core is not None:
+        try:
+            options, calls = core.chat_json(TITLES_SYSTEM.format(n=n), _prompt(prof.body, label, items),
+                                            _options_validator(allowed, n))
+            by = "model"
+        except CoreError as e:
+            log.warning("titles for topic %s failed: %s", topic_id, e)
+    if options is None:
+        # Without the model, the latest headlines of the trend.
+        options = [{"title": it.title[:160], "angle": "", "why_now": "", "format": "news", "citations": [it.id]}
+                   for it in items[:n]]
+    created = []
+    with db.tenant(tenant_id) as s:
+        for c in calls:
+            repo.record_llm_usage(s, tenant_id, "proposal", c.model, c.usage, c.cost)
+        for o in options:
+            pid = s.execute(insert(m.proposals).values(
+                tenant_id=tenant_id, site_id=site_id, topic_id=topic_id, profile_id=prof.id,
+                opportunity=score or 0.0, title=o["title"], angle=o["angle"], why_now=o["why_now"],
+                format=o["format"], generated_by=by,
+            ).returning(m.proposals.c.id)).scalar_one()
+            s.execute(insert(m.proposal_citations).values(
+                [{"tenant_id": tenant_id, "proposal_id": pid, "item_id": i} for i in o["citations"]]))
+            created.append(pid)
+    return created
+
+
 def decide(db, tenant_id: str, proposal_id: int, accept: bool, by: str, note: str | None = None) -> bool:
     """Accept or reject a proposal; the decision is also feedback."""
     with db.tenant(tenant_id) as s:

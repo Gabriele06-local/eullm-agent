@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, vault
+from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -812,10 +812,39 @@ def register(app, ctx) -> None:
             # Written drafts stay in the plan for a week, then live under Bozze.
             week = datetime.now(UTC) - timedelta(days=7)
             plan = [p for p in plan if p.status != "drafted" or p.created_at > week]
+            # The trend of the moment: the archive's latest snapshot, the
+            # topics in it that suit this site, and titles to choose from.
+            archive = repo.archive_of(db, c.tenant_id)
+            snap = trends.latest(s, archive)
+            day = trends.today(s, archive, start_of_day(s))
+            moment = []
+            if site and snap:
+                fit = {x.id: x.opportunity for x in topics}
+                for x in snap.topics:
+                    if (fit.get(x["topic_id"]) or 0) >= props.MIN_OPPORTUNITY and len(moment) < 3:
+                        moment.append(dict(x, opportunity=fit[x["topic_id"]]))
+                offered = proposal_rows(s, site.id, ("proposed",), 60)
+                for x in moment:
+                    x["titles"] = [p for p in offered if p.topic_id == x["topic_id"]]
+                shown = {p.id for x in moment for p in x["titles"]}
+                plan = [p for p in plan if p.id not in shown]
             explained = proposal_details(s, plan)
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,
-                          dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None)
+                          dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None,
+                          snap=snap, day=day, moment=moment, local=lambda at: at.astimezone(zone(s)))
+
+    @app.post("/ui/trends/{topic_id}/titles")
+    def ui_titles(request: Request, topic_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        """Titles to choose from for one trend of the moment."""
+        with db.tenant(c.tenant_id) as s:
+            _, site = current_site(s, request)
+            if site is None:
+                return done("/trends", t("Aggiungi prima un sito."))
+            if s.execute(select(m.topics.c.id).where(m.topics.c.id == topic_id)).scalar() is None:
+                raise HTTPException(404, "topic not found")
+        ctx.run_titles(c.tenant_id, site.id, topic_id)
+        return done("/trends#moment", t("Sto preparando i titoli: compaiono qui tra qualche minuto."))
 
     @app.post("/ui/proposals/now")
     def ui_propose_now(request: Request, c: auth.Caller = Depends(ctx.need("editor"))):

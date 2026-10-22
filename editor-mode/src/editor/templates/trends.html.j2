@@ -14,6 +14,48 @@
 {% if not site %}
 <section class="card pad"><h2>{{ _('Nessun sito') }}</h2><p class="lead">{{ _('Aggiungi un dominio da <a href="/site">Sito e profilo</a>.') }}</p></section>
 {% else %}
+<section class="card" id="moment" aria-labelledby="h-moment" style="gap: 0;">
+  <div class="card-head"><h2 id="h-moment">{{ _('Il trend del momento') }}</h2>{% if snap %}<span class="hint">{{ _('aggiornato alle {time}', time=local(snap.taken_at).strftime('%H:%M')) }}</span>{% endif %}</div>
+  <p class="hint" style="margin: 0; padding: 0 20px 12px;">{{ _("Ogni giorno alle 7:00, e poi ogni tre ore, l'archivio fissa i temi che crescono di più nel settore. Qui vedi quelli adatti a questo sito: scegli un titolo e l'agente scrive la bozza, oppure chiedi tre titoli tra cui scegliere.") }}</p>
+  {% for x in moment %}
+  <div class="item" style="align-items: flex-start;">
+    <span class="chip blue">{{ _('Hype {n}', n=x.hype|s100) }}</span>
+    <div class="what">
+      <strong>{{ x.label }}</strong>
+      <span class="hint">{{ x.sources|plural(_('fonte'), _('fonti')) }} · {{ x.items|plural(_('notizia'), _('notizie')) }} · {{ _('opportunità {n}', n=x.opportunity|s100) }}</span>
+      {% if x.summary %}<p style="margin: 4px 0;">{{ x.summary }}</p>{% endif %}
+      <ul style="margin: 4px 0; padding-left: 18px;">
+        {% for n in x.news %}<li><a href="{{ n.url }}" rel="noopener noreferrer" target="_blank">{{ n.title }}</a></li>{% endfor %}
+      </ul>
+      {% if x.titles %}
+      <span class="kicker">{{ _('Titoli proposti: quale vuoi che scriva?') }}</span>
+      {% for p in x.titles %}
+      <div class="row" style="justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line);">
+        <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">{{ p.title }}</span>{% if p.angle %}<span class="hint">{{ p.angle }}</span>{% endif %}</div>
+        {% if caller.can('editor') %}
+        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/trends#moment"><button class="btn pri" type="submit">{{ _('Scrivi questo') }}</button></form>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% if caller.can('editor') %}
+    <form class="inline" method="post" action="/ui/trends/{{ x.topic_id }}/titles"><button class="btn" type="submit">{% if x.titles %}{{ _('Altri titoli') }}{% else %}{{ _('Proponimi tre titoli') }}{% endif %}</button></form>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="empty">{% if snap %}{{ _("Nel trend del momento non c'è un tema abbastanza vicino a questo sito. Il prossimo aggiornamento arriva entro tre ore.") }}{% else %}{{ _("Il primo trend arriva con la prossima raccolta: dalle 7:00, ogni tre ore.") }}{% endif %}</p>
+  {% endfor %}
+  {% if day %}
+  <details style="padding: 0 20px 16px;">
+    <summary class="hint">{{ _('Il trend di oggi, ora per ora') }}</summary>
+    <ul style="margin: 8px 0; padding-left: 18px;">
+      {% for d in day %}<li><strong>{{ local(d.taken_at).strftime('%H:%M') }}</strong> · {{ d.topics[:3]|map(attribute='label')|join(' · ') or _('nessun tema') }}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</section>
+
 <div class="cols">
   <section class="card pad col-wide" aria-labelledby="h-map">
     <div class="row" style="justify-content: space-between;"><h2 id="h-map">{{ _('Mappa dei temi') }}</h2>
