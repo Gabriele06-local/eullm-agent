@@ -1,0 +1,50 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ _('Guida') }}{% endblock %}
+{% block main %}
+<header class="head">
+  <div>
+    <span class="kicker">{{ _('Guida') }}</span>
+    <h1>{{ _('Come lavora la redazione') }}</h1>
+    <p class="lead">{{ _('Dal dominio all\'articolo pubblicato, passo per passo: cosa fa partire ogni passo, quando va avanti e cosa devi vedere. Se un passo non dà quello che dice l\'ultima colonna, qualcosa non va.') }}</p>
+  </div>
+</header>
+
+<section class="card pad" aria-labelledby="h-you">
+  <h2 id="h-you">{{ _('Le cinque decisioni che spettano a te') }}</h2>
+  <ol>
+    <li>{{ _('Approvare il profilo del sito.') }} <a href="/site">{{ _('Sito e profilo') }}</a></li>
+    <li>{{ _('Attivare, se vuoi, le fonti candidate: quelle con punteggio da 0,50 si attivano da sole.') }} <a href="/sources">{{ _('Fonti') }}</a></li>
+    <li>{{ _('Accettare o scartare le proposte: accettare fa scrivere la bozza.') }} <a href="/trends">{{ _('Trend e piano') }}</a></li>
+    <li>{{ _('Approvare la bozza.') }} <a href="/drafts">{{ _('Bozze') }}</a></li>
+    <li>{{ _('Approvare la pubblicazione.') }} <a href="/publications">{{ _('Pubblicazioni') }}</a></li>
+  </ol>
+  <p class="hint">{{ _('Tutto il resto è automatico. Una fonte sospesa dalla manutenzione è un avviso, non una decisione.') }}</p>
+</section>
+
+{% set STEPS = [
+  (_('Analisi del sito'), _('Aggiungi il dominio; poi ogni lunedì alle 04:00'), _('Il sito risponde e ha articoli leggibili'), _('Profilo in bozza, esito "completa" o "parziale" con il motivo'), '/site'),
+  (_('Profilo approvato'), _('Lo approvi tu'), _('Hai controllato temi e articoli d\'esempio'), _('"in uso" accanto al sito, in Oggi'), '/site'),
+  (_('Ricerca delle fonti'), _('Subito dopo l\'approvazione; poi ogni lunedì'), _('Il profilo ha temi e parole chiave'), _('Fonti attive (da 0,50) e candidate (0,35-0,50), ognuna con origine e ultime notizie'), '/sources'),
+  (_('Raccolta'), _('Ogni ora'), _('Ci sono fonti attive'), _('"Ultimo giro" a meno di un\'ora fa, "notizie oggi" che cresce'), '/'),
+  (_('Temi'), _('A ogni raccolta'), _('Almeno due notizie con parole in comune'), _('Temi con Hype e Opportunità su 100'), '/trends'),
+  (_('Proposte'), _('Ogni mattina all\'ora del briefing, o con "Proponi adesso"'), _('Opportunità almeno 35/100 e due notizie da due fonti diverse, o una notizia forte (da 50/100) di una fonte affidabile'), _('Le proposte in "Da decidere", ognuna con le sue fonti'), '/trends'),
+  (_('Bozza'), _('Quando accetti una proposta'), _('C\'è un modello configurato e il piano ha articoli disponibili'), _('La bozza nella lingua e nel tono del sito, con fonti e controlli automatici'), '/drafts'),
+  (_('Bozza approvata'), _('La approvi tu'), _('Hai letto i controlli automatici e corretto i problemi'), _('Stato "approvata"'), '/drafts'),
+  (_('Pubblicazione'), _('La chiedi su una bozza approvata'), _('Il sito ha una destinazione (WordPress, webhook, Telegram)'), _('Richiesta "in attesa", poi l\'esito nello storico'), '/publications'),
+  (_('Briefing'), _('Ogni mattina dopo le proposte'), _('Ci sono destinatari'), _('Email o Telegram con proposte, trend e fonti'), '/settings'),
+  (_('Manutenzione'), _('Ogni giorno dalle 03:00'), '–', _('Fonti con 5 errori di fila, 45 giorni senza notizie o fuori tema sospese da sole e rivalutate dopo 14 giorni'), '/sources'),
+] %}
+<section class="card" aria-labelledby="h-steps" style="gap: 0;">
+  <div class="card-head"><h2 id="h-steps">{{ _('I passi') }}</h2></div>
+  <div class="scroll">
+    <table style="min-width: 760px;">
+      <thead><tr><th>{{ _('Passo') }}</th><th>{{ _('Parte quando') }}</th><th>{{ _('Va avanti se') }}</th><th>{{ _('Cosa devi vedere') }}</th></tr></thead>
+      <tbody>
+      {% for name, when_, cond, see, href in STEPS %}
+        <tr><td><strong>{{ loop.index }}. <a href="{{ href }}">{{ name }}</a></strong></td><td>{{ when_ }}</td><td>{{ cond }}</td><td>{{ see }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

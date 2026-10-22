@@ -621,6 +621,11 @@ def register(app, ctx) -> None:
             version = s.execute(select(m.editorial_profiles.c.version).where(m.editorial_profiles.c.id == pid)).scalar()
         return done("/site", t("Modifiche salvate come bozza v{version}: approvala per renderla attiva.", version=version))
 
+    @app.get("/guide", response_class=HTMLResponse)
+    def guide(request: Request, c: auth.Caller = Depends(viewer)):
+        with db.tenant(c.tenant_id) as s:
+            return render(request, "guide.html.j2", c, s, "guide")
+
     # --- Fonti --------------------------------------------------------------------
 
     @app.get("/sources", response_class=HTMLResponse)

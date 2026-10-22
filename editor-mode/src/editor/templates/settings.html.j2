@@ -8,6 +8,7 @@
   </div>
   {% if usage and usage.plan.get('plan') %}<span class="chip dark">{{ _('Piano {plan}', plan=usage.plan.get('plan')) }}</span>{% endif %}
 </header>
+{% with page="settings" %}{% include "_help.html.j2" %}{% endwith %}
 
 {% if new_token %}
 <section class="card pad" aria-labelledby="h-token" style="border-color: var(--accent);">

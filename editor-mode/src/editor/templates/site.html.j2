@@ -8,6 +8,7 @@
 {% endmacro %}
 {% if not site %}
 <header class="head"><div><span class="kicker">{{ _('Sito e profilo editoriale') }}</span><h1>{{ _('Nessun sito') }}</h1></div></header>
+{% with page="site" %}{% include "_help.html.j2" %}{% endwith %}
 {{ job_panel() }}
 {% else %}
 <header class="head">
@@ -33,6 +34,7 @@
   </div>
   {% endif %}
 </header>
+{% with page="site" %}{% include "_help.html.j2" %}{% endwith %}
 
 {{ job_panel() }}
 

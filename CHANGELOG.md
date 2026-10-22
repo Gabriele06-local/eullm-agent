@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.1
+
+### Added
+
+- Editor Mode: every page opens with "Come funziona questa pagina": what
+  it does, what to expect and what to check, in the five languages; it
+  can be closed and the browser remembers it. A new "Guida" page lists
+  the five decisions left to people and every step of the newsroom, from
+  the domain to the published article.
+
+### Changed
+
+- The language selector is at the top right of every page.
 ## 0.9.0
 
 ### Added

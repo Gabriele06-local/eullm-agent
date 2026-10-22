@@ -11,6 +11,7 @@
   <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn pri" type="submit">{{ _('Cerca nuove fonti') }}</button></form>
   {% endif %}
 </header>
+{% with page="sources" %}{% include "_help.html.j2" %}{% endwith %}
 
 {% if not site %}
 <section class="card pad"><h2>{{ _('Nessun sito') }}</h2><p class="lead">{{ _('Aggiungi un dominio da <a href="/site">Sito e profilo</a> per far partire la scoperta delle fonti.') }}</p></section>

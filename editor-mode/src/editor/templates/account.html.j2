@@ -19,13 +19,14 @@
     <span>{{ me.email }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
   </div>
-  {% include "_lang.html.j2" %}
 </nav>
 <main class="main">
+  <div class="topbar">{% include "_lang.html.j2" %}</div>
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
   <header class="head">
     <div><span class="kicker">{{ _('Il tuo account') }}</span><h1>{{ _('Abbonamento') }}</h1></div>
   </header>
+{% with page="account" %}{% include "_help.html.j2" %}{% endwith %}
 
   {% for r in rooms %}
   {% set sub = r.subscription %}

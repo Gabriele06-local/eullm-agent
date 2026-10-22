@@ -8,6 +8,7 @@
     <p class="lead">{{ _('Un editor chiede, un owner approva. Nulla viene inviato al CMS o al canale senza quel sì.') }}</p>
   </div>
 </header>
+{% with page="publications" %}{% include "_help.html.j2" %}{% endwith %}
 
 <section class="card" aria-labelledby="h-pending" style="gap: 0;">
   <div class="card-head"><h2 id="h-pending">{{ _('In attesa di approvazione') }}</h2><span class="hint">{{ pending|length }}</span></div>
