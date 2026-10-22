@@ -39,6 +39,7 @@ jobs:
     name: build-${{ matrix.target }}
     needs: release
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     permissions:
       contents: write
       packages: write
