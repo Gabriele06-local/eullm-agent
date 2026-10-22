@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- Core `/v1/fetch` took a "304 Not Modified" for a redirect and failed
+  with "Redirect without Location". Every feed answering a conditional
+  GET (ETag, Last-Modified) failed from its second read on, so Editor
+  Mode suspended most sources after a few hours and collected almost
+  nothing. Only 301, 302, 303, 307 and 308 are followed now; sources
+  suspended by this error go back to work at the next collection.
 - Editor Mode: a fetch the Core could not make (the newsroom used up its
   daily fetches, or the Core was down) no longer counts as a failure of
   the source. Before, a night past the limit suspended every source for

@@ -83,7 +83,7 @@ def test_the_cores_trouble_is_not_the_sources_fault(db, tenant):
         return_value=httpx.Response(429, json={"error": "daily fetches limit reached (2000 of 2000)"}))
     with db.tenant(tenant) as s:
         s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
-                       "last_error = 'ConnectError: Core fetch failed (429): daily fetches limit reached' "
+                       "last_error = 'ConnectError: Core fetch failed (502): Redirect without Location' "
                        "WHERE name = 'telecom'"))
         s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
                        "last_error = 'HTTPStatusError: 404 Not Found' WHERE name = 'mirror'"))

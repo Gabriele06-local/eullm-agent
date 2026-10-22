@@ -69,8 +69,10 @@ def upsert_source(
     ).scalar_one()
 
 
-# Errors of the Core, not of the source, as earlier versions recorded them.
-CORE_TROUBLE = ("CoreTrouble", "Core unreachable", "Core fetch failed (429)", "limit reached")
+# Errors of the Core, not of the source, as earlier versions recorded them;
+# before 0.9.3 the Core took a "304 Not Modified" for a redirect.
+CORE_TROUBLE = ("CoreTrouble", "Core unreachable", "Core fetch failed (429)", "limit reached",
+                "Redirect without Location")
 
 
 def rescue_sources(s: Session) -> list[int]:

@@ -724,14 +724,19 @@ async fn responses_match_the_openapi_contract() {
 
 // --- checked fetch -------------------------------------------------------------
 
-/// A local web server: /page answers with an ETag, /moved redirects to it.
+/// A local web server: /page answers with an ETag (304 when it matches),
+/// /moved redirects to it.
 async fn local_site() -> String {
+    use axum::http::HeaderMap;
     use axum::response::{IntoResponse, Redirect};
     use axum::routing::get;
     let app = axum::Router::new()
         .route(
             "/page",
-            get(|| async {
+            get(|h: HeaderMap| async move {
+                if h.get("if-none-match").is_some_and(|v| v == "\"v1\"") {
+                    return (StatusCode::NOT_MODIFIED, [("etag", "\"v1\"")]).into_response();
+                }
                 (
                     [("etag", "\"v1\""), ("content-type", "text/html")],
                     "<h1>hello</h1>",
@@ -886,6 +891,23 @@ async fn fetch_follows_checked_redirects_records_and_paces() {
         "query strings are not stored"
     );
     assert_eq!(recorded[1].0, "tenant-b");
+}
+
+#[tokio::test]
+async fn not_modified_is_an_answer_not_a_redirect() {
+    let base = local_site().await;
+    let h = harness_with(FETCH_CONFIG, vec![]);
+    let (s, v) = call(
+        &h.app,
+        "POST",
+        "/v1/fetch",
+        Some(TOKEN_A),
+        Some(json!({"url": format!("{base}/page"), "headers": {"If-None-Match": "\"v1\""}})),
+    )
+    .await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    assert_eq!(v["status"], 304);
+    assert_eq!(v["redirects"], 0);
 }
 
 // --- limits per tenant --------------------------------------------------------------
