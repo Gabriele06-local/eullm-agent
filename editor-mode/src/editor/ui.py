@@ -55,6 +55,20 @@ CHECKS = [
     ("copies a passage", N_("Nessun passaggio copiato parola per parola")),
 ]
 
+SEO_CHECKS = {
+    "keyphrase": N_("C'è una frase chiave, quella che i lettori cercano"),
+    "keyphrase_title": N_("La frase chiave è nel titolo"),
+    "keyphrase_lead": N_("La frase chiave è nelle prime righe"),
+    "title_length": N_("Titolo per Google entro 60 caratteri"),
+    "description_length": N_("Descrizione per Google tra 70 e 160 caratteri"),
+    "answer_first": N_("Le prime righe rispondono subito alla domanda"),
+    "headings": N_("Almeno due sottotitoli"),
+    "faq": N_("Almeno due domande frequenti con risposta"),
+    "internal_links": N_("Link ad altri articoli del sito"),
+    "sources": N_("Almeno due fonti citate"),
+    "length": N_("Lunghezza vicina a quella degli articoli del sito"),
+}
+
 
 MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
 DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
@@ -942,7 +956,9 @@ def register(app, ctx) -> None:
             sites, site = current_site(s, request)
             return render(request, "draft.html.j2", c, s, "drafts", _sites=(sites, site), d=d, sections=sections,
                           sources=[{"n": refs[i], **items[i]._mapping} for i in order if i in items],
-                          flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS)
+                          flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS,
+                          sd=d.seo or {}, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
+                                                      for x in (d.seo or {}).get("checks", []) if x.get("key") in SEO_CHECKS])
 
     @app.post("/ui/drafts/{draft_id}/decision")
     def ui_draft_decision(draft_id: int, accept: str = Form(...), c: auth.Caller = Depends(ctx.need("editor"))):
@@ -1011,12 +1027,20 @@ def register(app, ctx) -> None:
     @app.post("/ui/targets")
     def ui_add_target(site_id: int = Form(...), kind: str = Form(...), name: str = Form(...),
                       address: str = Form(""), user: str = Form(""), secret_env: str = Form(""),
-                      secret: str = Form(""), c: auth.Caller = Depends(ctx.need("owner"))):
+                      secret: str = Form(""), indexnow_key: str = Form(""), jsonld: str = Form(""),
+                      c: auth.Caller = Depends(ctx.need("owner"))):
         if kind not in TARGET_KINDS:
             raise HTTPException(400, "unknown kind")
         config = {"chat_id": address.strip()} if kind == "telegram_channel" else {"url": address.strip()}
         if kind == "wordpress":
             config["user"] = user.strip()
+            if jsonld:
+                config["jsonld"] = True
+        key = indexnow_key.strip()
+        if key:
+            if not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
+                return done("/publications", t("La chiave IndexNow va da 8 a 128 caratteri tra lettere, numeri e trattini."))
+            config["indexnow_key"] = key
         env_name = secret_env.strip() or None
         if env_name is not None and (len(env_name) > 40 or not publishing.SECRET_NAME.match(env_name)):
             return done("/publications", t("Il nome del segreto va scritto in MAIUSCOLO, es. WP_SITO."))

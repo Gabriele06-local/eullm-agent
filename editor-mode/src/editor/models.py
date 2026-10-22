@@ -370,6 +370,7 @@ drafts = Table(
     Column("language", Text),
     Column("status", Text),
     Column("flags", JSONB),
+    Column("seo", JSONB),
     Column("generated_by", Text, nullable=False),
     Column("created_at", _ts()),
     Column("decided_by", Text),

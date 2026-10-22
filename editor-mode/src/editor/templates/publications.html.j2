@@ -90,8 +90,11 @@
     <label class="field">{{ _('Utente (WordPress)') }}<input name="user" autocomplete="off" placeholder="{{ _('redazione') }}"></label>
     <label class="field">{{ _('Nome della credenziale') }}<input name="secret_env" placeholder="WP_SITO"></label>
     <label class="field">{{ _('Credenziale') }}<input name="secret" type="password" autocomplete="new-password" placeholder="{{ _('password applicativa, chiave o token') }}"></label>
+    <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" autocomplete="off" placeholder="{{ _('la stessa del file .txt nella radice del sito') }}"></label>
+    <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1"> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>
     <div><button class="btn" type="submit">{{ _('Aggiungi') }}</button></div>
   </form>
+  <p class="hint">{{ _("Con la chiave IndexNow, ogni articolo pubblicato viene segnalato subito a Bing e ai motori che la usano, e da lì alle risposte AI che leggono il loro indice. Il file con la chiave va messo nella radice del sito, per esempio https://tuosito.it/CHIAVE.txt. Google non ha un avviso immediato per gli articoli: li trova dalla sitemap e dai link interni.") }}</p>
   <p class="hint">{{ _("La credenziale (password applicativa di WordPress, chiave del webhook, token del bot Telegram) viene salvata cifrata e non viene più mostrata: puoi solo sostituirla. In alternativa lasciala vuota e l'amministratore del server imposta la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;.") }}</p>
   {% endif %}
 </section>

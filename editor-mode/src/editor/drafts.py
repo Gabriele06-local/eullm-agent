@@ -24,7 +24,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import quotas, repo
+from . import quotas, repo, seo
 from .core_client import CoreClient, CoreError
 from .html_extract import parse_html
 from .site import RobotsCache
@@ -69,6 +69,8 @@ class Article:
     title: str
     subtitle: str
     claims: list[Claim]
+    faq: list[str] = field(default_factory=list)  # sections that are a reader's question and its answer
+    seo: dict = field(default_factory=dict)  # the model's search fields, see seo.parse
 
     @property
     def flags(self) -> list[dict]:
@@ -137,10 +139,33 @@ def parse_article(value, allowed: set[int]) -> Article:
             claims.append(Claim(c["text"].strip(), list(dict.fromkeys(ids)), heading))
     if len(claims) < 3:
         raise ValueError("an article needs at least 3 claims")
-    return Article(title.strip(), str(value.get("subtitle") or "").strip()[:300], claims)
+    # Questions readers ask, each answered with sourced claims like the rest.
+    faq = []
+    for q in value.get("faq") or []:
+        if not isinstance(q, dict) or not isinstance(q.get("question"), str) or not q["question"].strip():
+            continue
+        question = " ".join(q["question"].split())[:200]
+        answer = [c for c in q.get("claims") or [] if isinstance(c, dict) and isinstance(c.get("text"), str)
+                  and c["text"].strip()]
+        if not answer:
+            continue
+        for c in answer:
+            try:
+                ids = [int(x) for x in c.get("sources", [])]
+            except (TypeError, ValueError):
+                raise ValueError("sources must be item ids") from None
+            if not ids or any(i not in allowed for i in ids):
+                raise ValueError(f"FAQ answer without valid sources: {c['text'][:80]!r}")
+            claims.append(Claim(c["text"].strip(), list(dict.fromkeys(ids)), question))
+        faq.append(question)
+    seo = value.get("seo") if isinstance(value.get("seo"), dict) else {}
+    return Article(title.strip(), str(value.get("subtitle") or "").strip()[:300], claims, faq, seo)
 
 
-def render(article: Article, sources: dict[int, Source], language: str | None) -> str:
+READ_MORE = {"it": "Leggi anche", "de": "Weiterlesen", "fr": "À lire aussi", "es": "Lee también"}
+
+
+def render(article: Article, sources: dict[int, Source], language: str | None, links: list[dict] | None = None) -> str:
     order: list[int] = []
     for c in article.claims:
         for i in c.sources:
@@ -166,6 +191,9 @@ def render(article: Article, sources: dict[int, Source], language: str | None) -
         marks = "".join(f"[^{ref[i]}]" for i in c.sources)
         para.append(f"{c.text}{marks}")
     flush()
+    if links:
+        lines.append(f"\n## {READ_MORE.get((language or '')[:2], 'Read more')}\n")
+        lines += [f"- [{x['title']}]({x['url']})" for x in links]
     lines.append("\n" + ("## Fonti" if (language or "").startswith("it") else "## Sources"))
     for i in order:
         s = sources[i]
@@ -182,9 +210,16 @@ SYSTEM = (
     "the context and background the other items give (earlier releases, competitors, the market, regulation), "
     "why it matters to the site's audience and what they can do with it. Use every item that is relevant and "
     "skip those that are not. Reach the target length when the items allow it; never pad with vague sentences. "
-    "Reply with JSON only: "
+    "Write it so search engines and AI answer engines pick it up: the first section has no heading and answers "
+    "the reader's main question in two or three sentences; the other headings are the questions people search "
+    "for, in plain words; then two to four frequently asked questions, each answered with sourced claims like "
+    "the rest. Choose the key phrase readers would type to find this article and use it naturally in the title "
+    "and the first sentence, never stuffed. Reply with JSON only: "
     '{"title": "...", "subtitle": "...", "sections": [{"heading": "<or null>", "claims": '
-    '[{"text": "...", "sources": [<ids>]}]}]}'
+    '[{"text": "...", "sources": [<ids>]}]}], '
+    '"faq": [{"question": "...", "claims": [{"text": "...", "sources": [<ids>]}]}], '
+    '"seo": {"keyphrase": "<2-4 words>", "title": "<search title, max 60 chars>", '
+    '"description": "<meta description, 120-155 chars>", "slug": "<url-words-with-hyphens>"}}'
 )
 
 
@@ -306,7 +341,18 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
                 repo.record_llm_usage(s, tenant_id, "draft", c.model, c.usage, c.cost)
         raise CoreError("the model did not produce a valid article")
 
-    body = render(article, sources, profile.get("language"))
+    sd = seo.parse(article.seo, article.title)
+    sd.faq = article.faq
+    with db.tenant(tenant_id) as s:
+        sd.links = seo.site_links(s, prop.site_id, article.title, sd.keyphrase)
+    body = render(article, sources, profile.get("language"), sd.links)
+    first = next((c.section for c in article.claims), None)
+    lead = " ".join(c.text for c in article.claims if c.section == first)
+    style = profile.get("style", {})
+    target = max(400, min(style.get("typical_words") or TARGET_WORDS, 1500))
+    sd.checks = seo.checks(sd, article.title, lead, list(dict.fromkeys(c.section for c in article.claims)),
+                           sum(len(c.text.split()) for c in article.claims), target,
+                           len({i for c in article.claims for i in c.sources}))
     with db.tenant(tenant_id) as s:
         # The model was paid for whatever happens next.
         for c in calls:
@@ -321,6 +367,7 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
             tenant_id=tenant_id, proposal_id=proposal_id, site_id=prop.site_id, version=version,
             title=article.title, subtitle=article.subtitle, body_md=body, language=profile.get("language"),
             status="needs_review" if article.flags else "draft", flags=article.flags, generated_by="model",
+            seo=sd.as_dict(),
         ).returning(m.drafts.c.id)).scalar_one()
         for n, c in enumerate(article.claims):
             cid = s.execute(insert(m.draft_claims).values(

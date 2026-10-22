@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import ipaddress
 import json
 import os
@@ -32,7 +33,10 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
+from . import seo
 from .markdown import to_html
+
+log = logging.getLogger(__name__)
 
 
 class PublishError(RuntimeError):
@@ -182,6 +186,27 @@ def add_target(db, tenant_id: str, site_id: int, kind: str, name: str, config: d
         ).returning(m.publish_targets.c.id)).scalar_one()
 
 
+def search_fields(s, d) -> dict:
+    """The draft's search fields and its schema.org data, for the CMS."""
+    sd = d.seo or {}
+    site = s.execute(select(m.sites.c.name, m.sites.c.domain).where(m.sites.c.id == d.site_id)).first()
+    dc, dcs, si = m.draft_claims, m.draft_claim_sources, m.source_items
+    claims = s.execute(select(dc.c.section, dc.c.text).where(dc.c.draft_id == d.id).order_by(dc.c.ordinal)).all()
+    urls = list(dict.fromkeys(s.execute(select(si.c.url).join(dcs, dcs.c.item_id == si.c.id)
+                                        .join(dc, dc.c.id == dcs.c.claim_id).where(dc.c.draft_id == d.id)).scalars()))
+    faq = [(q, " ".join(c.text for c in claims if c.section == q)) for q in sd.get("faq", [])]
+    description = sd.get("description") or d.subtitle or ""
+    return {
+        "slug": sd.get("slug") or seo.slugify(d.title), "seo_title": sd.get("title") or d.title,
+        "meta_description": description, "keyphrase": sd.get("keyphrase") or "",
+        "jsonld": seo.jsonld(title=d.title, description=description, language=d.language, url=None,
+                             keyphrase=sd.get("keyphrase") or "", published=datetime.now(UTC).isoformat(),
+                             site_name=site.name if site else None,
+                             site_url=f"https://{site.domain}/" if site else None, citations=urls,
+                             faq=[x for x in faq if x[1]]),
+    }
+
+
 def request(db, tenant_id: str, draft_id: int, target_id: int, mode: str, by: str) -> int:
     with db.tenant(tenant_id) as s:
         d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
@@ -193,7 +218,7 @@ def request(db, tenant_id: str, draft_id: int, target_id: int, mode: str, by: st
         if t.site_id != d.site_id or not t.enabled:
             raise PublishError("target not available for this site")
         payload = {"title": d.title, "subtitle": d.subtitle, "markdown": d.body_md, "html": to_html(d.body_md),
-                   "language": d.language}
+                   "language": d.language, **search_fields(s, d)}
         return s.execute(insert(m.publications).values(
             tenant_id=tenant_id, draft_id=draft_id, target_id=target_id, mode=mode, payload=payload, requested_by=by,
         ).returning(m.publications.c.id)).scalar_one()
@@ -266,7 +291,27 @@ class Publisher:
         with db.tenant(tenant_id) as s:
             s.execute(update(m.publications).where(m.publications.c.id == pub_id).values(
                 status="published", published_at=datetime.now(UTC), external_id=ext_id, external_url=ext_url, error=None))
-        return {"status": "published", "url": ext_url}
+        out = {"status": "published", "url": ext_url}
+        key = (target.config or {}).get("indexnow_key")
+        if key and ext_url and pub.mode == "publish":
+            out["indexnow"] = self.indexnow(ext_url, key)
+        return out
+
+    def indexnow(self, url: str, key: str) -> str:
+        """Tell Bing, and the engines that share IndexNow, that the page is
+        new. The key file must be at the site's root (https://site/<key>.txt).
+        A failure is reported, the publication stays published."""
+        host = httpx.URL(url).host
+        try:
+            r = self.http.post(seo.INDEXNOW, json={"host": host, "key": key, "urlList": [url]},
+                               headers={"Content-Type": "application/json; charset=utf-8"})
+        except httpx.HTTPError as e:
+            log.warning("IndexNow for %s failed: %s", url, e)
+            return f"failed: {type(e).__name__}"
+        if r.status_code >= 300:
+            log.warning("IndexNow for %s answered %s", url, r.status_code)
+            return f"failed: HTTP {r.status_code}"
+        return "sent"
 
     def _wordpress(self, target, pub, cms_url, secret):
         base = target.config["url"].rstrip("/")
@@ -274,19 +319,34 @@ class Publisher:
         r = self.http.post(
             f"{base}/wp-json/wp/v2/posts",
             auth=(target.config["user"], _need(secret, target)),
-            json={"title": pub.payload["title"], "content": pub.payload["html"], "excerpt": pub.payload["subtitle"],
-                  "status": "publish" if pub.mode == "publish" else "draft"},
+            json=self._wordpress_post(target, pub.payload, pub.mode),
         )
         _ensure_no_redirect(r, base, self.resolver)
         r.raise_for_status()
         body = r.json()
         return str(body["id"]), body.get("link")
 
+    @staticmethod
+    def _wordpress_post(target, payload: dict, mode: str) -> dict:
+        content = payload["html"]
+        if (target.config or {}).get("jsonld") and payload.get("jsonld"):
+            # Only for sites where the user may publish scripts (unfiltered_html):
+            # elsewhere WordPress would show it as text.
+            data = json.dumps(payload["jsonld"], ensure_ascii=False).replace("</", "<\\/")
+            content += f'\n<script type="application/ld+json">{data}</script>'
+        post = {"title": payload["title"], "content": content,
+                "excerpt": payload.get("meta_description") or payload["subtitle"],
+                "status": "publish" if mode == "publish" else "draft"}
+        if payload.get("slug"):
+            post["slug"] = payload["slug"]
+        return post
+
     def _webhook(self, target, pub, cms_url, secret):
         url = target.config["url"]
         check_public_url(url, self.resolver)
         data = json.dumps({"event": "publication", "mode": pub.mode, "publication_id": pub.id,
-                           "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")}},
+                           "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")},
+                           **{k: pub.payload.get(k) for k in ("slug", "seo_title", "meta_description", "keyphrase", "jsonld")}},
                           ensure_ascii=False).encode()
         sig = hmac.new(_need(secret, target).encode(), data, hashlib.sha256).hexdigest()
         r = self.http.post(url, content=data, headers={"Content-Type": "application/json", "X-Editor-Signature": f"sha256={sig}"})
