@@ -135,3 +135,17 @@ def test_article_text_is_not_read_where_robots_forbid_it(db, tenant):
         content, at = s.execute(text("SELECT content, content_fetched_at FROM editor.source_items WHERE id = :i"),
                                 {"i": cited[0]}).one()
     assert content is None and at is not None
+
+
+def test_related_items_give_the_article_context(db, tenant):
+    from sqlalchemy import text as sql
+
+    from editor.drafts import related_items
+    from test_proposals import setup_site
+
+    setup_site(db, tenant)
+    with db.tenant(tenant) as s:
+        ids = {r.url: r.id for r in s.execute(sql("SELECT id, url FROM editor.source_items"))}
+        found = related_items(s, [ids["https://news.example/1"]])
+    assert ids["https://rete.example/2"] in found
+    assert ids["https://news.example/5"] not in found  # the pizza recipe has nothing to do with it
