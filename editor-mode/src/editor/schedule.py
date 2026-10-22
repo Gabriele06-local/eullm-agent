@@ -13,7 +13,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import select, text
 
 from . import briefing, jobs, models as m, opportunity, proposals, repo, sources, tenant_data, trends
+from .i18n import N_
 from .ingest import collect_archive
+from .progress import step as progress
 from .profile import analyse_site
 from .scoring import score_topics
 from .topics import detect_topics
@@ -167,16 +169,23 @@ class Runner:
                               f"briefing {today.briefing_date.isoformat()} resent")
 
     def collect(self, archive: str, client, now: datetime, done: list[str], failed: list[str],
-                only: set[int] | None = None, tz: str | None = None, take_trend: bool = True) -> None:
+                only: set[int] | None = None, tz: str | None = None, take_trend: bool = True) -> dict:
         """Read the archive sources, then find and score its topics; from
-        07:00 every three hours keep the trend of the moment."""
+        07:00 every three hours keep the trend of the moment. Returns what
+        was read, for the dashboard."""
+        out: dict = {}
+
         def run():
-            collect_archive(self.db, archive, client, only)
-            detect_topics(self.db, archive, self.core_for(archive))
+            rep = collect_archive(self.db, archive, client, only)
+            out.update(sources=len(rep.sources), new=rep.new, errors=sum(1 for r in rep.sources if r.error))
+            progress(N_("Raggruppo le notizie in temi"))
+            topics = detect_topics(self.db, archive, self.core_for(archive))
+            out["new_topics"] = topics.new_topics
+            progress(N_("Calcolo dell'Hype dei temi"))
             score_topics(self.db, archive, now=now)
         self.step(archive, "collect", done, failed, run)
         if not take_trend:
-            return
+            return out
         tz = tz or self.settings.timezone
         with self.db.tenant(archive) as s:
             take = trends.due(s, now, tz)
@@ -185,25 +194,29 @@ class Runner:
                 with self.db.tenant(archive) as s:
                     trends.snapshot(s, archive, now)
             self.step(archive, "trend", done, failed, keep)
+        return out
 
-    def collect_now(self, tenant: str, now: datetime, done: list[str], failed: list[str]) -> None:
+    def collect_now(self, tenant: str, now: datetime, done: list[str], failed: list[str]) -> dict:
         """A newsroom's collection on request: its sources are read now, then
         topics, Hype, a fresh trend of the moment and each site's Opportunity."""
         archive = repo.archive_of(self.db, tenant)
         with self.db.tenant(tenant) as s:
             repo.rescue_sources(s)
             followed = repo.followed_archive(s)
-            sites = list(s.execute(select(m.sites.c.id)).scalars())
+            sites = s.execute(select(m.sites.c.id, m.sites.c.domain)).all()
         with self.http_factory() as client:
-            self.collect(archive, client, now, done, failed, followed, take_trend=False)
+            out = self.collect(archive, client, now, done, failed, followed, take_trend=False)
 
         def keep():
             with self.db.tenant(archive) as s:
                 trends.snapshot(s, archive, now)
+        progress(N_("Trend del momento"))
         self.step(archive, "trend", done, failed, keep)
-        for site_id in sites:
+        for site_id, domain in sites:
+            progress(N_("Opportunità dei temi per {domain}"), domain=domain)
             self.step(tenant, "opportunity", done, failed,
                       lambda site_id=site_id: opportunity.score_site(self.db, tenant, site_id, now=now))
+        return out
 
     def archive_tick(self, now: datetime, done: list[str], failed: list[str]) -> None:
         """The hour of the shared archive (PostgreSQL): read once every source

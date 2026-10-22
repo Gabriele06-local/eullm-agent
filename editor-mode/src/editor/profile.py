@@ -29,8 +29,9 @@ from . import models as m
 from . import quotas, repo
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
-from .i18n import t
+from .i18n import N_, t
 from .normalize import url_hash
+from .progress import step
 from .site import SiteSnapshot, is_note
 from .text import tokens
 
@@ -559,6 +560,7 @@ def store_snapshot(s, tenant_id: str, site_id: int, snap: SiteSnapshot) -> int:
 def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | None = None) -> dict:
     """First analysis or periodic review of a site. Returns what happened."""
     snap = crawler.analyse(domain)
+    step(N_("Il modello ricava settore, temi, pubblico e tono da {n} articoli letti"), n=len(snap.posts))
     body, calls = build_profile(snap, core)
     with db.tenant(tenant_id) as s:
         repo.ensure_tenant(s, tenant_id, tenant_id)

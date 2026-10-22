@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -210,6 +210,7 @@ def register(app, ctx) -> None:
             "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
+            "activity": data.pop("activity", None) or act.recent(s, tz, problem),
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": i18n.DAYS[i18n.current()], "months": i18n.MONTHS[i18n.current()], **data,
         }, status_code=status_code)
         if notice:
@@ -480,6 +481,14 @@ def register(app, ctx) -> None:
 
     # --- Oggi -----------------------------------------------------------------------
 
+    @app.get("/ui/activity", response_class=HTMLResponse)
+    def activity_box(request: Request, full: int = 0, c: auth.Caller = Depends(viewer)):
+        """The Attività box alone, fetched again while work runs."""
+        with db.tenant(c.tenant_id) as s:
+            data = act.recent(s, zone(s), problem, full=bool(full))
+        return pages.TemplateResponse(request, "_activity.html.j2", {"activity": data},
+                                      headers={"Cache-Control": "no-store"})
+
     @app.get("/", response_class=HTMLResponse)
     def today(request: Request, c: auth.Caller = Depends(viewer)):
         with db.tenant(c.tenant_id) as s:
@@ -496,7 +505,8 @@ def register(app, ctx) -> None:
                 pending.setdefault(r.site_id, r.version)
             site_lines = [{"id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id)}
                           for x in sites]
-            proposed = proposal_rows(s, sid, ("proposed",), limit=6)
+            # The Desk is every site at once: decisions, work and numbers of all.
+            proposed = proposal_rows(s, None, ("proposed",), limit=12)
             explained = proposal_details(s, proposed)
             pending_pubs = s.execute(
                 select(m.publications.c.id, m.publications.c.mode, m.publications.c.requested_by,
@@ -524,9 +534,12 @@ def register(app, ctx) -> None:
                 m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s))).scalar()
             usage = quotas.usage(s)
             # Only what could become a proposal: the same rule as proposals.py.
-            tops = [t for t in topic_scores(s, sid, 40) if t.opportunity is not None and (
-                (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
-                or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:4] if sid else []
+            tops = []
+            for x in sites:
+                tops += [{"domain": x.domain, "row": t} for t in topic_scores(s, x.id, 40) if t.opportunity is not None and (
+                    (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
+                    or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:3]
+            tops = sorted(tops, key=lambda x: -x["row"].opportunity)[:5]
             # The archive sources this newsroom follows: when they were last read,
             # and fetches the Core could not make (down, or out of daily fetches).
             followed = list(repo.followed_archive(s))
@@ -540,15 +553,53 @@ def register(app, ctx) -> None:
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             # A source the maintenance suspended is news, not a decision.
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs)
-            guide = first_steps(s, sites, lines, sid)
-            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), guide=guide,
+            desk = desk_rows(s, sites, lines, pending)
+            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk,
+                          activity=act.recent(s, zone(s), problem, full=True),
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
                           proposed=proposed, explained=explained, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions)
 
-    def first_steps(s, sites, lines, sid=None) -> list[dict] | None:
+    def draft_jobs(s, proposal_ids: list[int]) -> dict[int, dict]:
+        """The latest draft job of each accepted proposal still without a
+        draft: queued, running or failed, with its error."""
+        if not proposal_ids:
+            return {}
+        j = m.jobs.c
+        out = {}
+        for r in s.execute(select(j.subject, j.status, j.error).where(
+                j.kind == "draft", j.subject.in_([f"proposal {i}" for i in proposal_ids])).order_by(j.id)).all():
+            out[int(r.subject.split()[-1])] = {"status": r.status, "error": problem(r.error) if r.error else None}
+        return out
+
+    def desk_rows(s, sites, lines, pending) -> list[dict]:
+        """One row per site on the Desk: where it stands, its numbers, the
+        work running on it and the next step."""
+        day_ago = datetime.now(UTC) - timedelta(hours=24)
+        j = m.jobs.c
+        active = s.execute(select(j.kind, j.subject, j.args).where(j.status.in_(("queued", "running")))).all()
+        rows = []
+        for x in sites:
+            def count(table, *where):
+                return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
+            working = {r.kind for r in active if r.subject == x.domain or (r.args or {}).get("site_id") == x.id
+                       or r.kind in ("collect", "tick", "draft")}
+            steps = first_steps(s, sites, lines, x.id, working)
+            nxt = next((st for st in steps if st["current"]), None) if steps else None
+            rows.append({
+                "id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id),
+                "sources": count(m.sources, m.sources.c.site_id == x.id, m.sources.c.status == "active"),
+                "candidates": count(m.sources, m.sources.c.site_id == x.id, m.sources.c.status == "candidate"),
+                "news": count(m.source_items, repo.followed_by(x.id), m.source_items.c.fetched_at >= day_ago),
+                "proposals": count(m.proposals, m.proposals.c.site_id == x.id, m.proposals.c.status == "proposed"),
+                "drafts": count(m.drafts, m.drafts.c.site_id == x.id, m.drafts.c.status.in_(("draft", "needs_review"))),
+                "next": nxt, "working": bool(working - {"collect", "tick", "draft"}),
+            })
+        return rows
+
+    def first_steps(s, sites, lines, sid=None, working=None) -> list[dict] | None:
         """The way from a domain to the first article, step by step, with
         what the newsroom is waiting for; None once every step is done.
         Sources and news are those of the site in view, like the Fonti page."""
@@ -556,32 +607,34 @@ def register(app, ctx) -> None:
             return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
         of_site = m.sources.c.site_id == sid
         site_items = repo.followed_by(sid)
-        working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
+        if working is None:
+            working = set(s.execute(select(m.jobs.c.kind).where(m.jobs.c.status.in_(("queued", "running")))).scalars())
+        of = (lambda col: col == sid) if sid is not None else (lambda col: True)
         steps = [
             {"title": t("Aggiungi il sito"), "past": t("Sito aggiunto"), "done": bool(sites), "href": None,
              "busy": "analysis" in working and not sites,
              "wait": t("Scansione del sito in corso: legge fino a 25 articoli, di solito pochi minuti."),
              "todo": t("Scrivi il dominio qui sotto: la redazione legge il sito e ne ricava temi, pubblico e tono.")},
-            {"title": t("Approva il profilo"), "past": t("Profilo approvato"), "done": bool(lines), "href": "/site", "busy": "analysis" in working,
+            {"title": t("Approva il profilo"), "past": t("Profilo approvato"), "done": bool(lines.get(sid) if sid else lines), "href": "/site", "busy": "analysis" in working,
              "wait": t("Analisi in corso: il profilo da approvare arriva appena finisce."),
              "todo": t("Controlla temi e articoli d'esempio, togli i temi che non vuoi e approva.")},
             {"title": t("Attiva le fonti"), "past": t("Fonti attivate"), "done": count(m.sources, m.sources.c.status == "active", of_site) > 0, "href": "/sources",
              "busy": "discovery" in working, "wait": t("Ricerca delle fonti in corso dopo l'approvazione del profilo."),
              "todo": t("Guarda origine, ultime notizie e punteggio delle candidate e attiva quelle che vuoi.")},
             {"title": t("Raccogli le notizie"), "past": t("Notizie raccolte"), "done": count(m.source_items, site_items) > 0, "href": "/trends", "busy": True,
-             "wait": t("Parte da sola ogni ora dalle fonti attive: alla prossima ora vedi le prime notizie."),
+             "wait": t("Parte da sola ogni ora dalle fonti attive, oppure subito con \"Raccogli le notizie\"."),
              "todo": ""},
-            {"title": t("Accetta una proposta"), "past": t("Proposta accettata"), "done": count(m.proposals, m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
-             "href": "/trends", "busy": not count(m.proposals, m.proposals.c.status == "proposed"),
-             "wait": (t("Hai scartato le proposte arrivate finora. ") if count(m.proposals, m.proposals.c.status == "rejected") else "")
+            {"title": t("Accetta una proposta"), "past": t("Proposta accettata"), "done": count(m.proposals, of(m.proposals.c.site_id), m.proposals.c.status.in_(("accepted", "drafted"))) > 0,
+             "href": "/trends", "busy": not count(m.proposals, of(m.proposals.c.site_id), m.proposals.c.status == "proposed"),
+             "wait": (t("Hai scartato le proposte arrivate finora. ") if count(m.proposals, of(m.proposals.c.site_id), m.proposals.c.status == "rejected") else "")
              + t("Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in "
                  "Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte "
                  "(opportunità da 50/100) di una fonte affidabile."),
              "todo": t("Accetta le proposte che ti interessano e scarta le altre.")},
-            {"title": t("Rileggi la prima bozza"), "past": t("Prima bozza approvata"), "done": count(m.drafts, m.drafts.c.status == "approved") > 0,
+            {"title": t("Rileggi la prima bozza"), "past": t("Prima bozza approvata"), "done": count(m.drafts, of(m.drafts.c.site_id), m.drafts.c.status == "approved") > 0,
              "href": "/drafts", "busy": "draft" in working, "wait": t("La bozza è in scrittura."),
              "todo": t("Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala.")},
-            {"title": t("Collega il sito per pubblicare"), "past": t("Sito collegato"), "done": count(m.publish_targets) > 0, "href": "/publications",
+            {"title": t("Collega il sito per pubblicare"), "past": t("Sito collegato"), "done": count(m.publish_targets, of(m.publish_targets.c.site_id)) > 0, "href": "/publications",
              "busy": False, "wait": "", "todo": t("Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì.")},
         ]
         if all(x["done"] for x in steps):
@@ -653,13 +706,14 @@ def register(app, ctx) -> None:
         return done("/site", t("Analisi di {d} in coda: il sito compare qui quando il lavoro finisce, poi il profilo arriva in bozza da approvare.", d=d))
 
     @app.post("/ui/sites/{site_id}/review")
-    def ui_review(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+    def ui_review(site_id: int, back: str = "/site", c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             domain = s.execute(select(m.sites.c.domain).where(m.sites.c.id == site_id)).scalar()
         if domain is None:
             raise HTTPException(404, "site not found")
         ctx.run_analysis(c.tenant_id, domain)
-        return done("/site", t("Rianalisi di {domain} avviata.", domain=domain))
+        return done(safe_path(back, "/site"),
+                    t("Analisi di {domain} partita: la segui passo per passo nel riquadro Attività.", domain=domain))
 
     @app.post("/ui/sites/{site_id}/approve/{version}")
     def ui_approve(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -807,12 +861,13 @@ def register(app, ctx) -> None:
         return done(safe_path(back, "/sources"), notice)
 
     @app.post("/ui/sites/{site_id}/discover")
-    def ui_discover(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+    def ui_discover(site_id: int, back: str = "/sources?status=candidate", c: auth.Caller = Depends(ctx.need("owner"))):
         with db.tenant(c.tenant_id) as s:
             if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
                 raise HTTPException(404, "site not found")
         ctx.run_discovery(c.tenant_id, site_id)
-        return done("/sources?status=candidate", t("Ricerca di nuove fonti avviata: le trovate entrano come candidate."))
+        return done(safe_path(back, "/sources?status=candidate"),
+                    t("Ricerca delle fonti partita: la segui nel riquadro Attività. Le trovate entrano come candidate."))
 
     # --- Trend e piano --------------------------------------------------------------
 
@@ -846,6 +901,7 @@ def register(app, ctx) -> None:
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,
                           dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None,
+                          writing=draft_jobs(s, [p.id for p in plan if p.status == "accepted" and not p.draft_id]),
                           snap=snap, day=day, moment=moment, local=lambda at: at.astimezone(zone(s)))
 
     @app.post("/ui/trends/{topic_id}/titles")
@@ -864,7 +920,10 @@ def register(app, ctx) -> None:
     def ui_propose_now(request: Request, c: auth.Caller = Depends(ctx.need("editor"))):
         """The day's proposals now, without waiting for the briefing."""
         with db.tenant(c.tenant_id) as s:
-            _, site = current_site(s, request)
+            sites, site = current_site(s, request)
+            wanted = request.query_params.get("site")
+            if wanted:  # from the Desk, one row per site
+                site = next((x for x in sites if str(x.id) == wanted), None)
             if site is None:
                 return done("/trends", t("Aggiungi prima un sito."))
             if not s.execute(select(m.editorial_profiles.c.id).where(m.editorial_profiles.c.site_id == site.id,
@@ -874,13 +933,13 @@ def register(app, ctx) -> None:
         # Asked for by a person: never held back by the day's number.
         ctx.run_proposals(c.tenant_id, site.id, since, manual=True)
         return done(safe_path(request.query_params.get("back"), "/trends"),
-                    t("Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti."))
+                    t("Proposte per {domain} in preparazione: le segui nel riquadro Attività.", domain=site.domain))
 
     @app.post("/ui/collect")
     def ui_collect(c: auth.Caller = Depends(ctx.need("editor"))):
         """Read the sources now, then topics, Hype, the trend of the moment and Opportunity."""
         ctx.run_collect(c.tenant_id)
-        return done("/", t("Raccolta avviata: notizie, temi e trend si aggiornano tra qualche minuto."))
+        return done("/", t("Raccolta partita: la segui passo per passo nel riquadro Attività."))
 
     @app.post("/ui/proposals/{proposal_id}")
     def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),
@@ -889,7 +948,7 @@ def register(app, ctx) -> None:
             return done(safe_path(back, "/trends"), t("Questa proposta era già stata decisa."))
         if accept == "1" and ctx.core is not None:
             ctx.run_draft(c.tenant_id, proposal_id)
-            return done(safe_path(back, "/trends"), t("Proposta accettata: la bozza è in scrittura."))
+            return done(safe_path(back, "/trends"), t("Proposta accettata: la bozza è in scrittura, la segui nel riquadro Attività."))
         return done(safe_path(back, "/trends"), t("Proposta accettata.") if accept == "1" else t("Proposta scartata."))
 
     @app.post("/ui/proposals/{proposal_id}/draft")

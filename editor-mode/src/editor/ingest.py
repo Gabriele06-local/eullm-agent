@@ -17,7 +17,9 @@ from .collectors import COLLECTORS, Item, SourceSpec
 from .core_fetch import CoreTrouble
 from .db import Database
 from .dedup import find_duplicate, minhash
+from .i18n import N_
 from .normalize import canonical_url, content_hash, sha256_hex
+from .progress import step
 
 log = logging.getLogger(__name__)
 
@@ -114,7 +116,8 @@ def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[
     with db.tenant(tenant_id) as s:
         repo.rescue_sources(s)
         sources = repo.active_sources(s, only)
-    for src in sources:
+    for n, src in enumerate(sources, 1):
+        step(N_("Lettura delle fonti: {n} di {total} ({name})"), n=n, total=len(sources), name=src.name)
         r = SourceReport(src.id, src.name)
         report.sources.append(r)
         collector = COLLECTORS.get(src.kind)

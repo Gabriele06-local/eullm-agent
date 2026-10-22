@@ -27,6 +27,8 @@ from . import models as m
 from . import quotas, repo, seo
 from .core_client import CoreClient, CoreError
 from .html_extract import parse_html
+from .i18n import N_
+from .progress import step
 from .site import RobotsCache
 from .normalize import normalize_text
 from .text import item_terms, tokens
@@ -313,6 +315,7 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
         ids = list(dict.fromkeys(cited + more))
         ids += related_items(s, ids)
         profile = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.id == prop.profile_id)).scalar()
+    step(N_("Lettura degli articoli di {n} notizie collegate"), n=len(ids))
     fetch_contents(db, tenant_id, ids, client)
     with db.tenant(tenant_id) as s:
         sources = _sources(s, ids)
@@ -323,6 +326,8 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
     from .core_client import extract_json
 
     for attempt in range(3):
+        step(N_("Il modello scrive la bozza") if attempt == 0
+             else N_("Il modello corregge la bozza: frasi senza fonte o numeri che le fonti non riportano"))
         res = core.chat(messages)
         calls.append(res)
         try:

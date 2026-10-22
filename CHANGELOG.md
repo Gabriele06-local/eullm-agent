@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.12.0
+
+### Added
+
+- Editor Mode, the Desk (it replaces "Oggi"): every site on one page. A
+  table gives each site its profile, active sources, news in the last 24
+  hours, proposals and drafts waiting, the next step it needs and buttons
+  to analyse it, find sources and propose articles; the collection runs
+  for all sites at once. Decisions of every site are listed together.
+- Activity: every job started from the dashboard shows at once, queued,
+  then running with the step it is on ("Lettura degli articoli del sito:
+  7 di 25", "Lettura delle fonti: 12 di 40", "Il modello scrive la
+  bozza"), then what it produced with a link to it: a profile to approve
+  or "no change", sources tried and activated, news and topics read,
+  proposals made, the draft written. A failed job says why and at which
+  step. The box refreshes by itself on every page and the page reloads
+  when the work ends; if work waits more than three minutes with nothing
+  running, it says the worker seems stopped.
+- When no proposal comes out, the result names the topic closest to one,
+  with its Opportunity and its news and sources. An accepted proposal
+  shows whether its draft is being written or failed, and why.
+- Jobs keep their step and their result (`editor.jobs.progress`,
+  `editor.jobs.result`, migration 0020).
+
 ## 0.11.0
 
 ### Added

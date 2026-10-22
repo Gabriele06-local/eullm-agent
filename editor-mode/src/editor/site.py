@@ -24,7 +24,9 @@ import httpx
 
 from .collectors.base import from_iso, from_struct_time
 from .html_extract import Page, parse_html, same_site
+from .i18n import N_
 from .normalize import canonical_url, clean_text
+from .progress import step
 from .text import tokens
 
 log = logging.getLogger(__name__)
@@ -348,6 +350,7 @@ class SiteCrawler:
         self.snap = snap = SiteSnapshot(domain=domain)
         self.host = ""
         base = f"https://{domain}"
+        step(N_("Lettura della home page, dei feed e della sitemap di {domain}"), domain=domain)
         if not self._robots(base):
             snap.status = "failed"
             return snap
@@ -369,7 +372,9 @@ class SiteCrawler:
         outbound: Counter = Counter()
         texts = [home.description, home.title]
         words = []
-        for url in candidates[: self.article_samples]:
+        sample = candidates[: self.article_samples]
+        for n, url in enumerate(sample, 1):
+            step(N_("Lettura degli articoli del sito: {n} di {total}"), n=n, total=len(sample))
             got = self._article(url)
             if got is None:
                 continue

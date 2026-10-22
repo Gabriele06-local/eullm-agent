@@ -75,4 +75,4 @@ def test_every_page_renders_in_every_language(db, tenant):
             assert r.status_code == 200, (lang, path)
             assert f'<html lang="{lang}">' in r.text, (lang, path)
     page = c.get("/").text  # Spanish, the last one chosen
-    assert "Hoy" in page and "Oggi</a>" not in page
+    assert "Fuentes</a>" in page and "Fonti</a>" not in page

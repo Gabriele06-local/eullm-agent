@@ -1,10 +1,10 @@
 {% extends "base.html.j2" %}
-{% block title %}{{ _('Oggi') }}{% endblock %}
+{% block title %}{{ _('Desk') }}{% endblock %}
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }}{% if site %} · {{ site.domain }}{% endif %}</span>
-    <h1>{{ _('Oggi') }}</h1>
+    <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }} · {{ _('tutti i siti') }}</span>
+    <h1>{{ _('Desk') }}</h1>
   </div>
   <div class="row">
     {% if briefing and (briefing.sent_email_at or briefing.sent_telegram_at) %}
@@ -19,34 +19,51 @@
 </header>
 {% with page="today" %}{% include "_help.html.j2" %}{% endwith %}
 
-{% if site and caller.can('editor') %}
+{% if sites and caller.can('editor') %}
 <section class="card pad" aria-labelledby="h-now">
   <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-now">{{ _('Lancia adesso') }}</h2><span class="hint">{{ _('senza aspettare gli orari automatici') }}</span></div>
-  <p class="hint" style="margin: 0 0 10px;">{{ _("Ogni passo si può lanciare quando vuoi. Il lavoro parte in coda e il risultato compare nella sua pagina dopo qualche minuto.") }}</p>
+  <p class="hint" style="margin: 0 0 10px;">{{ _("La raccolta legge le fonti di tutti i siti insieme. Analisi, fonti e proposte si lanciano sito per sito dalla tabella qui sotto. Ogni lavoro compare in Attività e lo vedi andare avanti passo per passo.") }}</p>
   <div class="row" style="flex-wrap: wrap; gap: 8px;">
-    {% if caller.can('owner') %}
-    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/review"><button class="btn" type="submit">{{ _('1. Analizza il sito') }}</button></form>
-    <form class="inline" method="post" action="/ui/sites/{{ site.id }}/discover"><button class="btn" type="submit">{{ _('2. Cerca le fonti') }}</button></form>
-    {% endif %}
-    <form class="inline" method="post" action="/ui/collect"><button class="btn" type="submit">{{ _('3. Raccogli le notizie e il trend') }}</button></form>
-    <form class="inline" method="post" action="/ui/proposals/now?back=/"><button class="btn pri" type="submit">{{ _('4. Proponi gli articoli') }}</button></form>
+    <form class="inline" method="post" action="/ui/collect"><button class="btn pri" type="submit">{{ _('Raccogli le notizie e il trend') }}</button></form>
   </div>
 </section>
 {% endif %}
 
-{% if guide %}
-<section class="card pad" aria-labelledby="h-steps">
-  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-steps">{{ _('Primi passi') }}</h2><span class="hint">{{ _('{done} di {total}', done=guide|selectattr('done')|list|length, total=guide|length) }}</span></div>
-  <ol class="steps" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-  {% for x in guide %}
-    <li>
-      {% if x.done %}<span class="hint">✓ {{ x.past }}</span>
-      {% elif x.current %}<strong>{{ x.title }}</strong>{% if x.busy %} <span class="chip teal">{{ _('In attesa') }}</span>{% else %} <span class="chip amber">{{ _('Tocca a te') }}</span>{% endif %}
-        <br><span class="lead">{{ x.wait if x.busy else x.todo }}</span>{% if x.href %} <a href="{{ x.href }}">{{ _('Apri') }}</a>{% endif %}
-      {% else %}<span class="hint">{{ x.title }}</span>{% endif %}
-    </li>
-  {% endfor %}
-  </ol>
+{% include "_activity.html.j2" %}
+
+{% if desk %}
+<section class="card" aria-labelledby="h-desk" style="margin-bottom: 20px;">
+  <div class="card-head"><h2 id="h-desk">{{ _('Siti') }}</h2><span class="hint">{{ _('{n} siti', n=desk|length) if desk|length != 1 else _('1 sito') }}</span></div>
+  <div class="scroll">
+  <table style="min-width: 980px;">
+    <thead><tr>
+      <th>{{ _('Sito') }}</th><th>{{ _('Profilo') }}</th><th>{{ _('Fonti attive') }}</th><th>{{ _('Notizie 24 ore') }}</th>
+      <th>{{ _('Proposte') }}</th><th>{{ _('Bozze') }}</th><th>{{ _('Prossimo passo') }}</th>{% if caller.can('editor') %}<th>{{ _('Lancia') }}</th>{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for x in desk %}
+    <tr>
+      <td><a href="/switch?site={{ x.id }}&amp;back=/site">{{ x.domain }}</a>{% if x.working %} <span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('al lavoro') }}</span>{% endif %}</td>
+      <td>{% if x.pending %}<a class="chip amber" href="/switch?site={{ x.id }}&amp;back=/site">{{ _('v{version} da approvare', version=x.pending) }}</a>{% elif x.approved %}<span class="chip">{{ _('v{version} in uso', version=x.approved) }}</span>{% else %}<span class="chip">{{ _('in analisi') }}</span>{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/sources">{{ x.sources }}</a>{% if x.candidates %}<small>{{ _('{n} da valutare', n=x.candidates) }}</small>{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/trends">{{ x.news }}</a></td>
+      <td class="num">{% if x.proposals %}<a class="chip amber" href="#h-decide">{{ x.proposals }}</a>{% else %}0{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/drafts">{{ x.drafts }}</a></td>
+      <td>{% if x.next %}<strong style="font-weight: 500;">{{ x.next.title }}</strong>{% if x.next.busy %} <span class="chip teal">{{ _('In attesa') }}</span>{% else %} <span class="chip amber">{{ _('Tocca a te') }}</span>{% endif %}<small>{{ x.next.wait if x.next.busy else x.next.todo }}</small>{% else %}<span class="hint">{{ _('Tutto avviato') }}</span>{% endif %}</td>
+      {% if caller.can('editor') %}
+      <td><div class="row" style="gap: 6px; flex-wrap: wrap;">
+        {% if caller.can('owner') %}
+        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/review?back=/"><button class="btn sm" type="submit">{{ _('Analizza') }}</button></form>
+        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/discover?back=/"><button class="btn sm" type="submit">{{ _('Cerca fonti') }}</button></form>
+        {% endif %}
+        <form class="inline" method="post" action="/ui/proposals/now?back=/&amp;site={{ x.id }}"><button class="btn sm" type="submit">{{ _('Proponi') }}</button></form>
+      </div></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
 </section>
 {% endif %}
 
@@ -123,7 +140,7 @@
 
     {% for p in proposed %}
     <div class="item">
-      <span class="chip">{{ _('Proposta') }}</span>
+      <span class="chip">{{ _('Proposta') }}{% if sites|length > 1 %} · {{ p.domain }}{% endif %}</span>
       <div class="what">
         {% include "_proposal.html.j2" %}
       </div>
@@ -140,27 +157,12 @@
   </section>
 
   <div class="col-side">
-    <section class="card pad" aria-labelledby="h-sites">
-      <h2 id="h-sites">{{ _('Siti') }}</h2>
-      {% for x in site_lines %}
-      <div class="row" style="justify-content: space-between; flex-wrap: nowrap; gap: 8px;">
-        <a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px; min-width: 0; overflow-wrap: anywhere;">{{ x.domain }}</a>
-        <span class="row" style="gap: 6px; flex-wrap: nowrap;">
-          {% if x.approved %}<span class="chip">{{ _('v{version} in uso', version=x.approved) }}</span>{% endif %}
-          {% if x.pending %}<span class="chip amber">{{ _('v{version} da approvare', version=x.pending) }}</span>{% elif not x.approved %}<span class="chip">{{ _('in analisi') }}</span>{% endif %}
-        </span>
-      </div>
-      {% else %}
-      <p class="hint">{{ _('Nessun sito: aggiungilo da Sito e profilo.') }}</p>
-      {% endfor %}
-    </section>
-
     <section class="card pad" aria-labelledby="h-opp">
       <div class="row" style="justify-content: space-between;"><h2 id="h-opp">{{ _('Opportunità del giorno') }}</h2><a href="/trends" style="font-size: 14px;">{{ _('Tutti i trend') }}</a></div>
       <div class="legend"><span><i></i>{{ _('Opportunità per il sito') }}</span><span><i class="hype"></i>{{ _('Hype nel settore') }}</span></div>
-      {% for t in tops %}
+      {% for x in tops %}{% set t = x.row %}
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {{ _('{items} notizie da {sources} fonti', items=t.items, sources=t.sources) }}</span></span>
+        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {% if sites|length > 1 %}{{ x.domain }} · {% endif %}{{ _('{items} notizie da {sources} fonti', items=t.items, sources=t.sources) }}</span></span>
         <div class="pair">
           <div class="bar"><i style="width: {{ t.opportunity|round|int }}%"></i></div><span class="num">{{ t.opportunity|s100 }}</span>
           <div class="bar"><i class="hype" style="width: {{ (t.hype or 0)|round|int }}%"></i></div><span class="num" style="color: var(--muted);">{{ t.hype|s100 }}</span>

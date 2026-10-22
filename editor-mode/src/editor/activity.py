@@ -1,0 +1,170 @@
+"""What the newsroom is doing, in plain words: the work asked for from the
+dashboard (and the automatic round while it runs), the step each job is on,
+how long it has been going, and what it produced once it ends, with a link
+to the result. The Desk shows the day; every page shows what is running and
+what has just ended."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from urllib.parse import quote
+
+from sqlalchemy import or_, select
+
+from . import models as m
+from .i18n import N_, t
+from .proposals import MIN_OPPORTUNITY
+from .queue import PRIORITY_PERSON
+
+KINDS = {
+    "analysis": N_("Analisi del sito"),
+    "discovery": N_("Ricerca delle fonti"),
+    "collect": N_("Raccolta delle notizie e del trend"),
+    "proposals": N_("Proposte di articoli"),
+    "titles": N_("Titoli per un trend"),
+    "draft": N_("Scrittura della bozza"),
+    "publish": N_("Pubblicazione"),
+    "tick": N_("Giro orario automatico"),
+}
+RECENT = timedelta(minutes=15)  # how long an ended job stays on every page
+STALLED = timedelta(minutes=3)  # queued this long with nothing running: the worker is not taking work
+
+
+def _duration(d: timedelta) -> str:
+    sec = max(0, int(d.total_seconds()))
+    if sec < 60:
+        return t("{n} s", n=sec)
+    if sec < 3600:
+        return t("{n} min", n=sec // 60)
+    return t("{h} h {m} min", h=sec // 3600, m=sec % 3600 // 60)
+
+
+def _site_link(site_id, back: str) -> str:
+    return f"/switch?site={site_id}&back={quote(back, safe='')}" if site_id else back
+
+
+def _result(kind: str, r: dict, site_id) -> tuple[list[str], str | None, str | None]:
+    """Sentences on what the job produced, and a link to it."""
+    if kind == "analysis":
+        if r.get("status") == "failed":
+            return [t("Il sito non si è potuto leggere.")], _site_link(site_id, "/site"), t("Vedi i dettagli")
+        out = []
+        if r.get("profile_id") and r.get("changes"):
+            out.append(t("Il sito è cambiato: nuova versione del profilo da approvare ({n} differenze).", n=r["changes"]))
+        elif r.get("profile_id"):
+            out.append(t("Profilo pronto da approvare."))
+        else:
+            out.append(t("Nessun cambiamento: la linea del sito è la stessa del profilo in uso."))
+        src = r.get("sources") or {}
+        if src.get("no_profile"):
+            out.append(t("Le fonti si cercano dopo l'approvazione del profilo."))
+        elif src:
+            out.append(t("Fonti: {n} provate, {a} attivate, {c} da valutare.", n=src.get("candidates", 0),
+                         a=src.get("active", 0), c=src.get("candidate", 0)))
+        return out, _site_link(site_id, "/site"), t("Vedi il profilo")
+    if kind == "discovery":
+        if r.get("no_profile"):
+            return [t("Prima approva il profilo: le fonti si cercano a partire dai suoi temi.")], \
+                _site_link(site_id, "/site"), t("Vedi il profilo")
+        if not r.get("candidates"):
+            return [t("Nessuna fonte nuova da provare: quelle trovate sono già nell'elenco.")], \
+                _site_link(site_id, "/sources?status=all"), t("Vedi le fonti")
+        return [t("{n} fonti provate: {a} attivate, {c} da valutare, {x} scartate.", n=r["candidates"],
+                  a=r.get("active", 0), c=r.get("candidate", 0), x=r.get("rejected", 0) + r.get("failed", 0))], \
+            _site_link(site_id, "/sources?status=candidate" if r.get("candidate") else "/sources"), t("Vedi le fonti")
+    if kind == "collect":
+        out = [t("{s} fonti lette, {n} notizie nuove, {k} temi nuovi.", s=r.get("sources", 0), n=r.get("new", 0),
+                 k=r.get("new_topics", 0))]
+        if r.get("errors"):
+            out.append(t("{n} fonti non hanno risposto: riprovano al prossimo giro.", n=r["errors"]))
+        return out, "/trends", t("Vedi i trend")
+    if kind in ("proposals", "titles"):
+        if r.get("proposals"):
+            return [t("{n} proposte nuove da decidere.", n=r["proposals"])], "/", t("Decidi")
+        out = [t("Nessuna proposta nuova: nessun tema ha ancora due notizie di fonti diverse, o una notizia "
+                 "forte di una fonte affidabile. Prova dopo una raccolta.")]
+        best = r.get("best")
+        if best:
+            out.append(t("Il tema più vicino è «{label}»: opportunità {o}/100 (ne serve {min}), {n} notizie da {k} fonti.",
+                         label=best["label"], o=best["opportunity"], min=round(MIN_OPPORTUNITY),
+                         n=best["items"], k=best["sources"]))
+        elif kind == "proposals":
+            out.append(t("Non ci sono ancora temi con un'opportunità calcolata per questo sito: lancia la raccolta."))
+        return out, _site_link(site_id, "/trends"), t("Vedi i trend")
+    if kind == "draft":
+        text = t("Bozza pronta: «{title}».", title=r.get("title", ""))
+        if r.get("status") == "needs_review":
+            text += " " + t("Alcuni controlli non sono passati: rileggila con attenzione.")
+        return [text], f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Leggi la bozza")
+    if kind == "publish":
+        out = [t("Pubblicata.")]
+        if r.get("indexnow") == "sent":
+            out.append(t("Segnalata subito a Bing con IndexNow."))
+        elif r.get("indexnow"):
+            out.append(t("Segnalazione IndexNow non riuscita: la pagina resta pubblicata."))
+        return out, r.get("url") or "/publications", t("Apri")
+    return [], None, None
+
+
+def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datetime | None = None) -> dict:
+    """The jobs to show: those waiting or running, and those ended in the
+    last 15 minutes (the last day on the Desk)."""
+    now = now or datetime.now(UTC)
+    j = m.jobs.c
+    since = now - (timedelta(hours=24) if full else RECENT)
+    rows = s.execute(select(m.jobs).where(
+        j.kind.in_(KINDS), j.priority.is_not(None),
+        or_(j.priority >= PRIORITY_PERSON, j.status == "running"),
+        or_(j.status.in_(("queued", "running")), j.finished_at >= since),
+    ).order_by(j.id.desc()).limit(30 if full else 8)).all()
+    domains = dict(s.execute(select(m.sites.c.id, m.sites.c.domain)).all())
+    by_domain = {d: i for i, d in domains.items()}
+    proposal_ids = [r.args.get("proposal_id") for r in rows if r.kind == "draft" and r.args]
+    proposal_site = dict(s.execute(select(m.proposals.c.id, m.proposals.c.site_id)
+                                   .where(m.proposals.c.id.in_([x for x in proposal_ids if x])))) \
+        if proposal_ids else {}
+    running = any(r.status == "running" for r in rows)
+    items, stalled = [], False
+    for r in rows:
+        args, res = r.args or {}, r.result or {}
+        site_id = res.get("site_id") or args.get("site_id") or by_domain.get(r.subject) \
+            or proposal_site.get(args.get("proposal_id"))
+        where = domains.get(site_id) or (r.subject if r.kind == "analysis" else None)
+        if r.kind in ("collect", "tick"):
+            where = t("tutti i siti")
+        step = None
+        if r.progress and r.progress.get("text"):
+            try:
+                step = t(r.progress["text"], **(r.progress.get("values") or {}))
+            except (KeyError, IndexError, ValueError):
+                step = r.progress["text"]
+        item = {"id": r.id, "what": t(KINDS[r.kind]), "where": where, "status": r.status, "step": step,
+                "lines": [], "href": None, "link": None, "warn": None}
+        if r.status == "queued":
+            waited = now - _aware(r.run_after or r.started_at, now)
+            item["state"] = t("In coda da {d}", d=_duration(waited))
+            if waited > STALLED and not running:
+                stalled = True
+        elif r.status == "running":
+            item["state"] = t("In corso da {d}", d=_duration(now - _aware(r.started_at, now)))
+        elif r.status == "done":
+            item["state"] = t("Finito alle {time}, in {d}", time=_aware(r.finished_at, now).astimezone(tz).strftime("%H:%M"),
+                              d=_duration(_aware(r.finished_at, now) - _aware(r.started_at, now)))
+            item["lines"], item["href"], item["link"] = _result(r.kind, res, site_id)
+        else:
+            item["state"] = t("Non riuscito alle {time}", time=_aware(r.finished_at or now, now).astimezone(tz).strftime("%H:%M"))
+            item["lines"] = [humanize(r.error or "")]
+            if step:
+                item["lines"].append(t("Era a questo passo: {step}", step=step))
+            item["step"] = None
+        items.append(item)
+    items.sort(key=lambda x: (x["status"] not in ("running", "queued"), x["status"] != "running"))
+    return {"items": items, "active": any(x["status"] in ("running", "queued") for x in items),
+            "stalled": stalled, "full": full}
+
+
+def _aware(value: datetime | None, now: datetime) -> datetime:
+    if value is None:
+        return now
+    return value if value.tzinfo else value.replace(tzinfo=UTC)

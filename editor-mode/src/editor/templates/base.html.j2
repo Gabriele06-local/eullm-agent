@@ -32,7 +32,7 @@
     <noscript><button class="btn sm" type="submit">{{ _('Vai') }}</button></noscript>
   </form>
   {% endif %}
-  <a href="/" {% if active == 'today' %}class="on" aria-current="page"{% endif %}>{{ _('Oggi') }}</a>
+  <a href="/" {% if active == 'today' %}class="on" aria-current="page"{% endif %}>{{ _('Desk') }}</a>
   <a href="/site" {% if active == 'site' %}class="on" aria-current="page"{% endif %}>{{ _('Sito e profilo') }}</a>
   <a href="/sources" {% if active == 'sources' %}class="on" aria-current="page"{% endif %}>{{ _('Fonti') }}</a>
   <a href="/trends" {% if active == 'trends' %}class="on" aria-current="page"{% endif %}>{{ _('Trend e piano') }}</a>
@@ -59,8 +59,43 @@
   </p>
   {% endif %}
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+  {% if activity and not activity.full %}{% include "_activity.html.j2" %}{% endif %}
   {% block main %}{% endblock %}
 </main>
 </div>
+{% if activity %}
+<script>
+/* Follows the work while it runs: the Attività box is fetched again every
+   few seconds, and the page reloads when the last job ends, so what the
+   work produced shows at once. */
+(function () {
+  var box = document.getElementById('activity');
+  if (!box) return;
+  var was = box.dataset.active === '1';
+  function busy() {
+    var a = document.activeElement;
+    return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  }
+  function poll() {
+    fetch('/ui/activity?full=' + box.dataset.full, {credentials: 'same-origin'})
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (html) {
+        if (html) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = html.trim();
+          var fresh = tmp.firstElementChild;
+          if (fresh) { box.replaceWith(fresh); box = fresh; }
+        }
+        var now = box.dataset.active === '1';
+        if (was && !now && !busy()) { location.reload(); return; }
+        was = now;
+        setTimeout(poll, now ? 3000 : 20000);
+      })
+      .catch(function () { setTimeout(poll, 10000); });
+  }
+  setTimeout(poll, was ? 3000 : 20000);
+})();
+</script>
+{% endif %}
 </body>
 </html>
