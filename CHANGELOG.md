@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.1
+
+### Added
+
+- Editor Mode: "Lancia adesso" on the home page runs every step on
+  request, without waiting for the schedule: analyse the site, find
+  sources, collect the news (then topics, Hype, a fresh trend of the
+  moment and Opportunity) and propose articles. Proposals asked for by a
+  person are no longer held back by the day's number; the automatic ones
+  still are.
+
+### Changed
+
+- CI: main is not checked again after a merge (the branch merged was
+  checked by its own push); only the release cache is built there. The
+  release page is created as soon as the tag is pushed and each platform
+  adds its files when its build ends, so a queued Windows or macOS runner
+  holds up nothing. Every job has a time limit: a hung step fails in
+  minutes instead of running for hours.
+
 ## 0.10.0
 
 ### Added

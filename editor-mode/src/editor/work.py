@@ -43,7 +43,8 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
             drafts.write_draft(db, tenant, args["proposal_id"], core_for(tenant), client)
 
     def propose(tenant: str, subject: str, args: dict) -> None:
-        proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant))
+        proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant),
+                         manual=bool(args.get("manual")))
 
     def titles(tenant: str, subject: str, args: dict) -> None:
         proposals.propose_titles(db, tenant, args["site_id"], args["topic_id"], core_for(tenant))
@@ -59,6 +60,12 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
         if failed:
             raise RuntimeError("; ".join(failed))
 
+    def collect(tenant: str, subject: str, args: dict) -> None:
+        done, failed = [], []
+        need(runner, "scheduler").collect_now(tenant, datetime.now(UTC), done, failed)
+        if failed:
+            raise RuntimeError("; ".join(failed))
+
     def archive(tenant: str, subject: str, args: dict) -> None:
         done, failed = [], []
         need(runner, "scheduler").archive_tick(datetime.now(UTC), done, failed)
@@ -66,4 +73,5 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
             raise RuntimeError("; ".join(failed))
 
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
-            "proposals": propose, "titles": titles, "archive": archive}
+            "proposals": propose, "titles": titles, "archive": archive,
+            "collect": collect}

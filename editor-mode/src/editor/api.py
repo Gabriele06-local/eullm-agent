@@ -158,8 +158,12 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     def run_draft(tenant: str, proposal_id: int):
         queue.enqueue(db, tenant, "draft", f"proposal {proposal_id}", {"proposal_id": proposal_id})
 
-    def run_proposals(tenant: str, site_id: int, since: datetime):
-        queue.enqueue(db, tenant, "proposals", f"site {site_id}", {"site_id": site_id, "since": since.isoformat()})
+    def run_proposals(tenant: str, site_id: int, since: datetime, manual: bool = False):
+        queue.enqueue(db, tenant, "proposals", f"site {site_id}",
+                      {"site_id": site_id, "since": since.isoformat(), "manual": manual})
+
+    def run_collect(tenant: str):
+        queue.enqueue(db, tenant, "collect", "now")
 
     def run_titles(tenant: str, site_id: int, topic_id: int):
         queue.enqueue(db, tenant, "titles", f"topic {topic_id}", {"site_id": site_id, "topic_id": topic_id})
@@ -435,7 +439,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     ui.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, need=need, core=core, mail=mail,
                                      public_url=public_url,
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
-                                     run_proposals=run_proposals, run_titles=run_titles,
+                                     run_proposals=run_proposals, run_titles=run_titles, run_collect=run_collect,
                                      run_publication=run_publication))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))

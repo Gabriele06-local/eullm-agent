@@ -857,13 +857,16 @@ def register(app, ctx) -> None:
                                                                        m.editorial_profiles.c.status == "approved")).first():
                 return done("/trends", t("Approva prima il profilo del sito."))
             since = start_of_day(s)
-            per_day = s.execute(select(m.editorial_profiles.c.body).where(
-                m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "approved")).scalar()
-            left = per_day.get("settings", {}).get("proposals_per_day", 3) - props.made_today(s, site.id, since)
-        if left <= 0:
-            return done("/trends", t("Le proposte di oggi sono già state fatte: le prossime arrivano domani."))
-        ctx.run_proposals(c.tenant_id, site.id, since)
-        return done("/trends", t("Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti."))
+        # Asked for by a person: never held back by the day's number.
+        ctx.run_proposals(c.tenant_id, site.id, since, manual=True)
+        return done(safe_path(request.query_params.get("back"), "/trends"),
+                    t("Ricerca delle proposte avviata: compaiono qui tra qualche minuto, se ci sono temi abbastanza forti."))
+
+    @app.post("/ui/collect")
+    def ui_collect(c: auth.Caller = Depends(ctx.need("editor"))):
+        """Read the sources now, then topics, Hype, the trend of the moment and Opportunity."""
+        ctx.run_collect(c.tenant_id)
+        return done("/", t("Raccolta avviata: notizie, temi e trend si aggiornano tra qualche minuto."))
 
     @app.post("/ui/proposals/{proposal_id}")
     def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),
