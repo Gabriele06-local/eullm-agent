@@ -110,8 +110,7 @@
     <div class="item">
       <span class="chip">{{ _('Proposta') }}</span>
       <div class="what">
-        <strong>{{ p.title }}</strong>
-        <span>{{ _('Opportunità') }} {{ p.opportunity|s100 }} · {{ _('Hype') }} {{ p.hype|s100 }} · {{ p.citations|plural(_('fonte'), _('fonti')) }}</span>
+        {% include "_proposal.html.j2" %}
       </div>
       {% if caller.can('editor') %}
       <div class="row">

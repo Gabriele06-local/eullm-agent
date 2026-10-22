@@ -62,10 +62,7 @@
   <div class="item">
     {% if p.status == 'proposed' %}<span class="chip">{{ _('Proposta') }}</span>{% elif p.status == 'accepted' %}<span class="chip blue">{{ _('Accettata') }}</span>{% else %}<span class="chip green">{{ _('Bozza pronta') }}</span>{% endif %}
     <div class="what">
-      <strong>{{ p.title }}</strong>
-      {% if p.angle %}<span>{{ p.angle }}</span>{% endif %}
-      {% if p.why_now %}<span><em>{{ _('Perché ora:') }}</em> {{ p.why_now }}</span>{% endif %}
-      <span class="num" style="font-size: 12px;">{{ _('Opportunità') }} {{ p.opportunity|s100 }}/100 · {{ _('Hype') }} {{ p.hype|s100 }}/100 · {{ p.citations|plural(_('fonte'), _('fonti')) }}{% if p.format %} · {{ {'analysis': _('analisi'), 'news': _('notizia'), 'opinion': _('opinione'), 'guide': _('guida'), 'how-to': _('guida'), 'tutorial': _('guida'), 'interview': _('intervista'), 'review': _('recensione'), 'explainer': _('spiegazione')}.get(p.format, p.format) }}{% endif %}</span>
+      {% include "_proposal.html.j2" %}
     </div>
     <div class="row">
       {% if p.status == 'proposed' and caller.can('editor') %}

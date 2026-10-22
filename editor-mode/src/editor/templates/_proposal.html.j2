@@ -1,0 +1,21 @@
+{# What a proposal is, in plain words: needs `p` and `explained`. #}
+{% set d = explained.get(p.id) %}
+<strong>{{ d.title if d else p.title }}</strong>
+{% if d %}
+<dl class="prop">
+  <dt>{{ _('Articolo proposto') }}{% if d.format %} · {{ d.format }}{% endif %}</dt>
+  <dd>{{ d.article }}</dd>
+  {% if d.news %}
+  <dt>{{ _('Nasce da questa notizia') if d.news|length == 1 else _('Nasce da queste notizie') }}</dt>
+  <dd><ul>
+    {% for n in d.news %}<li><a href="{{ n.url }}" target="_blank" rel="noopener">{{ n.title }}</a> <span class="hint">{{ n.source }} · {{ when(n.published_at, 'date') }}</span></li>{% endfor %}
+  </ul></dd>
+  {% endif %}
+  {% if d.why %}
+  <dt>{{ _('Perché per il tuo sito') }}</dt>
+  <dd>{{ d.why }}</dd>
+  {% endif %}
+  <dt>{{ _('Cosa dicono i punteggi') }}</dt>
+  <dd>{{ d.opportunity }}<br>{{ d.hype }}</dd>
+</dl>
+{% endif %}

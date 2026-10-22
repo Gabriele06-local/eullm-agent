@@ -144,9 +144,11 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
                 log.warning("proposal for topic %s failed: %s", o.topic_id, e)
         if value is None:
             value = {
-                "title": label,
+                # The newest headline says more than the topic's keywords.
+                "title": items[0].title if items else label,
                 "angle": "",
-                "why_now": f"Hype {o.components.get('hype', 0) * 100:.0f}/100, {len(items)} items",
+                # The dashboard explains a proposal made without the model.
+                "why_now": "",
                 "format": "analysis",
                 "citations": [it.id for it in items[:3]],
             }

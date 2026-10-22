@@ -1,0 +1,86 @@
+{
+ "Articolo proposto": {
+  "en": "Proposed article",
+  "de": "Vorgeschlagener Artikel",
+  "fr": "Article proposé",
+  "es": "Artículo propuesto"
+ },
+ "Nasce da questa notizia": {
+  "en": "Based on this news item",
+  "de": "Beruht auf dieser Meldung",
+  "fr": "Né de cette actualité",
+  "es": "Nace de esta noticia"
+ },
+ "Nasce da queste notizie": {
+  "en": "Based on these news items",
+  "de": "Beruht auf diesen Meldungen",
+  "fr": "Né de ces actualités",
+  "es": "Nace de estas noticias"
+ },
+ "Perché per il tuo sito": {
+  "en": "Why it suits your site",
+  "de": "Warum es zu Ihrer Website passt",
+  "fr": "Pourquoi pour votre site",
+  "es": "Por qué encaja con tu sitio"
+ },
+ "Cosa dicono i punteggi": {
+  "en": "What the scores mean",
+  "de": "Was die Bewertungen bedeuten",
+  "fr": "Ce que disent les scores",
+  "es": "Qué dicen las puntuaciones"
+ },
+ "Rientra in «{topic}», uno degli argomenti del tuo profilo editoriale.": {
+  "en": "It falls under “{topic}”, one of the subjects in your editorial profile.",
+  "de": "Es gehört zu „{topic}“, einem der Themen Ihres redaktionellen Profils.",
+  "fr": "Il relève de « {topic} », l'un des sujets de votre profil éditorial.",
+  "es": "Entra en «{topic}», uno de los temas de tu perfil editorial."
+ },
+ "Hype non ancora misurato: il tema è appena comparso.": {
+  "en": "Hype not measured yet: the topic has just appeared.",
+  "de": "Hype noch nicht gemessen: Das Thema ist gerade erst aufgetaucht.",
+  "fr": "Hype pas encore mesuré : le thème vient d'apparaître.",
+  "es": "Hype aún sin medir: el tema acaba de aparecer."
+ },
+ "Hype {n}/100: per ora ne parla una sola fonte, quindi non è ancora un tema di cui parla tutto il settore. Non è un difetto: la proposta nasce perché la notizia è vicina al tuo sito e la fonte è affidabile.": {
+  "en": "Hype {n}/100: only one source covers it so far, so the whole sector is not talking about it yet. That is not a flaw: the proposal exists because the news is close to your site and the source is reliable.",
+  "de": "Hype {n}/100: Bisher berichtet nur eine Quelle darüber, die Branche spricht also noch nicht breit davon. Das ist kein Mangel: Der Vorschlag entsteht, weil die Meldung gut zu Ihrer Website passt und die Quelle zuverlässig ist.",
+  "fr": "Hype {n}/100 : pour l'instant une seule source en parle, ce n'est donc pas encore un sujet dont parle tout le secteur. Ce n'est pas un défaut : la proposition naît parce que l'actualité est proche de votre site et que la source est fiable.",
+  "es": "Hype {n}/100: por ahora solo habla de ello una fuente, así que todavía no es un tema del que hable todo el sector. No es un defecto: la propuesta nace porque la noticia es cercana a tu sitio y la fuente es fiable."
+ },
+ "Hype {n}/100: se ne parla poco nel settore ({k} fonti).": {
+  "en": "Hype {n}/100: the sector talks about it a little ({k} sources).",
+  "de": "Hype {n}/100: In der Branche wird wenig darüber gesprochen ({k} Quellen).",
+  "fr": "Hype {n}/100 : le secteur en parle peu ({k} sources).",
+  "es": "Hype {n}/100: se habla poco de ello en el sector ({k} fuentes)."
+ },
+ "Hype {n}/100: se ne parla nel settore ({k} fonti).": {
+  "en": "Hype {n}/100: the sector is talking about it ({k} sources).",
+  "de": "Hype {n}/100: In der Branche wird darüber gesprochen ({k} Quellen).",
+  "fr": "Hype {n}/100 : le secteur en parle ({k} sources).",
+  "es": "Hype {n}/100: se habla de ello en el sector ({k} fuentes)."
+ },
+ "Hype {n}/100: è un tema caldo, ne parlano molte fonti ({k}).": {
+  "en": "Hype {n}/100: a hot topic, many sources cover it ({k}).",
+  "de": "Hype {n}/100: ein heißes Thema, viele Quellen berichten darüber ({k}).",
+  "fr": "Hype {n}/100 : un sujet brûlant, de nombreuses sources en parlent ({k}).",
+  "es": "Hype {n}/100: es un tema candente, hablan de ello muchas fuentes ({k})."
+ },
+ "Opportunità {n}/100: quanto conviene a questo sito scriverne adesso, in base alla vicinanza ai tuoi argomenti, alla novità e all'affidabilità delle fonti. Da {min} in su l'agente la propone.": {
+  "en": "Opportunity {n}/100: how worthwhile it is for this site to write about it now, based on closeness to your subjects, novelty and how reliable the sources are. From {min} up the agent proposes it.",
+  "de": "Chance {n}/100: wie lohnend es für diese Website ist, jetzt darüber zu schreiben, gemessen an der Nähe zu Ihren Themen, der Neuheit und der Zuverlässigkeit der Quellen. Ab {min} schlägt der Agent es vor.",
+  "fr": "Opportunité {n}/100 : à quel point il vaut la peine pour ce site d'en parler maintenant, selon la proximité avec vos sujets, la nouveauté et la fiabilité des sources. À partir de {min}, l'agent le propose.",
+  "es": "Oportunidad {n}/100: cuánto le conviene a este sitio escribir sobre ello ahora, según la cercanía a tus temas, la novedad y la fiabilidad de las fuentes. A partir de {min} el agente lo propone."
+ },
+ "Un articolo che riprende la notizia qui sotto e la spiega ai lettori del tuo sito.": {
+  "en": "An article that takes up the news below and explains it to your site's readers.",
+  "de": "Ein Artikel, der die Meldung unten aufgreift und sie den Lesern Ihrer Website erklärt.",
+  "fr": "Un article qui reprend l'actualité ci-dessous et l'explique aux lecteurs de votre site.",
+  "es": "Un artículo que retoma la noticia de abajo y se la explica a los lectores de tu sitio."
+ },
+ "Un articolo che mette insieme le notizie qui sotto e le spiega ai lettori del tuo sito.": {
+  "en": "An article that brings together the news below and explains it to your site's readers.",
+  "de": "Ein Artikel, der die Meldungen unten zusammenführt und sie den Lesern Ihrer Website erklärt.",
+  "fr": "Un article qui rassemble les actualités ci-dessous et les explique aux lecteurs de votre site.",
+  "es": "Un artículo que reúne las noticias de abajo y se las explica a los lectores de tu sitio."
+ }
+}
