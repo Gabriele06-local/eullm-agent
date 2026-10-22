@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import insert
 from . import models as m
 from . import repo
 from .collectors import COLLECTORS, Item, SourceSpec
+from .core_fetch import CoreTrouble
 from .db import Database
 from .dedup import find_duplicate, minhash
 from .normalize import canonical_url, content_hash, sha256_hex
@@ -100,6 +101,7 @@ def store_items(s, tenant_id: str, source_id: int, items: list[Item], report: So
 def collect_tenant(db: Database, tenant_id: str, client: httpx.Client) -> CollectReport:
     report = CollectReport(tenant_id)
     with db.tenant(tenant_id) as s:
+        repo.rescue_sources(s)
         sources = repo.active_sources(s)
     for src in sources:
         r = SourceReport(src.id, src.name)
@@ -112,7 +114,7 @@ def collect_tenant(db: Database, tenant_id: str, client: httpx.Client) -> Collec
             r.error = f"{type(e).__name__}: {e}"[:500]
             log.warning("source %s failed: %s", src.name, r.error)
             with db.tenant(tenant_id) as s:
-                repo.mark_source(s, src.id, error=r.error)
+                repo.mark_source(s, src.id, error=r.error, counted=not isinstance(e, CoreTrouble))
             continue
         r.fetched, r.not_modified = len(result.items), result.not_modified
         with db.tenant(tenant_id) as s:

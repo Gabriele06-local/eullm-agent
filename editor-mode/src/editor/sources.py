@@ -24,6 +24,7 @@ from . import models as m
 from . import quotas, repo
 from .collectors import COLLECTORS, Item, SourceSpec
 from .core_client import CoreClient, CoreError
+from .core_fetch import CoreTrouble
 from .dedup import minhash, similarity
 from .html_extract import parse_html, same_site
 from .site import FEED_PATHS, NOT_SOURCES, RobotsCache
@@ -418,6 +419,8 @@ def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: dateti
     for r in due:
         try:
             result = COLLECTORS[r.kind].fetch(client, SourceSpec(r.kind, r.url, r.config or {}))
+        except CoreTrouble:
+            continue  # the Core's trouble, not the source's: try again next time
         except (httpx.HTTPError, ValueError, KeyError):
             with db.tenant(tenant_id) as s:
                 s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now))

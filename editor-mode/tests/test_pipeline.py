@@ -10,6 +10,7 @@ from sqlalchemy import text
 from conftest import fixture
 from editor import repo
 from editor.core_client import CoreClient
+from editor.core_fetch import core_http_client
 from editor.ingest import collect_tenant
 from editor.scoring import score_topics
 from editor.topics import detect_topics
@@ -71,6 +72,31 @@ def test_failing_source_is_recorded_and_others_continue(db, tenant):
     with db.tenant(tenant) as s:
         errors = s.execute(text("SELECT count(*) FROM editor.sources WHERE last_error IS NOT NULL")).scalar()
     assert errors == 2
+
+
+@respx.mock
+def test_the_cores_trouble_is_not_the_sources_fault(db, tenant):
+    """Out of daily fetches or the Core down: the sources stay active and
+    those an earlier version suspended for it go back to work."""
+    add_sources(db, tenant)
+    respx.post("http://core.test/v1/fetch").mock(
+        return_value=httpx.Response(429, json={"error": "daily fetches limit reached (2000 of 2000)"}))
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
+                       "last_error = 'ConnectError: Core fetch failed (429): daily fetches limit reached' "
+                       "WHERE name = 'telecom'"))
+        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
+                       "last_error = 'HTTPStatusError: 404 Not Found' WHERE name = 'mirror'"))
+    with core_http_client("http://core.test", "tok") as c:
+        for _ in range(6):
+            report = collect_tenant(db, tenant, c)
+    assert all(r.error.startswith("CoreTrouble") for r in report.sources) and len(report.sources) == 2
+    with db.tenant(tenant) as s:
+        rows = {r.name: r for r in s.execute(text("SELECT name, status, consecutive_errors FROM editor.sources"))}
+    assert rows["telecom"].status == "active" and rows["telecom"].consecutive_errors == 0
+    assert rows["hn"].status == "active" and rows["hn"].consecutive_errors == 0
+    # A real failure of the site stays a failure.
+    assert rows["mirror"].status == "suspended"
 
 
 @respx.mock

@@ -165,6 +165,9 @@
         <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">{{ _('ultimo giro') }}</div></div>
       </div>
       <span class="hint">{{ _('Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.') }}</span>
+      {% if core_trouble %}
+      <span class="note warn">{{ _("L'ultimo giro non ha letto {n} fonti perché la redazione ha finito le letture del giorno: riparte domani, oppure alza il limite delle letture.", n=core_trouble.n) if core_trouble.limit else _("L'ultimo giro non ha letto {n} fonti perché il motore dell'agente non rispondeva: riprova da solo al prossimo giro.", n=core_trouble.n) }} {{ _('Non è colpa delle fonti, che restano attive.') }}</span>
+      {% endif %}
       {% if stopped %}
       <div style="margin-top: 10px;">
         <span class="hint">{{ _('Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):') }}</span>

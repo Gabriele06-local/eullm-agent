@@ -40,6 +40,11 @@ class FetchRefused(httpx.TransportError):
     """The Core refused the address (private network, scheme, header)."""
 
 
+class CoreTrouble(httpx.TransportError):
+    """The Core, not the site, could not do the fetch: it is unreachable or
+    the newsroom used up its daily fetches. Not the source's fault."""
+
+
 class CoreTransport(httpx.BaseTransport):
     def __init__(self, base_url: str, token: str, client: httpx.Client | None = None, delegate: bool = False):
         self.endpoint = base_url.rstrip("/") + "/v1/fetch"
@@ -62,9 +67,11 @@ class CoreTransport(httpx.BaseTransport):
                 json={"url": str(request.url), "headers": headers},
             )
         except httpx.HTTPError as e:
-            raise httpx.ConnectError(f"Core unreachable: {e}", request=request) from e
+            raise CoreTrouble(f"Core unreachable: {e}", request=request) from e
         if r.status_code == 403:
             raise FetchRefused(_error(r), request=request)
+        if r.status_code == 429:
+            raise CoreTrouble(f"Core fetch limit: {_error(r)}", request=request)
         if r.status_code != 200:
             raise httpx.ConnectError(f"Core fetch failed ({r.status_code}): {_error(r)}", request=request)
         body = r.json()
