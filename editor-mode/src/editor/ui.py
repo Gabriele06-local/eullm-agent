@@ -35,6 +35,11 @@ ORIGINS = {
     "api_query": N_("Ricerca dal profilo"),
     "model_suggestion": N_("Suggerita dal modello"),
 }
+FORMATS = {
+    "analysis": N_("analisi"), "news": N_("notizia"), "opinion": N_("opinione"), "guide": N_("guida"),
+    "how-to": N_("guida"), "tutorial": N_("guida"), "interview": N_("intervista"), "review": N_("recensione"),
+    "explainer": N_("spiegazione"),
+}
 KINDS = {"rss": "RSS", "hackernews": "HN", "github": "GitHub", "huggingface": "Hugging Face", "arxiv": "arXiv"}
 TARGET_KINDS = {"wordpress": "WordPress", "webhook": "Webhook", "telegram_channel": N_("Canale Telegram")}
 QUOTA_LABELS = {
@@ -385,6 +390,69 @@ def register(app, ctx) -> None:
             q = q.where(p.c.site_id == site_id)
         return s.execute(q).all()
 
+    def proposal_details(s, rows) -> dict[int, dict]:
+        """What each proposal stands on, in plain words: the article it
+        suggests, the news it comes from, why it suits the site and what its
+        two scores mean."""
+        ids = [r.id for r in rows]
+        if not ids:
+            return {}
+        si, pc, o = m.source_items, m.proposal_citations, m.opportunity_scores
+        news: dict[int, list] = {}
+        for n in s.execute(
+                select(pc.c.proposal_id, si.c.title, si.c.url, si.c.published_at, m.sources.c.name.label("source"))
+                .join(si, si.c.id == pc.c.item_id).join(m.sources, m.sources.c.id == si.c.source_id)
+                .where(pc.c.proposal_id.in_(ids)).order_by(si.c.published_at.desc().nulls_last())).all():
+            news.setdefault(n.proposal_id, []).append(n)
+        out = {}
+        for r in rows:
+            comp = s.execute(select(o.c.components).where(o.c.topic_id == r.topic_id, o.c.site_id == r.site_id)
+                             .order_by(o.c.computed_at.desc()).limit(1)).scalar() or {}
+            sources = s.execute(select(func.count(func.distinct(si.c.source_id)))
+                                .join(m.topic_items, m.topic_items.c.item_id == si.c.id)
+                                .where(m.topic_items.c.topic_id == r.topic_id)).scalar() or 0
+            model = r.generated_by == "model"
+            cited = news.get(r.id, [])
+            if model and r.angle:
+                article = r.angle
+            elif len(cited) == 1:
+                article = t("Un articolo che riprende la notizia qui sotto e la spiega ai lettori del tuo sito.")
+            else:
+                article = t("Un articolo che mette insieme le notizie qui sotto e le spiega ai lettori del tuo sito.")
+            why = []
+            if comp.get("matched_subtopic"):
+                why.append(t("Rientra in «{topic}», uno degli argomenti del tuo profilo editoriale.",
+                             topic=comp["matched_subtopic"]))
+            if model and r.why_now:
+                why.append(r.why_now)
+            opp = round(r.opportunity or 0)
+            hype = None if r.hype is None else round(r.hype)
+            if hype is None:
+                hype_text = t("Hype non ancora misurato: il tema è appena comparso.")
+            elif sources <= 1:
+                hype_text = t("Hype {n}/100: per ora ne parla una sola fonte, quindi non è ancora un tema di cui "
+                              "parla tutto il settore. Non è un difetto: la proposta nasce perché la notizia è "
+                              "vicina al tuo sito e la fonte è affidabile.", n=hype)
+            elif hype < 30:
+                hype_text = t("Hype {n}/100: se ne parla poco nel settore ({k} fonti).", n=hype, k=sources)
+            elif hype < 60:
+                hype_text = t("Hype {n}/100: se ne parla nel settore ({k} fonti).", n=hype, k=sources)
+            else:
+                hype_text = t("Hype {n}/100: è un tema caldo, ne parlano molte fonti ({k}).", n=hype, k=sources)
+            out[r.id] = {
+                # Without the model the title is the topic's keywords: the news headline says more.
+                "title": r.title if model or not cited else cited[0].title,
+                "article": article,
+                "format": t(FORMATS[r.format]) if r.format in FORMATS else r.format,
+                "news": cited,
+                "why": " ".join(why),
+                "opportunity": t("Opportunità {n}/100: quanto conviene a questo sito scriverne adesso, in base "
+                                 "alla vicinanza ai tuoi argomenti, alla novità e all'affidabilità delle fonti. "
+                                 "Da {min} in su l'agente la propone.", n=opp, min=round(props.MIN_OPPORTUNITY)),
+                "hype": hype_text,
+            }
+        return out
+
     def start_of_day(s) -> datetime:
         tz = zone(s)
         return datetime.combine(datetime.now(tz).date(), time(), tz)
@@ -408,6 +476,7 @@ def register(app, ctx) -> None:
             site_lines = [{"id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id)}
                           for x in sites]
             proposed = proposal_rows(s, sid, ("proposed",), limit=6)
+            explained = proposal_details(s, proposed)
             pending_pubs = s.execute(
                 select(m.publications.c.id, m.publications.c.mode, m.publications.c.requested_by,
                        m.drafts.c.id.label("draft_id"), m.drafts.c.title, m.publish_targets.c.name.label("target"),
@@ -439,7 +508,7 @@ def register(app, ctx) -> None:
             guide = first_steps(s, sites, lines, sid)
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), guide=guide,
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
-                          proposed=proposed, pending_pubs=pending_pubs,
+                          proposed=proposed, explained=explained, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
                           usage=usage, tops=tops, last_fetch=last_fetch, briefing=briefing, decisions=decisions)
@@ -709,9 +778,10 @@ def register(app, ctx) -> None:
             # Written drafts stay in the plan for a week, then live under Bozze.
             week = datetime.now(UTC) - timedelta(days=7)
             plan = [p for p in plan if p.status != "drafted" or p.created_at > week]
+            explained = proposal_details(s, plan)
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,
-                          dots=dots, plan=plan, briefing_hour=hour, can_draft=ctx.core is not None)
+                          dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None)
 
     @app.post("/ui/proposals/now")
     def ui_propose_now(request: Request, c: auth.Caller = Depends(ctx.need("editor"))):

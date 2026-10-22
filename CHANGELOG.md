@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.2
+
+### Changed
+
+- Editor Mode: every proposal, on the home page and in "Trend e piano",
+  says in plain words what it is: the proposed article and its format,
+  the news it comes from (link, source and date), why it suits the site
+  (the editorial profile subject it falls under, and why now when the
+  model wrote it) and what its two scores mean. A low Hype from a single
+  source is explained, not left as a bare "Hype 0".
+- A proposal made without the model takes the newest headline as its
+  title instead of the topic's keywords.
+
 ## 0.9.1
 
 ### Added
@@ -13,6 +26,7 @@
 ### Changed
 
 - The language selector is at the top right of every page.
+
 ## 0.9.0
 
 ### Added

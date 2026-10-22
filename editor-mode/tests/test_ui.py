@@ -149,3 +149,24 @@ def test_propose_now_queues_the_work(db, tenant):
         kinds = list(s.execute(text("SELECT kind FROM editor.jobs")).scalars())
     assert "proposals" in kinds or "già state fatte" in page.text
     assert "Notizie in 7 giorni" in c.get("/sources").text
+
+
+def test_a_proposal_says_what_it_is_in_plain_words(db, tenant):
+    from datetime import UTC, datetime
+
+    from editor import opportunity as opp, proposals as props
+    from test_proposals import setup_site
+
+    site_id = setup_site(db, tenant)
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.sources SET score = 0.8 WHERE name = 'news'"))
+    props.propose(db, tenant, site_id, opp.score_site(db, tenant, site_id, now=datetime.now(UTC)), None)
+    c = logged_in(db, tenant, "editor")
+    for page in (c.get("/").text, c.get("/trends").text):
+        assert "Articolo proposto" in page and "Cosa dicono i punteggi" in page
+        # The news behind it, with its link, and why it fits the site.
+        assert 'href="https://news.example/3"' in page and "Nasce da questa notizia" in page
+        assert "Nasce da queste notizie" in page and 'href="https://rete.example/2"' in page
+        assert "Rientra in «Satellite»" in page and "Rientra in «Fibra»" in page
+        # A single source explains its low Hype.
+        assert "per ora ne parla una sola fonte" in page
