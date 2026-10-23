@@ -34,6 +34,7 @@ from sqlalchemy import insert, select, text, update
 
 from . import models as m
 from . import progress
+from .core_client import transient
 from .core_fetch import acting_for
 from .quotas import lock
 from .repo import ARCHIVE
@@ -43,6 +44,10 @@ log = logging.getLogger(__name__)
 HEARTBEAT_SECONDS = 30
 STALE_SECONDS = 300  # no heartbeat for this long: the worker is gone
 POLL_SECONDS = 2.0
+# A job stopped by a model provider that is down runs again after 10, 20,
+# 30... minutes, up to this many attempts (about 4 hours in all).
+RETRY_AFTER = timedelta(minutes=10)
+MAX_TRANSIENT_ATTEMPTS = 8
 PRIORITY_PERSON = 10  # asked from the dashboard or the API
 PRIORITY_TICK = 0
 
@@ -119,6 +124,14 @@ def finish(db, job: Job, error: str | None = None, result: dict | None = None) -
             status="failed" if error else "done", error=error, finished_at=datetime.now(UTC), result=result))
 
 
+def later(db, job: Job, error: str, wait: timedelta) -> None:
+    """Queue the job again after `wait`, keeping the reason it waits."""
+    with db.tenant(job.tenant_id) as s:
+        s.execute(update(m.jobs).where(m.jobs.c.id == job.id).values(
+            status="queued", error=error, worker=None, run_after=datetime.now(UTC) + wait,
+            max_attempts=max(job.attempts + 1, 3)))
+
+
 def requeue_stale(db, stale_seconds: int = STALE_SECONDS) -> int:
     """Queue again (or fail, when no attempts are left) the jobs whose worker
     stopped sending heartbeats."""
@@ -163,6 +176,12 @@ def run(db, job: Job, handlers: Handlers) -> bool:
         with acting_for(job.tenant_id), progress.running(db, job.tenant_id, job.id):
             result = fn(job.tenant_id, job.subject, job.args)
     except Exception as e:
+        if transient(e) and job.attempts < MAX_TRANSIENT_ATTEMPTS:
+            # The model provider is down for a while: the work waits and
+            # runs again by itself, nobody has to press anything.
+            log.warning("%s for tenant %s (%s) waits for the model: %s", job.kind, job.tenant_id, job.subject, e)
+            later(db, job, f"{type(e).__name__}: {e}"[:500], RETRY_AFTER * job.attempts)
+            return False
         log.exception("%s failed for tenant %s (%s)", job.kind, job.tenant_id, job.subject)
         finish(db, job, f"{type(e).__name__}: {e}"[:500])
         return False

@@ -9,6 +9,7 @@ from sqlalchemy import select, text, update
 import fakesite
 from editor import models as m
 from editor import profile as prof
+from editor import core_client
 from editor.core_client import CoreClient
 from editor.site import SiteCrawler
 
@@ -325,3 +326,94 @@ def test_a_newer_reanalysis_replaces_the_proposal_still_waiting(db, tenant):
     with db.tenant(tenant) as s:
         rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
     assert [tuple(r) for r in rows] == [(1, "approved"), (2, "retired"), (3, "draft")]
+
+
+def test_a_model_that_fails_for_a_moment_is_asked_again(monkeypatch):
+    snap = snapshot()
+    real = snap.posts[0].url
+    answer = json.dumps({
+        "sector": {"value": "Connettività", "evidence": [real]},
+        "audience": {"value": "Chi usa la rete", "evidence": [real]},
+        "style": {"tone": "divulgativo", "formats": ["news"], "evidence": [real]},
+        "subtopics": [], "gaps": [],
+    })
+    monkeypatch.setattr(core_client, "RETRY_WAITS", (0, 0))
+    with respx.mock(assert_all_called=False) as router:
+        router.post("http://core.test/v1/llm/chat").mock(side_effect=[
+            httpx.Response(502, json={"error": "model call failed: openai error 500 Internal Server Error"}),
+            httpx.Response(200, json={"content": answer, "tool_calls": [], "usage": {}, "cost": 0}),
+        ])
+        body, _ = prof.build_profile(snap, CoreClient("http://core.test", "tok"))
+    assert body["sector"]["value"] == "Connettività"
+
+    # A refusal (a spending limit) is not retried: the reason is kept.
+    with respx.mock(assert_all_called=False) as router:
+        route = router.post("http://core.test/v1/llm/chat").mock(
+            return_value=httpx.Response(403, json={"error": "llm_cost limit reached"}))
+        body, _ = prof.build_profile(snap, CoreClient("http://core.test", "tok"))
+        assert route.call_count == 1
+    assert body["sector"]["value"] is None
+    assert any("llm_cost limit" in g for g in body["gaps"])
+
+
+def test_an_analysis_the_model_left_incomplete_is_tried_again(db, tenant, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    class C:
+        def analyse(self, domain):
+            return snapshot()
+
+    monkeypatch.setattr(core_client, "RETRY_WAITS", ())
+    down = respx.mock(assert_all_called=False)
+    with down as router:
+        router.post("http://core.test/v1/llm/chat").mock(
+            return_value=httpx.Response(502, json={"error": "openai error 500 Internal Server Error"}))
+        first = prof.analyse_site(db, tenant, "blog.example", C(), CoreClient("http://core.test", "tok"))
+    assert first["model_failed"] and first["profile_id"]
+    now = datetime.now(UTC)
+    with db.tenant(tenant) as s:
+        assert not prof.retry_due(s, first["site_id"], now)  # just tried
+        assert prof.retry_due(s, first["site_id"], now + timedelta(hours=1))
+        # Approved anyway: a review where the model does not answer keeps the
+        # line in use, proposes nothing and is tried again.
+        assert prof.approve(s, first["site_id"], 1, "francesco")
+    with respx.mock(assert_all_called=False) as router:
+        router.post("http://core.test/v1/llm/chat").mock(
+            return_value=httpx.Response(503, json={"error": "busy"}))
+        again = prof.analyse_site(db, tenant, "blog.example", C(), CoreClient("http://core.test", "tok"))
+    assert again["profile_id"] is None and again["changes"] == []
+    with db.tenant(tenant) as s:
+        assert prof.retry_due(s, first["site_id"], now + timedelta(hours=3))
+    # The model answers: nothing more to retry.
+    real = snapshot().posts[0].url
+    answer = json.dumps({"sector": {"value": "Reti", "evidence": [real]}, "audience": {"value": "Tecnici", "evidence": [real]},
+                         "style": {"tone": "tecnico", "formats": ["news"], "evidence": [real]}, "subtopics": [], "gaps": []})
+    with respx.mock(assert_all_called=False) as router:
+        prof_core = fake_core(router, answer)
+        done = prof.analyse_site(db, tenant, "blog.example", C(), prof_core)
+    assert not done["model_failed"] and done["profile_id"]  # a better reading of the same site
+    with db.tenant(tenant) as s:
+        assert not prof.retry_due(s, first["site_id"], now + timedelta(hours=5))
+
+
+def test_the_hourly_tick_queues_the_incomplete_analysis_again(db, tenant):
+    from datetime import UTC, datetime, timedelta
+
+    from editor import models as m
+    from editor.config import Settings
+    from editor.schedule import Runner
+
+    class C:
+        def analyse(self, domain):
+            return snapshot()
+
+    with respx.mock(assert_all_called=False) as router:
+        router.post("http://core.test/v1/llm/chat").mock(return_value=httpx.Response(500, json={"error": "boom"}))
+        prof.analyse_site(db, tenant, "blog.example", C(), CoreClient("http://core.test", "tok"))
+    runner = Runner(db, Settings(), http_factory=lambda: None)
+    runner.core_for = lambda t: object()  # a model is configured
+    assert runner.retry_profiles(tenant, datetime.now(UTC)) == []
+    assert runner.retry_profiles(tenant, datetime.now(UTC) + timedelta(hours=1)) == ["blog.example"]
+    with db.tenant(tenant) as s:
+        job = s.execute(select(m.jobs.c.kind, m.jobs.c.subject, m.jobs.c.status)).one()
+    assert tuple(job) == ("analysis", "blog.example", "queued")

@@ -56,6 +56,34 @@ def test_a_failure_is_recorded_and_not_retried(db, tenant):
     assert queue.drain(db, recorder(calls), tenant) == 0
 
 
+def test_work_stopped_by_a_model_that_is_down_runs_again_by_itself(db, tenant):
+    from editor.core_client import CoreError
+
+    j = queue.enqueue(db, tenant, "draft", "proposal 4", {"proposal_id": 4})
+    tries = []
+
+    def draft(tenant_, subject, args):
+        tries.append(1)
+        if len(tries) == 1:
+            raise CoreError("Core returned 502: model call failed: openai error 500 Internal Server Error")
+        return {"draft_id": 9}
+
+    handlers = {"draft": draft}
+    assert queue.drain(db, handlers, tenant) == 1
+    row = status(db, tenant, j)
+    assert row.status == "queued" and "openai error 500" in row.error
+    assert queue.drain(db, handlers, tenant) == 0  # it waits before the next attempt
+    with db.tenant(tenant) as s:
+        s.execute(update(m.jobs).where(m.jobs.c.id == j).values(run_after=datetime.now(UTC) - timedelta(seconds=1)))
+    assert queue.drain(db, handlers, tenant) == 1
+    assert status(db, tenant, j).status == "done" and len(tries) == 2
+
+    # A refusal (a spending limit) is not waited on: it fails at once.
+    k = queue.enqueue(db, tenant, "draft", "proposal 5", {"proposal_id": 5})
+    queue.drain(db, {"draft": lambda *a: (_ for _ in ()).throw(CoreError("Core returned 403: llm_cost limit"))}, tenant)
+    assert status(db, tenant, k).status == "failed"
+
+
 def test_unknown_kind_fails_instead_of_staying_queued(db, tenant):
     j = queue.enqueue(db, tenant, "nonsense", "x")
     queue.drain(db, recorder([]), tenant)

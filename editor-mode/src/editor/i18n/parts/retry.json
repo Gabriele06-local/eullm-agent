@@ -1,0 +1,26 @@
+{
+ "Profilo da approvare, ma incompleto: il modello non ha ricavato settore, pubblico e stile. Riprovo da solo entro un'ora; puoi anche completarli tu.": {
+  "en": "Profile to approve, but incomplete: the model did not work out sector, audience and style. I will try again on my own within an hour; you can also fill them in yourself.",
+  "de": "Profil zur Freigabe, aber unvollständig: Das Modell hat Branche, Zielgruppe und Stil nicht ermittelt. Ich versuche es innerhalb einer Stunde selbst erneut; Sie können sie auch selbst ergänzen.",
+  "fr": "Profil à approuver, mais incomplet : le modèle n'a pas déterminé secteur, public et style. Je réessaie tout seul dans l'heure ; vous pouvez aussi les compléter vous-même.",
+  "es": "Perfil por aprobar, pero incompleto: el modelo no ha determinado sector, público y estilo. Lo reintento yo solo en menos de una hora; también puedes completarlos tú."
+ },
+ "Il modello non ha risposto: la linea approvata resta quella in uso. Riprovo da solo entro un'ora.": {
+  "en": "The model did not answer: the approved line stays in use. I will try again on my own within an hour.",
+  "de": "Das Modell hat nicht geantwortet: Die freigegebene Linie bleibt in Gebrauch. Ich versuche es innerhalb einer Stunde selbst erneut.",
+  "fr": "Le modèle n'a pas répondu : la ligne approuvée reste en vigueur. Je réessaie tout seul dans l'heure.",
+  "es": "El modelo no ha respondido: la línea aprobada sigue en uso. Lo reintento yo solo en menos de una hora."
+ },
+ "Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in &quot;Non determinato&quot;). Riprovo da solo entro un'ora; puoi anche rianalizzare subito, oppure completarli tu con &quot;Modifica&quot; prima di approvare.": {
+  "en": "This description is partial: the model did not complete the analysis, so sector, audience and style are missing (the reason is under &quot;Not determined&quot;). I will try again on my own within an hour; you can also re-analyse now, or fill them in yourself with &quot;Edit&quot; before approving.",
+  "de": "Diese Beschreibung ist unvollständig: Das Modell hat die Analyse nicht abgeschlossen, daher fehlen Branche, Zielgruppe und Stil (den Grund finden Sie unter &quot;Nicht ermittelt&quot;). Ich versuche es innerhalb einer Stunde selbst erneut; Sie können auch sofort neu analysieren oder die Angaben vor der Freigabe mit &quot;Bearbeiten&quot; selbst ergänzen.",
+  "fr": "Cette description est partielle : le modèle n'a pas terminé l'analyse, donc secteur, public et style manquent (la raison est sous &quot;Non déterminé&quot;). Je réessaie tout seul dans l'heure ; vous pouvez aussi relancer l'analyse maintenant, ou les compléter vous-même avec &quot;Modifier&quot; avant d'approuver.",
+  "es": "Esta descripción es parcial: el modelo no ha completado el análisis, así que faltan sector, público y estilo (el motivo está en &quot;No determinado&quot;). Lo reintento yo solo en menos de una hora; también puedes volver a analizar ahora, o completarlos tú con &quot;Editar&quot; antes de aprobar."
+ },
+ "Il modello non risponde: riprovo da solo alle {time}": {
+  "en": "The model is not answering: I will try again on my own at {time}",
+  "de": "Das Modell antwortet nicht: Ich versuche es um {time} selbst erneut",
+  "fr": "Le modèle ne répond pas : je réessaie tout seul à {time}",
+  "es": "El modelo no responde: lo reintento yo solo a las {time}"
+ }
+}

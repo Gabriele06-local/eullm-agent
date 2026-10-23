@@ -140,3 +140,11 @@ def feed(db, tenant, source_id, items):
     with db.tenant(archive) as s:
         store_items(s, archive, aid, items, report)
     return report
+
+
+@pytest.fixture(autouse=True)
+def _no_model_retry_waits(monkeypatch):
+    """A failing fake model answers at once: no waiting between attempts."""
+    from editor import core_client
+
+    monkeypatch.setattr(core_client, "RETRY_WAITS", ())

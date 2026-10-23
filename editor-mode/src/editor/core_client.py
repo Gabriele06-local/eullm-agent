@@ -5,14 +5,36 @@ applies the tenant's token, routing, budgets and audit."""
 from __future__ import annotations
 
 import json
+import logging
 import re
+import time
 from dataclasses import dataclass
 
 import httpx
 
+from .i18n import N_
+from .progress import step
+
+log = logging.getLogger(__name__)
+
 
 class CoreError(RuntimeError):
     pass
+
+
+# Waits before asking a failing provider again, within one call.
+RETRY_WAITS = (15, 45)
+
+
+def transient(e: Exception) -> bool:
+    """A failure that usually goes away by itself: the provider overloaded
+    (5xx), a rate limit (429), a timeout, the Core not reachable. A refusal
+    (spending limit, bad key, invalid answer) is not."""
+    msg = str(e)
+    if not isinstance(e, CoreError) or msg.startswith("invalid JSON"):
+        return False
+    return msg.startswith("Core unreachable") or bool(re.match(r"Core returned (5\d\d|429|408)", msg)) \
+        or bool(re.search(r"error (5\d\d|429)\b|timed? ?out", msg, re.I))
 
 
 @dataclass
@@ -86,6 +108,20 @@ class CoreClient:
         return r.json()
 
     def chat(self, messages: list[dict], model: str | None = None) -> ChatResult:
+        """One model call. A provider that fails for a moment (5xx, rate
+        limit, timeout) is asked again after RETRY_WAITS before giving up."""
+        for wait in (*RETRY_WAITS, None):
+            try:
+                return self._chat(messages, model)
+            except CoreError as e:
+                if wait is None or not transient(e):
+                    raise
+                log.warning("model call failed, retrying in %ss: %s", wait, e)
+                step(N_("Il modello non ha risposto ({error}): riprovo tra {n} secondi"), error=str(e)[:80], n=wait)
+                time.sleep(wait)
+        raise AssertionError("unreachable")
+
+    def _chat(self, messages: list[dict], model: str | None = None) -> ChatResult:
         model = model or self.model
         if self.guard is not None:
             self.guard()

@@ -1,0 +1,74 @@
+{
+ "Il modello non ha risposto ({error}): riprovo tra {n} secondi": {
+  "en": "The model did not answer ({error}): retrying in {n} seconds",
+  "de": "Das Modell hat nicht geantwortet ({error}): neuer Versuch in {n} Sekunden",
+  "fr": "Le modèle n'a pas répondu ({error}) : nouvel essai dans {n} secondes",
+  "es": "El modelo no ha respondido ({error}): reintento en {n} segundos"
+ },
+ "Lettura del sito completa": {
+  "en": "Site fully read",
+  "de": "Website vollständig gelesen",
+  "fr": "Site lu en entier",
+  "es": "Sitio leído por completo"
+ },
+ "Lettura del sito parziale": {
+  "en": "Site partly read",
+  "de": "Website teilweise gelesen",
+  "fr": "Site lu en partie",
+  "es": "Sitio leído en parte"
+ },
+ "Sito: dati insufficienti": {
+  "en": "Site: not enough data",
+  "de": "Website: zu wenige Daten",
+  "fr": "Site : données insuffisantes",
+  "es": "Sitio: datos insuficientes"
+ },
+ "Sito non letto": {
+  "en": "Site not read",
+  "de": "Website nicht gelesen",
+  "fr": "Site non lu",
+  "es": "Sitio no leído"
+ },
+ "Quante pagine e articoli del sito sono stati letti, con date e lingua. Il motivo di una lettura parziale è sotto.": {
+  "en": "How many pages and articles of the site were read, with dates and language. The reason for a partial reading is below.",
+  "de": "Wie viele Seiten und Artikel der Website gelesen wurden, mit Datum und Sprache. Den Grund für ein teilweises Lesen finden Sie unten.",
+  "fr": "Combien de pages et d'articles du site ont été lus, avec dates et langue. La raison d'une lecture partielle est indiquée plus bas.",
+  "es": "Cuántas páginas y artículos del sitio se han leído, con fechas e idioma. El motivo de una lectura parcial está abajo."
+ },
+ "Profilo completo": {
+  "en": "Profile complete",
+  "de": "Profil vollständig",
+  "fr": "Profil complet",
+  "es": "Perfil completo"
+ },
+ "Profilo da completare": {
+  "en": "Profile to complete",
+  "de": "Profil unvollständig",
+  "fr": "Profil à compléter",
+  "es": "Perfil por completar"
+ },
+ "Il modello ha ricavato settore, pubblico e stile.": {
+  "en": "The model worked out sector, audience and style.",
+  "de": "Das Modell hat Branche, Zielgruppe und Stil ermittelt.",
+  "fr": "Le modèle a déterminé secteur, public et style.",
+  "es": "El modelo ha determinado sector, público y estilo."
+ },
+ "Il modello non ha ricavato settore, pubblico e stile: il motivo è nel profilo, sotto.": {
+  "en": "The model did not work out sector, audience and style: the reason is in the profile, below.",
+  "de": "Das Modell hat Branche, Zielgruppe und Stil nicht ermittelt: Den Grund finden Sie unten im Profil.",
+  "fr": "Le modèle n'a pas déterminé secteur, public et style : la raison est dans le profil, plus bas.",
+  "es": "El modelo no ha determinado sector, público y estilo: el motivo está en el perfil, abajo."
+ },
+ "Note sulla lettura del sito": {
+  "en": "Notes on reading the site",
+  "de": "Hinweise zum Lesen der Website",
+  "fr": "Notes sur la lecture du site",
+  "es": "Notas sobre la lectura del sitio"
+ },
+ "Perché la lettura del sito è parziale": {
+  "en": "Why the site was only partly read",
+  "de": "Warum die Website nur teilweise gelesen wurde",
+  "fr": "Pourquoi le site n'a été lu qu'en partie",
+  "es": "Por qué el sitio se ha leído solo en parte"
+ }
+}
