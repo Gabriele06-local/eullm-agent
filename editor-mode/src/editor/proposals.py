@@ -16,7 +16,7 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import repo
+from . import repo, usage
 from .core_client import CoreClient, CoreError
 from .opportunity import Opportunity
 
@@ -144,7 +144,8 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
         value, calls, by = None, [], "heuristic"
         if core is not None:
             try:
-                value, calls = core.chat_json(SYSTEM, _prompt(prof.body, label, items), _validator(allowed))
+                with usage.tagged(db, tenant_id, "proposal", site_id=site_id, ref=f"topic:{o.topic_id}"):
+                    value, calls = core.chat_json(SYSTEM, _prompt(prof.body, label, items), _validator(allowed))
                 by = "model"
             except CoreError as e:
                 log.warning("proposal for topic %s failed: %s", o.topic_id, e)
@@ -159,8 +160,6 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
                 "citations": [it.id for it in items[:3]],
             }
         with db.tenant(tenant_id) as s:
-            for c in calls:
-                repo.record_llm_usage(s, tenant_id, "proposal", c.model, c.usage, c.cost)
             pid = s.execute(insert(m.proposals).values(
                 tenant_id=tenant_id, site_id=site_id, topic_id=o.topic_id, profile_id=prof.id,
                 opportunity=o.score, title=value["title"], angle=value["angle"], why_now=value["why_now"],
@@ -220,8 +219,9 @@ def propose_titles(db, tenant_id: str, site_id: int, topic_id: int, core: CoreCl
     options, calls, by = None, [], "heuristic"
     if core is not None:
         try:
-            options, calls = core.chat_json(TITLES_SYSTEM.format(n=n), _prompt(prof.body, label, items),
-                                            _options_validator(allowed, n))
+            with usage.tagged(db, tenant_id, "proposal", site_id=site_id, ref=f"topic:{topic_id}"):
+                options, calls = core.chat_json(TITLES_SYSTEM.format(n=n), _prompt(prof.body, label, items),
+                                                _options_validator(allowed, n))
             by = "model"
         except CoreError as e:
             log.warning("titles for topic %s failed: %s", topic_id, e)
@@ -231,8 +231,6 @@ def propose_titles(db, tenant_id: str, site_id: int, topic_id: int, core: CoreCl
                    for it in items[:n]]
     created = []
     with db.tenant(tenant_id) as s:
-        for c in calls:
-            repo.record_llm_usage(s, tenant_id, "proposal", c.model, c.usage, c.cost)
         for o in options:
             pid = s.execute(insert(m.proposals).values(
                 tenant_id=tenant_id, site_id=site_id, topic_id=topic_id, profile_id=prof.id,

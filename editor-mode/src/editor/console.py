@@ -12,13 +12,16 @@ Two ways in, both checked here:
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select
 
-from . import accounts, billing, commerce, newsrooms
+from . import accounts, billing, commerce, newsrooms, repo, usage
+from . import models as m
 from .auth import ROLES
 from .i18n import t
 
@@ -94,6 +97,7 @@ def _num(value: str, money: bool = False):
 def register(app, ctx) -> None:
     """ctx: db, admin, pages, core, mail (or None), public_url."""
     db, admin, pages = ctx.db, ctx.admin, ctx.pages
+    pages.env.filters.setdefault("tok", usage.tokens)
 
     def link(request: Request, token: str) -> str:
         base = (ctx.public_url or str(request.base_url)).rstrip("/")
@@ -253,6 +257,60 @@ def register(app, ctx) -> None:
             raise HTTPException(403, "operator account required")
         same_site(request)
         return s
+
+    def usage_tenants() -> tuple[list[str], dict]:
+        with accounts._read(admin) as conn:
+            rows = conn.execute(select(m.tenants.c.tenant_id, m.tenants.c.name)).all()
+        names = {r.tenant_id: r.name for r in rows}
+        names[repo.ARCHIVE] = t("Archivio condiviso")
+        return sorted(names), names
+
+    @app.get("/admin/usage", response_class=HTMLResponse)
+    def usage_page(request: Request, days: int = 30):
+        s = console_user(request)
+        if s is None:
+            return RedirectResponse("/login", status_code=303)
+        days = max(1, min(days, 366))
+        tenants, names = usage_tenants()
+        notice = request.cookies.get(NOTICE_COOKIE)
+        from urllib.parse import unquote
+        resp = pages.TemplateResponse(request, "usage.html.j2", {
+            "me": s, "r": usage.report(admin, db, tenants, days), "names": names, "purposes": usage.PURPOSES,
+            "notice": unquote(notice) if notice else None})
+        if notice:
+            resp.delete_cookie(NOTICE_COOKIE)
+        return resp
+
+    @app.get("/admin/usage.csv")
+    def usage_csv(request: Request, days: int = 30):
+        if console_user(request) is None:
+            raise HTTPException(403, "operator account required")
+        days = max(1, min(days, 366))
+        tenants, _ = usage_tenants()
+        day = datetime.now(UTC).date().isoformat()
+        return Response(usage.csv_rows(db, tenants, days), media_type="text/csv",
+                        headers={"Content-Disposition": f'attachment; filename="model-usage-{days}d-{day}.csv"'})
+
+    def back_usage(notice: str) -> RedirectResponse:
+        from urllib.parse import quote
+        resp = RedirectResponse("/admin/usage#prezzi", status_code=303)
+        resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
+        return resp
+
+    @app.post("/admin/usage/prices")
+    def usage_price(model: str = Form(...), input_per_mtok: str = Form(...), output_per_mtok: str = Form(...),
+                    note: str = Form(""), s=Depends(need_console)):
+        try:
+            usage.set_price(admin, model, float(input_per_mtok.replace(",", ".")),
+                            float(output_per_mtok.replace(",", ".")), note)
+        except ValueError:
+            return back_usage(t("Prezzo non salvato: servono due numeri, zero o più (per esempio 0,40)."))
+        return back_usage(t("Prezzo di riferimento di {model} salvato.", model=model.strip()))
+
+    @app.post("/admin/usage/prices/delete")
+    def usage_price_delete(model: str = Form(...), s=Depends(need_console)):
+        usage.delete_price(admin, model)
+        return back_usage(t("Prezzo di riferimento di {model} tolto.", model=model))
 
     @app.get("/operator")
     def old_console():

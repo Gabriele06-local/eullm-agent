@@ -1,0 +1,260 @@
+{
+ "Consumi": {
+  "en": "Usage",
+  "de": "Verbrauch",
+  "fr": "Consommation",
+  "es": "Consumo"
+ },
+ "Consumi del modello": {
+  "en": "Model usage",
+  "de": "Modellverbrauch",
+  "fr": "Consommation du modèle",
+  "es": "Consumo del modelo"
+ },
+ "{n} errori": {
+  "en": "{n} errors",
+  "de": "{n} Fehler",
+  "fr": "{n} erreurs",
+  "es": "{n} errores"
+ },
+ "Modelli senza prezzo di riferimento: non contati nella stima.": {
+  "en": "Models without a reference price: not counted in the estimate.",
+  "de": "Modelle ohne Referenzpreis: in der Schätzung nicht berücksichtigt.",
+  "fr": "Modèles sans prix de référence : non comptés dans l'estimation.",
+  "es": "Modelos sin precio de referencia: no se cuentan en la estimación."
+ },
+ "Chiamate": {
+  "en": "Calls",
+  "de": "Aufrufe",
+  "fr": "Appels",
+  "es": "Llamadas"
+ },
+ "Token in entrata": {
+  "en": "Input tokens",
+  "de": "Eingabe-Token",
+  "fr": "Tokens en entrée",
+  "es": "Tokens de entrada"
+ },
+ "Token in uscita": {
+  "en": "Output tokens",
+  "de": "Ausgabe-Token",
+  "fr": "Tokens en sortie",
+  "es": "Tokens de salida"
+ },
+ "Durata media": {
+  "en": "Average time",
+  "de": "Durchschnittliche Dauer",
+  "fr": "Durée moyenne",
+  "es": "Duración media"
+ },
+ "Costo registrato": {
+  "en": "Recorded cost",
+  "de": "Erfasste Kosten",
+  "fr": "Coût enregistré",
+  "es": "Coste registrado"
+ },
+ "Costo stimato": {
+  "en": "Estimated cost",
+  "de": "Geschätzte Kosten",
+  "fr": "Coût estimé",
+  "es": "Coste estimado"
+ },
+ "Prezzi di riferimento": {
+  "en": "Reference prices",
+  "de": "Referenzpreise",
+  "fr": "Prix de référence",
+  "es": "Precios de referencia"
+ },
+ "Costo per articolo": {
+  "en": "Cost per article",
+  "de": "Kosten pro Artikel",
+  "fr": "Coût par article",
+  "es": "Coste por artículo"
+ },
+ "Ogni chiamata al modello è registrata quando avviene, anche se il lavoro poi fallisce: redazione, sito, articolo, passo, modello che ha risposto, token in entrata e in uscita, durata ed errore. Il costo registrato è quello dei prezzi in core.yaml (0 per un modello gratuito); il costo stimato usa i prezzi di riferimento qui sotto.": {
+  "en": "Every model call is recorded when it happens, even if the work then fails: newsroom, site, article, step, the model that answered, input and output tokens, duration and error. The recorded cost uses the prices in core.yaml (0 for a free model); the estimated cost uses the reference prices below.",
+  "de": "Jeder Modellaufruf wird erfasst, wenn er stattfindet, auch wenn die Arbeit danach fehlschlägt: Redaktion, Website, Artikel, Schritt, antwortendes Modell, Eingabe- und Ausgabe-Token, Dauer und Fehler. Die erfassten Kosten verwenden die Preise in core.yaml (0 für ein kostenloses Modell); die geschätzten Kosten verwenden die Referenzpreise unten.",
+  "fr": "Chaque appel au modèle est enregistré au moment où il a lieu, même si le travail échoue ensuite : rédaction, site, article, étape, modèle qui a répondu, tokens en entrée et en sortie, durée et erreur. Le coût enregistré utilise les prix de core.yaml (0 pour un modèle gratuit) ; le coût estimé utilise les prix de référence ci-dessous.",
+  "es": "Cada llamada al modelo se registra cuando ocurre, aunque el trabajo luego falle: redacción, sitio, artículo, paso, modelo que respondió, tokens de entrada y de salida, duración y error. El coste registrado usa los precios de core.yaml (0 para un modelo gratuito); el coste estimado usa los precios de referencia de abajo."
+ },
+ "{n} giorni": {
+  "en": "{n} days",
+  "de": "{n} Tage",
+  "fr": "{n} jours",
+  "es": "{n} días"
+ },
+ "Ultime 24 ore": {
+  "en": "Last 24 hours",
+  "de": "Letzte 24 Stunden",
+  "fr": "Dernières 24 heures",
+  "es": "Últimas 24 horas"
+ },
+ "Scarica CSV": {
+  "en": "Download CSV",
+  "de": "CSV herunterladen",
+  "fr": "Télécharger le CSV",
+  "es": "Descargar CSV"
+ },
+ "Totale degli ultimi {n} giorni": {
+  "en": "Total of the last {n} days",
+  "de": "Summe der letzten {n} Tage",
+  "fr": "Total des {n} derniers jours",
+  "es": "Total de los últimos {n} días"
+ },
+ "Tutto": {
+  "en": "Everything",
+  "de": "Alles",
+  "fr": "Tout",
+  "es": "Todo"
+ },
+ "Tutte le redazioni": {
+  "en": "All newsrooms",
+  "de": "Alle Redaktionen",
+  "fr": "Toutes les rédactions",
+  "es": "Todas las redacciones"
+ },
+ "Un articolo costa in media {calls} chiamate, {tin} token in entrata e {tout} in uscita (su {n} articoli scritti), proposta compresa.": {
+  "en": "An article takes on average {calls} calls, {tin} input tokens and {tout} output tokens (over {n} articles written), proposal included.",
+  "de": "Ein Artikel braucht im Durchschnitt {calls} Aufrufe, {tin} Eingabe- und {tout} Ausgabe-Token (bei {n} geschriebenen Artikeln), Vorschlag inbegriffen.",
+  "fr": "Un article coûte en moyenne {calls} appels, {tin} tokens en entrée et {tout} en sortie (sur {n} articles écrits), proposition comprise.",
+  "es": "Un artículo cuesta de media {calls} llamadas, {tin} tokens de entrada y {tout} de salida (sobre {n} artículos escritos), propuesta incluida."
+ },
+ "Stima: € {eur} ad articolo.": {
+  "en": "Estimate: € {eur} per article.",
+  "de": "Schätzung: {eur} € pro Artikel.",
+  "fr": "Estimation : {eur} € par article.",
+  "es": "Estimación: {eur} € por artículo."
+ },
+ "Per passo": {
+  "en": "By step",
+  "de": "Nach Schritt",
+  "fr": "Par étape",
+  "es": "Por paso"
+ },
+ "Nessuna chiamata nel periodo.": {
+  "en": "No calls in this period.",
+  "de": "Keine Aufrufe in diesem Zeitraum.",
+  "fr": "Aucun appel sur la période.",
+  "es": "Ninguna llamada en el periodo."
+ },
+ "Per modello": {
+  "en": "By model",
+  "de": "Nach Modell",
+  "fr": "Par modèle",
+  "es": "Por modelo"
+ },
+ "Modello che ha risposto": {
+  "en": "Model that answered",
+  "de": "Antwortendes Modell",
+  "fr": "Modèle qui a répondu",
+  "es": "Modelo que respondió"
+ },
+ "Per redazione": {
+  "en": "By newsroom",
+  "de": "Nach Redaktion",
+  "fr": "Par rédaction",
+  "es": "Por redacción"
+ },
+ "Per sito": {
+  "en": "By site",
+  "de": "Nach Website",
+  "fr": "Par site",
+  "es": "Por sitio"
+ },
+ "Scrittura: ogni tentativo della bozza, correzioni comprese. Proposta: le chiamate che hanno proposto articoli sullo stesso tema. Più versioni della stessa bozza: la scrittura è contata sulla più recente.": {
+  "en": "Writing: every attempt at the draft, corrections included. Proposal: the calls that proposed articles on the same topic. Several versions of the same draft: the writing is counted on the newest one.",
+  "de": "Schreiben: jeder Versuch am Entwurf, Korrekturen inbegriffen. Vorschlag: die Aufrufe, die Artikel zum selben Thema vorgeschlagen haben. Mehrere Versionen desselben Entwurfs: das Schreiben wird bei der neuesten gezählt.",
+  "fr": "Rédaction : chaque tentative du brouillon, corrections comprises. Proposition : les appels qui ont proposé des articles sur le même thème. Plusieurs versions du même brouillon : la rédaction est comptée sur la plus récente.",
+  "es": "Escritura: cada intento del borrador, correcciones incluidas. Propuesta: las llamadas que propusieron artículos sobre el mismo tema. Varias versiones del mismo borrador: la escritura se cuenta en la más reciente."
+ },
+ "Scrittura": {
+  "en": "Writing",
+  "de": "Schreiben",
+  "fr": "Rédaction",
+  "es": "Escritura"
+ },
+ "{n} chiamate": {
+  "en": "{n} calls",
+  "de": "{n} Aufrufe",
+  "fr": "{n} appels",
+  "es": "{n} llamadas"
+ },
+ "Nessuna bozza scritta nel periodo.": {
+  "en": "No drafts written in this period.",
+  "de": "Keine Entwürfe in diesem Zeitraum geschrieben.",
+  "fr": "Aucun brouillon écrit sur la période.",
+  "es": "Ningún borrador escrito en el periodo."
+ },
+ "Euro per milione di token, per modello (il nome come compare in \"Per modello\"). Servono a stimare il costo anche dei modelli gratuiti: metti il prezzo che pagheresti per un servizio equivalente.": {
+  "en": "Euro per million tokens, per model (the name as it appears under \"By model\"). They estimate the cost of free models too: enter the price you would pay for an equivalent service.",
+  "de": "Euro pro Million Token, je Modell (der Name wie unter \"Nach Modell\"). Damit lassen sich auch die Kosten kostenloser Modelle schätzen: Geben Sie den Preis ein, den Sie für einen gleichwertigen Dienst zahlen würden.",
+  "fr": "Euros par million de tokens, par modèle (le nom tel qu'il apparaît sous \"Par modèle\"). Ils servent à estimer le coût des modèles gratuits aussi : indiquez le prix que vous paieriez pour un service équivalent.",
+  "es": "Euros por millón de tokens, por modelo (el nombre tal como aparece en \"Por modelo\"). Sirven para estimar el coste también de los modelos gratuitos: pon el precio que pagarías por un servicio equivalente."
+ },
+ "senza prezzo": {
+  "en": "no price",
+  "de": "ohne Preis",
+  "fr": "sans prix",
+  "es": "sin precio"
+ },
+ "Entrata €/M": {
+  "en": "Input €/M",
+  "de": "Eingabe €/M",
+  "fr": "Entrée €/M",
+  "es": "Entrada €/M"
+ },
+ "Uscita €/M": {
+  "en": "Output €/M",
+  "de": "Ausgabe €/M",
+  "fr": "Sortie €/M",
+  "es": "Salida €/M"
+ },
+ "Nota": {
+  "en": "Note",
+  "de": "Notiz",
+  "fr": "Note",
+  "es": "Nota"
+ },
+ "Altro modello": {
+  "en": "Another model",
+  "de": "Weiteres Modell",
+  "fr": "Autre modèle",
+  "es": "Otro modelo"
+ },
+ "Archivio condiviso": {
+  "en": "Shared archive",
+  "de": "Gemeinsames Archiv",
+  "fr": "Archive partagée",
+  "es": "Archivo compartido"
+ },
+ "Prezzo di riferimento di {model} salvato.": {
+  "en": "Reference price of {model} saved.",
+  "de": "Referenzpreis von {model} gespeichert.",
+  "fr": "Prix de référence de {model} enregistré.",
+  "es": "Precio de referencia de {model} guardado."
+ },
+ "Prezzo di riferimento di {model} tolto.": {
+  "en": "Reference price of {model} removed.",
+  "de": "Referenzpreis von {model} entfernt.",
+  "fr": "Prix de référence de {model} retiré.",
+  "es": "Precio de referencia de {model} eliminado."
+ },
+ "Prezzo non salvato: servono due numeri, zero o più (per esempio 0,40).": {
+  "en": "Price not saved: two numbers are needed, zero or more (for example 0.40).",
+  "de": "Preis nicht gespeichert: Es werden zwei Zahlen benötigt, null oder mehr (zum Beispiel 0,40).",
+  "fr": "Prix non enregistré : il faut deux nombres, zéro ou plus (par exemple 0,40).",
+  "es": "Precio no guardado: hacen falta dos números, cero o más (por ejemplo 0,40)."
+ },
+ "Nomi dei temi": {
+  "en": "Topic names",
+  "de": "Themennamen",
+  "fr": "Noms des thèmes",
+  "es": "Nombres de los temas"
+ },
+ "Scrittura delle bozze": {
+  "en": "Writing drafts",
+  "de": "Entwürfe schreiben",
+  "fr": "Rédaction des brouillons",
+  "es": "Escritura de borradores"
+ }
+}

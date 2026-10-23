@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -54,7 +55,9 @@ class CoreClient:
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.model = model
-        self.http = client or httpx.Client(timeout=180)
+        # Longer than the Core's own limits: a model on this machine can take
+        # minutes, and the Core may try a spare model after the first one.
+        self.http = client or httpx.Client(timeout=float(os.environ.get("EDITOR_CORE_TIMEOUT", "900")))
         # Called before every model call; raises to stop it (tenant quotas).
         self.guard = guard
         # With a delegating Core token (`delegate: true`), each Editor Mode
@@ -110,15 +113,23 @@ class CoreClient:
     def chat(self, messages: list[dict], model: str | None = None) -> ChatResult:
         """One model call. A provider that fails for a moment (5xx, rate
         limit, timeout) is asked again after RETRY_WAITS before giving up."""
+        from . import usage
+
         for wait in (*RETRY_WAITS, None):
+            started = time.monotonic()
             try:
-                return self._chat(messages, model)
+                res = self._chat(messages, model)
             except CoreError as e:
+                if str(e).startswith("Core"):  # a call that reached out and failed, not a quota refusal
+                    usage.record(model or self.model, None, None, int((time.monotonic() - started) * 1000), str(e))
                 if wait is None or not transient(e):
                     raise
                 log.warning("model call failed, retrying in %ss: %s", wait, e)
                 step(N_("Il modello non ha risposto ({error}): riprovo tra {n} secondi"), error=str(e)[:80], n=wait)
                 time.sleep(wait)
+                continue
+            usage.record(res.model, res.usage, res.cost, int((time.monotonic() - started) * 1000))
+            return res
         raise AssertionError("unreachable")
 
     def _chat(self, messages: list[dict], model: str | None = None) -> ChatResult:

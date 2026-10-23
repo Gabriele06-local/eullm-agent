@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.13.0
+
+### Added
+
+- Editor Mode, model usage measured call by call. Every model call is
+  recorded when it happens, also when the work then fails: newsroom, site,
+  article (the proposal or topic it was for), step, the model that
+  answered, input and output tokens, duration, the job it ran in and, for
+  a failed call, the error. Before, calls were recorded only at the end of
+  a successful step, without site or article.
+- Console, "Consumi" page (/admin/usage): tokens, calls, errors, average
+  duration and cost per step, model, newsroom and site over 1, 7, 30 or 90
+  days; the cost of every article written (writing attempts and the
+  proposal of its topic) and the average per article; every call as CSV.
+- Reference prices per model (euro per million input and output tokens),
+  set in the console: the cost of an article is estimated also when the
+  model is free today.
+
+### Fixed
+
+- A newsroom with a timezone the system does not know no longer breaks the
+  console: it counts as UTC.
+
+### Upgrading
+
+- Migration 0022 (Postgres) / 0011 (SQLite) adds the new columns of
+  `llm_usage` and the `model_prices` table; it runs with the update.
+
 ## 0.12.3
 
 ### Fixed
@@ -16,6 +44,9 @@
 - Work stopped by a model provider that stays down (a draft, for example)
   is no longer marked failed: it waits and runs again by itself after 10,
   20, 30... minutes, up to 8 attempts, and Activity shows when.
+- Editor Mode waits up to 15 minutes for the Core (`EDITOR_CORE_TIMEOUT`,
+  in seconds) instead of 3: a model running on the same machine, or a
+  spare model tried after the first, has the time to answer.
 - A profile left incomplete because the model did not answer is analysed
   again by the hourly tick, waiting longer each time (up to 6 times a
   day), with no button to press. A review of an approved site where the

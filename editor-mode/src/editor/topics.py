@@ -11,7 +11,7 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import repo
+from . import repo, usage
 from .core_client import CoreClient, CoreError
 from .db import Database
 from .text import item_terms, top_terms
@@ -171,14 +171,13 @@ def relabel(db: Database, tenant_id: str, core: CoreClient, topic_id: int, repor
             .limit(20)
         ).scalars().all()
     try:
-        value, calls = label_topic(core, titles)
+        with usage.tagged(db, tenant_id, "topic_label", ref=f"topic:{topic_id}"):
+            value, calls = label_topic(core, titles)
     except CoreError as e:
         log.warning("labelling topic %s failed: %s", topic_id, e)
         report.label_errors += 1
         return
     with db.tenant(tenant_id) as s:
-        for c in calls:
-            repo.record_llm_usage(s, tenant_id, "topic_label", c.model, c.usage, c.cost)
         values = {"label": value["label"], "summary": value["summary"], "labelled_by": "model"}
         s.execute(update(m.topics).where(m.topics.c.id == topic_id).values(**values))
     report.labelled += 1

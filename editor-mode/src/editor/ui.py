@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, usage, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -159,6 +159,7 @@ def register(app, ctx) -> None:
     admin = getattr(ctx, "admin", None) or db
     env = pages.env
     env.filters["num"] = number
+    env.filters["tok"] = usage.tokens
     env.globals["version"] = VERSION
     env.filters["problem"] = problem
     env.filters["s100"] = score100
