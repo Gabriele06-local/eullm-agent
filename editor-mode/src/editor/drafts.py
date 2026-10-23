@@ -24,7 +24,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import quotas, repo, seo
+from . import quotas, repo, seo, usage
 from .core_client import CoreClient, CoreError
 from .html_extract import parse_html
 from .i18n import N_
@@ -328,7 +328,8 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
     for attempt in range(3):
         step(N_("Il modello scrive la bozza") if attempt == 0
              else N_("Il modello corregge la bozza: frasi senza fonte o numeri che le fonti non riportano"))
-        res = core.chat(messages)
+        with usage.tagged(db, tenant_id, "draft", site_id=prop.site_id, ref=f"proposal:{proposal_id}"):
+            res = core.chat(messages)
         calls.append(res)
         try:
             article = check(parse_article(extract_json(res.content), allowed), sources)
@@ -341,9 +342,6 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
         messages += [{"role": "assistant", "content": res.content},
                      {"role": "user", "content": f"Fix these problems and reply with the whole JSON again: {problem}"}]
     if article is None:
-        with db.tenant(tenant_id) as s:
-            for c in calls:
-                repo.record_llm_usage(s, tenant_id, "draft", c.model, c.usage, c.cost)
         raise CoreError("the model did not produce a valid article")
 
     sd = seo.parse(article.seo, article.title)
@@ -358,10 +356,6 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
     sd.checks = seo.checks(sd, article.title, lead, list(dict.fromkeys(c.section for c in article.claims)),
                            sum(len(c.text.split()) for c in article.claims), target,
                            len({i for c in article.claims for i in c.sources}))
-    with db.tenant(tenant_id) as s:
-        # The model was paid for whatever happens next.
-        for c in calls:
-            repo.record_llm_usage(s, tenant_id, "draft", c.model, c.usage, c.cost)
     with db.tenant(tenant_id) as s:
         # Checked again with the insert: other drafts may have been written
         # while this one was with the model.

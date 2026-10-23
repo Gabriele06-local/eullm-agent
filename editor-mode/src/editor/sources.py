@@ -21,7 +21,7 @@ import httpx
 from sqlalchemy import select, update
 
 from . import models as m
-from . import quotas, repo
+from . import quotas, repo, usage
 from .collectors import COLLECTORS, Item, SourceSpec
 from .core_client import CoreClient, CoreError
 from .core_fetch import CoreTrouble
@@ -347,10 +347,8 @@ def discover(db, tenant_id: str, site_id: int, client: httpx.Client, core: CoreC
             ) + (f"\nSector: {body.get('sector', {}).get('value')}\nLanguage: {body.get('language')}"
                  f"\nLanguages of the site: {', '.join(body.get('languages') or {}) or body.get('language')}"
                  f"\nSummary: {body.get('summary') or '-'}\nSite: {domain}")
-            suggestions, calls = core.chat_json(SUGGEST_SYSTEM, prompt, _validate_suggestions)
-            with db.tenant(tenant_id) as s:
-                for c in calls:
-                    repo.record_llm_usage(s, tenant_id, "source_discovery", c.model, c.usage, c.cost)
+            with usage.tagged(db, tenant_id, "source_discovery", site_id=site_id):
+                suggestions, calls = core.chat_json(SUGGEST_SYSTEM, prompt, _validate_suggestions)
         except CoreError as e:
             report.notes.append(f"model suggestions unavailable: {e}")
     body["search_terms"] = suggestions["search_terms"]

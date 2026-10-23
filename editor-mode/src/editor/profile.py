@@ -27,7 +27,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import quotas, repo
+from . import quotas, repo, usage
 from .core_client import CoreClient, CoreError
 from .dedup import minhash
 from .i18n import N_, t
@@ -596,12 +596,13 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
     if snap.status not in ("failed", "insufficient") and core is not None:
         step(N_("Il modello ricava settore, temi, pubblico e tono da {n} articoli letti (di solito 1-3 minuti)"),
              n=len(snap.posts))
-    body, calls = build_profile(snap, core)
+    with db.tenant(tenant_id) as s:
+        known = s.execute(select(m.sites.c.id).where(m.sites.c.domain == snap.domain)).scalar()
+    with usage.tagged(db, tenant_id, "site_profile", site_id=known, ref=f"site:{snap.domain}"):
+        body, calls = build_profile(snap, core)
     with db.tenant(tenant_id) as s:
         repo.ensure_tenant(s, tenant_id, tenant_id)
         site_id = repo.ensure_site(s, tenant_id, snap.domain, body["name"], snap.language or "und")
-        for c in calls:
-            repo.record_llm_usage(s, tenant_id, "site_profile", c.model, c.usage, c.cost)
         analysis_id = store_snapshot(s, tenant_id, site_id, snap)
         current = approved_profile(s, site_id)
         draft, _ = _editable(s, site_id)

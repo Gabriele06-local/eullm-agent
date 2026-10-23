@@ -19,6 +19,7 @@
   <a href="#piani">{{ _('Piani') }}</a>
   <a href="#operatori">{{ _('Operatori') }}</a>
   <a href="#api">{{ _('Chiavi API') }}</a>
+  <a href="/admin/usage">{{ _('Consumi') }}</a>
   {% if mine %}<span class="hint" style="padding: 12px 12px 4px;">{{ _('Le tue redazioni') }}</span>
   {% for x in mine %}<a href="/admin/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
   <span class="grow"></span>

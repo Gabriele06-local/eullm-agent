@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="{{ lang() }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ _('Consumi del modello') }} · EuLLM Editor</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+{% include "_style.html.j2" %}
+</head>
+<body>
+{% macro eur(v) %}{% if v is none %}–{% else %}€ {{ v|num(4) }}{% endif %}{% endmacro %}
+{% macro row(label, g) %}
+<tr>
+  <td>{{ label }}</td>
+  <td class="num">{{ g.calls|tok }}{% if g.errors %} <span class="hint">· {{ _('{n} errori', n=g.errors) }}</span>{% endif %}</td>
+  <td class="num">{{ g['in']|tok }}</td>
+  <td class="num">{{ g.out|tok }}</td>
+  <td class="num">{{ g.avg_s|num(1) }} s</td>
+  <td class="num">{{ eur(g.cost) }}</td>
+  <td class="num">{{ eur(g.estimate) }}{% if g.unpriced %} <span class="hint" title="{{ _('Modelli senza prezzo di riferimento: non contati nella stima.') }}">*</span>{% endif %}</td>
+</tr>
+{% endmacro %}
+{% macro head(first) %}<thead><tr><th>{{ first }}</th><th>{{ _('Chiamate') }}</th><th>{{ _('Token in entrata') }}</th><th>{{ _('Token in uscita') }}</th><th>{{ _('Durata media') }}</th><th>{{ _('Costo registrato') }}</th><th>{{ _('Costo stimato') }}</th></tr></thead>{% endmacro %}
+<div class="shell">
+<nav class="nav" aria-label="{{ _('Sezioni') }}">
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></div>
+  <a href="/admin">{{ _('Redazioni') }}</a>
+  <a href="/admin/usage" class="on">{{ _('Consumi') }}</a>
+  <a href="#prezzi">{{ _('Prezzi di riferimento') }}</a>
+  <a href="#articoli">{{ _('Costo per articolo') }}</a>
+  <span class="grow"></span>
+  <div class="who"><span>{{ me.email }} · {{ _('operatore') }}</span></div>
+</nav>
+<main class="main">
+  <div class="topbar">{% include "_lang.html.j2" %}</div>
+  {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+  <header class="head">
+    <div>
+      <span class="kicker">{{ _('Amministrazione') }}</span>
+      <h1>{{ _('Consumi del modello') }}</h1>
+      <p class="hint" style="margin: 4px 0 0;">{{ _("Ogni chiamata al modello è registrata quando avviene, anche se il lavoro poi fallisce: redazione, sito, articolo, passo, modello che ha risposto, token in entrata e in uscita, durata ed errore. Il costo registrato è quello dei prezzi in core.yaml (0 per un modello gratuito); il costo stimato usa i prezzi di riferimento qui sotto.") }}</p>
+    </div>
+    <div class="row">
+      {% for d in (1, 7, 30, 90) %}<a class="btn sm{% if d == r.days %} pri{% endif %}" href="/admin/usage?days={{ d }}">{{ _('{n} giorni', n=d) if d > 1 else _('Ultime 24 ore') }}</a>{% endfor %}
+      <a class="btn sm" href="/admin/usage.csv?days={{ r.days }}">{{ _('Scarica CSV') }}</a>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="h-total">
+    <div class="card-head"><h2 id="h-total">{{ _('Totale degli ultimi {n} giorni', n=r.days) }}</h2></div>
+    <div class="pad">
+      <table class="tbl">{{ head(_('Tutto')) }}<tbody>{{ row(_('Tutte le redazioni'), r.total) }}</tbody></table>
+      {% if r.average %}
+      <p class="lead" style="margin: 12px 0 0;">{{ _('Un articolo costa in media {calls} chiamate, {tin} token in entrata e {tout} in uscita (su {n} articoli scritti), proposta compresa.', calls=r.average.calls|num(1), tin=r.average['in']|tok, tout=r.average.out|tok, n=r.average.articles) }}{% if r.average.estimate is not none %} {{ _('Stima: € {eur} ad articolo.', eur=r.average.estimate|num(4)) }}{% endif %}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-purpose">
+    <div class="card-head"><h2 id="h-purpose">{{ _('Per passo') }}</h2></div>
+    <div class="pad"><table class="tbl">{{ head(_('Passo')) }}<tbody>
+      {% for g in r.by_purpose %}{{ row(_(purposes.get(g.key, g.key)), g) }}{% else %}<tr><td colspan="7" class="hint">{{ _('Nessuna chiamata nel periodo.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-model">
+    <div class="card-head"><h2 id="h-model">{{ _('Per modello') }}</h2></div>
+    <div class="pad"><table class="tbl">{{ head(_('Modello che ha risposto')) }}<tbody>
+      {% for g in r.by_model %}{{ row(g.key, g) }}{% else %}<tr><td colspan="7" class="hint">{{ _('Nessuna chiamata nel periodo.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-tenant">
+    <div class="card-head"><h2 id="h-tenant">{{ _('Per redazione') }}</h2></div>
+    <div class="pad"><table class="tbl">{{ head(_('Redazione')) }}<tbody>
+      {% for g in r.by_tenant %}{{ row(names.get(g.key, g.key), g) }}{% else %}<tr><td colspan="7" class="hint">{{ _('Nessuna chiamata nel periodo.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-site">
+    <div class="card-head"><h2 id="h-site">{{ _('Per sito') }}</h2></div>
+    <div class="pad"><table class="tbl">{{ head(_('Sito')) }}<tbody>
+      {% for g in r.by_site %}{{ row(g.key[1] ~ ' · ' ~ names.get(g.key[0], g.key[0]), g) }}{% else %}<tr><td colspan="7" class="hint">{{ _('Nessuna chiamata nel periodo.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="articoli" aria-labelledby="h-art">
+    <div class="card-head"><div><h2 id="h-art">{{ _('Costo per articolo') }}</h2>
+      <span class="hint">{{ _("Scrittura: ogni tentativo della bozza, correzioni comprese. Proposta: le chiamate che hanno proposto articoli sullo stesso tema. Più versioni della stessa bozza: la scrittura è contata sulla più recente.") }}</span></div></div>
+    <div class="pad"><table class="tbl">
+      <thead><tr><th>{{ _('Articolo') }}</th><th>{{ _('Scrittura') }}</th><th>{{ _('Proposta') }}</th><th>{{ _('Token in entrata') }}</th><th>{{ _('Token in uscita') }}</th><th>{{ _('Costo stimato') }}</th></tr></thead>
+      <tbody>
+      {% for a in r.articles %}
+      <tr>
+        <td><strong>{{ a.title }}</strong><br><span class="hint">{{ names.get(a.tenant, a.tenant) }} · {{ _('bozza') }} {{ a.draft_id }}</span></td>
+        <td class="num">{{ _('{n} chiamate', n=a.writing.calls) }}</td>
+        <td class="num">{{ _('{n} chiamate', n=a.proposing.calls) }}</td>
+        <td class="num">{{ a.total['in']|tok }}</td>
+        <td class="num">{{ a.total.out|tok }}</td>
+        <td class="num">{{ eur(a.total.estimate) }}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="hint">{{ _('Nessuna bozza scritta nel periodo.') }}</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card" id="prezzi" aria-labelledby="h-prices">
+    <div class="card-head"><div><h2 id="h-prices">{{ _('Prezzi di riferimento') }}</h2>
+      <span class="hint">{{ _("Euro per milione di token, per modello (il nome come compare in \"Per modello\"). Servono a stimare il costo anche dei modelli gratuiti: metti il prezzo che pagheresti per un servizio equivalente.") }}</span></div></div>
+    <div class="pad" style="display: flex; flex-direction: column; gap: 10px;">
+      {% for model in r.models %}{% set p = r.prices.get(model) %}
+      <form class="row" method="post" action="/admin/usage/prices" style="gap: 8px; align-items: end;">
+        <input type="hidden" name="model" value="{{ model }}">
+        <span style="min-width: 260px;"><strong>{{ model }}</strong>{% if not p %} <span class="hint">· {{ _('senza prezzo') }}</span>{% endif %}</span>
+        <label class="field">{{ _('Entrata €/M') }}<input name="input_per_mtok" inputmode="decimal" value="{{ p.input if p else '' }}" style="width: 110px;"></label>
+        <label class="field">{{ _('Uscita €/M') }}<input name="output_per_mtok" inputmode="decimal" value="{{ p.output if p else '' }}" style="width: 110px;"></label>
+        <label class="field">{{ _('Nota') }}<input name="note" value="{{ p.note if p else '' }}" style="width: 220px;"></label>
+        <button class="btn sm" type="submit">{{ _('Salva') }}</button>
+        {% if p %}<button class="btn sm danger" type="submit" formaction="/admin/usage/prices/delete">{{ _('Togli') }}</button>{% endif %}
+      </form>
+      {% endfor %}
+      <form class="row" method="post" action="/admin/usage/prices" style="gap: 8px; align-items: end;">
+        <label class="field">{{ _('Altro modello') }}<input name="model" required style="width: 260px;"></label>
+        <label class="field">{{ _('Entrata €/M') }}<input name="input_per_mtok" inputmode="decimal" required style="width: 110px;"></label>
+        <label class="field">{{ _('Uscita €/M') }}<input name="output_per_mtok" inputmode="decimal" required style="width: 110px;"></label>
+        <label class="field">{{ _('Nota') }}<input name="note" style="width: 220px;"></label>
+        <button class="btn sm" type="submit">{{ _('Aggiungi') }}</button>
+      </form>
+    </div>
+  </section>
+</main>
+</div>
+</body>
+</html>

@@ -213,6 +213,23 @@ llm_usage = Table(
     Column("output_tokens", Integer),
     Column("cost", Float),
     Column("at", _ts()),
+    Column("site_id", BigInteger),
+    Column("ref", Text),
+    Column("job_id", BigInteger),
+    Column("duration_ms", Integer),
+    Column("error", Text),
+)
+
+# Reference price of a model, in euro per million tokens, set in the console
+# (no tenant: only the owner connection reads it).
+model_prices = Table(
+    "model_prices",
+    metadata,
+    Column("model", Text, primary_key=True),
+    Column("input_per_mtok", Float, nullable=False),
+    Column("output_per_mtok", Float, nullable=False),
+    Column("note", Text, nullable=False, default=""),
+    Column("updated_at", _ts()),
 )
 
 editorial_profiles = Table(

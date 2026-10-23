@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import func, select, text
 
@@ -46,8 +46,17 @@ def lock(s, key: str) -> None:
         s.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": key})
 
 
+def _zone(name: str | None) -> ZoneInfo:
+    """A newsroom's timezone; one the system does not know counts as UTC
+    instead of breaking every page that lists newsrooms."""
+    try:
+        return ZoneInfo(name or "UTC")
+    except (ZoneInfoNotFoundError, ValueError):
+        return ZoneInfo("UTC")
+
+
 def _used(s, t, now: datetime | None = None) -> dict:
-    now = (now or datetime.now(UTC)).astimezone(ZoneInfo(t.timezone or "UTC"))
+    now = (now or datetime.now(UTC)).astimezone(_zone(t.timezone))
     day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     month = day.replace(day=1)
     tid = t.tenant_id

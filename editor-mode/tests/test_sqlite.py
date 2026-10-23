@@ -13,7 +13,8 @@ def local(tmp_path):
     url = f"sqlite:///{tmp_path}/editor.db"
     assert migrate.upgrade_sqlite(url) == ["0001_schema", "0002_job_queue", "0003_secrets", "0004_accounts",
                                            "0005_billing", "0006_desired_plan", "0007_shared_archive",
-                                           "0008_trend_snapshots", "0009_draft_seo", "0010_job_progress"]
+                                           "0008_trend_snapshots", "0009_draft_seo", "0010_job_progress",
+                                           "0011_usage_detail"]
     database = Database.from_url(url)
     yield url, database
     database.engine.dispose()
