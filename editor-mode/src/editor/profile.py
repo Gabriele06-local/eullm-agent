@@ -17,6 +17,8 @@ from __future__ import annotations
 import copy
 import logging
 import math
+import re
+import time
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Annotated
@@ -300,12 +302,28 @@ def build_profile(snap: SiteSnapshot, core: CoreClient | None = None) -> tuple[d
     if core is None:
         body["gaps"].append("model analysis not run: sector, audience and style left undetermined")
         return body, []
-    try:
-        return enrich(body, snap, core)
-    except CoreError as e:
-        log.warning("profile enrichment failed for %s: %s", snap.domain, e)
-        body["gaps"].append(f"model analysis failed ({str(e)[:200]}): sector, audience and style left undetermined")
-        return body, []
+    for wait in (*RETRY_WAITS, None):
+        try:
+            return enrich(body, snap, core)
+        except CoreError as e:
+            log.warning("profile enrichment failed for %s: %s", snap.domain, e)
+            if wait is None or not transient(e):
+                body["gaps"].append(f"model analysis failed ({str(e)[:200]}): sector, audience and style left undetermined")
+                return body, []
+            step(N_("Il modello non ha risposto ({error}): riprovo tra {n} secondi"), error=str(e)[:80], n=wait)
+            time.sleep(wait)
+    return body, []
+
+
+# A model provider that fails for a moment (a 5xx, a rate limit, a timeout)
+# usually answers a minute later: the profile is not left half-done for that.
+RETRY_WAITS = (20, 60)
+
+
+def transient(e: CoreError) -> bool:
+    msg = str(e)
+    return msg.startswith("Core unreachable") or bool(re.match(r"Core returned (5\d\d|429|408)", msg)) \
+        or bool(re.search(r"error (5\d\d|429)\b|timed? ?out", msg, re.I))
 
 
 # --- drift between two versions ----------------------------------------------

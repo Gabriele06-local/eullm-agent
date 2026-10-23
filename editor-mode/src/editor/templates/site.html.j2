@@ -17,8 +17,9 @@
     <h1>{{ site.domain }}</h1>
     {% if analysis %}
     <div class="row">
-      {% set st = {'complete': ('green', _('Analisi completa')), 'partial': ('amber', _('Analisi parziale')), 'insufficient': ('red', _('Dati insufficienti')), 'failed': ('red', _('Analisi fallita'))}[analysis.status] %}
-      <span class="chip {{ st[0] }}">{{ st[1] }}</span>
+      {% set st = {'complete': ('green', _('Lettura del sito completa')), 'partial': ('amber', _('Lettura del sito parziale')), 'insufficient': ('red', _('Sito: dati insufficienti')), 'failed': ('red', _('Sito non letto'))}[analysis.status] %}
+      <span class="chip {{ st[0] }}" title="{{ _('Quante pagine e articoli del sito sono stati letti, con date e lingua. Il motivo di una lettura parziale è sotto.') }}">{{ st[1] }}</span>
+      {% if shown %}{% if (shown.body.get('sector') or {}).get('value') %}<span class="chip green" title="{{ _('Il modello ha ricavato settore, pubblico e stile.') }}">{{ _('Profilo completo') }}</span>{% else %}<span class="chip red" title="{{ _('Il modello non ha ricavato settore, pubblico e stile: il motivo è nel profilo, sotto.') }}">{{ _('Profilo da completare') }}</span>{% endif %}{% endif %}
       <span class="chip">{{ _('{n} pagine lette', n=analysis.pages_fetched or 0) }} · {{ when(analysis.started_at) }}</span>
       {% set langs = (shown.body.get('languages') if shown else None) or {} %}
       {% if langs|length > 1 %}<span class="chip">{{ _('Lingue:') }} {% for k, v in langs.items() %}{{ k }} ({{ v }}){{ ', ' if not loop.last }}{% endfor %}</span>
@@ -39,7 +40,7 @@
 {{ job_panel() }}
 
 {% if analysis and analysis.problems %}
-<div class="dashed"><strong>{{ _("Note sull'ultima analisi") if analysis.status == 'complete' else _("Perché l'ultima analisi non è completa") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
+<div class="dashed"><strong>{{ _("Note sulla lettura del sito") if analysis.status == 'complete' else _("Perché la lettura del sito è parziale") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}
 
 {% if editing %}

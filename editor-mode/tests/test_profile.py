@@ -325,3 +325,31 @@ def test_a_newer_reanalysis_replaces_the_proposal_still_waiting(db, tenant):
     with db.tenant(tenant) as s:
         rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
     assert [tuple(r) for r in rows] == [(1, "approved"), (2, "retired"), (3, "draft")]
+
+
+def test_a_model_that_fails_for_a_moment_is_asked_again(monkeypatch):
+    snap = snapshot()
+    real = snap.posts[0].url
+    answer = json.dumps({
+        "sector": {"value": "Connettività", "evidence": [real]},
+        "audience": {"value": "Chi usa la rete", "evidence": [real]},
+        "style": {"tone": "divulgativo", "formats": ["news"], "evidence": [real]},
+        "subtopics": [], "gaps": [],
+    })
+    monkeypatch.setattr(prof, "RETRY_WAITS", (0, 0))
+    with respx.mock(assert_all_called=False) as router:
+        router.post("http://core.test/v1/llm/chat").mock(side_effect=[
+            httpx.Response(502, json={"error": "model call failed: openai error 500 Internal Server Error"}),
+            httpx.Response(200, json={"content": answer, "tool_calls": [], "usage": {}, "cost": 0}),
+        ])
+        body, _ = prof.build_profile(snap, CoreClient("http://core.test", "tok"))
+    assert body["sector"]["value"] == "Connettività"
+
+    # A refusal (a spending limit) is not retried: the reason is kept.
+    with respx.mock(assert_all_called=False) as router:
+        route = router.post("http://core.test/v1/llm/chat").mock(
+            return_value=httpx.Response(403, json={"error": "llm_cost limit reached"}))
+        body, _ = prof.build_profile(snap, CoreClient("http://core.test", "tok"))
+        assert route.call_count == 1
+    assert body["sector"]["value"] is None
+    assert any("llm_cost limit" in g for g in body["gaps"])

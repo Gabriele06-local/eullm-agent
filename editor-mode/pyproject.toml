@@ -1,6 +1,6 @@
 [project]
 name = "eullm-editor-mode"
-version = "0.12.2"
+version = "0.12.3"
 description = "Editor Mode for EuLLM Agent: domain-first editorial intelligence (site analysis, source discovery, trends, proposals, drafts) on top of the Core API"
 readme = "README.md"
 license = "AGPL-3.0-or-later"

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.12.3
+
+### Fixed
+
+- Editor Mode, site page: two separate statuses instead of one that looked
+  contradictory. "Lettura del sito" says how much of the site was read
+  (articles, dates, language); "Profilo" says whether the model worked out
+  sector, audience and style. Before, a site could show "Analisi completa"
+  with a partial profile, or "Analisi parziale" with a complete one.
+- A model provider that fails for a moment (5xx, rate limit, timeout) no
+  longer leaves the profile half-done: the model step is retried after 20
+  and 60 seconds, and the Activity panel says so. Refusals such as a
+  spending limit are not retried and keep their reason.
+
 ## 0.12.2
 
 ### Added
