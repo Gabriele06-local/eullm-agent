@@ -28,7 +28,7 @@ provider:
 #     provider:
 #       type: openai
 #       base_url: https://api.mistral.ai/v1
-#       model: mistral-small-latest
+#       model: ministral-14b-latest   # the free plan allows it; mistral-small is rate limited there
 #       api_key_env: LLM_FALLBACK_API_KEY
 #     pricing: {input_per_mtok: 0.0, output_per_mtok: 0.0}
 #     # A spare can have its own spare, e.g. OpenRouter's free models:
