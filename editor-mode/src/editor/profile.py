@@ -15,12 +15,11 @@ person approves the version that drives proposals.
 from __future__ import annotations
 
 import copy
+import json
 import logging
 import math
-import re
-import time
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
@@ -302,28 +301,12 @@ def build_profile(snap: SiteSnapshot, core: CoreClient | None = None) -> tuple[d
     if core is None:
         body["gaps"].append("model analysis not run: sector, audience and style left undetermined")
         return body, []
-    for wait in (*RETRY_WAITS, None):
-        try:
-            return enrich(body, snap, core)
-        except CoreError as e:
-            log.warning("profile enrichment failed for %s: %s", snap.domain, e)
-            if wait is None or not transient(e):
-                body["gaps"].append(f"model analysis failed ({str(e)[:200]}): sector, audience and style left undetermined")
-                return body, []
-            step(N_("Il modello non ha risposto ({error}): riprovo tra {n} secondi"), error=str(e)[:80], n=wait)
-            time.sleep(wait)
-    return body, []
-
-
-# A model provider that fails for a moment (a 5xx, a rate limit, a timeout)
-# usually answers a minute later: the profile is not left half-done for that.
-RETRY_WAITS = (20, 60)
-
-
-def transient(e: CoreError) -> bool:
-    msg = str(e)
-    return msg.startswith("Core unreachable") or bool(re.match(r"Core returned (5\d\d|429|408)", msg)) \
-        or bool(re.search(r"error (5\d\d|429)\b|timed? ?out", msg, re.I))
+    try:
+        return enrich(body, snap, core)
+    except CoreError as e:
+        log.warning("profile enrichment failed for %s: %s", snap.domain, e)
+        body["gaps"].append(f"model analysis failed ({str(e)[:200]}): sector, audience and style left undetermined")
+        return body, []
 
 
 # --- drift between two versions ----------------------------------------------
@@ -575,6 +558,38 @@ def store_snapshot(s, tenant_id: str, site_id: int, snap: SiteSnapshot) -> int:
     return analysis_id
 
 
+# An analysis the model could not finish is tried again by the hourly tick,
+# waiting longer each time: 1, 1, 2, 4, 8 hours, then the Monday review.
+RETRY_PER_DAY = 6
+
+
+def retry_due(s, site_id: int, now: datetime) -> bool:
+    """Whether the site's last reading was left incomplete by the model (a
+    profile waiting with "model analysis failed", or a review of an approved
+    line where the model did not answer) and it is time to try again."""
+    a = m.site_analyses.c
+    starts = list(s.execute(select(a.started_at).where(
+        a.site_id == site_id, a.started_at >= now - timedelta(days=1))).scalars())
+    if not starts or len(starts) >= RETRY_PER_DAY:
+        return False
+    last = max(starts)
+    last = last if last.tzinfo else last.replace(tzinfo=UTC)
+    if now - last < timedelta(minutes=50) * 2 ** max(len(starts) - 2, 0):
+        return False
+    if approved_profile(s, site_id) is not None:
+        r = m.profile_reviews.c
+        drift_ = s.execute(select(r.drift).where(r.site_id == site_id).order_by(r.id.desc()).limit(1)).scalar()
+        if isinstance(drift_, str):
+            drift_ = json.loads(drift_)
+        return bool((drift_ or {}).get("model_failed"))
+    p = m.editorial_profiles.c
+    body = s.execute(select(p.body).where(p.site_id == site_id, p.status == "draft")
+                     .order_by(p.id.desc()).limit(1)).scalar()
+    if isinstance(body, str):
+        body = json.loads(body)
+    return any(g.startswith("model analysis failed") for g in (body or {}).get("gaps") or [])
+
+
 def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | None = None) -> dict:
     """First analysis or periodic review of a site. Returns what happened."""
     snap = crawler.analyse(domain)
@@ -599,8 +614,9 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
         if removed:
             body["settings"] = {**body["settings"], "removed": removed}
             body = _without_removed(body)
+        model_failed = next((g for g in body["gaps"] if g.startswith("model analysis failed")), None)
         result = {"site_id": site_id, "analysis_id": analysis_id, "status": snap.status, "problems": snap.problems,
-                  "profile_id": None, "changes": [], "significant": False}
+                  "profile_id": None, "changes": [], "significant": False, "model_failed": model_failed}
         if current is None:
             if snap.status != "failed":
                 # The newer analysis replaces the drafts of the older ones
@@ -610,8 +626,10 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
                           .values(status="retired"))
                 result["profile_id"] = save_draft(s, tenant_id, site_id, body, "analysis", analysis_id)
             return result
-        changes = drift(current.body, body) if snap.status in ("complete", "partial") else []
-        if not changes and snap.status in ("complete", "partial") and (
+        # A model that did not answer says nothing about the site: the line
+        # in use stays, and the reading is tried again (retry_due).
+        changes = drift(current.body, body) if snap.status in ("complete", "partial") and not model_failed else []
+        if not changes and snap.status in ("complete", "partial") and not model_failed and (
                 current.body.get("method") != METHOD
                 or (not (current.body.get("sector") or {}).get("value") and (body.get("sector") or {}).get("value"))):
             changes = [{"kind": "method"}]  # same site, better reading of it
@@ -627,7 +645,8 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
             result["profile_id"] = proposed
         s.execute(
             insert(m.profile_reviews).values(
-                tenant_id=tenant_id, site_id=site_id, analysis_id=analysis_id, drift={"changes": changes},
+                tenant_id=tenant_id, site_id=site_id, analysis_id=analysis_id,
+                drift={"changes": changes, **({"model_failed": model_failed} if model_failed else {})},
                 significant=bool(changes), proposed_profile_id=proposed,
             )
         )

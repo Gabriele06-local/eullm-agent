@@ -38,6 +38,8 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
             res = prof.analyse_site(db, tenant, domain, SiteCrawler(client), core_for(tenant))
             out = {"site_id": res["site_id"], "domain": domain, "status": res["status"],
                    "profile_id": res["profile_id"], "changes": len(res["changes"]), "problems": res["problems"][:3]}
+            if res.get("model_failed") and not res["profile_id"]:
+                out["incomplete"] = res["model_failed"]
             if res["profile_id"]:
                 with db.tenant(tenant) as s:
                     body = s.execute(select(m.editorial_profiles.c.body)

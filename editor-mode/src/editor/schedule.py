@@ -149,6 +149,7 @@ class Runner:
                     sources.maintain(self.db, tenant, client, now=now, archive=own_archive)
                     tenant_data.prune(self.db, tenant, now=now)
                 self.step(tenant, "maintain", done, failed, maintain)
+            self.retry_profiles(tenant, now)
             if review_due(local, last_review):
                 self.step(tenant, "review", done, failed, lambda: self.review(tenant, client))
             with self.db.tenant(tenant) as s:
@@ -237,6 +238,21 @@ class Runner:
                     sources.maintain_archive(self.db, archive, client, now)
                     tenant_data.prune(self.db, archive, now=now)
                 self.step(archive, "maintain", done, failed, maintain)
+
+    def retry_profiles(self, tenant: str, now: datetime) -> list[str]:
+        """Queue again the analyses the model left incomplete, without
+        anyone pressing "Rianalizza"; they show in Activity like any other."""
+        from .profile import retry_due
+        from .queue import PRIORITY_TICK, enqueue
+
+        if self.core_for(tenant) is None:
+            return []
+        with self.db.tenant(tenant) as s:
+            sites = s.execute(select(m.sites.c.id, m.sites.c.domain)).all()
+            due = [x.domain for x in sites if retry_due(s, x.id, now)]
+        for domain in due:
+            enqueue(self.db, tenant, "analysis", domain, {"retry": True}, priority=PRIORITY_TICK + 1)
+        return due
 
     def review(self, tenant: str, client) -> None:
         from .site import SiteCrawler

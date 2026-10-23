@@ -9,10 +9,18 @@
   (articles, dates, language); "Profilo" says whether the model worked out
   sector, audience and style. Before, a site could show "Analisi completa"
   with a partial profile, or "Analisi parziale" with a complete one.
-- A model provider that fails for a moment (5xx, rate limit, timeout) no
-  longer leaves the profile half-done: the model step is retried after 20
-  and 60 seconds, and the Activity panel says so. Refusals such as a
-  spending limit are not retried and keep their reason.
+- A model provider that fails for a moment (5xx, rate limit, timeout) is
+  asked again after 15 and 45 seconds, for every model call (profile,
+  proposals, titles, drafts, sources); Activity says so. Refusals such as a
+  spending limit or an invalid answer are not retried.
+- Work stopped by a model provider that stays down (a draft, for example)
+  is no longer marked failed: it waits and runs again by itself after 10,
+  20, 30... minutes, up to 8 attempts, and Activity shows when.
+- A profile left incomplete because the model did not answer is analysed
+  again by the hourly tick, waiting longer each time (up to 6 times a
+  day), with no button to press. A review of an approved site where the
+  model does not answer keeps the approved line and proposes nothing,
+  instead of a version without sector, audience and style.
 
 ## 0.12.2
 

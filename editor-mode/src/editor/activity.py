@@ -55,7 +55,11 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
             out.append(t("Il sito è cambiato: nuova versione del profilo da approvare ({n} differenze).", n=r["changes"]))
         elif r.get("profile_id") and "incomplete" in r:
             out.append(t("Profilo da approvare, ma incompleto: il modello non ha ricavato settore, pubblico e stile. "
-                         "Rianalizza, oppure completali tu prima di approvare."))
+                         "Riprovo da solo entro un'ora; puoi anche completarli tu."))
+            if r["incomplete"]:
+                out.append(t("Motivo: {why}", why=humanize(r["incomplete"])))
+        elif "incomplete" in r:
+            out.append(t("Il modello non ha risposto: la linea approvata resta quella in uso. Riprovo da solo entro un'ora."))
             if r["incomplete"]:
                 out.append(t("Motivo: {why}", why=humanize(r["incomplete"])))
         elif r.get("profile_id"):
@@ -150,6 +154,11 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
         if r.status == "queued":
             waited = now - _aware(r.run_after or r.started_at, now)
             item["state"] = t("In coda da {d}", d=_duration(waited))
+            if r.error and r.run_after and _aware(r.run_after, now) > now:
+                # Stopped by a model provider that is down: it runs again by itself.
+                item["state"] = t("Il modello non risponde: riprovo da solo alle {time}",
+                                  time=_aware(r.run_after, now).astimezone(tz).strftime("%H:%M"))
+                item["lines"] = [humanize(r.error)]
             if waited > STALLED and not running:
                 stalled = True
         elif r.status == "running":

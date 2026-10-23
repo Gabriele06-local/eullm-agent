@@ -120,7 +120,7 @@
     <p class="lead" style="margin: 0;">{% if langs|length > 1 %}{{ _('{name} pubblica in {languages}', name=nm, languages=langs.keys()|join(' ' ~ _('e') ~ ' ')) }}{% elif b.get('language') %}{{ _('{name} pubblica in {languages}', name=nm, languages=b.get('language')) }}{% else %}{{ _('{name} pubblica', name=nm) }}{% endif %}{% if an.get('posts_per_week') %}{{ _(', circa {n} articoli a settimana', n=an.get('posts_per_week')|num) }}{% endif %}{% if sty.get('typical_words') %} {{ _('di circa {n} parole', n=sty.get('typical_words')) }}{% endif %}{% if subs %}{{ _(', soprattutto su {topics}', topics=subs|map(attribute='name')|join(', ')) }}{% endif %}.{% if b.get('site_keywords') %} {{ _('Si presenta con le parole chiave {keywords}.', keywords=b.get('site_keywords')|join(', ')) }}{% endif %}</p>
     {% endif %}
     {% if incomplete %}
-    <p class="error" style="margin: 0;">{{ _("Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in &quot;Non determinato&quot;). Rianalizza, oppure completali tu con &quot;Modifica&quot; prima di approvare.") }}</p>
+    <p class="error" style="margin: 0;">{{ _("Questa descrizione è parziale: il modello non ha completato l'analisi, quindi settore, pubblico e stile mancano (il motivo è in &quot;Non determinato&quot;). Riprovo da solo entro un'ora; puoi anche rianalizzare subito, oppure completarli tu con &quot;Modifica&quot; prima di approvare.") }}</p>
     {% endif %}
     <p class="hint" style="margin: 0;">{{ _("Approvare vuol dire: &quot;questa è la mia linea&quot;. Da qui l'agente:") }}</p>
     <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px;">
