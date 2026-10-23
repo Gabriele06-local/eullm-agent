@@ -91,8 +91,9 @@
         <p class="hint">{{ _('Con un importo registra un pagamento ricevuto (bonifico) e, senza data, allunga di un mese o un anno. Senza importo cambia solo il piano; senza data il piano non scade. I limiti del piano sostituiscono quelli della redazione.') }}</p>
       </details>
       <details>
-        <summary class="hint">{{ _('Piano e limiti') }}</summary>
+        <summary class="hint">{{ _('Nome, piano e limiti') }}</summary>
         <form method="post" action="/admin/newsrooms/{{ r.tenant_id }}" class="form-grid" style="margin-top: 8px;">
+          <label class="field">{{ _('Nome') }}<input name="name" value="{{ r.name }}" maxlength="100" required></label>
           <label class="field">{{ _('Piano') }}<input name="plan" value="{{ r.plan or '' }}" maxlength="60"></label>
           <label class="field">{{ _('Siti') }}<input name="max_sites" inputmode="numeric" value="{{ r.max_sites if r.max_sites is not none else '' }}"></label>
           <label class="field">{{ _('Fonti attive') }}<input name="max_active_sources" inputmode="numeric" value="{{ r.max_active_sources if r.max_active_sources is not none else '' }}"></label>
@@ -156,6 +157,23 @@
         <td>{% for n in c.newsrooms %}<div>{{ n.name }} <span class="hint">{{ n.plan_code or '–' }} · {{ _(statuses[n.status]) if n.status in statuses else '–' }}</span></div>{% else %}<span class="hint">{{ _('nessuna') }}</span>{% endfor %}</td>
         <td class="hint">{{ reseller_names.get(c.reseller_id) or _('diretto') }}</td>
       </tr>
+      <tr><td colspan="5">
+        <details>
+          <summary class="hint">{{ _('Modifica o elimina {name}', name=c.name) }}</summary>
+          <form method="post" action="/admin/customers/{{ c.id }}" class="form-grid" style="margin-top: 8px;">
+            <label class="field">{{ _('Tipo') }}<select name="kind"><option value="company">{{ _('Azienda o professionista') }}</option><option value="person" {% if c.kind == 'person' %}selected{% endif %}>{{ _('Privato') }}</option></select></label>
+            {% for f, label in [('name', _('Nome o ragione sociale')), ('email', _('Email')), ('phone', _('Telefono')), ('vat_number', _('P.IVA')), ('tax_code', _('Codice fiscale')), ('address', _('Indirizzo')), ('postal_code', _('CAP')), ('city', _('Città')), ('province', _('Provincia')), ('country', _('Paese')), ('sdi_code', _('Codice SDI')), ('pec', 'PEC')] %}
+            <label class="field">{{ label }}<input name="{{ f }}" value="{{ c[f] or '' }}"{% if f in ('name', 'email') %} required{% endif %}></label>
+            {% endfor %}
+            <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+          </form>
+          {% if not c.newsrooms %}
+          <form method="post" action="/admin/customers/{{ c.id }}/delete" onsubmit='return confirm({{ _('Eliminare il cliente {name}?', name=c.name)|string|tojson }})'><button class="btn sm danger" type="submit">{{ _('Elimina il cliente') }}</button></form>
+          {% else %}
+          <p class="hint">{{ _('Si può eliminare quando non ha più redazioni.') }}</p>
+          {% endif %}
+        </details>
+      </td></tr>
       {% endfor %}
       </tbody>
     </table>
@@ -177,6 +195,20 @@
           <form class="inline" method="post" action="/admin/resellers/{{ x.id }}/active"><input type="hidden" name="active" value="{{ '0' if x.active else '1' }}"><button class="btn sm" type="submit">{{ _('Disattiva') if x.active else _('Riattiva') }}</button></form>
         </span>
       </div>
+      <details>
+        <summary class="hint">{{ _('Modifica o elimina {name}', name=x.name) }}</summary>
+        <form method="post" action="/admin/resellers/{{ x.id }}" class="form-grid" style="margin-top: 8px;">
+          <label class="field">{{ _('Nome') }}<input name="name" value="{{ x.name }}" required maxlength="100"></label>
+          <label class="field">{{ _('Email') }}<input name="email" type="email" value="{{ x.email }}" required></label>
+          <label class="field">{{ _('Sconto (%)') }}<input name="discount" inputmode="decimal" value="{{ x.discount_pct|num(0) if x.discount_pct else '0' }}"></label>
+          <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+        </form>
+        {% if not x.customers %}
+        <form method="post" action="/admin/resellers/{{ x.id }}/delete" onsubmit='return confirm({{ _('Eliminare {name} e le sue chiavi API?', name=x.name)|string|tojson }})'><button class="btn sm danger" type="submit">{{ _('Elimina il rivenditore') }}</button></form>
+        {% else %}
+        <p class="hint">{{ _('Ha dei clienti: si può solo disattivare.') }}</p>
+        {% endif %}
+      </details>
       {% endfor %}
       <form method="post" action="/admin/resellers" class="form-grid">
         <label class="field">{{ _('Nome') }}<input name="name" required maxlength="100"></label>
@@ -210,7 +242,15 @@
       <label class="field">{{ _('Sul sito') }}<select name="public"><option value="1" {% if p.public %}selected{% endif %}>{{ _('Sì') }}</option><option value="0" {% if not p.public %}selected{% endif %}>{{ _('No') }}</option></select></label>
       <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
     </form>
+    {% if p.code != 'trial' %}
+    <form method="post" action="/admin/plans/{{ p.code }}/delete" style="margin: -8px 0 16px;" onsubmit='return confirm({{ _('Eliminare il piano {name}?', name=p.name)|string|tojson }})'><button class="btn sm danger" type="submit">{{ _('Elimina il piano {name}', name=p.name) }}</button></form>
+    {% endif %}
     {% endfor %}
+    <form method="post" action="/admin/plans" class="form-grid" style="margin-bottom: 16px;">
+      <label class="field">{{ _('Codice del nuovo piano') }}<input name="code" required maxlength="40" pattern="[a-z0-9-]{1,40}" placeholder="pro-plus"></label>
+      <label class="field">{{ _('Nome') }}<input name="name" required maxlength="100"></label>
+      <div><button class="btn" type="submit">{{ _('Aggiungi un piano') }}</button></div>
+    </form>
     <p class="hint">{{ _('Il sito pubblico legge i piani da <code>/api/public/plans</code>. Il piano "Prova" è quello di chi si iscrive.') }}</p>
     </div>
   </section>
@@ -219,10 +259,10 @@
     <section class="card pad col-wide" id="operatori" aria-labelledby="h-ops">
       <h2 id="h-ops">{{ _('Operatori') }}</h2>
       {% for o in operators %}
-      <div class="list-row"><span>{{ o.name or o.email }}{% if o.name %} <span class="hint">{{ o.email }}</span>{% endif %}</span>{% if not o.password_hash %}<span class="chip amber">{{ _('Invito non accettato') }}</span>{% endif %}</div>
+      <div class="list-row"><span>{{ o.name or o.email }}{% if o.name %} <span class="hint">{{ o.email }}</span>{% endif %}</span><span class="row">{% if not o.password_hash %}<span class="chip amber">{{ _('Invito non accettato') }}</span>{% endif %}{% if o.id != me.user_id %}<form class="inline" method="post" action="/admin/operators/{{ o.id }}/remove" onsubmit='return confirm({{ _('Togliere la console a {email}? Le sue redazioni restano.', email=o.email)|string|tojson }})'><button class="btn sm" type="submit">{{ _('Togli') }}</button></form>{% endif %}</span></div>
       {% endfor %}
       {% for i in pending %}
-      <div class="list-row"><span>{{ i.email }}</span><span class="chip">{{ _('Invitato, scade {date}', date=i.expires_at.strftime('%d/%m')) }}</span></div>
+      <div class="list-row"><span>{{ i.email }}</span><span class="row"><span class="chip">{{ _('Invitato, scade {date}', date=i.expires_at.strftime('%d/%m')) }}</span><form class="inline" method="post" action="/admin/invites/{{ i.token_sha256 }}/revoke"><button class="btn sm" type="submit">{{ _('Annulla') }}</button></form></span></div>
       {% endfor %}
       <form method="post" action="/admin/operators" class="form-grid">
         <label class="field">{{ _('Email') }}<input name="email" type="email" required></label>

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.12.2
+
+### Added
+
+- Editor Mode: whatever is created from the dashboard can now be corrected
+  or deleted from it, without a command line.
+  - Sites: rename; correct a mistyped domain until a profile is approved
+    (the site is analysed again under the new domain); delete a site with
+    everything that belongs to it, typing its domain to confirm. Work queued
+    for it is dropped; a site with work running is deleted when it ends.
+  - Publishing targets: edit name, address, WordPress user, IndexNow key,
+    JSON-LD and on/off; delete a target (articles already on the site stay).
+  - Briefing recipients: edit; newsroom preferences (timezone, briefing
+    hour, language) set by the owner in Impostazioni.
+  - Drafts: edit title, subtitle, every sentence and the SEO fields; claims
+    are checked again and an approved draft goes back to review. Delete a
+    draft; its proposal can be written again.
+- Console: rename a newsroom; edit and delete customers (not while they
+  have a newsroom) and resellers (not while they have customers); add and
+  delete plans (not the trial plan, not a plan in use); remove an operator
+  (never yourself, never the last one); revoke an operator invite.
+- Translations of the new screens in English, German, French and Spanish.
+
 ## 0.12.1
 
 ### Fixed

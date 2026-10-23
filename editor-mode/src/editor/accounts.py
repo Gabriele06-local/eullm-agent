@@ -164,6 +164,23 @@ def operators(admin) -> list:
         return conn.execute(select(m.users).where(m.users.c.operator).order_by(m.users.c.email)).all()
 
 
+def remove_operator(admin, user_id: int, by_user_id: int) -> str:
+    """Take the console away from a person (their newsroom memberships
+    stay). Nobody removes themselves, and one operator always stays."""
+    if user_id == by_user_id:
+        raise AccountError(t("non puoi togliere te stesso: chiedilo a un altro operatore"))
+    u = m.users
+    with admin.engine.begin() as conn:
+        row = conn.execute(select(u.c.email).where(u.c.id == user_id, u.c.operator)).first()
+        if row is None:
+            raise LookupError(user_id)
+        if conn.execute(select(func.count()).select_from(u).where(u.c.operator)).scalar() <= 1:
+            raise AccountError(t("serve almeno un operatore"))
+        conn.execute(update(u).where(u.c.id == user_id).values(operator=False))
+        conn.execute(delete(m.sessions).where(m.sessions.c.user_id == user_id, m.sessions.c.tenant_id.is_(None)))
+    return row.email
+
+
 # --- memberships ---------------------------------------------------------------
 
 def memberships(admin, user_id: int) -> list:

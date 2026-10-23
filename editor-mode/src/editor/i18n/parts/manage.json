@@ -1,0 +1,566 @@
+{
+ "Nome, piano e limiti": {
+  "en": "Name, plan and limits",
+  "de": "Name, Tarif und Limits",
+  "fr": "Nom, offre et limites",
+  "es": "Nombre, plan y límites"
+ },
+ "Modifica o elimina {name}": {
+  "en": "Edit or delete {name}",
+  "de": "{name} bearbeiten oder löschen",
+  "fr": "Modifier ou supprimer {name}",
+  "es": "Editar o eliminar {name}"
+ },
+ "Nome o ragione sociale": {
+  "en": "Name or company name",
+  "de": "Name oder Firmenname",
+  "fr": "Nom ou raison sociale",
+  "es": "Nombre o razón social"
+ },
+ "Codice SDI": {
+  "en": "SDI code",
+  "de": "SDI-Code",
+  "fr": "Code SDI",
+  "es": "Código SDI"
+ },
+ "Eliminare il cliente {name}?": {
+  "en": "Delete the customer {name}?",
+  "de": "Kunde {name} löschen?",
+  "fr": "Supprimer le client {name} ?",
+  "es": "¿Eliminar el cliente {name}?"
+ },
+ "Elimina il cliente": {
+  "en": "Delete the customer",
+  "de": "Kunde löschen",
+  "fr": "Supprimer le client",
+  "es": "Eliminar el cliente"
+ },
+ "Si può eliminare quando non ha più redazioni.": {
+  "en": "It can be deleted once it has no newsrooms left.",
+  "de": "Er kann gelöscht werden, sobald er keine Redaktionen mehr hat.",
+  "fr": "Il pourra être supprimé quand il n'aura plus de rédactions.",
+  "es": "Se puede eliminar cuando ya no tenga redacciones."
+ },
+ "Eliminare {name} e le sue chiavi API?": {
+  "en": "Delete {name} and its API keys?",
+  "de": "{name} und seine API-Schlüssel löschen?",
+  "fr": "Supprimer {name} et ses clés API ?",
+  "es": "¿Eliminar {name} y sus claves API?"
+ },
+ "Elimina il rivenditore": {
+  "en": "Delete the reseller",
+  "de": "Wiederverkäufer löschen",
+  "fr": "Supprimer le revendeur",
+  "es": "Eliminar el revendedor"
+ },
+ "Ha dei clienti: si può solo disattivare.": {
+  "en": "It has customers: it can only be deactivated.",
+  "de": "Er hat Kunden: er kann nur deaktiviert werden.",
+  "fr": "Il a des clients : il peut seulement être désactivé.",
+  "es": "Tiene clientes: solo se puede desactivar."
+ },
+ "Eliminare il piano {name}?": {
+  "en": "Delete the plan {name}?",
+  "de": "Tarif {name} löschen?",
+  "fr": "Supprimer l'offre {name} ?",
+  "es": "¿Eliminar el plan {name}?"
+ },
+ "Elimina il piano {name}": {
+  "en": "Delete the plan {name}",
+  "de": "Tarif {name} löschen",
+  "fr": "Supprimer l'offre {name}",
+  "es": "Eliminar el plan {name}"
+ },
+ "Codice del nuovo piano": {
+  "en": "Code of the new plan",
+  "de": "Code des neuen Tarifs",
+  "fr": "Code de la nouvelle offre",
+  "es": "Código del nuevo plan"
+ },
+ "Aggiungi un piano": {
+  "en": "Add a plan",
+  "de": "Tarif hinzufügen",
+  "fr": "Ajouter une offre",
+  "es": "Añadir un plan"
+ },
+ "Togliere la console a {email}? Le sue redazioni restano.": {
+  "en": "Remove console access for {email}? Their newsrooms stay.",
+  "de": "Konsolenzugang für {email} entziehen? Die Redaktionen bleiben.",
+  "fr": "Retirer l'accès à la console à {email} ? Ses rédactions restent.",
+  "es": "¿Quitar el acceso a la consola a {email}? Sus redacciones se mantienen."
+ },
+ "Togli": {
+  "en": "Remove",
+  "de": "Entziehen",
+  "fr": "Retirer",
+  "es": "Quitar"
+ },
+ "Eliminare questa bozza? La proposta torna accettata e potrai riscriverla. Gli articoli già inviati restano sul sito.": {
+  "en": "Delete this draft? The proposal goes back to accepted and you can write it again. Articles already sent stay on the site.",
+  "de": "Diesen Entwurf löschen? Der Vorschlag wird wieder angenommen und Sie können ihn neu schreiben lassen. Bereits gesendete Artikel bleiben auf der Website.",
+  "fr": "Supprimer ce brouillon ? La proposition redevient acceptée et vous pourrez la réécrire. Les articles déjà envoyés restent sur le site.",
+  "es": "¿Eliminar este borrador? La propuesta vuelve a aceptada y podrás volver a escribirla. Los artículos ya enviados se quedan en el sitio."
+ },
+ "Modifica la bozza": {
+  "en": "Edit the draft",
+  "de": "Entwurf bearbeiten",
+  "fr": "Modifier le brouillon",
+  "es": "Editar el borrador"
+ },
+ "Ogni frase tiene le sue fonti e viene ricontrollata (numeri presenti nelle fonti, niente testo copiato). Se la bozza era approvata, va riapprovata.": {
+  "en": "Every sentence keeps its sources and is checked again (numbers found in the sources, no copied text). If the draft was approved, it has to be approved again.",
+  "de": "Jeder Satz behält seine Quellen und wird erneut geprüft (Zahlen in den Quellen, kein kopierter Text). War der Entwurf freigegeben, muss er erneut freigegeben werden.",
+  "fr": "Chaque phrase garde ses sources et est vérifiée à nouveau (chiffres présents dans les sources, pas de texte copié). Si le brouillon était approuvé, il doit l'être à nouveau.",
+  "es": "Cada frase mantiene sus fuentes y se vuelve a comprobar (cifras presentes en las fuentes, nada de texto copiado). Si el borrador estaba aprobado, hay que aprobarlo de nuevo."
+ },
+ "Sottotitolo": {
+  "en": "Subtitle",
+  "de": "Untertitel",
+  "fr": "Sous-titre",
+  "es": "Subtítulo"
+ },
+ "Frase {n}": {
+  "en": "Sentence {n}",
+  "de": "Satz {n}",
+  "fr": "Phrase {n}",
+  "es": "Frase {n}"
+ },
+ "da rivedere": {
+  "en": "to review",
+  "de": "zu prüfen",
+  "fr": "à revoir",
+  "es": "por revisar"
+ },
+ "Salva le modifiche": {
+  "en": "Save the changes",
+  "de": "Änderungen speichern",
+  "fr": "Enregistrer les modifications",
+  "es": "Guardar los cambios"
+ },
+ "Attiva: compare tra le destinazioni delle bozze": {
+  "en": "Active: offered as a destination for drafts",
+  "de": "Aktiv: wird bei den Entwürfen als Ziel angeboten",
+  "fr": "Active : proposée comme destination des brouillons",
+  "es": "Activa: aparece entre los destinos de los borradores"
+ },
+ "Eliminare {name}? Si cancella anche lo storico delle sue pubblicazioni; gli articoli già inviati restano sul sito.": {
+  "en": "Delete {name}? Its publication history is deleted too; articles already sent stay on the site.",
+  "de": "{name} löschen? Auch der Veröffentlichungsverlauf wird gelöscht; bereits gesendete Artikel bleiben auf der Website.",
+  "fr": "Supprimer {name} ? L'historique de ses publications est aussi supprimé ; les articles déjà envoyés restent sur le site.",
+  "es": "¿Eliminar {name}? También se borra su historial de publicaciones; los artículos ya enviados se quedan en el sitio."
+ },
+ "Elimina la destinazione": {
+  "en": "Delete the destination",
+  "de": "Ziel löschen",
+  "fr": "Supprimer la destination",
+  "es": "Eliminar el destino"
+ },
+ "Modifica le preferenze": {
+  "en": "Edit the preferences",
+  "de": "Einstellungen bearbeiten",
+  "fr": "Modifier les préférences",
+  "es": "Editar las preferencias"
+ },
+ "La lingua è quella dei briefing e delle email della redazione.": {
+  "en": "The language is that of the newsroom's briefings and emails.",
+  "de": "Die Sprache gilt für Briefings und E-Mails der Redaktion.",
+  "fr": "La langue est celle des briefings et des e-mails de la rédaction.",
+  "es": "El idioma es el de los briefings y los correos de la redacción."
+ },
+ "Le cambia il proprietario della redazione.": {
+  "en": "The newsroom's owner changes them.",
+  "de": "Der Inhaber der Redaktion ändert sie.",
+  "fr": "Le propriétaire de la rédaction les modifie.",
+  "es": "Las cambia el propietario de la redacción."
+ },
+ "Correggi o elimina": {
+  "en": "Correct or delete",
+  "de": "Korrigieren oder löschen",
+  "fr": "Corriger ou supprimer",
+  "es": "Corregir o eliminar"
+ },
+ "Modifica {address}": {
+  "en": "Edit {address}",
+  "de": "{address} bearbeiten",
+  "fr": "Modifier {address}",
+  "es": "Editar {address}"
+ },
+ "Riceve il briefing": {
+  "en": "Receives the briefing",
+  "de": "Erhält das Briefing",
+  "fr": "Reçoit le briefing",
+  "es": "Recibe el briefing"
+ },
+ "Dati del sito": {
+  "en": "Site details",
+  "de": "Daten der Website",
+  "fr": "Données du site",
+  "es": "Datos del sitio"
+ },
+ "Hai sbagliato a scrivere il dominio? Correggilo qui: finché il profilo non è approvato, il sito riparte da capo con l'analisi del dominio giusto.": {
+  "en": "Mistyped the domain? Correct it here: until the profile is approved, the site starts over with the analysis of the right domain.",
+  "de": "Domain falsch geschrieben? Korrigieren Sie sie hier: Solange das Profil nicht freigegeben ist, beginnt die Website mit der Analyse der richtigen Domain von vorn.",
+  "fr": "Vous avez mal saisi le domaine ? Corrigez-le ici : tant que le profil n'est pas approuvé, le site repart de zéro avec l'analyse du bon domaine.",
+  "es": "¿Escribiste mal el dominio? Corrígelo aquí: mientras el perfil no esté aprobado, el sitio empieza de cero con el análisis del dominio correcto."
+ },
+ "Il profilo è approvato: per passare a un altro dominio elimina il sito e aggiungi quello giusto.": {
+  "en": "The profile is approved: to move to another domain, delete the site and add the right one.",
+  "de": "Das Profil ist freigegeben: Um zu einer anderen Domain zu wechseln, löschen Sie die Website und fügen Sie die richtige hinzu.",
+  "fr": "Le profil est approuvé : pour passer à un autre domaine, supprimez le site et ajoutez le bon.",
+  "es": "El perfil está aprobado: para pasar a otro dominio elimina el sitio y añade el correcto."
+ },
+ "Elimina il sito": {
+  "en": "Delete the site",
+  "de": "Website löschen",
+  "fr": "Supprimer le site",
+  "es": "Eliminar el sitio"
+ },
+ "Si cancellano profilo e versioni, analisi, fonti seguite, proposte, bozze, destinazioni e storico delle pubblicazioni di {domain}. Gli articoli già pubblicati restano sul sito. Non si può annullare.": {
+  "en": "This deletes the profile and its versions, analyses, followed sources, proposals, drafts, destinations and publication history of {domain}. Articles already published stay on the site. It cannot be undone.",
+  "de": "Gelöscht werden Profil und Versionen, Analysen, verfolgte Quellen, Vorschläge, Entwürfe, Ziele und Veröffentlichungsverlauf von {domain}. Bereits veröffentlichte Artikel bleiben auf der Website. Dies lässt sich nicht rückgängig machen.",
+  "fr": "Sont supprimés le profil et ses versions, les analyses, les sources suivies, les propositions, les brouillons, les destinations et l'historique des publications de {domain}. Les articles déjà publiés restent sur le site. Impossible d'annuler.",
+  "es": "Se borran el perfil y sus versiones, los análisis, las fuentes seguidas, las propuestas, los borradores, los destinos y el historial de publicaciones de {domain}. Los artículos ya publicados se quedan en el sitio. No se puede deshacer."
+ },
+ "Scrivi {domain} per confermare": {
+  "en": "Type {domain} to confirm",
+  "de": "Geben Sie {domain} zur Bestätigung ein",
+  "fr": "Saisissez {domain} pour confirmer",
+  "es": "Escribe {domain} para confirmar"
+ },
+ "non puoi togliere te stesso: chiedilo a un altro operatore": {
+  "en": "you cannot remove yourself: ask another operator",
+  "de": "Sie können sich nicht selbst entfernen: bitten Sie einen anderen Operator",
+  "fr": "vous ne pouvez pas vous retirer vous-même : demandez à un autre opérateur",
+  "es": "no puedes quitarte a ti mismo: pídeselo a otro operador"
+ },
+ "serve almeno un operatore": {
+  "en": "at least one operator is needed",
+  "de": "mindestens ein Operator wird benötigt",
+  "fr": "il faut au moins un opérateur",
+  "es": "hace falta al menos un operador"
+ },
+ "il codice è fatto di lettere minuscole, numeri e trattini (es. pro-plus)": {
+  "en": "the code is made of lowercase letters, digits and hyphens (e.g. pro-plus)",
+  "de": "der Code besteht aus Kleinbuchstaben, Ziffern und Bindestrichen (z. B. pro-plus)",
+  "fr": "le code est fait de lettres minuscules, de chiffres et de tirets (ex. pro-plus)",
+  "es": "el código se compone de minúsculas, números y guiones (p. ej. pro-plus)"
+ },
+ "il piano di prova serve a chi si iscrive: non si elimina": {
+  "en": "the trial plan is where sign-ups start: it cannot be deleted",
+  "de": "der Testtarif ist der Start für neue Anmeldungen: er kann nicht gelöscht werden",
+  "fr": "l'offre d'essai sert aux nouvelles inscriptions : elle ne se supprime pas",
+  "es": "el plan de prueba es el de quien se registra: no se elimina"
+ },
+ "il piano {code} esiste già": {
+  "en": "the plan {code} already exists",
+  "de": "der Tarif {code} existiert bereits",
+  "fr": "l'offre {code} existe déjà",
+  "es": "el plan {code} ya existe"
+ },
+ "{n} redazioni usano {name}: spostale su un altro piano, oppure toglilo dal sito pubblico": {
+  "en": "{n} newsrooms use {name}: move them to another plan, or take it off the public site",
+  "de": "{n} Redaktionen nutzen {name}: Verschieben Sie sie in einen anderen Tarif oder nehmen Sie ihn von der öffentlichen Website",
+  "fr": "{n} rédactions utilisent {name} : déplacez-les vers une autre offre, ou retirez-la du site public",
+  "es": "{n} redacciones usan {name}: pásalas a otro plan o quítalo del sitio público"
+ },
+ "{name} ha ancora {n} redazioni: eliminale prima, o collegale a un altro cliente": {
+  "en": "{name} still has {n} newsrooms: delete them first, or link them to another customer",
+  "de": "{name} hat noch {n} Redaktionen: Löschen Sie diese zuerst oder verknüpfen Sie sie mit einem anderen Kunden",
+  "fr": "{name} a encore {n} rédactions : supprimez-les d'abord, ou rattachez-les à un autre client",
+  "es": "{name} todavía tiene {n} redacciones: elimínalas antes o vincúlalas a otro cliente"
+ },
+ "{name} ha {n} clienti: disattivalo invece di eliminarlo": {
+  "en": "{name} has {n} customers: deactivate it instead of deleting it",
+  "de": "{name} hat {n} Kunden: Deaktivieren Sie ihn, statt ihn zu löschen",
+  "fr": "{name} a {n} clients : désactivez-le au lieu de le supprimer",
+  "es": "{name} tiene {n} clientes: desactívalo en lugar de eliminarlo"
+ },
+ "Piano {name} creato, non ancora sul sito: imposta prezzi e limiti e scegli \"Sul sito: Sì\".": {
+  "en": "Plan {name} created, not on the site yet: set prices and limits and choose \"On the site: Yes\".",
+  "de": "Tarif {name} erstellt, noch nicht auf der Website: Legen Sie Preise und Limits fest und wählen Sie \"Auf der Website: Ja\".",
+  "fr": "Offre {name} créée, pas encore sur le site : définissez prix et limites puis choisissez « Sur le site : Oui ».",
+  "es": "Plan {name} creado, todavía no en el sitio: fija precios y límites y elige \"En el sitio: Sí\"."
+ },
+ "Piano {name} eliminato.": {
+  "en": "Plan {name} deleted.",
+  "de": "Tarif {name} gelöscht.",
+  "fr": "Offre {name} supprimée.",
+  "es": "Plan {name} eliminado."
+ },
+ "Cliente {name} aggiornato.": {
+  "en": "Customer {name} updated.",
+  "de": "Kunde {name} aktualisiert.",
+  "fr": "Client {name} mis à jour.",
+  "es": "Cliente {name} actualizado."
+ },
+ "Cliente {name} eliminato.": {
+  "en": "Customer {name} deleted.",
+  "de": "Kunde {name} gelöscht.",
+  "fr": "Client {name} supprimé.",
+  "es": "Cliente {name} eliminado."
+ },
+ "Rivenditore {name} aggiornato.": {
+  "en": "Reseller {name} updated.",
+  "de": "Wiederverkäufer {name} aktualisiert.",
+  "fr": "Revendeur {name} mis à jour.",
+  "es": "Revendedor {name} actualizado."
+ },
+ "Rivenditore {name} eliminato con le sue chiavi.": {
+  "en": "Reseller {name} deleted with its keys.",
+  "de": "Wiederverkäufer {name} mit seinen Schlüsseln gelöscht.",
+  "fr": "Revendeur {name} supprimé avec ses clés.",
+  "es": "Revendedor {name} eliminado con sus claves."
+ },
+ "Piano non creato: {error}.": {
+  "en": "Plan not created: {error}.",
+  "de": "Tarif nicht erstellt: {error}.",
+  "fr": "Offre non créée : {error}.",
+  "es": "Plan no creado: {error}."
+ },
+ "Piano non trovato.": {
+  "en": "Plan not found.",
+  "de": "Tarif nicht gefunden.",
+  "fr": "Offre introuvable.",
+  "es": "Plan no encontrado."
+ },
+ "Piano non eliminato: {error}.": {
+  "en": "Plan not deleted: {error}.",
+  "de": "Tarif nicht gelöscht: {error}.",
+  "fr": "Offre non supprimée : {error}.",
+  "es": "Plan no eliminado: {error}."
+ },
+ "Cliente non trovato.": {
+  "en": "Customer not found.",
+  "de": "Kunde nicht gefunden.",
+  "fr": "Client introuvable.",
+  "es": "Cliente no encontrado."
+ },
+ "Cliente non aggiornato: {error}.": {
+  "en": "Customer not updated: {error}.",
+  "de": "Kunde nicht aktualisiert: {error}.",
+  "fr": "Client non mis à jour : {error}.",
+  "es": "Cliente no actualizado: {error}."
+ },
+ "Cliente non eliminato: {error}.": {
+  "en": "Customer not deleted: {error}.",
+  "de": "Kunde nicht gelöscht: {error}.",
+  "fr": "Client non supprimé : {error}.",
+  "es": "Cliente no eliminado: {error}."
+ },
+ "Rivenditore non aggiornato: {error}.": {
+  "en": "Reseller not updated: {error}.",
+  "de": "Wiederverkäufer nicht aktualisiert: {error}.",
+  "fr": "Revendeur non mis à jour : {error}.",
+  "es": "Revendedor no actualizado: {error}."
+ },
+ "Rivenditore non eliminato: {error}.": {
+  "en": "Reseller not deleted: {error}.",
+  "de": "Wiederverkäufer nicht gelöscht: {error}.",
+  "fr": "Revendeur non supprimé : {error}.",
+  "es": "Revendedor no eliminado: {error}."
+ },
+ "{email} non è più operatore: le sue redazioni restano.": {
+  "en": "{email} is no longer an operator: their newsrooms stay.",
+  "de": "{email} ist kein Operator mehr: die Redaktionen bleiben.",
+  "fr": "{email} n'est plus opérateur : ses rédactions restent.",
+  "es": "{email} ya no es operador: sus redacciones se mantienen."
+ },
+ "Redazione {tenant} aggiornata.": {
+  "en": "Newsroom {tenant} updated.",
+  "de": "Redaktion {tenant} aktualisiert.",
+  "fr": "Rédaction {tenant} mise à jour.",
+  "es": "Redacción {tenant} actualizada."
+ },
+ "Operatore non trovato.": {
+  "en": "Operator not found.",
+  "de": "Operator nicht gefunden.",
+  "fr": "Opérateur introuvable.",
+  "es": "Operador no encontrado."
+ },
+ "Operatore non tolto: {e}.": {
+  "en": "Operator not removed: {e}.",
+  "de": "Operator nicht entfernt: {e}.",
+  "fr": "Opérateur non retiré : {e}.",
+  "es": "Operador no quitado: {e}."
+ },
+ "Il nome del sito non può essere vuoto.": {
+  "en": "The site name cannot be empty.",
+  "de": "Der Name der Website darf nicht leer sein.",
+  "fr": "Le nom du site ne peut pas être vide.",
+  "es": "El nombre del sitio no puede estar vacío."
+ },
+ "La destinazione ha bisogno di un nome.": {
+  "en": "The destination needs a name.",
+  "de": "Das Ziel braucht einen Namen.",
+  "fr": "La destination a besoin d'un nom.",
+  "es": "El destino necesita un nombre."
+ },
+ "L'ora del briefing è un numero da 0 a 23.": {
+  "en": "The briefing hour is a number from 0 to 23.",
+  "de": "Die Briefing-Uhrzeit ist eine Zahl von 0 bis 23.",
+  "fr": "L'heure du briefing est un nombre de 0 à 23.",
+  "es": "La hora del briefing es un número de 0 a 23."
+ },
+ "Lingua non disponibile.": {
+  "en": "Language not available.",
+  "de": "Sprache nicht verfügbar.",
+  "fr": "Langue non disponible.",
+  "es": "Idioma no disponible."
+ },
+ "{domain} ha un lavoro in corso: aspetta che finisca (lo vedi in Attività) e riprova.": {
+  "en": "{domain} has a job running: wait for it to finish (you can follow it in Activity) and try again.",
+  "de": "Für {domain} läuft gerade ein Auftrag: Warten Sie, bis er fertig ist (unter Aktivität), und versuchen Sie es erneut.",
+  "fr": "{domain} a une tâche en cours : attendez qu'elle se termine (vous la suivez dans Activité) et réessayez.",
+  "es": "{domain} tiene un trabajo en curso: espera a que termine (lo ves en Actividad) y vuelve a intentarlo."
+ },
+ "Manca l'indirizzo della destinazione.": {
+  "en": "The destination's address is missing.",
+  "de": "Die Adresse des Ziels fehlt.",
+  "fr": "L'adresse de la destination manque.",
+  "es": "Falta la dirección del destino."
+ },
+ "WordPress ha bisogno dell'utente della password applicativa.": {
+  "en": "WordPress needs the user of the application password.",
+  "de": "WordPress braucht den Benutzer des Anwendungspassworts.",
+  "fr": "WordPress a besoin de l'utilisateur du mot de passe d'application.",
+  "es": "WordPress necesita el usuario de la contraseña de aplicación."
+ },
+ "Una pubblicazione verso {name} è in invio: riprova quando è finita.": {
+  "en": "A publication to {name} is being sent: try again when it is done.",
+  "de": "Eine Veröffentlichung an {name} wird gerade gesendet: Versuchen Sie es erneut, wenn sie fertig ist.",
+  "fr": "Une publication vers {name} est en cours d'envoi : réessayez quand elle sera terminée.",
+  "es": "Se está enviando una publicación a {name}: vuelve a intentarlo cuando termine."
+ },
+ "Questo destinatario c'è già.": {
+  "en": "This recipient is already there.",
+  "de": "Diesen Empfänger gibt es bereits.",
+  "fr": "Ce destinataire existe déjà.",
+  "es": "Este destinatario ya existe."
+ },
+ "Questa bozza è in invio a un sito: riprova quando l'invio è finito.": {
+  "en": "This draft is being sent to a site: try again when the sending is done.",
+  "de": "Dieser Entwurf wird gerade an eine Website gesendet: Versuchen Sie es erneut, wenn der Versand fertig ist.",
+  "fr": "Ce brouillon est en cours d'envoi vers un site : réessayez quand l'envoi sera terminé.",
+  "es": "Este borrador se está enviando a un sitio: vuelve a intentarlo cuando termine el envío."
+ },
+ "Fuso orario sconosciuto: {tz}. Esempio: Europe/Rome.": {
+  "en": "Unknown time zone: {tz}. Example: Europe/Rome.",
+  "de": "Unbekannte Zeitzone: {tz}. Beispiel: Europe/Rome.",
+  "fr": "Fuseau horaire inconnu : {tz}. Exemple : Europe/Rome.",
+  "es": "Zona horaria desconocida: {tz}. Ejemplo: Europe/Rome."
+ },
+ "Modifiche salvate.": {
+  "en": "Changes saved.",
+  "de": "Änderungen gespeichert.",
+  "fr": "Modifications enregistrées.",
+  "es": "Cambios guardados."
+ },
+ "Sito aggiornato.": {
+  "en": "Site updated.",
+  "de": "Website aktualisiert.",
+  "fr": "Site mis à jour.",
+  "es": "Sitio actualizado."
+ },
+ "{domain} eliminato con profilo, fonti seguite, proposte, bozze e destinazioni.": {
+  "en": "{domain} deleted with its profile, followed sources, proposals, drafts and destinations.",
+  "de": "{domain} mit Profil, verfolgten Quellen, Vorschlägen, Entwürfen und Zielen gelöscht.",
+  "fr": "{domain} supprimé avec son profil, ses sources suivies, propositions, brouillons et destinations.",
+  "es": "{domain} eliminado con perfil, fuentes seguidas, propuestas, borradores y destinos."
+ },
+ "Destinazione {name} aggiornata.": {
+  "en": "Destination {name} updated.",
+  "de": "Ziel {name} aktualisiert.",
+  "fr": "Destination {name} mise à jour.",
+  "es": "Destino {name} actualizado."
+ },
+ "Destinazione {name} eliminata: gli articoli già inviati restano sul sito.": {
+  "en": "Destination {name} deleted: articles already sent stay on the site.",
+  "de": "Ziel {name} gelöscht: bereits gesendete Artikel bleiben auf der Website.",
+  "fr": "Destination {name} supprimée : les articles déjà envoyés restent sur le site.",
+  "es": "Destino {name} eliminado: los artículos ya enviados se quedan en el sitio."
+ },
+ "Destinatario aggiornato.": {
+  "en": "Recipient updated.",
+  "de": "Empfänger aktualisiert.",
+  "fr": "Destinataire mis à jour.",
+  "es": "Destinatario actualizado."
+ },
+ "Preferenze salvate: il prossimo briefing segue i nuovi orari.": {
+  "en": "Preferences saved: the next briefing follows the new times.",
+  "de": "Einstellungen gespeichert: das nächste Briefing folgt den neuen Zeiten.",
+  "fr": "Préférences enregistrées : le prochain briefing suit les nouveaux horaires.",
+  "es": "Preferencias guardadas: el próximo briefing sigue los nuevos horarios."
+ },
+ "Bozza «{title}» eliminata: la proposta torna accettata e puoi riscriverla.": {
+  "en": "Draft «{title}» deleted: the proposal goes back to accepted and you can write it again.",
+  "de": "Entwurf «{title}» gelöscht: Der Vorschlag ist wieder angenommen und Sie können ihn neu schreiben lassen.",
+  "fr": "Brouillon « {title} » supprimé : la proposition redevient acceptée et vous pouvez la réécrire.",
+  "es": "Borrador «{title}» eliminado: la propuesta vuelve a aceptada y puedes volver a escribirla."
+ },
+ "Dominio corretto da {old} a {new}: l'analisi riparte da capo, la segui in Attività.": {
+  "en": "Domain corrected from {old} to {new}: the analysis starts over, you can follow it in Activity.",
+  "de": "Domain von {old} auf {new} korrigiert: Die Analyse beginnt von vorn, Sie verfolgen sie unter Aktivität.",
+  "fr": "Domaine corrigé de {old} en {new} : l'analyse repart de zéro, vous la suivez dans Activité.",
+  "es": "Dominio corregido de {old} a {new}: el análisis empieza de cero, lo sigues en Actividad."
+ },
+ "Per eliminare scrivi il dominio esatto ({domain}): niente è stato eliminato.": {
+  "en": "To delete, type the exact domain ({domain}): nothing was deleted.",
+  "de": "Zum Löschen geben Sie die genaue Domain ein ({domain}): nichts wurde gelöscht.",
+  "fr": "Pour supprimer, saisissez le domaine exact ({domain}) : rien n'a été supprimé.",
+  "es": "Para eliminar escribe el dominio exacto ({domain}): no se ha eliminado nada."
+ },
+ "Alcune frasi non passano i controlli: sono evidenziate nel testo.": {
+  "en": "Some sentences do not pass the checks: they are highlighted in the text.",
+  "de": "Einige Sätze bestehen die Prüfungen nicht: Sie sind im Text markiert.",
+  "fr": "Certaines phrases ne passent pas les contrôles : elles sont surlignées dans le texte.",
+  "es": "Algunas frases no pasan los controles: están resaltadas en el texto."
+ },
+ "La bozza era approvata: va riapprovata prima di pubblicarla.": {
+  "en": "The draft was approved: it has to be approved again before publishing.",
+  "de": "Der Entwurf war freigegeben: Er muss vor der Veröffentlichung erneut freigegeben werden.",
+  "fr": "Le brouillon était approuvé : il doit être approuvé à nouveau avant publication.",
+  "es": "El borrador estaba aprobado: hay que volver a aprobarlo antes de publicarlo."
+ },
+ "{domain} non è un dominio valido.": {
+  "en": "{domain} is not a valid domain.",
+  "de": "{domain} ist keine gültige Domain.",
+  "fr": "{domain} n'est pas un domaine valide.",
+  "es": "{domain} no es un dominio válido."
+ },
+ "Il profilo di {domain} è già approvato: per cambiare dominio elimina il sito e aggiungi quello giusto.": {
+  "en": "The profile of {domain} is already approved: to change domain, delete the site and add the right one.",
+  "de": "Das Profil von {domain} ist bereits freigegeben: Um die Domain zu ändern, löschen Sie die Website und fügen Sie die richtige hinzu.",
+  "fr": "Le profil de {domain} est déjà approuvé : pour changer de domaine, supprimez le site et ajoutez le bon.",
+  "es": "El perfil de {domain} ya está aprobado: para cambiar de dominio elimina el sitio y añade el correcto."
+ },
+ "Destinazione non modificata: {e}": {
+  "en": "Destination not changed: {e}",
+  "de": "Ziel nicht geändert: {e}",
+  "fr": "Destination non modifiée : {e}",
+  "es": "Destino no modificado: {e}"
+ },
+ "il titolo va da 5 a 160 caratteri.": {
+  "en": "the title must be 5 to 160 characters.",
+  "de": "der Titel muss 5 bis 160 Zeichen lang sein.",
+  "fr": "le titre doit faire de 5 à 160 caractères.",
+  "es": "el título debe tener de 5 a 160 caracteres."
+ },
+ "una frase non può restare vuota.": {
+  "en": "a sentence cannot be left empty.",
+  "de": "ein Satz darf nicht leer bleiben.",
+  "fr": "une phrase ne peut pas rester vide.",
+  "es": "una frase no puede quedar vacía."
+ },
+ "Modifiche non salvate: {e}": {
+  "en": "Changes not saved: {e}",
+  "de": "Änderungen nicht gespeichert: {e}",
+  "fr": "Modifications non enregistrées : {e}",
+  "es": "Cambios no guardados: {e}"
+ },
+ "{domain} c'è già tra i siti della redazione.": {
+  "en": "{domain} is already among the newsroom's sites.",
+  "de": "{domain} ist bereits unter den Websites der Redaktion.",
+  "fr": "{domain} figure déjà parmi les sites de la rédaction.",
+  "es": "{domain} ya está entre los sitios de la redacción."
+ }
+}

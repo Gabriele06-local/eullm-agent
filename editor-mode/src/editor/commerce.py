@@ -396,6 +396,79 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         return back(t("Piano {name} salvato. Le redazioni già su questo piano prendono i nuovi limiti al prossimo pagamento.",
                       name=name.strip()))
 
+    @app.post("/admin/plans")
+    def ui_new_plan(code: str = Form(...), name: str = Form(...), s=Depends(need_console)):
+        try:
+            code = billing.create_plan(admin, code, name)
+        except billing.BillingError as e:
+            return back(t("Piano non creato: {error}.", error=e))
+        return back(t("Piano {name} creato, non ancora sul sito: imposta prezzi e limiti e scegli \"Sul sito: Sì\".",
+                      name=name.strip()))
+
+    @app.post("/admin/plans/{code}/delete")
+    def ui_delete_plan(code: str, s=Depends(need_console)):
+        try:
+            name = billing.delete_plan(admin, code)
+        except LookupError:
+            return back(t("Piano non trovato."))
+        except billing.BillingError as e:
+            return back(t("Piano non eliminato: {error}.", error=e))
+        return back(t("Piano {name} eliminato.", name=name))
+
+    @app.post("/admin/customers/{cid}")
+    def ui_customer(cid: int, kind: str = Form("company"), name: str = Form(""), email: str = Form(""),
+                    phone: str = Form(""), vat_number: str = Form(""), tax_code: str = Form(""), address: str = Form(""),
+                    postal_code: str = Form(""), city: str = Form(""), province: str = Form(""),
+                    country: str = Form("IT"), sdi_code: str = Form(""), pec: str = Form(""), s=Depends(need_console)):
+        spec = {"kind": kind, "name": name, "email": email, "phone": phone, "vat_number": vat_number,
+                "tax_code": tax_code, "address": address, "postal_code": postal_code, "city": city,
+                "province": province, "country": country, "sdi_code": sdi_code, "pec": pec}
+        try:
+            billing.clean_customer(spec)
+            billing.update_customer(admin, cid, spec)
+        except LookupError:
+            return back(t("Cliente non trovato."))
+        except (billing.BillingError, accounts.AccountError) as e:
+            return back(t("Cliente non aggiornato: {error}.", error=e))
+        return back(t("Cliente {name} aggiornato.", name=name.strip()))
+
+    @app.post("/admin/customers/{cid}/delete")
+    def ui_delete_customer(cid: int, s=Depends(need_console)):
+        try:
+            name = billing.delete_customer(admin, cid)
+        except LookupError:
+            return back(t("Cliente non trovato."))
+        except billing.BillingError as e:
+            return back(t("Cliente non eliminato: {error}.", error=e))
+        return back(t("Cliente {name} eliminato.", name=name))
+
+    @app.post("/admin/resellers/{rid}")
+    def ui_edit_reseller(rid: int, name: str = Form(...), email: str = Form(...), discount: str = Form("0"),
+                         s=Depends(need_console)):
+        try:
+            if not name.strip():
+                raise billing.BillingError(t("il rivenditore ha bisogno di un nome"))
+            try:
+                pct = float((discount or "0").replace(",", "."))
+            except ValueError:
+                raise billing.BillingError(t("lo sconto è una percentuale da 0 a 100")) from None
+            billing.update_reseller(admin, rid, {"name": name.strip()[:100], "email": email, "discount_pct": pct})
+        except LookupError:
+            return back(t("Rivenditore non trovato."))
+        except (ValueError, accounts.AccountError) as e:
+            return back(t("Rivenditore non aggiornato: {error}.", error=e))
+        return back(t("Rivenditore {name} aggiornato.", name=name.strip()))
+
+    @app.post("/admin/resellers/{rid}/delete")
+    def ui_delete_reseller(rid: int, s=Depends(need_console)):
+        try:
+            name = billing.delete_reseller(admin, rid)
+        except LookupError:
+            return back(t("Rivenditore non trovato."))
+        except billing.BillingError as e:
+            return back(t("Rivenditore non eliminato: {error}.", error=e))
+        return back(t("Rivenditore {name} eliminato con le sue chiavi.", name=name))
+
     @app.post("/admin/resellers", response_class=HTMLResponse)
     def ui_reseller(request: Request, name: str = Form(...), email: str = Form(...), discount: str = Form("0"),
                     s=Depends(need_console)):

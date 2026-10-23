@@ -72,11 +72,29 @@
     <span><strong>{{ t.name }}</strong> <span class="chip">{{ _(kinds.get(t.kind, t.kind)) }}</span></span>
     <span class="hint num">{{ (t.config or {}).get('url') or (t.config or {}).get('chat_id') or '' }}{% if (t.config or {}).get('user') %} · {{ _('utente {user}', user=t.config.user) }}{% endif %}{% if t.secret_env %} · {% if t.secret_env in stored %}{{ _('credenziale {name} salvata cifrata', name=t.secret_env) }}{% else %}{{ _('credenziale in {var}', var=secret_var(t.secret_env)) }}{% endif %}{% endif %}{% if t.enabled is sameas false %} · {{ _('disattivata') }}{% endif %}</span>
   </div>
-  {% if t.secret_env and caller.can('owner') %}
-  <form method="post" action="/ui/secrets/{{ t.secret_env }}" class="form-grid">
-    <label class="field">{{ _('Nuova credenziale {name}', name=t.secret_env) }}<input name="value" type="password" autocomplete="new-password" required></label>
-    <div><button class="btn" type="submit">{{ _('Sostituisci') }}</button></div>
-  </form>
+  {% if caller.can('owner') %}
+  <details class="manage">
+    <summary>{{ _('Modifica o elimina {name}', name=t.name) }}</summary>
+    {% set cf = t.config or {} %}
+    <form method="post" action="/ui/targets/{{ t.id }}" class="form-grid">
+      <label class="field">{{ _('Nome') }}<input name="name" value="{{ t.name }}" required maxlength="100"></label>
+      <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ cf.get('url') or cf.get('chat_id') or '' }}" required></label>
+      {% if t.kind == 'wordpress' %}<label class="field">{{ _('Utente (WordPress)') }}<input name="user" value="{{ cf.get('user') or '' }}" autocomplete="off" required></label>{% endif %}
+      <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" value="{{ cf.get('indexnow_key') or '' }}" autocomplete="off"></label>
+      {% if t.kind == 'wordpress' %}<label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1" {% if cf.get('jsonld') %}checked{% endif %}> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>{% endif %}
+      <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="enabled" value="1" {% if t.enabled is not sameas false %}checked{% endif %}> {{ _('Attiva: compare tra le destinazioni delle bozze') }}</label>
+      <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+    </form>
+    {% if t.secret_env %}
+    <form method="post" action="/ui/secrets/{{ t.secret_env }}" class="form-grid">
+      <label class="field">{{ _('Nuova credenziale {name}', name=t.secret_env) }}<input name="value" type="password" autocomplete="new-password" required></label>
+      <div><button class="btn" type="submit">{{ _('Sostituisci') }}</button></div>
+    </form>
+    {% endif %}
+    <form method="post" action="/ui/targets/{{ t.id }}/delete" class="row" onsubmit='return confirm({{ _('Eliminare {name}? Si cancella anche lo storico delle sue pubblicazioni; gli articoli già inviati restano sul sito.', name=t.name)|string|tojson }})'>
+      <button class="btn danger sm" type="submit">{{ _('Elimina la destinazione') }}</button>
+    </form>
+  </details>
   {% endif %}
   {% else %}
   <p class="hint">{{ _('Nessuna destinazione: le bozze approvate restano qui finché non ne aggiungi una.') }}</p>

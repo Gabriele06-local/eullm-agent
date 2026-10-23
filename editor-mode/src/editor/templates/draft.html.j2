@@ -10,7 +10,13 @@
       {% if d.decided_by %}<span class="hint">{{ _('Approvata da {who} il {date}', who=d.decided_by, date=when(d.decided_at, 'day')) if d.status == 'approved' else _('Decisa da {who} il {date}', who=d.decided_by, date=when(d.decided_at, 'day')) }}</span>{% endif %}
     </div>
   </div>
-  {% if d.status in ('draft', 'needs_review') and caller.can('editor') %}
+  {% if caller.can('editor') and not editing %}
+  <div class="row">
+    <a class="btn" href="/drafts/{{ d.id }}?edit=1">{{ _('Modifica') }}</a>
+    <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/delete" onsubmit='return confirm({{ _('Eliminare questa bozza? La proposta torna accettata e potrai riscriverla. Gli articoli già inviati restano sul sito.')|string|tojson }})'><button class="btn danger" type="submit">{{ _('Elimina') }}</button></form>
+  </div>
+  {% endif %}
+  {% if d.status in ('draft', 'needs_review') and caller.can('editor') and not editing %}
   <div class="row">
     <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="0"><button class="btn" type="submit">{{ _('Rifiuta') }}</button></form>
     <form class="inline" method="post" action="/ui/drafts/{{ d.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">{{ _('Approva la bozza') }}</button></form>
@@ -18,6 +24,25 @@
   {% endif %}
 </header>
 
+{% if editing %}
+<form method="post" action="/ui/drafts/{{ d.id }}/edit" class="card pad" style="display: flex; flex-direction: column; gap: 12px;" lang="{{ d.language or 'it' }}">
+  <h2>{{ _('Modifica la bozza') }}</h2>
+  <p class="hint">{{ _('Ogni frase tiene le sue fonti e viene ricontrollata (numeri presenti nelle fonti, niente testo copiato). Se la bozza era approvata, va riapprovata.') }}</p>
+  <label class="field">{{ _('Titolo') }}<input name="title" value="{{ d.title }}" required minlength="5" maxlength="160"></label>
+  <label class="field">{{ _('Sottotitolo') }}<input name="subtitle" value="{{ d.subtitle or '' }}" maxlength="300"></label>
+  {% set ns = namespace(section=none) %}
+  {% for cl in claims %}
+    {% if loop.first or cl.section != ns.section %}{% set ns.section = cl.section %}{% if cl.section %}<h3>{{ cl.section }}</h3>{% endif %}{% endif %}
+    <label class="field"><span class="hint">{{ _('Frase {n}', n=loop.index) }}{% if cl.ordinal in flagged_ordinals %} · {{ _('da rivedere') }}{% endif %}</span><textarea name="claim-{{ cl.ordinal }}" rows="2" required>{{ cl.text }}</textarea></label>
+  {% endfor %}
+  <h3>{{ _('Google e risposte AI') }}</h3>
+  <label class="field">{{ _('Frase chiave') }}<input name="seo_keyphrase" value="{{ sd.keyphrase or '' }}" maxlength="80"></label>
+  <label class="field">{{ _('Titolo per Google') }}<input name="seo_title" value="{{ sd.title or '' }}" maxlength="70"></label>
+  <label class="field">{{ _('Descrizione per Google') }}<input name="seo_description" value="{{ sd.description or '' }}" maxlength="170"></label>
+  <label class="field">{{ _('Indirizzo') }}<input name="seo_slug" value="{{ sd.slug or '' }}" maxlength="80"></label>
+  <div class="row"><a class="btn" href="/drafts/{{ d.id }}">{{ _('Annulla') }}</a><button class="btn pri" type="submit">{{ _('Salva le modifiche') }}</button></div>
+</form>
+{% else %}
 <div class="cols">
   <article class="card article col-wide" lang="{{ d.language or 'it' }}">
     <h1>{{ d.title }}</h1>
@@ -101,4 +126,5 @@
     </section>
   </div>
 </div>
+{% endif %}
 {% endblock %}
