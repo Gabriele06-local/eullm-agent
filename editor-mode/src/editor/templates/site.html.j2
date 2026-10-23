@@ -230,6 +230,26 @@
 {% endif %}
 {% endif %}
 
+{% if site and caller.can('owner') %}
+<section class="card pad" aria-labelledby="h-site-data" id="h-danger">
+  <h2 id="h-site-data">{{ _('Dati del sito') }}</h2>
+  <form method="post" action="/ui/sites/{{ site.id }}/edit" class="form-grid">
+    <label class="field">{{ _('Nome') }}<input name="name" value="{{ site.name }}" maxlength="100"></label>
+    {% if domain_free %}
+    <label class="field">{{ _('Dominio') }}<input name="domain" value="{{ site.domain }}" required></label>
+    {% endif %}
+    <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+  </form>
+  <p class="hint">{% if domain_free %}{{ _("Hai sbagliato a scrivere il dominio? Correggilo qui: finché il profilo non è approvato, il sito riparte da capo con l'analisi del dominio giusto.") }}{% else %}{{ _('Il profilo è approvato: per passare a un altro dominio elimina il sito e aggiungi quello giusto.') }}{% endif %}</p>
+  <h3>{{ _('Elimina il sito') }}</h3>
+  <p class="hint">{{ _('Si cancellano profilo e versioni, analisi, fonti seguite, proposte, bozze, destinazioni e storico delle pubblicazioni di {domain}. Gli articoli già pubblicati restano sul sito. Non si può annullare.', domain=site.domain) }}</p>
+  <form method="post" action="/ui/sites/{{ site.id }}/delete" class="form-grid">
+    <label class="field">{{ _('Scrivi {domain} per confermare', domain=site.domain) }}<input name="confirm" autocomplete="off" required></label>
+    <div><button class="btn danger" type="submit">{{ _('Elimina il sito') }}</button></div>
+  </form>
+</section>
+{% endif %}
+
 {% if caller.can('owner') and not site %}
 <section class="card pad" aria-labelledby="h-add">
   <h2 id="h-add">{{ _('Aggiungi un dominio') }}</h2>

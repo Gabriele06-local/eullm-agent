@@ -290,21 +290,22 @@ def register(app, ctx) -> None:
         return page(request, s, new=new)
 
     @app.post("/admin/newsrooms/{tenant_id}")
-    def ui_update(tenant_id: str, plan: str = Form(""), max_sites: str = Form(""), max_active_sources: str = Form(""),
-                  max_items_per_day: str = Form(""), max_llm_cost_month: str = Form(""),
-                  max_drafts_month: str = Form(""), s=Depends(need_console)):
+    def ui_update(tenant_id: str, name: str = Form(""), plan: str = Form(""), max_sites: str = Form(""),
+                  max_active_sources: str = Form(""), max_items_per_day: str = Form(""),
+                  max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), s=Depends(need_console)):
         try:
             limits = {"max_sites": _num(max_sites), "max_active_sources": _num(max_active_sources),
                       "max_items_per_day": _num(max_items_per_day),
                       "max_llm_cost_month": _num(max_llm_cost_month, money=True),
                       "max_drafts_month": _num(max_drafts_month)}
             res = newsrooms.update_newsroom(admin, tenant_id, {"limits": limits} | (
-                {"plan": plan.strip()[:60]} if plan.strip() else {}), ctx.core)
+                {"plan": plan.strip()[:60]} if plan.strip() else {}) | (
+                {"name": name.strip()} if name.strip() else {}), ctx.core)
         except ValueError:
             return back(t("I limiti sono numeri di zero o più; vuoto vuol dire senza limite."))
         except LookupError:
             return back(t("Redazione non trovata."))
-        return back(t("Piano di {tenant} aggiornato.", tenant=tenant_id)
+        return back(t("Redazione {tenant} aggiornata.", tenant=tenant_id)
                     + (" " + t("Attenzione: {warning}", warning=res["warning"]) if res["warning"] else ""))
 
     @app.post("/admin/newsrooms/{tenant_id}/active")
@@ -364,6 +365,21 @@ def register(app, ctx) -> None:
             return page(request, s, 400, error=t("Invito non creato: {error}.", error=e))
         return page(request, s, new={"what": t("Invito come operatore per {email}", email=email.strip().lower()),
                                      "link": send(request, token, "invite", email.strip().lower(), None, s.email)})
+
+    @app.post("/admin/operators/{uid}/remove")
+    def ui_remove_operator(uid: int, s=Depends(need_console)):
+        try:
+            email = accounts.remove_operator(admin, uid, s.user_id)
+        except LookupError:
+            return back(t("Operatore non trovato."))
+        except accounts.AccountError as e:
+            return back(t("Operatore non tolto: {e}.", e=e))
+        return back(t("{email} non è più operatore: le sue redazioni restano.", email=email))
+
+    @app.post("/admin/invites/{sha}/revoke")
+    def ui_revoke_operator_invite(sha: str, s=Depends(need_console)):
+        return back(t("Invito annullato.") if accounts.revoke_invite(admin, None, sha)
+                    else t("Invito già usato o scaduto."))
 
     @app.post("/admin/reset", response_class=HTMLResponse)
     def ui_reset(request: Request, email: str = Form(...), s=Depends(need_console)):

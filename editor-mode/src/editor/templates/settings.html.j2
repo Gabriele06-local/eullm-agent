@@ -43,14 +43,27 @@
     <div class="list-row"><span>{{ _('Ora del briefing') }}</span><span class="num">{% if usage.plan.get('briefing_hour') is not none %}{{ '%02d'|format(usage.plan.get('briefing_hour')) }}:00{% else %}–{% endif %}</span></div>
     <div class="list-row"><span>{{ _('Lingua') }}</span><span class="num">{{ usage.plan.get('language') or '–' }}</span></div>
     {% endif %}
-    <p class="hint">{{ _('Le cambia chi gestisce il servizio.') }}</p>
+    {% if caller.can('owner') and usage %}
+    <details class="manage">
+      <summary>{{ _('Modifica le preferenze') }}</summary>
+      <form method="post" action="/ui/preferences" class="form-grid">
+        <label class="field">{{ _('Fuso orario') }}<input name="timezone" value="{{ usage.plan.get('timezone') or 'Europe/Rome' }}" required placeholder="Europe/Rome"></label>
+        <label class="field">{{ _('Ora del briefing') }}<select name="briefing_hour">{% for h in range(24) %}<option value="{{ h }}" {% if usage.plan.get('briefing_hour', 8) == h %}selected{% endif %}>{{ '%02d'|format(h) }}:00</option>{% endfor %}</select></label>
+        <label class="field">{{ _('Lingua') }}<select name="language">{% for code, label in [('it', 'Italiano'), ('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('es', 'Español')] %}<option value="{{ code }}" {% if usage.plan.get('language') == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+      </form>
+      <p class="hint">{{ _('La lingua è quella dei briefing e delle email della redazione.') }}</p>
+    </details>
+    {% else %}
+    <p class="hint">{{ _('Le cambia il proprietario della redazione.') }}</p>
+    {% endif %}
   </section>
 </div>
 
 {% if caller.can('owner') %}
 <section class="card pad" aria-labelledby="h-sites">
   <h2 id="h-sites">{{ _('Siti della redazione') }}</h2>
-  {% for x in sites %}<div class="list-row"><span>{{ x.domain }}</span><a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px;">{{ _('Profilo') }}</a></div>{% endfor %}
+  {% for x in sites %}<div class="list-row"><span>{{ x.domain }}</span><span class="row"><a href="/switch?site={{ x.id }}&amp;back=/site" style="font-size: 14px;">{{ _('Profilo') }}</a><a href="/switch?site={{ x.id }}&amp;back={{ '/site#h-danger'|urlencode }}" style="font-size: 14px;">{{ _('Correggi o elimina') }}</a></span></div>{% endfor %}
   <form method="post" action="/ui/sites" class="form-grid">
     <label class="field">{{ _('Aggiungi un dominio') }}<input name="domain" placeholder="{{ _('esempio.it') }}" required></label>
     <div><button class="btn" type="submit">{{ _('Analizza il sito') }}</button></div>
@@ -66,6 +79,17 @@
     <span><span class="chip">{{ _('Email') if r.channel == 'email' else 'Telegram' }}</span> <span class="num">{{ r.address }}</span>{% if r.enabled is sameas false %} <span class="hint">{{ _('disattivato') }}</span>{% endif %}</span>
     {% if caller.can('owner') %}<form class="inline" method="post" action="/ui/recipients/{{ r.id }}/delete"><button class="btn sm" type="submit">{{ _('Rimuovi') }}</button></form>{% endif %}
   </div>
+  {% if caller.can('owner') %}
+  <details class="manage">
+    <summary>{{ _('Modifica {address}', address=r.address) }}</summary>
+    <form method="post" action="/ui/recipients/{{ r.id }}" class="form-grid">
+      <label class="field">{{ _('Canale') }}<select name="channel"><option value="email" {% if r.channel == 'email' %}selected{% endif %}>{{ _('Email') }}</option><option value="telegram" {% if r.channel == 'telegram' %}selected{% endif %}>Telegram</option></select></label>
+      <label class="field">{{ _('Indirizzo o chat id') }}<input name="address" value="{{ r.address }}" required></label>
+      <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="enabled" value="1" {% if r.enabled is not sameas false %}checked{% endif %}> {{ _('Riceve il briefing') }}</label>
+      <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+    </form>
+  </details>
+  {% endif %}
   {% else %}
   <p class="hint">{{ _('Nessun destinatario: il briefing si prepara ma non parte.') }}</p>
   {% endfor %}

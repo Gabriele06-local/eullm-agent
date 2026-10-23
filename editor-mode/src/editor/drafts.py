@@ -404,3 +404,48 @@ def stored_claims(s, draft_id: int) -> list[dict]:
     rows = s.execute(select(c.c.id, c.c.ordinal, c.c.section, c.c.text)
                      .where(c.c.draft_id == draft_id).order_by(c.c.ordinal))
     return [dict(r._mapping, sources=sources.get(r.id, [])) for r in rows]
+
+
+def edit(db, tenant_id: str, draft_id: int, title: str, subtitle: str, texts: dict[int, str],
+         search: dict | None = None) -> dict:
+    """A person's corrections to a draft: title, subtitle, the text of each
+    sentence and the search fields. Every sentence keeps its sources and is
+    checked again like the model's (numbers in the sources, no copying); an
+    approved draft goes back to be approved, because what was approved has
+    changed. Returns the new status and the problems found."""
+    title = " ".join((title or "").split())
+    if not 5 <= len(title) <= 160:
+        raise ValueError("title must be 5 to 160 characters")
+    with db.tenant(tenant_id) as s:
+        d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
+        if d is None:
+            raise LookupError(draft_id)
+        stored = stored_claims(s, draft_id)
+        sources = _sources(s, list({i for c in stored for i in c["sources"]}))
+        profile = s.execute(select(m.editorial_profiles.c.body).join(
+            m.proposals, m.proposals.c.profile_id == m.editorial_profiles.c.id)
+            .where(m.proposals.c.id == d.proposal_id)).scalar() or {}
+    claims = []
+    for c in stored:
+        text = " ".join((texts.get(c["ordinal"], c["text"]) or "").split())
+        if not text:
+            raise ValueError("a sentence cannot be empty: delete the draft or write it again")
+        claims.append(Claim(text, c["sources"], c["section"]))
+    old = d.seo or {}
+    sd = seo.parse({**{k: old.get(k) for k in ("keyphrase", "title", "description", "slug")}, **(search or {})}, title)
+    sd.faq, sd.links = old.get("faq") or [], old.get("links") or []
+    article = check(Article(title, " ".join((subtitle or "").split())[:300], claims, sd.faq, {}), sources)
+    first = next((c.section for c in claims), None)
+    lead = " ".join(c.text for c in claims if c.section == first)
+    target = max(400, min((profile.get("style") or {}).get("typical_words") or TARGET_WORDS, 1500))
+    sd.checks = seo.checks(sd, title, lead, list(dict.fromkeys(c.section for c in claims)),
+                           sum(len(c.text.split()) for c in claims), target, len({i for c in claims for i in c.sources}))
+    status = "needs_review" if article.flags else "draft"
+    with db.tenant(tenant_id) as s:
+        for c, new in zip(stored, claims):
+            if new.text != c["text"]:
+                s.execute(update(m.draft_claims).where(m.draft_claims.c.id == c["id"]).values(text=new.text))
+        s.execute(update(m.drafts).where(m.drafts.c.id == draft_id).values(
+            title=title, subtitle=article.subtitle, body_md=render(article, sources, d.language, sd.links),
+            flags=article.flags, seo=sd.as_dict(), status=status, decided_by=None, decided_at=None))
+    return {"status": status, "flags": article.flags, "was_approved": d.status == "approved"}

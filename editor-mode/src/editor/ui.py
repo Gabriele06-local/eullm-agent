@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -690,6 +690,7 @@ def register(app, ctx) -> None:
                       rows=rows, evidence=ev, editing=editing, error=error,
                       comparison=prof.compare(approved.body, draft.body) if approved and draft else [],
                       jobs=[j for j in jobs.recent(s, 10) if j["status"] != "done"][:5],
+                      domain_free=manage.can_change_domain(s, site.id) if site else False,
                       body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "")
 
     @app.get("/site", response_class=HTMLResponse)
@@ -987,7 +988,7 @@ def register(app, ctx) -> None:
             return render(request, "drafts.html.j2", c, s, "drafts", _sites=(sites, site), rows=rows)
 
     @app.get("/drafts/{draft_id}", response_class=HTMLResponse)
-    def draft_view(request: Request, draft_id: int, c: auth.Caller = Depends(viewer)):
+    def draft_view(request: Request, draft_id: int, edit: int = 0, c: auth.Caller = Depends(viewer)):
         with db.tenant(c.tenant_id) as s:
             d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
             if d is None:
@@ -1024,7 +1025,7 @@ def register(app, ctx) -> None:
             return render(request, "draft.html.j2", c, s, "drafts", _sites=(sites, site), d=d, sections=sections,
                           sources=[{"n": refs[i], **items[i]._mapping} for i in order if i in items],
                           flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS,
-                          sd=d.seo or {}, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
+                          sd=d.seo or {}, editing=bool(edit) and c.can("editor"), claims=claims, flagged_ordinals=flagged, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
                                                       for x in (d.seo or {}).get("checks", []) if x.get("key") in SEO_CHECKS])
 
     @app.post("/ui/drafts/{draft_id}/decision")
@@ -1250,3 +1251,140 @@ def register(app, ctx) -> None:
     def ui_revoke_invite(sha: str, c: auth.Caller = Depends(ctx.need("owner"))):
         n = accounts.revoke_invite(admin, c.tenant_id, sha)
         return done("/settings", t("Invito annullato.") if n else t("Invito già usato o scaduto."))
+
+    # --- Change and delete what was created -------------------------------------------
+
+    @app.post("/ui/sites/{site_id}/edit")
+    def ui_edit_site(request: Request, site_id: int, name: str = Form(""), domain: str = Form(""),
+                     c: auth.Caller = Depends(ctx.need("owner"))):
+        from .api import normalise_domain
+        with db.tenant(c.tenant_id) as s:
+            old = s.execute(select(m.sites.c.domain).where(m.sites.c.id == site_id)).scalar()
+            if old is None:
+                raise HTTPException(404, "site not found")
+            free = manage.can_change_domain(s, site_id)
+        try:
+            new = normalise_domain(domain) if domain.strip() else old
+        except HTTPException:
+            return done("/site", t("{domain} non è un dominio valido.", domain=domain.strip()[:100]))
+        if new != old:
+            if not free:
+                return done("/site", t("Il profilo di {domain} è già approvato: per cambiare dominio elimina il sito "
+                                       "e aggiungi quello giusto.", domain=old))
+            with db.tenant(c.tenant_id) as s:
+                if s.execute(select(m.sites.c.id).where(m.sites.c.domain == new)).scalar() is not None:
+                    return done("/site", t("{domain} c'è già tra i siti della redazione.", domain=new))
+            try:
+                manage.delete_site(db, c.tenant_id, site_id)
+            except manage.ManageError as e:
+                return done("/site", str(e))
+            ctx.run_analysis(c.tenant_id, new)
+            with db.tenant(c.tenant_id) as s:
+                sid = s.execute(select(m.sites.c.id).where(m.sites.c.domain == new)).scalar()
+            resp = done("/site", t("Dominio corretto da {old} a {new}: l'analisi riparte da capo, la segui in "
+                                   "Attività.", old=old, new=new))
+            if sid is not None:
+                resp.set_cookie(SITE_COOKIE, str(sid), httponly=True, samesite="strict", max_age=365 * 86400)
+            return resp
+        try:
+            manage.rename_site(db, c.tenant_id, site_id, name or old)
+        except manage.ManageError as e:
+            return done("/site", str(e))
+        return done("/site", t("Sito aggiornato."))
+
+    @app.post("/ui/sites/{site_id}/delete")
+    def ui_delete_site(site_id: int, confirm: str = Form(""), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            domain = s.execute(select(m.sites.c.domain).where(m.sites.c.id == site_id)).scalar()
+        if domain is None:
+            raise HTTPException(404, "site not found")
+        if confirm.strip().lower() != domain:
+            return done("/site#h-danger", t("Per eliminare scrivi il dominio esatto ({domain}): niente è stato "
+                                            "eliminato.", domain=domain))
+        try:
+            manage.delete_site(db, c.tenant_id, site_id)
+        except manage.ManageError as e:
+            return done("/site#h-danger", str(e))
+        resp = done("/", t("{domain} eliminato con profilo, fonti seguite, proposte, bozze e destinazioni.",
+                           domain=domain))
+        resp.delete_cookie(SITE_COOKIE)
+        return resp
+
+    @app.post("/ui/targets/{target_id}")
+    def ui_edit_target(target_id: int, name: str = Form(...), address: str = Form(""), user: str = Form(""),
+                       indexnow_key: str = Form(""), jsonld: str = Form(""), enabled: str = Form(""),
+                       c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            manage.update_target(db, c.tenant_id, target_id, name=name, address=address, user=user,
+                                 indexnow_key=indexnow_key, jsonld=bool(jsonld), enabled=bool(enabled))
+        except LookupError:
+            raise HTTPException(404, "target not found") from None
+        except manage.ManageError as e:
+            return done("/publications#h-targets", t("Destinazione non modificata: {e}", e=e))
+        return done("/publications#h-targets", t("Destinazione {name} aggiornata.", name=name.strip()[:100]))
+
+    @app.post("/ui/targets/{target_id}/delete")
+    def ui_delete_target(target_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            name = manage.delete_target(db, c.tenant_id, target_id)
+        except LookupError:
+            raise HTTPException(404, "target not found") from None
+        except manage.ManageError as e:
+            return done("/publications#h-targets", str(e))
+        return done("/publications#h-targets", t("Destinazione {name} eliminata: gli articoli già inviati restano "
+                                                 "sul sito.", name=name))
+
+    @app.post("/ui/recipients/{rid}")
+    def ui_edit_recipient(rid: int, channel: str = Form(...), address: str = Form(...), enabled: str = Form(""),
+                          c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            manage.update_recipient(db, c.tenant_id, rid, channel, address, bool(enabled))
+        except LookupError:
+            raise HTTPException(404, "recipient not found") from None
+        except manage.ManageError as e:
+            return done("/settings#h-rec", str(e))
+        return done("/settings#h-rec", t("Destinatario aggiornato."))
+
+    @app.post("/ui/preferences")
+    def ui_preferences(timezone: str = Form(...), briefing_hour: str = Form(...), language: str = Form(...),
+                       c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            manage.preferences(admin, c.tenant_id, timezone, briefing_hour, language)
+        except manage.ManageError as e:
+            return done("/settings#h-prefs", str(e))
+        return done("/settings#h-prefs", t("Preferenze salvate: il prossimo briefing segue i nuovi orari."))
+
+    @app.post("/ui/drafts/{draft_id}/edit")
+    async def ui_edit_draft(request: Request, draft_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        form = await request.form()
+        texts = {}
+        for key, value in form.items():
+            if key.startswith("claim-") and key[6:].isdigit():
+                texts[int(key[6:])] = str(value)
+        search = {k: str(form.get(f"seo_{k}", "")) for k in ("keyphrase", "title", "description", "slug")}
+        try:
+            res = drafts.edit(db, c.tenant_id, draft_id, str(form.get("title", "")), str(form.get("subtitle", "")),
+                              texts, search)
+        except LookupError:
+            raise HTTPException(404, "draft not found") from None
+        except ValueError as e:
+            msg = (t("il titolo va da 5 a 160 caratteri.") if "title" in str(e)
+                   else t("una frase non può restare vuota."))
+            return done(f"/drafts/{draft_id}?edit=1", t("Modifiche non salvate: {e}", e=msg))
+        notice = t("Modifiche salvate.")
+        if res["flags"]:
+            notice += " " + t("Alcune frasi non passano i controlli: sono evidenziate nel testo.")
+        if res["was_approved"]:
+            notice += " " + t("La bozza era approvata: va riapprovata prima di pubblicarla.")
+        return done(f"/drafts/{draft_id}", notice)
+
+    @app.post("/ui/drafts/{draft_id}/delete")
+    def ui_delete_draft(draft_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        try:
+            title = manage.delete_draft(db, c.tenant_id, draft_id)
+        except LookupError:
+            raise HTTPException(404, "draft not found") from None
+        except manage.ManageError as e:
+            return done(f"/drafts/{draft_id}", str(e))
+        return done("/drafts", t("Bozza «{title}» eliminata: la proposta torna accettata e puoi riscriverla.",
+                                 title=title))

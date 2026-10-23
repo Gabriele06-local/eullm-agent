@@ -23,7 +23,7 @@ import logging
 import re
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import func, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 
 from . import accounts, i18n, newsrooms
 from . import models as m
@@ -110,6 +110,42 @@ def save_plan(admin, code: str, fields: dict) -> None:
     with admin.engine.begin() as conn:
         if not conn.execute(update(m.plans).where(m.plans.c.code == code).values(**values)).rowcount:
             raise BillingError(t("piano sconosciuto: {code}", code=code))
+
+
+def create_plan(admin, code: str, name: str) -> str:
+    """A new plan in the catalogue, hidden from the public site until its
+    prices and limits are set and it is made public."""
+    code = (code or "").strip().lower()
+    if not re.fullmatch(r"[a-z0-9-]{1,40}", code):
+        raise BillingError(t("il codice è fatto di lettere minuscole, numeri e trattini (es. pro-plus)"))
+    name = (name or "").strip()[:100]
+    if not name:
+        raise BillingError(t("il piano ha bisogno di un nome"))
+    with admin.engine.begin() as conn:
+        if conn.execute(select(m.plans.c.code).where(m.plans.c.code == code)).first() is not None:
+            raise BillingError(t("il piano {code} esiste già", code=code))
+        last = conn.execute(select(func.max(m.plans.c.sort))).scalar() or 0
+        conn.execute(insert(m.plans).values(code=code, name=name, description="", currency="EUR", trial_days=0,
+                                            public=False, sort=last + 10))
+    return code
+
+
+def delete_plan(admin, code: str) -> str:
+    """Remove a plan nobody is on. The trial plan stays: new sign-ups start on it."""
+    if code == TRIAL_PLAN:
+        raise BillingError(t("il piano di prova serve a chi si iscrive: non si elimina"))
+    with admin.engine.begin() as conn:
+        plan = conn.execute(select(m.plans).where(m.plans.c.code == code)).first()
+        if plan is None:
+            raise LookupError(code)
+        used = conn.execute(select(func.count()).select_from(m.subscriptions).where(
+            (m.subscriptions.c.plan_code == code) | (m.subscriptions.c.desired_plan == code))).scalar()
+        used += conn.execute(select(func.count()).select_from(m.tenants).where(m.tenants.c.plan == code)).scalar()
+        if used:
+            raise BillingError(t("{n} redazioni usano {name}: spostale su un altro piano, oppure toglilo dal sito "
+                                 "pubblico", n=used, name=plan.name))
+        conn.execute(delete(m.plans).where(m.plans.c.code == code))
+    return plan.name
 
 
 def apply_plan(admin, tenant_id: str, plan, core=None) -> str | None:
@@ -202,6 +238,22 @@ def update_customer(admin, customer_id: int, spec: dict, reseller_id: int | None
             conn.execute(update(m.customers).where(m.customers.c.id == customer_id)
                          .values(**data, updated_at=datetime.now(UTC)))
     return customer(admin, customer_id)
+
+
+def delete_customer(admin, customer_id: int) -> str:
+    """Remove a customer that has no newsroom any more (its data are then
+    no longer needed for invoices to come)."""
+    with admin.engine.begin() as conn:
+        row = _customer_row(conn, customer_id)
+        if row is None:
+            raise LookupError(customer_id)
+        rooms = conn.execute(select(func.count()).select_from(m.tenants).where(
+            m.tenants.c.customer_id == customer_id)).scalar()
+        if rooms:
+            raise BillingError(t("{name} ha ancora {n} redazioni: eliminale prima, o collegale a un altro cliente",
+                                 name=row.name, n=rooms))
+        conn.execute(delete(m.customers).where(m.customers.c.id == customer_id))
+    return row.name
 
 
 def customer(admin, customer_id: int, reseller_id: int | None = None) -> dict | None:
@@ -298,6 +350,21 @@ def update_reseller(admin, reseller_id: int, fields: dict) -> None:
             conn.execute(update(m.operator_tokens).where(m.operator_tokens.c.reseller_id == reseller_id,
                                                          m.operator_tokens.c.revoked_at.is_(None))
                          .values(revoked_at=datetime.now(UTC)))
+
+
+def delete_reseller(admin, reseller_id: int) -> str:
+    """Remove a reseller without customers, with its API keys."""
+    with admin.engine.begin() as conn:
+        r = conn.execute(select(m.resellers.c.name).where(m.resellers.c.id == reseller_id)).first()
+        if r is None:
+            raise LookupError(reseller_id)
+        n = conn.execute(select(func.count()).select_from(m.customers).where(
+            m.customers.c.reseller_id == reseller_id)).scalar()
+        if n:
+            raise BillingError(t("{name} ha {n} clienti: disattivalo invece di eliminarlo", name=r.name, n=n))
+        conn.execute(delete(m.operator_tokens).where(m.operator_tokens.c.reseller_id == reseller_id))
+        conn.execute(delete(m.resellers).where(m.resellers.c.id == reseller_id))
+    return r.name
 
 
 def resellers(admin) -> list[dict]:
