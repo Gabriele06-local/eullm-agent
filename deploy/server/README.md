@@ -187,6 +187,14 @@ ends without a payment. Its data stay, and its owner can still sign in to
   reachable from the internet. `POST /api/operator/tenants/{id}/checkout`
   gives the payment address to the public site instead. Without a key,
   plans are paid by bank transfer and recorded from the console.
+- **Cover images** (FLUX by Black Forest Labs, on `api.eu.bfl.ai`): set
+  `EDITOR_IMAGES_API_KEY` in `.env` (and in `compose.yaml`, under
+  `x-editor-env`, the lines `EDITOR_IMAGES_API_KEY: ${EDITOR_IMAGES_API_KEY:-}`
+  and `EDITOR_IMAGES_MODEL: ${EDITOR_IMAGES_MODEL:-flux-2-pro}` for a
+  compose written before 0.17.0). Each draft then gets an image drawn for
+  it, kept in the database and served at `/media/<token>`; WordPress
+  receives it as the featured image, webhooks as `image.url` (an absolute
+  address needs `EDITOR_PUBLIC_URL`). The cost of each image is in Consumi.
 - **What happens by itself** (every hour, in the worker): an email to the
   owner two days before the trial ends; the hold when the trial ends, or
   three days after a paid period ends without a renewal.

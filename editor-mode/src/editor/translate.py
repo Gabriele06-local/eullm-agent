@@ -19,7 +19,7 @@ import json
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from . import drafts, quotas, seo, usage
+from . import drafts, images, quotas, seo, usage
 from . import models as m
 from .core_client import CoreClient, CoreError, extract_json
 from .i18n import N_
@@ -90,21 +90,25 @@ SYSTEM = (
     "same number of sentences in the same order, one translated sentence for each. Write numbers the way the "
     "target language writes them only when it does not change their value. Headings that are questions stay "
     "questions. Choose the key phrase readers of that language would type, and a search title (max 60 "
-    "characters), a meta description (120-155 characters) and a slug in that language. Reply with JSON only: "
+    "characters), a meta description (120-155 characters) and a slug in that language. Translate the image's "
+    "alternative text too, when there is one. Reply with JSON only: "
     '{"title": "...", "subtitle": "...", "headings": ["<one per heading, same order>"], '
     '"sentences": ["<one per sentence, same order>"], '
-    '"seo": {"keyphrase": "...", "title": "...", "description": "...", "slug": "..."}}'
+    '"seo": {"keyphrase": "...", "title": "...", "description": "...", "slug": "..."}, "image_alt": "..."}'
 )
 
 
-def _payload(d, claims: list[dict]) -> tuple[dict, list[str]]:
+def _payload(d, claims: list[dict], image_alt: str | None = None) -> tuple[dict, list[str]]:
     headings = [h for h in dict.fromkeys(c["section"] for c in claims) if h]
     sd = d.seo or {}
-    return {
+    out = {
         "title": d.title, "subtitle": d.subtitle or "", "headings": headings,
         "sentences": [c["text"] for c in claims],
         "seo": {k: sd.get(k) or "" for k in ("keyphrase", "title", "description", "slug")},
-    }, headings
+    }
+    if image_alt:
+        out["image_alt"] = image_alt
+    return out, headings
 
 
 def _parse(value, n_headings: int, n_sentences: int) -> dict:
@@ -124,7 +128,8 @@ def _parse(value, n_headings: int, n_sentences: int) -> dict:
         raise ValueError("a sentence is empty")
     return {"title": title, "subtitle": " ".join(str(value.get("subtitle") or "").split())[:300],
             "headings": [" ".join(str(x or "").split()) or None for x in heads], "sentences": texts,
-            "seo": value.get("seo") if isinstance(value.get("seo"), dict) else {}}
+            "seo": value.get("seo") if isinstance(value.get("seo"), dict) else {},
+            "image_alt": " ".join(str(value.get("image_alt") or "").split())[:300]}
 
 
 def translate(db, tenant_id: str, draft_id: int, language: str, core: CoreClient) -> int:
@@ -144,9 +149,10 @@ def translate(db, tenant_id: str, draft_id: int, language: str, core: CoreClient
         quotas.check(s, "drafts")
         claims = drafts.stored_claims(s, draft_id)
         sources = drafts._sources(s, list({i for c in claims for i in c["sources"]}))
+        image = images.of(s, draft_id)
     if not claims:
         raise LanguageError("the draft has no sentences to translate")
-    payload, headings = _payload(d, claims)
+    payload, headings = _payload(d, claims, image.alt if image else None)
     messages = [{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": f"Target language: {LANGUAGES[language]} ({language})\n"
                                             f"Article (in {d.language or 'its language'}):\n"
@@ -206,4 +212,5 @@ def translate(db, tenant_id: str, draft_id: int, language: str, core: CoreClient
             ).returning(m.draft_claims.c.id)).scalar_one()
             s.execute(insert(m.draft_claim_sources).values(
                 [{"tenant_id": tenant_id, "claim_id": cid, "item_id": i} for i in c.sources]))
+        images.copy(s, tenant_id, draft_id, did, out["image_alt"] or None)  # the original's image, if any
     return did

@@ -44,6 +44,11 @@ class Settings:
     # for every newsroom. On by default on a server; tests build Settings
     # without it.
     base_news: bool = False
+    # Cover images (images.py): Black Forest Labs' FLUX, on its EU endpoint.
+    # No key: drafts have no image.
+    images_api_key: str = ""
+    images_url: str = "https://api.eu.bfl.ai/v1"
+    images_model: str = "flux-2-pro"
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -68,4 +73,7 @@ class Settings:
             public_url=env.get("EDITOR_PUBLIC_URL", "").strip().rstrip("/"),
             mollie_api_key=env.get("EDITOR_MOLLIE_API_KEY", "").strip(),
             base_news=env.get("EDITOR_BASE_NEWS", "1").strip().lower() not in ("0", "false", "no"),
+            images_api_key=env.get("EDITOR_IMAGES_API_KEY", "").strip(),
+            images_url=env.get("EDITOR_IMAGES_URL", cls.images_url).strip().rstrip("/"),
+            images_model=env.get("EDITOR_IMAGES_MODEL", cls.images_model).strip(),
         )

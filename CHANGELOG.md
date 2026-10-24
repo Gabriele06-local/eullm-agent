@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.17.0
+
+### Added
+
+- Editor Mode, cover images. Each draft gets an image drawn for it by FLUX
+  (Black Forest Labs, on its EU endpoint `api.eu.bfl.ai`), never taken
+  from the news it comes from: the model writes the image prompt and the
+  alternative text in the article's language (one short call), FLUX draws
+  it (16:9, about one megapixel) and the image is kept in the database,
+  since the provider deletes it after ten minutes. The draft page shows it
+  with "Rifai l'immagine" and "Togli"; translations take the original's
+  image with their own alternative text. At publication WordPress receives
+  it in the media library, with its alternative text, as the post's
+  featured image; webhooks get `image.url` (served at `/media/<token>`,
+  without login, by an unguessable token). Each image is in Consumi with
+  its cost (Black Forest Labs' credits, one cent each). Set
+  `EDITOR_IMAGES_API_KEY` (and optionally `EDITOR_IMAGES_MODEL`, default
+  `flux-2-pro`; `flux-2-klein-9b` costs less): without a key drafts have
+  no image, as before.
+- Consumi names the steps of translations and images.
+- Editor Mode, delivery of the approved articles, for the customers whose
+  site is not connected to a destination. The draft page has a "Consegna"
+  card: "Scarica il pacchetto" gives a ZIP with the page ready to open
+  (`article.html`, with the search fields, the schema.org data and the
+  image), the text alone to paste into any CMS (`body.html`), Markdown
+  with front matter for Hugo, Jekyll and Astro (`article.md`), the cover
+  image and every field for Google (`meta.json`); "Copia HTML" and "Copia
+  Markdown" copy the text without its title. At each approval the
+  newsroom's email recipients (Impostazioni) get the article in the
+  message with the package attached, a job of its own shown in Attività
+  (needs SMTP). In Sito e profilo › Come ricevi gli articoli the owner
+  creates the site's feed, JSON Feed 1.1 and RSS 2.0, with the last 50
+  approved articles complete with text, image and search fields
+  (`?lang=en` for one language), for Zapier, Make, n8n or a site that
+  imports a feed: its address holds an unguessable token, needs no login,
+  and can be changed. API: `GET /api/drafts/{id}/package` and
+  `POST /api/sites/{id}/feed`.
+
 ## 0.16.0
 
 ### Added

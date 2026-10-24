@@ -15,6 +15,7 @@ collected from growing for ever.
 
 from __future__ import annotations
 
+import base64
 import json
 from datetime import UTC, date, datetime, timedelta
 
@@ -24,8 +25,8 @@ from . import models as m
 
 # Children before parents, the tenant last.
 DELETE_ORDER = [
-    "publications", "publish_targets",
-    "draft_claim_sources", "draft_claims", "drafts",
+    "publications", "publish_targets", "feeds",
+    "draft_images", "draft_claim_sources", "draft_claims", "drafts",
     "proposal_citations", "proposals", "opportunity_scores",
     "feedback", "profile_reviews", "editorial_profiles", "site_analyses", "site_posts",
     "briefings", "recipients",
@@ -41,7 +42,7 @@ DELETE_ORDER = [
 ACCOUNT_TABLES = ("memberships", "sessions", "invites", "subscriptions", "payments")
 
 # Never exported: what would let someone act as the tenant.
-WITHHELD = {"access_tokens": {"token_sha256"}, "secrets": {"ciphertext", "key_id"}}
+WITHHELD = {"access_tokens": {"token_sha256"}, "feeds": {"token"}, "secrets": {"ciphertext", "key_id"}}
 
 DEFAULT_RETENTION_DAYS = 365
 
@@ -49,6 +50,8 @@ DEFAULT_RETENTION_DAYS = 365
 def _plain(value):
     if isinstance(value, (datetime, date)):
         return value.isoformat()
+    if isinstance(value, (bytes, memoryview)):  # the cover images
+        return base64.b64encode(bytes(value)).decode()
     return value
 
 

@@ -7,16 +7,20 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from . import drafts, models as m, picks, profile as prof, proposals, sources, translate as tr
+from . import delivery, drafts, images, models as m, picks, profile as prof, proposals, sources, translate as tr
 from .i18n import N_
 from .progress import step
-from .queue import Handlers
+from .queue import Handlers, enqueue
 from .site import SiteCrawler
 
 
-def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> Handlers:
+def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imager=None, mail=None,
+             public_url: str = "") -> Handlers:
     """http_factory: () -> httpx.Client reading the web through the Core;
-    core: CoreClient for the model; runner: schedule.Runner for the tick.
+    core: CoreClient for the model; runner: schedule.Runner for the tick;
+    imager: images.Imager for the cover images (None: drafts have none);
+    mail: delivery.smtp_sender for the approved articles (None: no SMTP);
+    public_url: the dashboard's address, for the image links in the emails.
     Work that needs a missing piece fails with a message instead of
     pretending to have run."""
 
@@ -69,7 +73,19 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
         with db.tenant(tenant) as s:
             d = s.execute(select(m.drafts.c.title, m.drafts.c.status, m.drafts.c.site_id)
                           .where(m.drafts.c.id == did)).first()
+        if imager is not None:  # the cover image follows, as a job of its own
+            enqueue(db, tenant, "image", f"draft {did}", {"draft_id": did, "site_id": d.site_id})
         return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id}
+
+    def image(tenant: str, subject: str, args: dict) -> dict:
+        images.make(db, tenant, args["draft_id"], need(imager, "image service (EDITOR_IMAGES_API_KEY)"),
+                    core_for(tenant))
+        with db.tenant(tenant) as s:
+            d = s.execute(select(m.drafts.c.title, m.drafts.c.site_id).where(m.drafts.c.id == args["draft_id"])).first()
+            # Translations written before the image take it too.
+            for tid in s.execute(select(m.drafts.c.id).where(m.drafts.c.translation_of == args["draft_id"])).scalars():
+                images.copy(s, tenant, args["draft_id"], tid)
+        return {"draft_id": args["draft_id"], "title": d.title if d else "", "site_id": d.site_id if d else None}
 
     def translation(tenant: str, subject: str, args: dict) -> dict:
         did = tr.translate(db, tenant, args["draft_id"], args["language"], need(core_for(tenant), "model (Core)"))
@@ -77,6 +93,11 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
             d = s.execute(select(m.drafts.c.title, m.drafts.c.status, m.drafts.c.site_id, m.drafts.c.language)
                           .where(m.drafts.c.id == did)).first()
         return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id, "language": d.language}
+
+    def deliver(tenant: str, subject: str, args: dict) -> dict:
+        step(N_("Invio l'articolo approvato per email"))
+        out = delivery.email(db, tenant, args["draft_id"], mail, public_url)
+        return {"draft_id": args["draft_id"], **out}
 
     def propose(tenant: str, subject: str, args: dict) -> dict:
         step(N_("Scelgo i temi migliori e scrivo le proposte"))
@@ -119,4 +140,5 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
 
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
             "proposals": propose, "titles": titles, "archive": archive,
-            "collect": collect, "translate": translation}
+            "collect": collect, "translate": translation, "image": image,
+            "deliver": deliver}

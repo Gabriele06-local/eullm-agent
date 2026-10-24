@@ -50,6 +50,8 @@ def runner() -> Runner:
 
 def handlers():
     """What the worker runs for each kind of queued job."""
-    from . import work
+    from . import delivery, images, work
 
-    return work.handlers(database(), http, core(), Publisher(), runner())
+    st = settings()
+    return work.handlers(database(), http, core(), Publisher(public_url=st.public_url), runner(),
+                         images.from_settings(st), delivery.smtp_sender(st), st.public_url)

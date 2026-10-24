@@ -59,6 +59,11 @@ def populate(db, tenant, monkeypatch):
     archive = repo.archive_of(db, tenant)
     with db.tenant(archive) as s:
         trends.snapshot(s, archive)
+    with db.tenant(tenant) as s:  # a cover image
+        s.execute(text("INSERT INTO editor.draft_images (tenant_id, draft_id, token, prompt, model, mime, content) "
+                       "VALUES (:t, :d, 'tok-x', 'p', 'flux', 'image/jpeg', :c)"), {"t": tenant, "d": did, "c": b"jpg"})
+    from editor import delivery  # the site's feed
+    delivery.feed_token(db, tenant, site_id)
 
 
 @pytest.mark.postgres

@@ -32,6 +32,18 @@ profiles, sources and publications.
 | **Pubblicazioni** | Requests waiting for an owner, history, WordPress / webhook / Telegram targets. |
 | **Impostazioni** | Plan meters, briefing recipients, people of the newsroom (invited by email, with a role), tokens for integrations. |
 
+An approved article reaches the customer's site in four ways, also
+together: a connected destination (WordPress, signed webhook, Telegram
+channel, after an owner's yes); an email to the newsroom's email
+recipients with the article and a ZIP package attached (needs SMTP); the
+package downloaded from the draft (`article.html` ready to open,
+`body.html` to paste into a CMS, `article.md` with front matter for static
+sites, the cover image, `meta.json` with the search fields); and the
+site's feed, `/feeds/<token>.json` (JSON Feed 1.1, the CMS fields under
+`_redazia`) or `.rss`, with the last 50 approved articles, for Zapier,
+Make, n8n or a site that imports feeds. The feed is created and its token
+changed in Sito e profilo; `?lang=en` keeps one language.
+
 People sign in with email and password and may belong to several
 newsrooms. Operator accounts also get the **console** (`/admin`): every
 newsroom with plan, limits and usage; create, suspend, delete, invite
@@ -110,6 +122,7 @@ Two installations, same code:
    | `EDITOR_CORE_DELEGATE` | `true` when the Core token has `delegate: true`: each tenant acts as Core tenant `<token tenant>/<tenant>` |
    | `EDITOR_WORKER_CONCURRENCY` | tenants the worker runs at the same time (default 2, PostgreSQL) |
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
+   | `EDITOR_IMAGES_API_KEY`, `EDITOR_IMAGES_MODEL`, `EDITOR_IMAGES_URL` | cover images drawn by FLUX (Black Forest Labs): the key, the model (default `flux-2-pro`), the endpoint (default the EU one, `https://api.eu.bfl.ai/v1`); no key, no images |
    | `EDITOR_BASE_NEWS` | default on: about 46 general news feeds (world, economy, technology; English, Italian, German, French, Spanish) read for every newsroom in the shared archive, for the news index and the proposals; `0` turns them off |
    | `EDITOR_RETENTION_DAYS` | collected items and finished jobs older than this are deleted at the daily maintenance (default 365, `0` keeps everything); items cited by a proposal or a draft and model usage are kept |
    | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | email (STARTTLS): briefing, invites, password resets |
