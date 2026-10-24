@@ -59,6 +59,7 @@ services:
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_FALLBACK_API_KEY: ${LLM_FALLBACK_API_KEY:-}
       LLM_FALLBACK2_API_KEY: ${LLM_FALLBACK2_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       RUST_LOG: ${RUST_LOG:-eullm_agent=info}
     volumes:
       - ./core.yaml:/etc/eullm-agent/config.yaml:ro

@@ -18,6 +18,9 @@
   set in the console: the cost of an article is estimated also when the
   model is free today.
 
+- Server compose: the Core receives `ANTHROPIC_API_KEY`, for a Claude model
+  (`type: anthropic` in core.yaml).
+
 ### Fixed
 
 - A newsroom with a timezone the system does not know no longer breaks the
