@@ -1,0 +1,20 @@
+{
+ "Fonti che non rispondono per un giorno intero (24 letture di fila) sospese e riprovate ogni giorno; 45 giorni senza notizie o fuori tema: sospese e rivalutate dopo 14 giorni": {
+  "de": "Quellen, die einen ganzen Tag nicht antworten (24 Abrufe in Folge), werden pausiert und täglich erneut versucht; 45 Tage ohne Meldungen oder außerhalb der Themen: pausiert und nach 14 Tagen neu bewertet",
+  "en": "Sources that do not answer for a whole day (24 reads in a row) suspended and tried again every day; 45 days without news or off-topic: suspended and reassessed after 14 days",
+  "es": "Fuentes que no responden durante un día entero (24 lecturas seguidas) suspendidas y reintentadas cada día; 45 días sin noticias o fuera de tema: suspendidas y reevaluadas a los 14 días",
+  "fr": "Sources qui ne répondent pas pendant une journée entière (24 lectures d'affilée) suspendues et réessayées chaque jour ; 45 jours sans actualités ou hors sujet : suspendues et réévaluées après 14 jours"
+ },
+ "\\1 letture fallite di fila: la riprovo da sola ogni giorno.": {
+  "de": "\\1 fehlgeschlagene Abrufe in Folge: wird jeden Tag automatisch erneut versucht.",
+  "en": "\\1 failed fetches in a row: I try it again by myself every day.",
+  "es": "\\1 lecturas fallidas seguidas: la vuelvo a intentar sola cada día.",
+  "fr": "\\1 lectures échouées d'affilée : je la réessaie moi-même chaque jour."
+ },
+ "{n} fonti su {s} non hanno risposto insieme: il guasto è dalla nostra parte (rete del server o Core), non nei siti. Non contano per la sospensione e riprovano al prossimo giro.": {
+  "de": "{n} von {s} Quellen haben gleichzeitig nicht geantwortet: Die Störung liegt bei uns (Netzwerk des Servers oder Core), nicht bei den Websites. Das zählt nicht für die Pausierung; sie werden in der nächsten Runde erneut versucht.",
+  "en": "{n} of {s} sources failed together: the trouble is on our side (the server's network or the Core), not in the sites. It does not count towards suspension; they try again next round.",
+  "es": "{n} de {s} fuentes no respondieron a la vez: el fallo está de nuestro lado (red del servidor o Core), no en los sitios. No cuenta para la suspensión; vuelven a intentarlo en la próxima vuelta.",
+  "fr": "{n} sources sur {s} n'ont pas répondu en même temps : la panne est de notre côté (réseau du serveur ou Core), pas dans les sites. Cela ne compte pas pour la suspension ; elles réessaient au prochain tour."
+ }
+}

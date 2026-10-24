@@ -114,7 +114,7 @@ PROBLEMS = [
     (r"model analysis not run.*", N_("Analisi del modello non eseguita: settore, pubblico e stile restano da determinare.")),
     (r"not enough material.*", N_("Materiale insufficiente: settore, pubblico e stile restano da determinare.")),
     (r"nothing new for more than (\d+) days", N_(r"Nessuna notizia nuova da più di \1 giorni: ritorna in valutazione tra due settimane.")),
-    (r"(\d+) failed fetches in a row", N_(r"\1 letture fallite di fila: ritorna in valutazione tra due settimane.")),
+    (r"(\d+) failed fetches in a row", N_(r"\1 letture fallite di fila: la riprovo da sola ogni giorno.")),
     (r"off topic \(relevance ([\d.]+) on the last (\d+) items\)",
      N_(r"Fuori tema: pertinenza \1 sulle ultime \2 notizie. Ritorna in valutazione tra due settimane.")),
     (r"replaced by GitHub Trending",

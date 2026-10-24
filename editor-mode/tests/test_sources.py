@@ -122,9 +122,10 @@ def test_discovery_and_maintenance(db, tenant):
         sid = s.execute(text("SELECT archive_id FROM editor.sources WHERE origin = 'site_outbound' "
                              "AND shared IS NOT TRUE")).scalar()
     with db.tenant(repo.archive_of(db, tenant)) as s:
-        s.execute(text("UPDATE editor.sources SET consecutive_errors = 5 WHERE id = :i"), {"i": sid})
+        s.execute(text("UPDATE editor.sources SET consecutive_errors = :n WHERE id = :i"),
+                  {"i": sid, "n": repo.ERROR_LIMIT})
     m1 = src.maintain(db, tenant)
-    assert (sid, "5 failed fetches in a row") in m1.suspended
+    assert (sid, f"{repo.ERROR_LIMIT} failed fetches in a row") in m1.suspended
     later = NOW + timedelta(days=20)
     with respx.mock(assert_all_called=False) as router:
         router.get("https://agcom.it/rss").mock(return_value=httpx.Response(200, text=feed(

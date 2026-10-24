@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.17.1
+
+### Fixed
+
+- Editor Mode: good feeds were suspended for everyone after five failed
+  reads, which with hourly reads is five hours: a site down for an
+  afternoon, or the server's own network, stopped TechCrunch, arXiv, Hacker
+  News and the like for two weeks. Now an archive source is suspended after
+  24 failed reads in a row (about a day) and a source suspended for failed
+  reads is tried again every day, not after two weeks. When more than half
+  of the sources fail in the same round the trouble is on this side (the
+  server's network, DNS, the Core), so the failures are shown but do not
+  count towards suspension, and Attività says so. Sources suspended by the
+  old rule go back to work by themselves at the next collection.
+- Editor Mode: "Accetta e scrivi la bozza" answered Internal Server Error,
+  and so did every page with the Attività box while a draft was being
+  written (the box read the proposals' sites the wrong way).
+
 ## 0.17.0
 
 ### Added

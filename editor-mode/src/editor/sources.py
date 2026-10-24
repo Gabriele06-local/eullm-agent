@@ -399,7 +399,7 @@ class MaintenanceReport:
 
 
 def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: datetime | None = None,
-             error_limit: int = 5, stale_days: int = 45, retry_days: int = 14, archive: bool = True) -> MaintenanceReport:
+             error_limit: int = repo.ERROR_LIMIT, stale_days: int = 45, retry_days: int = 14, archive: bool = True) -> MaintenanceReport:
     """Suspend the newsroom's sources that drift off topic and give its
     suspended and candidate sources another look after a while; with
     `archive`, maintain the archive sources it reads too (the scheduler
@@ -469,10 +469,11 @@ def _stored(s, r, limit: int, since: datetime | None = None) -> list[Item]:
 
 
 def maintain_archive(db, archive: str, client: httpx.Client | None = None, now: datetime | None = None,
-                     error_limit: int = 5, stale_days: int = 45, retry_days: int = 14) -> MaintenanceReport:
+                     error_limit: int = repo.ERROR_LIMIT, stale_days: int = 45, retry_days: int = 14) -> MaintenanceReport:
     """Suspend archive sources that fail or go silent, for every newsroom;
     read the suspended ones again after a while and bring back those that
-    answer with news."""
+    answer with news. A source that failed is tried again the next day (a
+    site down for a day is not a dead feed), a silent one after `retry_days`."""
     now = now or datetime.now(UTC)
     rep = MaintenanceReport()
     with db.tenant(archive) as s:
@@ -490,7 +491,8 @@ def maintain_archive(db, archive: str, client: httpx.Client | None = None, now: 
                 repo.set_source_status(s, r.id, "suspended", reason)
                 rep.suspended.append((r.id, reason))
         due = [r for r in rows if r.status == "suspended" and not r.status_set_by
-               and (r.evaluated_at or r.status_changed_at) < now - timedelta(days=retry_days)]
+               and (r.evaluated_at or r.status_changed_at) < now - timedelta(
+                   days=1 if (r.status_reason or "").endswith("failed fetches in a row") else retry_days)]
     if client is None:
         return rep
     for r in due:

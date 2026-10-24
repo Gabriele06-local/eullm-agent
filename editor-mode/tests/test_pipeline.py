@@ -2,6 +2,7 @@
 HTTP responses and a fake Core."""
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import respx
@@ -82,7 +83,7 @@ def test_the_cores_trouble_is_not_the_sources_fault(db, tenant):
     respx.post("http://core.test/v1/fetch").mock(
         return_value=httpx.Response(429, json={"error": "daily fetches limit reached (2000 of 2000)"}))
     archive = repo.archive_of(db, tenant)
-    suspend = ("UPDATE editor.sources SET status = 'suspended', status_reason = '5 failed fetches in a row', "
+    suspend = ("UPDATE editor.sources SET status = 'suspended', status_reason = '24 failed fetches in a row', "
                "last_error = :e WHERE name = :n AND shared")
     with db.tenant(archive) as s:
         s.execute(text(suspend), {"n": "telecom", "e": "ConnectError: Core fetch failed (502): Redirect without Location"})
@@ -104,6 +105,55 @@ def test_the_cores_trouble_is_not_the_sources_fault(db, tenant):
     assert shared["mirror"].status == "suspended"
     with db.tenant(tenant) as s:
         assert s.execute(text("SELECT status FROM editor.sources WHERE name = 'mirror' AND NOT shared")).scalar() == "active"
+
+
+@respx.mock
+def test_a_failure_of_every_site_at_once_is_ours(db, tenant):
+    """The server without network for hours: every source fails, none gets
+    closer to suspension; those an earlier rule suspended after five failed
+    reads (five hours) go back to work."""
+    add_sources(db, tenant)
+    with db.tenant(tenant) as s:
+        repo.upsert_source(s, tenant, kind="rss", name="fourth", url="https://fourth.example/rss")
+    respx.get(url__regex=r".*").mock(side_effect=httpx.ConnectError("Temporary failure in name resolution"))
+    archive = repo.archive_of(db, tenant)
+    with db.tenant(archive) as s:
+        s.execute(text("UPDATE editor.sources SET status = 'suspended', status_reason = '6 failed fetches in a row', "
+                       "last_error = 'HTTPStatusError: 502' WHERE name = 'mirror' AND shared"))
+    with httpx.Client() as c:
+        for _ in range(30):
+            report = collect_tenant(db, tenant, c)
+    assert report.outage and all(r.error for r in report.sources) and len(report.sources) == 4
+    with db.tenant(archive) as s:
+        rows = s.execute(text("SELECT name, status, consecutive_errors FROM editor.sources WHERE shared")).all()
+    assert all(r.status == "active" and r.consecutive_errors == 0 for r in rows), rows
+
+
+@respx.mock
+def test_one_site_down_for_a_day_is_suspended_and_tried_again_the_next_day(db, tenant):
+    from editor import sources as src
+
+    add_sources(db, tenant)
+    with db.tenant(tenant) as s:
+        repo.upsert_source(s, tenant, kind="rss", name="fourth", url="https://fourth.example/rss")
+    respx.get(FEED).mock(return_value=httpx.Response(200, content=fixture("rss.xml")))
+    respx.get(FEED2).mock(return_value=httpx.Response(503))
+    respx.get("https://hn.algolia.com/api/v1/search").mock(return_value=httpx.Response(200, content=fixture("hn.json")))
+    respx.get("https://fourth.example/rss").mock(return_value=httpx.Response(200, content=fixture("rss.xml")))
+    archive = repo.archive_of(db, tenant)
+    with httpx.Client() as c:
+        for _ in range(5):
+            assert not collect_tenant(db, tenant, c).outage
+    assert src.maintain_archive(db, archive).suspended == []  # five hours down is not a dead feed
+    with httpx.Client() as c:
+        for _ in range(repo.ERROR_LIMIT - 5):
+            collect_tenant(db, tenant, c)
+    rep = src.maintain_archive(db, archive)
+    assert [r for _, r in rep.suspended] == [f"{repo.ERROR_LIMIT} failed fetches in a row"]
+    respx.get(FEED2).mock(return_value=httpx.Response(200, content=MIRROR))
+    with httpx.Client() as c:
+        later = src.maintain_archive(db, archive, c, now=datetime.now(UTC) + timedelta(days=1, hours=1))
+    assert len(later.reactivated) == 1
 
 
 @respx.mock

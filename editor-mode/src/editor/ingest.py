@@ -40,6 +40,7 @@ class SourceReport:
 class CollectReport:
     tenant_id: str
     sources: list[SourceReport] = field(default_factory=list)
+    outage: bool = False  # most sources failed together: the trouble is ours
 
     @property
     def new(self) -> int:
@@ -100,6 +101,9 @@ def store_items(s, tenant_id: str, source_id: int, items: list[Item], report: So
             s.execute(insert(m.observations).values(tenant_id=tenant_id, item_id=item_id, metrics=nums))
 
 
+OUTAGE_MIN = 4  # sources read in a round before a mass failure counts as ours
+
+
 def collect_tenant(db: Database, tenant_id: str, client: httpx.Client) -> CollectReport:
     """Read the archive sources this newsroom follows."""
     with db.tenant(tenant_id) as s:
@@ -116,6 +120,7 @@ def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[
     with db.tenant(tenant_id) as s:
         repo.rescue_sources(s)
         sources = repo.active_sources(s, only)
+    failed: list[tuple[int, str, bool]] = []
     for n, src in enumerate(sources, 1):
         step(N_("Lettura delle fonti: {n} di {total} ({name})"), n=n, total=len(sources), name=src.name)
         r = SourceReport(src.id, src.name)
@@ -127,8 +132,7 @@ def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[
         except (httpx.HTTPError, ValueError, KeyError) as e:
             r.error = f"{type(e).__name__}: {e}"[:500]
             log.warning("source %s failed: %s", src.name, r.error)
-            with db.tenant(tenant_id) as s:
-                repo.mark_source(s, src.id, error=r.error, counted=not isinstance(e, CoreTrouble))
+            failed.append((src.id, r.error, not isinstance(e, CoreTrouble)))
             continue
         r.fetched, r.not_modified = len(result.items), result.not_modified
         with db.tenant(tenant_id) as s:
@@ -137,4 +141,15 @@ def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[
             repo.mark_source(
                 s, src.id, etag=result.etag, last_modified=result.last_modified, newest=max(dates, default=None)
             )
+    # When most sources fail in the same round, the trouble is on this side
+    # (the server's network, DNS, the Core's way out), not in every site at
+    # once: the failures are shown but do not bring the sources closer to
+    # suspension.
+    outage = len(sources) >= OUTAGE_MIN and sum(c for _, _, c in failed) * 2 > len(sources)
+    if outage:
+        log.warning("%d of %d sources failed in one round: not counted against them", len(failed), len(sources))
+    report.outage = outage
+    with db.tenant(tenant_id) as s:
+        for source_id, error, counted in failed:
+            repo.mark_source(s, source_id, error=error, counted=counted and not outage)
     return report
