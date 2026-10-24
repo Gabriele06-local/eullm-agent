@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from . import drafts, models as m, picks, profile as prof, proposals, sources
+from . import drafts, models as m, picks, profile as prof, proposals, sources, translate as tr
 from .i18n import N_
 from .progress import step
 from .queue import Handlers
@@ -71,6 +71,13 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
                           .where(m.drafts.c.id == did)).first()
         return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id}
 
+    def translation(tenant: str, subject: str, args: dict) -> dict:
+        did = tr.translate(db, tenant, args["draft_id"], args["language"], need(core_for(tenant), "model (Core)"))
+        with db.tenant(tenant) as s:
+            d = s.execute(select(m.drafts.c.title, m.drafts.c.status, m.drafts.c.site_id, m.drafts.c.language)
+                          .where(m.drafts.c.id == did)).first()
+        return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id, "language": d.language}
+
     def propose(tenant: str, subject: str, args: dict) -> dict:
         step(N_("Scelgo i temi migliori e scrivo le proposte"))
         ids = proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant),
@@ -112,4 +119,4 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
 
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
             "proposals": propose, "titles": titles, "archive": archive,
-            "collect": collect}
+            "collect": collect, "translate": translation}

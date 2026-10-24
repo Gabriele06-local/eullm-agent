@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.16.0
+
+### Added
+
+- Editor Mode, translations. In Sito e profilo › Lingue degli articoli the
+  owner picks the languages a site's articles are translated into
+  (English, Italian, German, French, Spanish, Portuguese, Dutch, Polish),
+  within the plan's languages per site (`max_languages`, its own included;
+  now on the newsroom too, copied from the plan, set in /admin and with
+  `editor tenant-plan --max-languages`). When an article is approved the
+  agent translates it into each of them, one model call per language: a
+  translation is a draft of its own with the same sentences in the same
+  order and the same sources, checked like the original (numbers found in
+  the sources, nothing copied), with its own search title, description and
+  slug, approved and published separately. Each translation counts as one
+  article of the plan. A draft page lists the original and its
+  translations, with "Traduci" for a language still missing. API:
+  `PUT /api/sites/{id}/languages`, `POST /api/drafts/{id}/translations`;
+  approving a draft through the API answers with the languages being
+  translated.
+
 ## 0.15.0
 
 ### Added

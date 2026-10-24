@@ -45,7 +45,8 @@ STATUS_LABELS = {
 }
 CUSTOMER_FIELDS = ("kind", "name", "email", "phone", "vat_number", "tax_code", "address", "postal_code", "city",
                    "province", "country", "sdi_code", "pec")
-PLAN_LIMITS = ("max_sites", "max_active_sources", "max_items_per_day", "max_drafts_month", "max_llm_cost_month")
+PLAN_LIMITS = ("max_sites", "max_active_sources", "max_items_per_day", "max_drafts_month", "max_llm_cost_month",
+               "max_languages")
 
 
 class BillingError(ValueError):

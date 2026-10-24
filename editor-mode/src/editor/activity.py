@@ -15,6 +15,7 @@ from sqlalchemy import or_, select
 from . import models as m
 from .i18n import N_, t
 from .queue import PRIORITY_PERSON
+from .translate import LANGUAGES
 
 KINDS = {
     "analysis": N_("Analisi del sito"),
@@ -23,6 +24,7 @@ KINDS = {
     "proposals": N_("Proposte di articoli"),
     "titles": N_("Titoli per un trend"),
     "draft": N_("Scrittura della bozza"),
+    "translate": N_("Traduzione dell'articolo"),
     "publish": N_("Pubblicazione"),
     "tick": N_("Giro orario automatico"),
 }
@@ -106,6 +108,12 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
         if r.get("status") == "needs_review":
             text += " " + t("Alcuni controlli non sono passati: rileggila con attenzione.")
         return [text], f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Leggi la bozza")
+    if kind == "translate":
+        text = t("Traduzione in {language} pronta: «{title}».", language=LANGUAGES.get(r.get("language"), r.get("language")),
+                 title=r.get("title", ""))
+        if r.get("status") == "needs_review":
+            text += " " + t("Alcuni controlli non sono passati: rileggila con attenzione.")
+        return [text], f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Leggi la traduzione")
     if kind == "publish":
         out = [t("Pubblicata.")]
         if r.get("indexnow") == "sent":

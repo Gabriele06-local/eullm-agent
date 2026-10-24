@@ -73,6 +73,7 @@ tenants = Table(
     Column("max_items_per_day", Integer),
     Column("max_llm_cost_month", Float),
     Column("max_drafts_month", Integer),
+    Column("max_languages", Integer),  # per site, its own included
     Column("timezone", Text),
     Column("briefing_hour", Integer),
     Column("language", Text),
@@ -91,6 +92,7 @@ sites = Table(
     Column("domain", Text, nullable=False),
     Column("name", Text, nullable=False),
     Column("language", Text),
+    Column("languages", JSONB),  # the languages it also publishes in, by translation
 )
 
 sources = Table(
@@ -389,6 +391,7 @@ drafts = Table(
     Column("status", Text),
     Column("flags", JSONB),
     Column("seo", JSONB),
+    Column("translation_of", BigInteger),  # the draft this one translates
     Column("generated_by", Text, nullable=False),
     Column("created_at", _ts()),
     Column("decided_by", Text),

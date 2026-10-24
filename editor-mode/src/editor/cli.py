@@ -97,12 +97,12 @@ def cmd_tenant_plan(a):
     fields = {k: v for k, v in {
         "plan": a.plan, "max_sites": a.max_sites, "max_active_sources": a.max_sources,
         "max_items_per_day": a.max_items_day, "max_llm_cost_month": a.max_cost_month,
-        "max_drafts_month": a.max_drafts_month, "timezone": a.timezone, "briefing_hour": a.briefing_hour,
+        "max_drafts_month": a.max_drafts_month, "max_languages": a.max_languages, "timezone": a.timezone, "briefing_hour": a.briefing_hour,
         "language": a.language, "core_token_env": a.core_token_env,
     }.items() if v is not None}
     if a.unlimited:
         fields |= {"max_sites": None, "max_active_sources": None, "max_items_per_day": None,
-                   "max_llm_cost_month": None, "max_drafts_month": None}
+                   "max_llm_cost_month": None, "max_drafts_month": None, "max_languages": None}
     if not fields:
         sys.exit("nothing to change")
     admin = Database.from_url(settings().admin_database_url)
@@ -348,6 +348,7 @@ def main(argv=None):
     sp.add_argument("tenant"); sp.add_argument("--plan"); sp.add_argument("--max-sites", type=int)
     sp.add_argument("--max-sources", type=int); sp.add_argument("--max-items-day", type=int)
     sp.add_argument("--max-cost-month", type=float); sp.add_argument("--max-drafts-month", type=int)
+    sp.add_argument("--max-languages", type=int, help="languages per site, its own included")
     sp.add_argument("--timezone"); sp.add_argument("--briefing-hour", type=int); sp.add_argument("--language")
     sp.add_argument("--core-token-env"); sp.add_argument("--unlimited", action="store_true")
     sp = add("usage", cmd_usage, "usage of a tenant against its plan"); sp.add_argument("--tenant", required=True)

@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, quotas, repo, ui, vault
+from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, quotas, repo, translate as tr, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -63,6 +63,14 @@ class TargetIn(BaseModel):
 
 class SecretIn(BaseModel):
     value: str = Field(..., min_length=1, max_length=4096)
+
+
+class TranslationIn(BaseModel):
+    language: str = Field(..., min_length=2, max_length=5)
+
+
+class LanguagesIn(BaseModel):
+    languages: list[str] = Field(default_factory=list, max_length=10)
 
 
 class PublicationIn(BaseModel):
@@ -160,6 +168,23 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
 
     def run_draft(tenant: str, proposal_id: int):
         queue.enqueue(db, tenant, "draft", f"proposal {proposal_id}", {"proposal_id": proposal_id})
+
+    def run_translation(tenant: str, draft_id: int, language: str):
+        with db.tenant(tenant) as s:
+            site_id = s.execute(select(m.drafts.c.site_id).where(m.drafts.c.id == draft_id)).scalar()
+        queue.enqueue(db, tenant, "translate", f"draft {draft_id} {language}",
+                      {"draft_id": draft_id, "language": language, "site_id": site_id})
+
+    def run_translations(tenant: str, draft_id: int) -> list[str]:
+        """Translate an approved article into the site's other languages it is
+        not in yet; returns them. Needs a model."""
+        if core is None:
+            return []
+        with db.tenant(tenant) as s:
+            todo = tr.missing(s, draft_id)
+        for language in todo:
+            run_translation(tenant, draft_id, language)
+        return todo
 
     def run_proposals(tenant: str, site_id: int, since: datetime, manual: bool = False):
         queue.enqueue(db, tenant, "proposals", f"site {site_id}",
@@ -320,7 +345,36 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     def draft_decision(draft_id: int, body: DecisionIn, c: auth.Caller = Depends(need("editor"))):
         if not drafts.decide(db, c.tenant_id, draft_id, body.accept, c.name):
             raise HTTPException(409, "draft not found or already decided")
-        return {"status": "approved" if body.accept else "rejected"}
+        out = {"status": "approved" if body.accept else "rejected"}
+        if body.accept and (todo := run_translations(c.tenant_id, draft_id)):
+            out["translating"] = todo
+        return out
+
+    @app.post("/api/drafts/{draft_id}/translations", status_code=202)
+    def request_translation(draft_id: int, body: TranslationIn, c: auth.Caller = Depends(need("editor"))):
+        """Translate a draft into one more language; it counts as one article of the plan."""
+        if core is None:
+            raise HTTPException(409, "no model configured")
+        language = body.language.strip().lower()[:2]
+        with db.tenant(c.tenant_id) as s:
+            d = s.execute(select(m.drafts.c.site_id, m.drafts.c.translation_of)
+                          .where(m.drafts.c.id == draft_id)).first()
+            if d is None:
+                raise HTTPException(404, "draft not found")
+            if language not in tr.site_languages(s, d.site_id):
+                raise HTTPException(409, "add the language to the site first (PUT /api/sites/{id}/languages)")
+        run_translation(c.tenant_id, d.translation_of or draft_id, language)
+        return {"status": "translating", "language": language}
+
+    @app.put("/api/sites/{site_id}/languages")
+    def put_languages(site_id: int, body: LanguagesIn, c: auth.Caller = Depends(need("owner"))):
+        """The languages the site's approved articles are translated into."""
+        try:
+            return {"languages": tr.set_languages(db, c.tenant_id, site_id, body.languages)}
+        except LookupError:
+            raise HTTPException(404, "site not found") from None
+        except tr.LanguageError as e:
+            raise HTTPException(422, str(e)) from None
 
     @app.get("/api/export")
     def get_export(c: auth.Caller = Depends(need("owner"))):
@@ -446,7 +500,8 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                                      public_url=public_url,
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_proposals=run_proposals, run_titles=run_titles, run_collect=run_collect,
-                                     run_publication=run_publication))
+                                     run_publication=run_publication, run_translation=run_translation,
+                                     run_translations=run_translations))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))
 

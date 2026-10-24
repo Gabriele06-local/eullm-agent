@@ -231,6 +231,25 @@
 {% endif %}
 {% endif %}
 
+{% if site %}
+<section class="card pad" aria-labelledby="h-languages-t" id="h-languages">
+  <h2 id="h-languages-t">{{ _('Lingue degli articoli') }}</h2>
+  <p class="hint">{{ _("Gli articoli si scrivono nella lingua del sito ({language}). Scegli in quali altre lingue tradurli: quando approvi un articolo, l'agente scrive una traduzione per ogni lingua, con le stesse fonti e gli stessi controlli, da approvare a parte. Ogni traduzione conta come un articolo del piano.", language=langs.get(own_language, own_language or '?')) }}{% if max_languages %} {{ _('Il tuo piano permette {n} lingue per sito, compresa la sua.', n=max_languages) }}{% endif %}</p>
+  {% if caller.can('owner') %}
+  <form method="post" action="/ui/sites/{{ site.id }}/languages" class="form-grid">
+    <div class="row" style="gap: 14px; flex-wrap: wrap;">
+      {% for code, name in langs.items() if code != own_language %}
+      <label class="row" style="gap: 6px;"><input type="checkbox" name="languages" value="{{ code }}" {% if code in site_langs %}checked{% endif %}>{{ name }}</label>
+      {% endfor %}
+    </div>
+    <div><button class="btn" type="submit">{{ _('Salva le lingue') }}</button></div>
+  </form>
+  {% else %}
+  <p>{{ site_langs|map('extract', langs)|join(', ') or _('Solo la lingua del sito.') }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if site and caller.can('owner') %}
 <section class="card pad" aria-labelledby="h-site-data" id="h-danger">
   <h2 id="h-site-data">{{ _('Dati del sito') }}</h2>
