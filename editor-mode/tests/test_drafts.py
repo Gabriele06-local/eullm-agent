@@ -71,7 +71,14 @@ def test_draft_every_claim_has_a_source(db, tenant):
                            {"heading": "I lavori", "claims": [
                                {"text": "Il cantiere è durato 18 mesi in 3 quartieri.", "sources": [first]},
                                {"text": "Le velocità annunciate arrivano a 10 Gbit/s.", "sources": [first]}]}]})
-    answers = iter([bad, good])
+    # Far under the target length: asked once to expand, and the longer one is kept.
+    extra = [{"text": t, "sources": [first]} for t in (
+        "Il piano di Open Fiber per la città riguarda le aree dove la rete mancava.",
+        "Le famiglie dei quartieri coperti possono chiedere l'attivazione a un operatore.",
+        "Il cantiere ha toccato strade e cortili di tutti i quartieri previsti.")]
+    longer = json.loads(good)
+    longer["sections"].append({"heading": "Il contesto", "claims": extra})
+    answers = iter([bad, good, json.dumps(longer)])
     with respx.mock(assert_all_called=False) as router:
         router.get(url__regex=r"https://(news|rete)\.example/.*").mock(return_value=httpx.Response(200, text=ARTICLE_PAGE, headers={"content-type": "text/html"}))
         llm = router.post("http://core.test/v1/llm/chat").mock(side_effect=lambda r: chat(next(answers)))
@@ -79,6 +86,8 @@ def test_draft_every_claim_has_a_source(db, tenant):
             did = drafts.write_draft(db, tenant, pid, CoreClient("http://core.test", "tok"), client)
         retry_prompt = json.loads(llm.calls[1].request.content)["messages"][-1]["content"]
         assert "claim without sources" in retry_prompt
+        expand_prompt = json.loads(llm.calls[2].request.content)["messages"][-1]["content"]
+        assert f"the target is about {drafts.TARGET_WORDS}" in expand_prompt
     with db.tenant(tenant) as s:
         d = s.execute(select(m.drafts).where(m.drafts.c.id == did)).one()
         claims = s.execute(text("SELECT c.ordinal, count(cs.item_id) FROM editor.draft_claims c "
@@ -88,9 +97,9 @@ def test_draft_every_claim_has_a_source(db, tenant):
         content = s.execute(text("SELECT content FROM editor.source_items WHERE id = :i"), {"i": first}).scalar()
         usage = s.execute(text("SELECT count(*) FROM editor.llm_usage WHERE purpose = 'draft'")).scalar()
     assert d.status == "draft" and d.flags == [] and d.version == 1
-    assert len(claims) == 4 and all(n >= 1 for _, n in claims)
-    assert "## I lavori" in d.body_md and "[^1]" in d.body_md and "## Fonti" in d.body_md and "https://news.example/" in d.body_md
-    assert pstatus == "drafted" and "120.000" in content and usage == 2
+    assert len(claims) == 7 and all(n >= 1 for _, n in claims)
+    assert "## Il contesto" in d.body_md and "## I lavori" in d.body_md and "[^1]" in d.body_md and "## Fonti" in d.body_md and "https://news.example/" in d.body_md
+    assert pstatus == "drafted" and "120.000" in content and usage == 3
 
 
 def test_unfixable_draft_is_kept_for_review(db, tenant):

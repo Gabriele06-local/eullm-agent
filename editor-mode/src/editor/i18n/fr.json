@@ -393,6 +393,7 @@
  "Il link è partito per email a {email}.": "Le lien a été envoyé par e-mail à {email}.",
  "Il link è scaduto o è già stato usato. Chiedine uno nuovo a chi te l'ha mandato.": "Le lien a expiré ou a déjà été utilisé. Demandez-en un nouveau à la personne qui vous l'a envoyé.",
  "Il link è scaduto, è già stato usato o l'amministratore esiste già. Per un link nuovo, sul server: <code>docker compose exec editor-web editor setup-link</code>.": "Le lien a expiré, a déjà été utilisé ou l'administrateur existe déjà. Pour un nouveau lien, sur le serveur : <code>docker compose exec editor-web editor setup-link</code>.",
+ "Il modello arricchisce la bozza: {words} parole su {target}": "Le modèle enrichit le brouillon : {words} mots sur {target}",
  "Il modello corregge la bozza: frasi senza fonte o numeri che le fonti non riportano": "Le modèle corrige le brouillon : phrases sans source ou chiffres que les sources ne donnent pas",
  "Il modello corregge la traduzione": "Le modèle corrige la traduction",
  "Il modello descrive l'immagine": "Le modèle décrit l'image",

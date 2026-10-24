@@ -36,9 +36,18 @@ from .text import item_terms, tokens
 log = logging.getLogger(__name__)
 
 MAX_CONTENT = 20_000
-RELATED = 8  # more items on the same subject, for context
+RELATED = 12  # more items on the same subject, for context
 RELATED_DAYS = 30
-TARGET_WORDS = 700  # when the site's own length is unknown
+TARGET_WORDS = 1000  # when the site's own length is unknown
+# An article is never shorter than this, whatever the site's pages are
+# (their median counts short pages too): below it a piece reads as a note
+# and gives search engines and AI answers little to take.
+MIN_WORDS, MAX_WORDS = 900, 2000
+EXPAND_BELOW = 0.75  # under this share of the target, the model is asked once to expand
+
+
+def target_words(profile: dict) -> int:
+    return max(MIN_WORDS, min((profile.get("style") or {}).get("typical_words") or TARGET_WORDS, MAX_WORDS))
 COPY_RUN = 12  # words in a row taken from a source count as copying
 _NUMBER = re.compile(r"(?<![\w.,])\d+(?:[.,]\d+)*(?:%|‰)?")
 
@@ -205,13 +214,18 @@ def render(article: Article, sources: dict[int, Source], language: str | None, l
 
 SYSTEM = (
     "You write original articles for a website. You receive the editorial profile, the accepted proposal and "
-    "the source items, each with an id and its text. Write the article as claims: every claim is one or two "
+    "the source items, each with an id and its text. Write the article as claims: every claim is one to three "
     "sentences and lists the ids of the items that support it. Use only facts found in the cited items; do not "
     "add facts, numbers or quotes from elsewhere, and do not copy sentences from the sources: write in your own "
     "words, in the site's language and tone. Write a full article, not a summary of one source: what happened, "
     "the context and background the other items give (earlier releases, competitors, the market, regulation), "
     "why it matters to the site's audience and what they can do with it. Use every item that is relevant and "
-    "skip those that are not. Reach the target length when the items allow it; never pad with vague sentences. "
+    "skip those that are not. Reach the target length when the items allow it: give each section several claims "
+    "with the details the items carry (who, what, numbers, dates, how it works, what changes for the reader); "
+    "never pad with vague sentences. Write like a journalist of the site, not like an assistant: vary the length "
+    "of sentences, prefer concrete nouns and verbs to adjectives, no stock openings or closings (\"in today's "
+    "world\", \"it is worth noting\", \"in conclusion\", \"game changer\", their equivalents in any language), no "
+    "em dashes, no triplets of adjectives, no rhetorical questions in the text, no summary of what was just said. "
     "Write it so search engines and AI answer engines pick it up: the first section has no heading and answers "
     "the reader's main question in two or three sentences; the other headings are the questions people search "
     "for, in plain words; then two to four frequently asked questions, each answered with sourced claims like "
@@ -263,7 +277,7 @@ def _sources(s, ids: list[int]) -> dict[int, Source]:
 
 def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] | None = None) -> str:
     style = profile.get("style", {})
-    target = max(400, min(style.get("typical_words") or TARGET_WORDS, 1500))
+    target = target_words(profile)
     lines = [
         f"Site: {profile.get('name')} ({profile.get('domain')}), language: {profile.get('language')}",
         f"Audience: {(profile.get('audience') or {}).get('value') or 'not determined'}",
@@ -299,6 +313,40 @@ def related_items(s, ids: list[int], limit: int = RELATED, now: datetime | None 
         if shared >= 2:
             scored.append((shared, r.id))
     return [i for _, i in sorted(scored, reverse=True)[:limit]]
+
+
+def _words(article) -> int:
+    return sum(len(c.text.split()) for c in article.claims)
+
+
+def expand(db, tenant_id: str, prop, core: CoreClient, messages: list, last, article, sources: dict, target: int):
+    """A draft well under its length is sent back once, with the items it
+    left out: the longer version is kept only if it passes every check."""
+    words = _words(article)
+    if article.flags or words >= target * EXPAND_BELOW:
+        return article
+    from .core_client import extract_json
+
+    used = {i for c in article.claims for i in c.sources}
+    unused = [i for i in sources if i not in used]
+    step(N_("Il modello arricchisce la bozza: {words} parole su {target}"), words=words, target=target)
+    ask = (f"The article has {words} words; the target is about {target}. Expand it to the target with facts from the "
+           f"items: background and context, earlier events, competitors and market, numbers and dates, how it works, "
+           f"what it means for the site's audience and what they can do. "
+           + (f"Items you have not used yet: {', '.join(map(str, unused))}. " if unused else "")
+           + "Keep every rule: only facts from the cited items, every claim with its sources, your own words. "
+           "Reply with the whole JSON again.")
+    with usage.tagged(db, tenant_id, "draft", site_id=prop.site_id, ref=f"proposal:{prop.id}"):
+        res = core.chat(messages + [{"role": "assistant", "content": last.content}, {"role": "user", "content": ask}])
+    try:
+        longer = check(parse_article(extract_json(res.content), set(sources)), sources)
+    except ValueError as e:
+        log.info("expanded draft refused: %s", e)
+        return article
+    if longer.flags or _words(longer) <= words:
+        log.info("expanded draft not kept: %s flags, %d words", len(longer.flags), _words(longer))
+        return article
+    return longer
 
 
 def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: httpx.Client | None = None) -> int:
@@ -343,6 +391,7 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
                      {"role": "user", "content": f"Fix these problems and reply with the whole JSON again: {problem}"}]
     if article is None:
         raise CoreError("the model did not produce a valid article")
+    article = expand(db, tenant_id, prop, core, messages, calls[-1], article, sources, target_words(profile))
 
     sd = seo.parse(article.seo, article.title)
     sd.faq = article.faq
@@ -352,7 +401,7 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
     first = next((c.section for c in article.claims), None)
     lead = " ".join(c.text for c in article.claims if c.section == first)
     style = profile.get("style", {})
-    target = max(400, min(style.get("typical_words") or TARGET_WORDS, 1500))
+    target = target_words(profile)
     sd.checks = seo.checks(sd, article.title, lead, list(dict.fromkeys(c.section for c in article.claims)),
                            sum(len(c.text.split()) for c in article.claims), target,
                            len({i for c in article.claims for i in c.sources}))
@@ -431,7 +480,7 @@ def edit(db, tenant_id: str, draft_id: int, title: str, subtitle: str, texts: di
     article = check(Article(title, " ".join((subtitle or "").split())[:300], claims, sd.faq, {}), sources)
     first = next((c.section for c in claims), None)
     lead = " ".join(c.text for c in claims if c.section == first)
-    target = max(400, min((profile.get("style") or {}).get("typical_words") or TARGET_WORDS, 1500))
+    target = target_words(profile)
     sd.checks = seo.checks(sd, title, lead, list(dict.fromkeys(c.section for c in claims)),
                            sum(len(c.text.split()) for c in claims), target, len({i for c in claims for i in c.sources}))
     status = "needs_review" if article.flags else "draft"
