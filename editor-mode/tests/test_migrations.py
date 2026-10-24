@@ -30,11 +30,12 @@ def test_every_tenant_table_forces_rls(pg_urls):
     assert all(r[1] for r in rows), rows
     # Not forced on the owner, whose SECURITY DEFINER functions read across
     # tenants: editor.active_tenants() (tenants), resolve_token (access_tokens),
-    # claim_job and requeue_stale (jobs). editor_app is still filtered
+    # claim_job and requeue_stale (jobs), image_by_token (draft_images, the
+    # cover images the sites fetch without a login). editor_app is still filtered
     # (see test_tenants_are_isolated). Memberships, sessions and invites are
     # not granted to editor_app at all: the owner connection reads them, as
     # subscriptions and payments.
-    assert sorted(r[0] for r in rows if not r[2]) == ["access_tokens", "invites", "jobs", "memberships", "payments",
+    assert sorted(r[0] for r in rows if not r[2]) == ["access_tokens", "draft_images", "invites", "jobs", "memberships", "payments",
                                                        "sessions", "subscriptions", "tenants"]
 
 

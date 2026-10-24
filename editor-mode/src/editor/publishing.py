@@ -246,8 +246,10 @@ def mark_uncertain_failed(db, tenant_id: str, pub_id: int, by: str) -> bool:
 
 
 class Publisher:
-    def __init__(self, http: httpx.Client | None = None, resolver=None, telegram_api="https://api.telegram.org"):
+    def __init__(self, http: httpx.Client | None = None, resolver=None, telegram_api="https://api.telegram.org",
+                 public_url: str = ""):
         self.http = http or pinned_client(resolver)
+        self.public_url = public_url.rstrip("/")  # where the sites fetch the cover image (/media/<token>)
         self.resolver = resolver
         self.telegram_api = telegram_api
 
@@ -276,10 +278,13 @@ class Publisher:
             cms_url = s.execute(select(m.publications.c.external_url).where(
                 m.publications.c.draft_id == pub.draft_id, m.publications.c.status == "published",
                 m.publications.c.external_url.is_not(None)).limit(1)).scalar()
+            image = s.execute(select(m.draft_images.c.mime, m.draft_images.c.content, m.draft_images.c.alt,
+                                     m.draft_images.c.token)
+                              .where(m.draft_images.c.draft_id == pub.draft_id)).first()
         secret = None
         try:
             secret = resolve_secret(db, target) if target.secret_env else None
-            ext_id, ext_url = getattr(self, f"_{target.kind}")(target, pub, cms_url, secret)
+            ext_id, ext_url = getattr(self, f"_{target.kind}")(target, pub, cms_url, secret, image)
         except (PublishError, httpx.HTTPError, KeyError, ValueError) as e:
             msg = f"{type(e).__name__}: {e}"
             if secret:  # a token can sit in the request URL (Telegram)
@@ -313,14 +318,25 @@ class Publisher:
             return f"failed: HTTP {r.status_code}"
         return "sent"
 
-    def _wordpress(self, target, pub, cms_url, secret):
+    def _wordpress(self, target, pub, cms_url, secret, image=None):
         base = target.config["url"].rstrip("/")
         check_public_url(base, self.resolver)
-        r = self.http.post(
-            f"{base}/wp-json/wp/v2/posts",
-            auth=(target.config["user"], _need(secret, target)),
-            json=self._wordpress_post(target, pub.payload, pub.mode),
-        )
+        auth = (target.config["user"], _need(secret, target))
+        post = self._wordpress_post(target, pub.payload, pub.mode)
+        if image is not None:
+            # The cover image to the media library first, then as the post's featured image.
+            ext = "png" if image.mime == "image/png" else "jpg"
+            slug = pub.payload.get("slug") or "cover"
+            r = self.http.post(f"{base}/wp-json/wp/v2/media", auth=auth, content=image.content, headers={
+                "Content-Type": image.mime, "Content-Disposition": f'attachment; filename="{slug}.{ext}"'})
+            _ensure_no_redirect(r, base, self.resolver)
+            r.raise_for_status()
+            media = r.json()["id"]
+            if image.alt:
+                r = self.http.post(f"{base}/wp-json/wp/v2/media/{media}", auth=auth, json={"alt_text": image.alt})
+                _ensure_no_redirect(r, base, self.resolver)
+            post["featured_media"] = media
+        r = self.http.post(f"{base}/wp-json/wp/v2/posts", auth=auth, json=post)
         _ensure_no_redirect(r, base, self.resolver)
         r.raise_for_status()
         body = r.json()
@@ -341,12 +357,16 @@ class Publisher:
             post["slug"] = payload["slug"]
         return post
 
-    def _webhook(self, target, pub, cms_url, secret):
+    def _webhook(self, target, pub, cms_url, secret, image=None):
         url = target.config["url"]
         check_public_url(url, self.resolver)
+        cover = None
+        if image is not None and self.public_url:
+            cover = {"url": f"{self.public_url}/media/{image.token}", "alt": image.alt, "type": image.mime}
         data = json.dumps({"event": "publication", "mode": pub.mode, "publication_id": pub.id,
                            "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")},
-                           **{k: pub.payload.get(k) for k in ("slug", "seo_title", "meta_description", "keyphrase", "jsonld")}},
+                           **{k: pub.payload.get(k) for k in ("slug", "seo_title", "meta_description", "keyphrase", "jsonld")},
+                           "image": cover},
                           ensure_ascii=False).encode()
         sig = hmac.new(_need(secret, target).encode(), data, hashlib.sha256).hexdigest()
         r = self.http.post(url, content=data, headers={"Content-Type": "application/json", "X-Editor-Signature": f"sha256={sig}"})
@@ -354,7 +374,7 @@ class Publisher:
         r.raise_for_status()
         return None, None
 
-    def _telegram_channel(self, target, pub, cms_url, secret):
+    def _telegram_channel(self, target, pub, cms_url, secret, image=None):
         import html as h
         text = f"<b>{h.escape(pub.payload['title'])}</b>"
         if pub.payload.get("subtitle"):

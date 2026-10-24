@@ -25,6 +25,7 @@ KINDS = {
     "titles": N_("Titoli per un trend"),
     "draft": N_("Scrittura della bozza"),
     "translate": N_("Traduzione dell'articolo"),
+    "image": N_("Immagine di copertina"),
     "publish": N_("Pubblicazione"),
     "tick": N_("Giro orario automatico"),
 }
@@ -114,6 +115,9 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
         if r.get("status") == "needs_review":
             text += " " + t("Alcuni controlli non sono passati: rileggila con attenzione.")
         return [text], f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Leggi la traduzione")
+    if kind == "image":
+        return [t("Immagine pronta per «{title}».", title=r.get("title", ""))], \
+            f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Vedi l'immagine")
     if kind == "publish":
         out = [t("Pubblicata.")]
         if r.get("indexnow") == "sent":

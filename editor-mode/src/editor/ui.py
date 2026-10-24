@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -1094,11 +1094,15 @@ def register(app, ctx) -> None:
             j = m.jobs.c
             translating = {a.get("language") for a in s.execute(select(j.args).where(
                 j.kind == "translate", j.status.in_(("queued", "running")))).scalars() if a and a.get("draft_id") == root}
+            img_busy = any(a and a.get("draft_id") == root for a in s.execute(select(j.args).where(
+                j.kind == "image", j.status.in_(("queued", "running")))).scalars())
+            image = images.of(s, d.id)
             have = {x.language for x in family}
             wanted = [x for x in tr.site_languages(s, d.site_id) if x not in have]
             return render(request, "draft.html.j2", c, s, "drafts", _sites=(sites, site), d=d, sections=sections,
                           original=original, translations=[x for x in family if x.translation_of],
                           wanted=wanted, translating=translating, langs=tr.LANGUAGES, can_translate=ctx.core is not None,
+                          image=image, img_busy=img_busy, images_on=getattr(ctx, "imager", None) is not None,
                           sources=[{"n": refs[i], **items[i]._mapping} for i in order if i in items],
                           flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS,
                           sd=d.seo or {}, editing=bool(edit) and c.can("editor"), claims=claims, flagged_ordinals=flagged, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
@@ -1116,6 +1120,37 @@ def register(app, ctx) -> None:
                                                  "riquadro Attività, ognuna conta come un articolo.",
                                                  languages=", ".join(tr.LANGUAGES[x] for x in todo)))
         return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione."))
+
+    @app.get("/media/{token}")
+    def media(token: str):
+        """A cover image, for the dashboard and for the sites that publish it:
+        the token is the key, no login."""
+        img = images.by_token(db, token.rsplit(".", 1)[0])
+        if img is None:
+            raise HTTPException(404, "image not found")
+        return Response(bytes(img.content), media_type=img.mime,
+                        headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+    @app.post("/ui/drafts/{draft_id}/image")
+    def ui_image(draft_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        if getattr(ctx, "imager", None) is None:
+            return done(f"/drafts/{draft_id}", t("Immagini non configurate: serve EDITOR_IMAGES_API_KEY sul server."))
+        with db.tenant(c.tenant_id) as s:
+            d = s.execute(select(m.drafts.c.translation_of).where(m.drafts.c.id == draft_id)).first()
+        if d is None:
+            raise HTTPException(404, "draft not found")
+        ctx.run_image(c.tenant_id, d.translation_of or draft_id)
+        return done(f"/drafts/{draft_id}", t("Immagine in preparazione: la segui nel riquadro Attività. "
+                                             "Vale anche per le traduzioni."))
+
+    @app.post("/ui/drafts/{draft_id}/image/delete")
+    def ui_image_delete(draft_id: int, c: auth.Caller = Depends(ctx.need("editor"))):
+        with db.tenant(c.tenant_id) as s:
+            root = s.execute(select(m.drafts.c.translation_of).where(m.drafts.c.id == draft_id)).scalar() or draft_id
+            ids = [root] + list(s.execute(select(m.drafts.c.id).where(m.drafts.c.translation_of == root)).scalars())
+        for i in ids:
+            images.remove(db, c.tenant_id, i)
+        return done(f"/drafts/{draft_id}", t("Immagine tolta: l'articolo esce senza copertina."))
 
     @app.post("/ui/drafts/{draft_id}/translate")
     def ui_translate(draft_id: int, language: str = Form(...), c: auth.Caller = Depends(ctx.need("editor"))):

@@ -15,6 +15,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     MetaData,
     REAL,
     Table,
@@ -396,6 +397,23 @@ drafts = Table(
     Column("created_at", _ts()),
     Column("decided_by", Text),
     Column("decided_at", _ts()),
+)
+
+draft_images = Table(
+    "draft_images",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    _tenant(),
+    Column("draft_id", BigInteger, nullable=False),
+    Column("token", Text, nullable=False),
+    Column("prompt", Text, nullable=False),
+    Column("alt", Text),
+    Column("model", Text, nullable=False),
+    Column("mime", Text, nullable=False),
+    Column("width", Integer),
+    Column("height", Integer),
+    Column("content", LargeBinary, nullable=False),
+    Column("created_at", _ts()),
 )
 
 draft_claims = Table(

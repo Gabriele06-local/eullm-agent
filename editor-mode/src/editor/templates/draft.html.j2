@@ -100,6 +100,24 @@
       </ol>
     </section>
 
+    {% if image or images_on %}
+    <section class="card pad" aria-labelledby="h-image">
+      <h2 id="h-image">{{ _('Immagine di copertina') }}</h2>
+      {% if image %}
+      <img src="/media/{{ image.token }}" alt="{{ image.alt }}" width="{{ image.width or 1344 }}" height="{{ image.height or 768 }}" style="width: 100%; height: auto; border-radius: 8px;">
+      <p class="hint">{{ _('Testo alternativo: {alt}', alt=image.alt) }}</p>
+      {% endif %}
+      {% if img_busy %}<span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('Immagine in preparazione') }}</span>
+      {% elif caller.can('editor') %}
+      <div class="row">
+        {% if images_on %}<form class="inline" method="post" action="/ui/drafts/{{ d.id }}/image"><button class="btn sm" type="submit">{{ _('Rifai l\'immagine') if image else _('Crea l\'immagine') }}</button></form>{% endif %}
+        {% if image %}<form class="inline" method="post" action="/ui/drafts/{{ d.id }}/image/delete"><button class="btn sm" type="submit">{{ _('Togli') }}</button></form>{% endif %}
+      </div>
+      {% endif %}
+      <p class="hint">{{ _("Disegnata per l'articolo, mai presa dalle notizie di origine (hanno i diritti dei loro editori). Alla pubblicazione va al sito come immagine in evidenza.") }}</p>
+    </section>
+    {% endif %}
+
     <section class="card pad" aria-labelledby="h-langs">
       <h2 id="h-langs">{{ _('Lingue') }}</h2>
       {% if original %}

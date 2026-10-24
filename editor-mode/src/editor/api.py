@@ -90,12 +90,13 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gateway=None) -> FastAPI:
+def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gateway=None, imager=None) -> FastAPI:
     """admin: the owner connection, for accounts and the operator (by
     default the database's own `admin_url`, else `db`); mail: (to,
     subject, text) -> None, for invites (None: links are shown instead);
     public_url: the address people open, for the links in invites;
-    gateway: online payments (gateway.Mollie), None for bank transfers."""
+    gateway: online payments (gateway.Mollie), None for bank transfers;
+    imager: the cover images service (images.Imager), None for no images."""
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
     if admin is None:
         from .db import Database
@@ -174,6 +175,11 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
             site_id = s.execute(select(m.drafts.c.site_id).where(m.drafts.c.id == draft_id)).scalar()
         queue.enqueue(db, tenant, "translate", f"draft {draft_id} {language}",
                       {"draft_id": draft_id, "language": language, "site_id": site_id})
+
+    def run_image(tenant: str, draft_id: int):
+        with db.tenant(tenant) as s:
+            site_id = s.execute(select(m.drafts.c.site_id).where(m.drafts.c.id == draft_id)).scalar()
+        queue.enqueue(db, tenant, "image", f"draft {draft_id}", {"draft_id": draft_id, "site_id": site_id})
 
     def run_translations(tenant: str, draft_id: int) -> list[str]:
         """Translate an approved article into the site's other languages it is
@@ -501,7 +507,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_proposals=run_proposals, run_titles=run_titles, run_collect=run_collect,
                                      run_publication=run_publication, run_translation=run_translation,
-                                     run_translations=run_translations))
+                                     run_translations=run_translations, run_image=run_image, imager=imager))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))
 
@@ -523,5 +529,7 @@ def default_app() -> FastAPI:
     from . import gateway
 
     st = runtime.settings()
+    from . import images
+
     return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
-                      accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st))
+                      accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st), images.from_settings(st))

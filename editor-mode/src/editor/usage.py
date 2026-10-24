@@ -39,6 +39,8 @@ PURPOSES = {
     "topic_label": N_("Nomi dei temi"),
     "proposal": N_("Proposte di articoli"),
     "draft": N_("Scrittura delle bozze"),
+    "translate": N_("Traduzioni"),
+    "image": N_("Immagini di copertina"),
 }
 
 
