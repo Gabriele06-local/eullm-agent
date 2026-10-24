@@ -1,6 +1,7 @@
 {% extends "base.html.j2" %}
 {% block title %}{{ _('Desk') }}{% endblock %}
 {% block main %}
+{# The Desk is the whole newsroom at a glance: every box is short and opens the page with the rest. #}
 <header class="head">
   <div>
     <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }} · {{ _('tutti i siti') }}</span>
@@ -15,57 +16,12 @@
       <span class="chip">{{ _('Briefing di oggi non ancora pronto') }}</span>
     {% endif %}
     <a class="btn" href="/trends">{{ _('Trend e piano') }}</a>
+    {% if sites and caller.can('editor') %}
+    <form class="inline" method="post" action="/ui/collect"><button class="btn pri" type="submit" title="{{ _('La raccolta legge le fonti di tutti i siti insieme, senza aspettare il giro orario.') }}">{{ _('Raccogli le notizie e il trend') }}</button></form>
+    {% endif %}
   </div>
 </header>
 {% with page="today" %}{% include "_help.html.j2" %}{% endwith %}
-
-{% if sites and caller.can('editor') %}
-<section class="card pad" aria-labelledby="h-now">
-  <div class="card-head" style="padding: 0 0 8px;"><h2 id="h-now">{{ _('Lancia adesso') }}</h2><span class="hint">{{ _('senza aspettare gli orari automatici') }}</span></div>
-  <p class="hint" style="margin: 0 0 10px;">{{ _("La raccolta legge le fonti di tutti i siti insieme. Analisi, fonti e proposte si lanciano sito per sito dalla tabella qui sotto. Ogni lavoro compare in Attività e lo vedi andare avanti passo per passo.") }}</p>
-  <div class="row" style="flex-wrap: wrap; gap: 8px;">
-    <form class="inline" method="post" action="/ui/collect"><button class="btn pri" type="submit">{{ _('Raccogli le notizie e il trend') }}</button></form>
-  </div>
-</section>
-{% endif %}
-
-{% include "_activity.html.j2" %}
-
-{% if desk %}
-<section class="card" aria-labelledby="h-desk" style="margin-bottom: 20px;">
-  <div class="card-head"><h2 id="h-desk">{{ _('Siti') }}</h2><span class="hint">{{ _('{n} siti', n=desk|length) if desk|length != 1 else _('1 sito') }}</span></div>
-  <div class="scroll">
-  <table style="min-width: 980px;">
-    <thead><tr>
-      <th>{{ _('Sito') }}</th><th>{{ _('Profilo') }}</th><th>{{ _('Fonti attive') }}</th><th>{{ _('Notizie 24 ore') }}</th>
-      <th>{{ _('Proposte') }}</th><th>{{ _('Bozze') }}</th><th>{{ _('Prossimo passo') }}</th>{% if caller.can('editor') %}<th>{{ _('Lancia') }}</th>{% endif %}
-    </tr></thead>
-    <tbody>
-    {% for x in desk %}
-    <tr>
-      <td><a href="/switch?site={{ x.id }}&amp;back=/site">{{ x.domain }}</a>{% if x.working %} <span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('al lavoro') }}</span>{% endif %}</td>
-      <td>{% if x.pending %}<a class="chip amber" href="/switch?site={{ x.id }}&amp;back=/site">{{ _('v{version} da approvare', version=x.pending) }}</a>{% elif x.approved %}<span class="chip">{{ _('v{version} in uso', version=x.approved) }}</span>{% else %}<span class="chip">{{ _('in analisi') }}</span>{% endif %}</td>
-      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/sources">{{ x.sources }}</a>{% if x.candidates %}<small>{{ _('{n} da valutare', n=x.candidates) }}</small>{% endif %}</td>
-      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/trends">{{ x.news }}</a></td>
-      <td class="num">{% if x.proposals %}<a class="chip amber" href="#h-decide">{{ x.proposals }}</a>{% else %}0{% endif %}</td>
-      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/drafts">{{ x.drafts }}</a></td>
-      <td>{% if x.next %}<strong style="font-weight: 500;">{{ x.next.title }}</strong>{% if x.next.busy %} <span class="chip teal">{{ _('In attesa') }}</span>{% else %} <span class="chip amber">{{ _('Tocca a te') }}</span>{% endif %}<small>{{ x.next.wait if x.next.busy else x.next.todo }}</small>{% else %}<span class="hint">{{ _('Tutto avviato') }}</span>{% endif %}</td>
-      {% if caller.can('editor') %}
-      <td><div class="row" style="gap: 6px; flex-wrap: wrap;">
-        {% if caller.can('owner') %}
-        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/review?back=/"><button class="btn sm" type="submit">{{ _('Analizza') }}</button></form>
-        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/discover?back=/"><button class="btn sm" type="submit">{{ _('Cerca fonti') }}</button></form>
-        {% endif %}
-        <form class="inline" method="post" action="/ui/proposals/now?back=/&amp;site={{ x.id }}"><button class="btn sm" type="submit">{{ _('Proponi') }}</button></form>
-      </div></td>
-      {% endif %}
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  </div>
-</section>
-{% endif %}
 
 {% if not sites %}
 <section class="card pad">
@@ -80,120 +36,177 @@
 </section>
 {% endif %}
 
-<section class="stats" aria-label="{{ _('Riepilogo') }}">
-  <div class="card stat">
+<section class="kpis" aria-label="{{ _('Riepilogo') }}">
+  <a class="card kpi{% if decisions %} warn{% endif %}" href="#h-decide">
     <span class="label">{{ _('Da decidere') }}</span>
     <span class="value">{{ decisions }}</span>
-    <span class="note {% if decisions %}warn{% endif %}">{{ profile_drafts|length|plural(_('profilo'), _('profili')) }} · {{ proposed|length|plural(_('proposta'), _('proposte')) }} · {{ pending_pubs|length|plural(_('pubblicazione'), _('pubblicazioni')) }}</span>
-  </div>
-  <div class="card stat">
+    <span class="note">{{ profile_drafts|length|plural(_('profilo'), _('profili')) }} · {{ proposed|length|plural(_('proposta'), _('proposte')) }} · {{ pending_pubs|length|plural(_('pubblicazione'), _('pubblicazioni')) }}</span>
+  </a>
+  <a class="card kpi" href="/trends#h-plan">
     <span class="label">{{ _('Proposte nel piano') }}</span>
     <span class="value">{{ proposed|length }}</span>
     <span class="note">{{ _('{n} da stamattina', n=new_today|plural(_('nuova'), _('nuove'))) }}</span>
-  </div>
-  <div class="card stat">
+  </a>
+  <a class="card kpi" href="/drafts">
     <span class="label">{{ _('Bozze pronte') }}</span>
     <span class="value">{{ drafts_ready }}</span>
     <span class="note">{% if needs_review %}{{ _('{n} da rivedere a mano', n=needs_review) }}{% else %}{{ _('tutte con i controlli superati') }}{% endif %}</span>
-  </div>
-  <div class="card stat">
-    {% set cost = (usage.used.get('llm_cost_month') or 0) if usage else 0 %}
-    {% set cap = usage.plan.get('max_llm_cost_month') if usage else none %}
-    <span class="label">{{ _('Costo modello nel mese') }}</span>
-    <span class="value">€ {{ cost|num }}{% if cap %} <small>/ {{ cap|num(0) }}</small>{% endif %}</span>
-    {% if cap %}
-    <div class="bar thin" role="img" aria-label="{{ _('{pct}% della quota mensile', pct=(100 * cost / cap)|round|int) }}"><i style="width: {{ [100, 100 * cost / cap]|min }}%"></i></div>
-    {% else %}<span class="note">{{ _('nessun tetto nel piano') }}</span>{% endif %}
+  </a>
+  <a class="card kpi{% if sites and not news_day %} bad{% endif %}" href="/trends">
+    <span class="label">{{ _('Notizie in 24 ore') }}</span>
+    <span class="value">{{ news_day }}</span>
+    <span class="note">{% if sites and not news_day %}{{ _('nessuna: controlla la raccolta') }}{% else %}{{ _('ultimo giro alle {time}', time=when(last_fetch, 'time')) }}{% endif %}</span>
+  </a>
+  <a class="card kpi" href="/sources">
+    <span class="label">{{ _('Fonti attive') }}</span>
+    <span class="value">{{ usage.used.get('active_sources', 0) if usage else 0 }}</span>
+    <span class="note">{{ _('in tutti i siti') if sites|length > 1 else _('del sito') }}</span>
+  </a>
+  <div class="card kpi">
+    <span class="label">{{ _('Costo modello, 30 giorni') }}</span>
+    <span class="value">{{ cost_month|num(2) }}</span>
+    <span class="note" title="{{ _('ai prezzi di core.yaml') }}">{{ _('{n} chiamate', n=calls_month|tok) }}</span>
   </div>
 </section>
 
-<div class="cols">
-  <section class="card col-wide" aria-labelledby="h-decide" style="gap: 0;">
-    <div class="card-head"><h2 id="h-decide">{{ _('Da decidere') }}</h2><span class="hint">{{ _('Nulla esce senza il tuo sì') }}</span></div>
-
+<div class="board">
+  <section class="card" aria-labelledby="h-decide">
+    <div class="card-head"><h2 id="h-decide">{{ _('Da decidere') }}</h2><span class="hint">{{ _('Nulla esce senza il tuo sì') }}{% if proposed|length > 6 %} · <a href="/trends#h-plan">{{ _('Tutte ({n})', n=proposed|length) }}</a>{% endif %}</span></div>
     {% for p in profile_drafts %}
-    <div class="item">
+    <div class="item line">
       <span class="chip amber">{{ _('Profilo') }}</span>
-      <div class="what">
-        <strong>{{ p.domain }}</strong>
-        <span>{{ _('v{version} da approvare', version=p.version) }} · {% if lines.get(p.site_id) %}{{ _('in uso la v{version}', version=lines.get(p.site_id)) }}{% if p.changes %}, {{ p.changes|length|plural(_('cambiamento'), _('cambiamenti')) }}{% endif %}{% else %}{{ _('nessuna versione in uso') }}{% endif %}</span>
-      </div>
-      <a class="btn pri" href="/switch?site={{ p.site_id }}&amp;back=/site">{{ _('Vedi il profilo') }}</a>
+      <div class="what"><strong>{{ p.domain }}</strong><span class="one">{{ _('v{version} da approvare', version=p.version) }}{% if p.changes %} · {{ p.changes|length|plural(_('cambiamento'), _('cambiamenti')) }}{% endif %}</span></div>
+      <a class="btn sm pri" href="/switch?site={{ p.site_id }}&amp;back=/site">{{ _('Vedi il profilo') }}</a>
     </div>
     {% endfor %}
-
     {% for p in pending_pubs %}
-    <div class="item">
+    <div class="item line">
       <span class="chip blue">{{ _('Pubblicazione') }}</span>
-      <div class="what">
-        <strong>{{ p.title }}</strong>
-        <span>{{ _('Verso {target}', target=p.target) }} · {{ _('come bozza') if p.mode == 'draft' else _('pubblicata subito') }} · {{ _('chiesta da {name}', name=p.requested_by) }}</span>
-      </div>
-      <div class="row">
-        <a class="btn" href="/drafts/{{ p.draft_id }}">{{ _('Leggi') }}</a>
-        {% if caller.can('owner') %}
-        <form class="inline" method="post" action="/ui/publications/{{ p.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn pri" type="submit">{{ _('Approva') }}</button></form>
+      <div class="what"><strong>{{ p.title }}</strong><span class="one">{{ _('Verso {target}', target=p.target) }} · {{ _('come bozza') if p.mode == 'draft' else _('pubblicata subito') }}</span></div>
+      <a class="btn sm" href="/drafts/{{ p.draft_id }}">{{ _('Leggi') }}</a>
+      {% if caller.can('owner') %}
+      <form class="inline" method="post" action="/ui/publications/{{ p.id }}/decision"><input type="hidden" name="accept" value="1"><button class="btn sm pri" type="submit">{{ _('Approva') }}</button></form>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% for p in proposed[:6] %}{% set d = explained.get(p.id) %}
+    <details class="item line prop-line">
+      <summary>
+        <span class="chip">{{ p.domain }}</span>
+        <span class="what"><strong>{{ d.title if d else p.title }}</strong><span class="one">{% if d and d.single %}{{ _('notizia singola') }}{% elif d %}{{ d.format }}{% endif %}{% if d and d.news %} · {{ d.news[0].source }}{% endif %}</span></span>
+        <span class="hint more">{{ _('dettagli') }}</span>
+      </summary>
+      <div class="detail">{% include "_proposal.html.j2" %}
+        {% if caller.can('editor') %}
+        <div class="row" style="margin-top: 10px;">
+          <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/"><button class="btn sm" type="submit">{{ _('Scarta') }}</button></form>
+          <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn sm pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
+        </div>
         {% endif %}
       </div>
-    </div>
+    </details>
     {% endfor %}
-
-    {% for p in proposed %}
-    <div class="item">
-      <span class="chip">{{ _('Proposta') }}{% if sites|length > 1 %} · {{ p.domain }}{% endif %}</span>
-      <div class="what">
-        {% include "_proposal.html.j2" %}
-      </div>
-      {% if caller.can('editor') %}
-      <div class="row">
-        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/"><button class="btn" type="submit">{{ _('Scarta') }}</button></form>
-        <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/"><button class="btn pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-
-    {% if not decisions %}<p class="empty">{{ _('Niente da decidere adesso.') }}</p>{% endif %}
+    {% if not decisions %}<p class="empty">{{ _('Niente da decidere adesso.') }}{% if sites and caller.can('editor') %} {{ _('Usa "Proponi" nella tabella dei siti per avere subito nuove proposte.') }}{% endif %}</p>{% endif %}
   </section>
 
-  <div class="col-side">
-    <section class="card pad" aria-labelledby="h-opp">
-      <div class="row" style="justify-content: space-between;"><h2 id="h-opp">{{ _('Opportunità del giorno') }}</h2><a href="/trends" style="font-size: 14px;">{{ _('Tutti i trend') }}</a></div>
-      <div class="legend"><span><i></i>{{ _('Opportunità per il sito') }}</span><span><i class="hype"></i>{{ _('Hype nel settore') }}</span></div>
-      {% for x in tops %}{% set t = x.row %}
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span style="font-size: 14px; font-weight: 500;">{{ t.label }} <span class="hint">· {% if sites|length > 1 %}{{ x.domain }} · {% endif %}{{ _('{items} notizie da {sources} fonti', items=t.items, sources=t.sources) }}</span></span>
-        <div class="pair">
-          <div class="bar"><i style="width: {{ t.opportunity|round|int }}%"></i></div><span class="num">{{ t.opportunity|s100 }}</span>
-          <div class="bar"><i class="hype" style="width: {{ (t.hype or 0)|round|int }}%"></i></div><span class="num" style="color: var(--muted);">{{ t.hype|s100 }}</span>
-        </div>
-      </div>
-      {% else %}
-      <p class="hint">{{ _('Ancora nessun tema da proporre: servono due fonti diverse sullo stesso tema, o una notizia forte di una fonte affidabile.') }}</p>
-      {% endfor %}
-      <p class="hint">{{ _("Molto hype non vuol dire opportunità: conta quanto il tema è vicino al sito e quanto non l'hai già coperto.") }}</p>
-    </section>
+  <div class="stack">
+    {% include "_activity.html.j2" %}
 
-    <section class="card pad" aria-labelledby="h-raccolta">
-      <h2 id="h-raccolta">{{ _('Raccolta') }}</h2>
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
-        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('active_sources', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">{{ _('fonti attive in tutti i siti') if sites|length > 1 else _('fonti attive') }}</div></div>
-        <div><div class="num" style="font-size: 22px;">{{ usage.used.get('items_today', 0) if usage else 0 }}</div><div class="hint" style="font-size: 12px;">{{ _('notizie oggi') }}</div></div>
-        <div><div class="num" style="font-size: 22px;">{{ when(last_fetch, 'time') }}</div><div class="hint" style="font-size: 12px;">{{ _('ultimo giro') }}</div></div>
+    <section class="card" aria-labelledby="h-raccolta">
+      <div class="card-head"><h2 id="h-raccolta">{{ _('Raccolta') }}</h2><span class="hint">{{ _('ogni ora') }} · <a href="/sources">{{ _('Fonti') }}</a></span></div>
+      <div class="pad" style="gap: 8px;">
+        <div class="trio">
+          <div><span class="num">{{ usage.used.get('active_sources', 0) if usage else 0 }}</span><small>{{ _('fonti attive') }}</small></div>
+          <div><span class="num">{{ usage.used.get('items_today', 0) if usage else 0 }}</span><small>{{ _('notizie oggi') }}</small></div>
+          <div><span class="num">{{ when(last_fetch, 'time') }}</span><small>{{ _('ultimo giro') }}</small></div>
+        </div>
+        {% if core_trouble %}
+        <span class="note warn">{{ _("L'ultimo giro non ha letto {n} fonti perché la redazione ha finito le letture del giorno: riparte domani, oppure alza il limite delle letture.", n=core_trouble.n) if core_trouble.limit else _("L'ultimo giro non ha letto {n} fonti perché il motore dell'agente non rispondeva: riprova da solo al prossimo giro.", n=core_trouble.n) }}</span>
+        {% endif %}
+        {% if stopped %}
+        <details class="manage" style="margin: 0;">
+          <summary>{{ _('{n} fonti sospese da sole negli ultimi 7 giorni', n=stopped|length) }}</summary>
+          {% for x in stopped %}
+          <div class="hint"><a href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">{{ x.name }}</a>{% if sites|length > 1 %} · {{ x.domain }}{% endif %}: {{ x.status_reason|problem if x.status_reason else _('nessuna notizia recente') }}</div>
+          {% endfor %}
+        </details>
+        {% endif %}
       </div>
-      <span class="hint">{{ _('Le fonti si rivalutano ogni lunedì; la raccolta gira ogni ora.') }}</span>
-      {% if core_trouble %}
-      <span class="note warn">{{ _("L'ultimo giro non ha letto {n} fonti perché la redazione ha finito le letture del giorno: riparte domani, oppure alza il limite delle letture.", n=core_trouble.n) if core_trouble.limit else _("L'ultimo giro non ha letto {n} fonti perché il motore dell'agente non rispondeva: riprova da solo al prossimo giro.", n=core_trouble.n) }} {{ _('Non è colpa delle fonti, che restano attive.') }}</span>
-      {% endif %}
-      {% if stopped %}
-      <div style="margin-top: 10px;">
-        <span class="hint">{{ _('Sospese da sole negli ultimi 7 giorni (non devi fare niente, tornano in valutazione tra due settimane):') }}</span>
-        {% for x in stopped %}
-        <div class="hint" style="margin-top: 4px;"><a href="/switch?site={{ x.site_id }}&amp;back={{ '/sources?status=suspended'|urlencode }}">{{ x.name }}</a>{% if sites|length > 1 %} · {{ x.domain }}{% endif %}: {{ x.status_reason|problem if x.status_reason else _('nessuna notizia recente') }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
     </section>
   </div>
 </div>
+
+{% if desk %}
+<section class="card" aria-labelledby="h-desk">
+  <div class="card-head"><h2 id="h-desk">{{ _('Siti') }}</h2><span class="hint">{{ _('{n} siti', n=desk|length) if desk|length != 1 else _('1 sito') }}{% if caller.can('owner') %} · <a href="/settings#h-sites">{{ _('+ Aggiungi un sito') }}</a>{% endif %}</span></div>
+  <div class="scroll">
+  <table class="sites">
+    <thead><tr>
+      <th>{{ _('Sito') }}</th><th>{{ _('Profilo') }}</th><th>{{ _('Fonti attive') }}</th><th>{{ _('Notizie 24 ore') }}</th>
+      <th>{{ _('Proposte') }}</th><th>{{ _('Bozze') }}</th><th>{{ _('Costo 30 giorni') }}</th><th>{{ _('Prossimo passo') }}</th>{% if caller.can('editor') %}<th>{{ _('Lancia') }}</th>{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for x in desk %}
+    <tr>
+      <td><a href="/switch?site={{ x.id }}&amp;back=/site">{{ x.domain }}</a>{% if x.working %} <span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('al lavoro') }}</span>{% endif %}</td>
+      <td>{% if x.pending %}<a class="chip amber" href="/switch?site={{ x.id }}&amp;back=/site">{{ _('v{version} da approvare', version=x.pending) }}</a>{% elif x.approved %}<span class="chip">{{ _('v{version} in uso', version=x.approved) }}</span>{% else %}<span class="chip">{{ _('in analisi') }}</span>{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/sources">{{ x.sources }}</a>{% if x.candidates %}<small>{{ _('{n} da valutare', n=x.candidates) }}</small>{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/trends">{{ x.news }}</a></td>
+      <td class="num">{% if x.proposals %}<a class="chip amber" href="#h-decide">{{ x.proposals }}</a>{% else %}0{% endif %}</td>
+      <td class="num"><a href="/switch?site={{ x.id }}&amp;back=/drafts">{{ x.drafts }}</a></td>
+      <td class="num">{{ x.cost|num(2) }}<small>{{ _('{n} chiamate', n=x.calls|tok) }}</small></td>
+      <td>{% if x.next %}<strong style="font-weight: 500;">{{ x.next.title }}</strong>{% if x.next.busy %} <span class="chip teal">{{ _('In attesa') }}</span>{% else %} <span class="chip amber">{{ _('Tocca a te') }}</span>{% endif %}<small>{{ x.next.wait if x.next.busy else x.next.todo }}</small>{% else %}<span class="hint">{{ _('Tutto avviato') }}</span>{% endif %}</td>
+      {% if caller.can('editor') %}
+      <td><div class="row" style="gap: 6px; flex-wrap: nowrap;">
+        {% if caller.can('owner') %}
+        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/review?back=/"><button class="btn sm" type="submit">{{ _('Analizza') }}</button></form>
+        <form class="inline" method="post" action="/ui/sites/{{ x.id }}/discover?back=/"><button class="btn sm" type="submit">{{ _('Cerca fonti') }}</button></form>
+        {% endif %}
+        <form class="inline" method="post" action="/ui/proposals/now?back=/&amp;site={{ x.id }}"><button class="btn sm" type="submit">{{ _('Proponi') }}</button></form>
+      </div></td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<div class="trio-cards">
+  <section class="card" aria-labelledby="h-busy">
+    <div class="card-head"><h2 id="h-busy">{{ _('Siti più attivi') }}</h2><span class="hint">{{ _('notizie 24 ore · proposte e bozze 7 giorni') }}</span></div>
+    <div class="pad rank">
+      {% set top = (busiest|map(attribute='news')|max) if busiest else 0 %}
+      {% for x in busiest %}
+      <div class="rank-row">
+        <a href="/switch?site={{ x.id }}&amp;back=/trends">{{ x.domain }}</a>
+        <div class="bar thin"><i style="width: {{ (100 * x.news / top)|round|int if top else 0 }}%"></i></div>
+        <span class="num">{{ x.news }} · {{ x.proposals_week }} · {{ x.drafts_week }}</span>
+      </div>
+      {% else %}<p class="hint">{{ _('Ancora nessuna attività: lancia la raccolta.') }}</p>{% endfor %}
+    </div>
+  </section>
+  <section class="card" aria-labelledby="h-cost">
+    <div class="card-head"><h2 id="h-cost">{{ _('Siti più costosi') }}</h2><span class="hint">{{ _('30 giorni, ai prezzi di core.yaml') }}{% if caller.operator %} · <a href="/admin/usage">{{ _('Consumi') }}</a>{% endif %}</span></div>
+    <div class="pad rank">
+      {% set top = (costly|map(attribute='cost')|max) if costly else 0 %}
+      {% for x in costly %}
+      <div class="rank-row">
+        <a href="/switch?site={{ x.id }}&amp;back=/site">{{ x.domain }}</a>
+        <div class="bar thin"><i class="hype" style="width: {{ (100 * x.cost / top)|round|int if top else 0 }}%"></i></div>
+        <span class="num" title="{{ _('{n} token', n=x.tokens|tok) }}">{{ x.cost|num(3) }} · {{ _('{n} chiamate', n=x.calls|tok) }}</span>
+      </div>
+      {% else %}<p class="hint">{{ _('Nessuna chiamata al modello negli ultimi 30 giorni.') }}</p>{% endfor %}
+    </div>
+  </section>
+  <section class="card" aria-labelledby="h-latest">
+    <div class="card-head"><h2 id="h-latest">{{ _('Ultime notizie') }}</h2><a class="hint" href="/trends">{{ _('Tutti i trend') }}</a></div>
+    <div class="pad" style="gap: 8px;">
+      {% for n in latest %}
+      <div class="news-row"><a href="{{ n.url }}" target="_blank" rel="noopener">{{ n.title }}</a><small>{{ n.source }} · {{ when(n.published_at or n.fetched_at) }}</small></div>
+      {% else %}<p class="hint">{{ _('Nessuna notizia ancora: lancia la raccolta.') }}</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endif %}
 {% endblock %}

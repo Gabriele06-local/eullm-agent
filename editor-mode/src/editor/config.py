@@ -40,6 +40,10 @@ class Settings:
     # Online payments (Mollie); empty: plans are paid by bank transfer and
     # recorded by the operator.
     mollie_api_key: str = ""
+    # The news base (news_base.py): general sources from around the world read
+    # for every newsroom. On by default on a server; tests build Settings
+    # without it.
+    base_news: bool = False
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -63,4 +67,5 @@ class Settings:
             telegram_token=env.get("EDITOR_TELEGRAM_TOKEN", ""),
             public_url=env.get("EDITOR_PUBLIC_URL", "").strip().rstrip("/"),
             mollie_api_key=env.get("EDITOR_MOLLIE_API_KEY", "").strip(),
+            base_news=env.get("EDITOR_BASE_NEWS", "1").strip().lower() not in ("0", "false", "no"),
         )

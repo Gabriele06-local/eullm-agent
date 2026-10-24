@@ -2,20 +2,23 @@
 the archive keeps the topics that rise most with their latest news: the
 day's snapshots catalogue what the sector talked about, and the newest is
 the trend of the moment each newsroom is offered, with titles to choose
-from."""
+from. Each snapshot is also the news index (the Indice page): the ranking
+of the moment by section, each topic with its summary and news."""
 
 from __future__ import annotations
 
+from collections import Counter
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, insert, select
 
 from . import models as m
+from . import news_base
 
 # 07:00 first, then every three hours.
 HOURS = (7, 10, 13, 16, 19, 22, 1, 4)
-TOPICS = 20
+TOPICS = 40
 WINDOW = timedelta(hours=48)
 
 
@@ -57,8 +60,13 @@ def snapshot(s, archive: str, now: datetime | None = None) -> int:
             .where(m.topic_items.c.topic_id == r.id, si.c.duplicate_of.is_(None))
             .order_by(si.c.published_at.desc().nulls_last(), si.c.id.desc())
         ).all()
+        # The index groups the topics by section, from the news base's sources
+        # that tell them (world, economy, technology); the others have none.
+        where = news_base.sections(s, {n.source_id for n in news})
+        counted = Counter(where[n.source_id] for n in news if n.source_id in where)
         out.append({"topic_id": r.id, "label": r.label, "summary": r.summary or "", "hype": round(r.score, 1),
                     "items": len(news), "sources": len({n.source_id for n in news}),
+                    "section": counted.most_common(1)[0][0] if counted else None,
                     "news": [{"id": n.id, "title": n.title, "url": n.url} for n in news[:3]]})
     return s.execute(insert(m.trend_snapshots).values(tenant_id=archive, taken_at=now, topics=out)
                      .returning(m.trend_snapshots.c.id)).scalar_one()

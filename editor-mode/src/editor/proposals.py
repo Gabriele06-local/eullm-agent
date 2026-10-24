@@ -163,12 +163,29 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
             pid = s.execute(insert(m.proposals).values(
                 tenant_id=tenant_id, site_id=site_id, topic_id=o.topic_id, profile_id=prof.id,
                 opportunity=o.score, title=value["title"], angle=value["angle"], why_now=value["why_now"],
-                format=value["format"], generated_by=by,
+                format=value["format"], generated_by=by, basis={"kind": "topic"},
             ).returning(m.proposals.c.id)).scalar_one()
             s.execute(insert(m.proposal_citations).values(
                 [{"tenant_id": tenant_id, "proposal_id": pid, "item_id": i} for i in value["citations"]]))
             created.append(pid)
     return created
+
+
+def plan(db, tenant_id: str, site_id: int, core: CoreClient | None = None, limit: int | None = None,
+         now: datetime | None = None) -> list[int]:
+    """The day's proposals: first the topics told by several sources, then,
+    for what is left of the number, the best single news for the site
+    (picks.fill). Never empty while news comes in."""
+    from . import opportunity, picks
+
+    with db.tenant(tenant_id) as s:
+        body = s.execute(select(m.editorial_profiles.c.body).where(
+            m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+    if body is None:
+        return []
+    limit = limit or body.get("settings", {}).get("proposals_per_day", 3)
+    ids = propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=limit)
+    return ids + picks.fill(db, tenant_id, site_id, limit - len(ids), core, now=now)
 
 
 TITLES_SYSTEM = (
@@ -266,8 +283,6 @@ def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient |
            now: datetime | None = None, manual: bool = False) -> list[int]:
     """Proposals now, on request, up to the day's number still left; asked
     for by a person (`manual`), a full day's number whatever was made."""
-    from . import opportunity
-
     with db.tenant(tenant_id) as s:
         body = s.execute(select(m.editorial_profiles.c.body).where(
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
@@ -277,4 +292,4 @@ def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient |
         left = per_day if manual else per_day - made_today(s, site_id, since)
     if left <= 0:
         return []
-    return propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=left)
+    return plan(db, tenant_id, site_id, core, limit=left, now=now)

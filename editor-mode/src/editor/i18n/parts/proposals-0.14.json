@@ -1,0 +1,14 @@
+{
+ "Le proposte arrivano ogni mattina, oppure subito con \"Proponi adesso\": prima i temi raccontati da più fonti, poi le notizie singole più adatte al sito tra quelle delle ultime 72 ore, scelte dal modello. Sempre il numero al giorno impostato nel profilo, se in 72 ore è arrivata almeno una notizia.": {
+  "en": "Proposals arrive every morning, or at once with \"Propose now\": first the topics told by several sources, then the single news items of the last 72 hours that best suit the site, chosen by the model. Always the daily number set in the profile, as long as at least one news item came in during the last 72 hours.",
+  "de": "Vorschläge kommen jeden Morgen oder sofort mit „Jetzt vorschlagen“: zuerst Themen, über die mehrere Quellen berichten, dann die am besten zur Website passenden Einzelmeldungen der letzten 72 Stunden, vom Modell ausgewählt. Immer die im Profil festgelegte Tageszahl, sofern in 72 Stunden mindestens eine Meldung eingegangen ist.",
+  "fr": "Les propositions arrivent chaque matin, ou tout de suite avec « Proposer maintenant » : d'abord les thèmes racontés par plusieurs sources, puis les actualités isolées des dernières 72 heures les plus adaptées au site, choisies par le modèle. Toujours le nombre quotidien défini dans le profil, dès qu'au moins une actualité est arrivée en 72 heures.",
+  "es": "Las propuestas llegan cada mañana, o al momento con «Proponer ahora»: primero los temas que cuentan varias fuentes, luego las noticias únicas de las últimas 72 horas que mejor encajan con el sitio, elegidas por el modelo. Siempre el número diario fijado en el perfil, siempre que en 72 horas haya llegado al menos una noticia."
+ },
+ "Prima i temi con due notizie da due fonti diverse (opportunità almeno 35/100), poi le notizie singole delle ultime 72 ore più adatte al sito, scelte dal modello": {
+  "en": "First the topics with two news items from two different sources (opportunity at least 35/100), then the single news items of the last 72 hours that best suit the site, chosen by the model",
+  "de": "Zuerst Themen mit zwei Meldungen aus zwei verschiedenen Quellen (Chance mindestens 35/100), dann die am besten passenden Einzelmeldungen der letzten 72 Stunden, vom Modell ausgewählt",
+  "fr": "D'abord les thèmes avec deux actualités de deux sources différentes (opportunité d'au moins 35/100), puis les actualités isolées des dernières 72 heures les plus adaptées au site, choisies par le modèle",
+  "es": "Primero los temas con dos noticias de dos fuentes distintas (oportunidad de al menos 35/100), luego las noticias únicas de las últimas 72 horas que mejor encajan con el sitio, elegidas por el modelo"
+ }
+}

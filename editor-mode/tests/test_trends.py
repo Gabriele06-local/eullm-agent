@@ -93,10 +93,8 @@ def test_proposals_asked_by_a_person_are_not_held_back_by_the_day(db, tenant):
 
     site_id = setup_site(db, tenant)
     since = datetime.now(UTC) - timedelta(hours=12)
-    assert len(props.top_up(db, tenant, site_id, since)) == 1
-    with db.tenant(tenant) as s:
-        s.execute(text("UPDATE editor.sources SET score = 0.8"))
-    assert len(props.top_up(db, tenant, site_id, since)) == 1
+    # The Bari story, then the best single news for the day's number.
+    assert len(props.top_up(db, tenant, site_id, since)) == 2
     assert props.top_up(db, tenant, site_id, since) == []  # the day's 2 are made
     # A person asks again: a full day's number, from the topics not yet proposed.
     with db.tenant(tenant) as s:
@@ -128,7 +126,7 @@ def test_the_home_page_launches_every_step(db, tenant):
     setup_site(db, tenant)
     c = logged_in(db, tenant, "owner")
     page = c.get("/").text
-    assert "Lancia adesso" in page and "/ui/collect" in page and "/ui/proposals/now?back=/" in page
+    assert "Raccogli le notizie e il trend" in page and "/ui/collect" in page and "/ui/proposals/now?back=/" in page
     assert c.post("/ui/collect", follow_redirects=False).status_code == 303
     assert c.post("/ui/proposals/now?back=/", follow_redirects=False).headers["location"] == "/"
     with db.tenant(tenant) as s:

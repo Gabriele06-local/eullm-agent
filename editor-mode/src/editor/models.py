@@ -282,6 +282,7 @@ proposals = Table(
     Column("status", Text),
     Column("decided_by", Text),
     Column("created_at", _ts()),
+    Column("basis", JSONB),
 )
 
 proposal_citations = Table(

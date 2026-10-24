@@ -3,10 +3,11 @@ from datetime import UTC, datetime, timedelta
 
 import httpx
 import respx
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from editor import opportunity as opp
 from editor import profile as prof
+from editor import picks
 from editor import proposals as props
 from editor import models as m
 from editor import repo
@@ -171,9 +172,75 @@ def test_one_strong_item_from_a_reliable_source_is_a_story(db, tenant):
 def test_proposals_now_stop_at_the_day_number(db, tenant):
     site_id = setup_site(db, tenant)
     since = NOW - timedelta(hours=12)
-    assert len(props.top_up(db, tenant, site_id, since, now=NOW)) == 1
+    # PROFILE asks for 2 a day: the Bari story, and Starlink as a single news item.
+    ids = props.top_up(db, tenant, site_id, since, now=NOW)
+    assert len(ids) == 2
     with db.tenant(tenant) as s:
-        s.execute(text("UPDATE editor.sources SET score = 0.8"))
-    # PROFILE asks for 2 a day: one is left.
-    assert len(props.top_up(db, tenant, site_id, since, now=NOW)) == 1
+        rows = s.execute(select(m.proposals.c.title, m.proposals.c.basis).order_by(m.proposals.c.id)).all()
+    assert rows[0].basis == {"kind": "topic"}
+    assert "Starlink" in rows[1].title and rows[1].basis["kind"] == "news"
+    assert rows[1].basis["picked_by"] == "formula" and rows[1].basis["matched"] == "Satellite"
     assert props.top_up(db, tenant, site_id, since, now=NOW) == []
+    # Asked by a person: the pizza is far from every subtopic and the calcio
+    # excluded, so without the model there is nothing more to propose.
+    assert props.top_up(db, tenant, site_id, since, now=NOW, manual=True) == []
+    assert picks.why_none(db, tenant, site_id, now=NOW) == "all_proposed"
+
+
+def test_an_italian_profile_meets_english_news(db, tenant):
+    with db.tenant(tenant) as s:
+        site_id = repo.ensure_site(s, tenant, "ai.example", "AI Blog")
+        prof.save_draft(s, tenant, site_id, {
+            **PROFILE, "domain": "ai.example",
+            "sector": {"value": "intelligenza artificiale", "evidence": []},
+            "subtopics": [{"name": "inferenza locale", "keywords": ["inferenza", "quantizzazione"], "share": 0.4,
+                           "evidence": []}]}, "manual")
+        prof.approve(s, site_id, 1, "francesco")
+        sid = repo.upsert_source(s, tenant, kind="rss", name="hn", url="https://hn.example/feed", site_id=site_id)
+    feed(db, tenant, sid, [
+        Item(url="https://hn.example/1", title="A faster inference engine for quantized models",
+             published_at=NOW - timedelta(hours=2)),
+        Item(url="https://hn.example/2", title="Best pasta recipes of the year", published_at=NOW - timedelta(hours=1)),
+    ])
+    detect_topics(db, tenant)
+    created = props.top_up(db, tenant, site_id, NOW - timedelta(hours=12), now=NOW)
+    with db.tenant(tenant) as s:
+        titles = list(s.execute(select(m.proposals.c.title)).scalars())
+    assert len(created) == 1 and "inference" in titles[0]
+
+
+def test_the_model_picks_the_news_in_one_call(db, tenant):
+    site_id = setup_site(db, tenant)
+    calls = []
+
+    def answer(request):
+        prompt = json.loads(request.content)["messages"][1]["content"]
+        calls.append(prompt)
+        ids = {line[1:line.index("]")]: line for line in prompt.splitlines() if line.startswith("[")}
+        pizza = next(int(i) for i, line in ids.items() if "pizza" in line)
+        content = json.dumps({"options": [{"title": "Pizza e connessione: un caso", "angle": "Curiosità",
+                                           "why_now": "Se ne parla", "format": "news", "citations": [pizza]}]})
+        return httpx.Response(200, json={"content": content, "tool_calls": [],
+                                         "usage": {"input_tokens": 1, "output_tokens": 1}, "cost": 0.0})
+
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.editorial_profiles SET body = :b"),
+                  {"b": json.dumps({**PROFILE, "settings": {**PROFILE["settings"], "proposals_per_day": 3}})})
+    with respx.mock() as router:
+        router.post("http://core.test/v1/llm/chat").mock(side_effect=answer)
+        ids = picks.fill(db, tenant, site_id, 2, CoreClient("http://core.test", "tok"), now=NOW)
+    with db.tenant(tenant) as s:
+        rows = s.execute(select(m.proposals.c.title, m.proposals.c.basis, m.proposals.c.generated_by)
+                         .order_by(m.proposals.c.id)).all()
+    # One call; the model's pick first, then the formula's best for the second.
+    assert len(calls) == 1 and "Open Fiber" in calls[0] and "calcio" not in calls[0]
+    assert len(ids) == 2 and rows[0].title == "Pizza e connessione: un caso"
+    assert rows[0].basis["picked_by"] == "model" and rows[0].generated_by == "model"
+    assert rows[1].basis["picked_by"] == "formula"
+
+
+def test_no_news_for_three_days_is_a_stopped_collection(db, tenant):
+    site_id = setup_site(db, tenant)
+    later = NOW + timedelta(days=4)
+    assert props.top_up(db, tenant, site_id, later - timedelta(hours=12), now=later) == []
+    assert picks.why_none(db, tenant, site_id, now=later) == "no_news"

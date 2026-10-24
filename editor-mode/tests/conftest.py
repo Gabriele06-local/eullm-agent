@@ -94,7 +94,7 @@ def tenant(db) -> str:
         # test starts from an empty one, as a fresh installation does.
         with psycopg.connect(db.admin_url, autocommit=True) as conn:
             conn.execute("TRUNCATE editor.sources, editor.source_items, editor.observations, editor.topics, "
-                         "editor.topic_items, editor.trend_scores, editor.jobs, editor.llm_usage CASCADE")
+                         "editor.topic_items, editor.trend_scores, editor.trend_snapshots, editor.jobs, editor.llm_usage CASCADE")
     with db.tenant(tid) as s:
         repo.ensure_tenant(s, tid, name=tid)
     return tid

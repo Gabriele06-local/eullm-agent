@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.15.0
+
+### Added
+
+- Editor Mode, the news base: 46 general news feeds read once an hour in the
+  shared archive for every newsroom, whatever its sites follow: world and
+  politics, economy and technology, in English (BBC, Guardian, NYT, Al
+  Jazeera, DW, France 24, Euronews, FT, Ars Technica, The Verge, TechCrunch,
+  Hacker News...) and in Italian, German, French and Spanish (ANSA,
+  Corriere, Repubblica, Il Sole 24 Ore, tagesschau, Spiegel, heise, Le
+  Monde, El País, Xataka...), so national news reach the sites of that
+  country. `EDITOR_BASE_NEWS=0` turns them off.
+- News index (/index): every three hours from 07:00, the 40 topics rising
+  most across all sources, ranked, each with a short summary, its news,
+  how many sources tell it and its section (world, economy, technology, or
+  the sites' own sources), with tabs per section and "Titoli per <sito>".
+
+### Changed
+
+- The keywords of a site's profile are written in the site's language and
+  again in English, so both national and international news are found.
+  Existing profiles get them at the next analysis ("Rianalizza").
+- Topic labels by the model are capped at the 10 largest topics touched by
+  each run, so the larger base does not multiply the cost; the others keep
+  their keyword labels until they grow.
+
+### Fixed
+
+- Trend e piano showed "<built-in method items>" instead of the number of
+  news of a topic.
+
+## 0.14.0
+
+### Changed
+
+- Editor Mode, proposals every day. Until now a proposal needed a topic
+  told by two sources, or one "strong" news item, and its closeness to the
+  site was a word-for-word match between the profile's keywords, in the
+  site's language, and news that come mostly in English: Italian sites got
+  "nothing to propose" in 0 seconds. Now the topics come first, as before,
+  and the rest of the day's number comes from the best single news items of
+  the last 72 hours for the site (its own sources first, then the shared
+  archive): scored without the model on word roots (so "inferenza" meets
+  "inference"), the site's sources and their rating, freshness, how many
+  sources tell the story and what the site already covered. One model call
+  reads the first 30 and picks the best, writing title and angle (before:
+  one call per proposal); without the model the formula's first ones are
+  taken. Each such proposal is marked "notizia singola" and says why it was
+  chosen. Nothing is proposed only when no news came in for 72 hours, and
+  the Attività box says so in red.
+- Desk, a cockpit of the whole newsroom: six figures at the top (decisions,
+  proposals, drafts, news in 24 hours, sources, model cost over 30 days),
+  decisions one line each with the details on click, the Attività box one
+  line per job with the full day on the new Attività page (/activity), the
+  sites table with each site's model cost over 30 days, and the most active
+  sites, the most expensive sites and the latest news.
+
+### Added
+
+- `proposals.basis`: what a proposal stands on (a topic, or a single news
+  item with its score and who picked it). Migration 0023 (SQLite 0012).
+
 ## 0.13.1
 
 ### Added

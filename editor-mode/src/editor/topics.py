@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -20,6 +20,7 @@ log = logging.getLogger(__name__)
 
 MATCH = 0.5  # share of an item's terms found in a topic
 MIN_SHARED = 2  # and at least this many shared terms
+LABELS_PER_RUN = 10  # topics the model names in one collection
 
 
 @dataclass
@@ -153,7 +154,14 @@ def detect_topics(
                 .values(keywords=top_terms(all_titles), updated_at=now)
             )
             report.assigned += len(c.item_ids)
-        touched = [c.topic_id for c in clusters if c.item_ids]
+        # The model names at most LABELS_PER_RUN topics, those told by more
+        # news items first: with the news base an hour brings hundreds of
+        # items, and a name for each would cost more than the news is worth.
+        # The others keep the words of their headlines.
+        sizes = dict(s.execute(
+            select(ti.c.topic_id, func.count()).where(ti.c.topic_id.in_([c.topic_id for c in clusters if c.item_ids]))
+            .group_by(ti.c.topic_id)).all())
+        touched = sorted(sizes, key=lambda t: (-sizes[t], t))[:LABELS_PER_RUN]
 
     if core is not None:
         for topic_id in touched:

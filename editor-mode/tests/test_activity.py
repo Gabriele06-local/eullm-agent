@@ -19,8 +19,7 @@ def test_a_job_shows_its_step_while_running_and_its_result_after(db, tenant):
         progress.step("Lettura delle fonti: {n} di {total} ({name})", n=3, total=9, name="Fonte")
         with db.tenant(tenant_id) as s:
             seen.update(activity.recent(s, ROME, problem))
-        return {"site_id": args["site_id"], "proposals": 0,
-                "best": {"label": "Fibra", "opportunity": 28, "items": 1, "sources": 1}}
+        return {"site_id": args["site_id"], "proposals": 0, "why": "no_news"}
 
     queue.enqueue(db, tenant, "proposals", f"site {site_id}", {"site_id": site_id})
     with db.tenant(tenant) as s:
@@ -33,8 +32,9 @@ def test_a_job_shows_its_step_while_running_and_its_result_after(db, tenant):
     with db.tenant(tenant) as s:
         ended = activity.recent(s, ROME, problem)
     item = ended["items"][0]
-    assert not ended["active"] and item["status"] == "done" and item["state"].startswith("Finito alle")
-    assert "Nessuna proposta nuova" in item["lines"][0] and "«Fibra»: opportunità 28/100" in item["lines"][1]
+    # No news at all in 72 hours is a stopped collection: it looks like a failure.
+    assert not ended["active"] and item["status"] == "failed" and item["state"].startswith("Finito alle")
+    assert "Nessuna notizia raccolta nelle ultime 72 ore" in item["lines"][0]
 
 
 def test_a_failed_job_says_why_and_where_it_stopped(db, tenant):

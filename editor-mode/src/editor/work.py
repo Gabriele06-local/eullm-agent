@@ -3,11 +3,11 @@ work (queue.enqueue); the worker runs it with these handlers."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from . import drafts, models as m, profile as prof, proposals, sources
+from . import drafts, models as m, picks, profile as prof, proposals, sources
 from .i18n import N_
 from .progress import step
 from .queue import Handlers
@@ -77,27 +77,8 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None) -> H
                                manual=bool(args.get("manual")))
         out = {"site_id": args["site_id"], "proposals": len(ids)}
         if not ids:
-            out["best"] = best_topic(tenant, args["site_id"])
+            out["why"] = picks.why_none(db, tenant, args["site_id"])
         return out
-
-    def best_topic(tenant: str, site_id: int) -> dict | None:
-        """Why nothing was proposed: the topic closest to a proposal, with
-        its Opportunity and how many news and sources it has."""
-        o = m.opportunity_scores
-        with db.tenant(tenant) as s:
-            last = s.execute(select(func.max(o.c.computed_at)).where(o.c.site_id == site_id)).scalar()
-            if last is None:
-                return None
-            r = s.execute(select(o.c.topic_id, o.c.score, m.topics.c.label)
-                          .join(m.topics, m.topics.c.id == o.c.topic_id)
-                          .where(o.c.site_id == site_id, o.c.computed_at >= last - timedelta(minutes=30))
-                          .order_by(o.c.score.desc()).limit(1)).first()
-            if r is None:
-                return None
-            news = s.execute(select(m.source_items.c.source_id).join(
-                m.topic_items, m.topic_items.c.item_id == m.source_items.c.id)
-                .where(m.topic_items.c.topic_id == r.topic_id)).scalars().all()
-        return {"label": r.label, "opportunity": round(r.score), "items": len(news), "sources": len(set(news))}
 
     def titles(tenant: str, subject: str, args: dict) -> dict:
         step(N_("Il modello scrive i titoli"))

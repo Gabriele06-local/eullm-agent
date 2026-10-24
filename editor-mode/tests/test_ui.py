@@ -8,7 +8,7 @@ from editor.api import create_app
 from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
 
-PAGES = ["/", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
+PAGES = ["/", "/activity", "/index", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
          "/publications", "/settings", "/guide"]
 
 
@@ -29,6 +29,9 @@ def test_every_page_renders_for_every_role(db, tenant):
             assert "blog.example" in r.text or path == "/settings"
         draft = c.get(f"/drafts/{did}").text
         assert 'href="#src-1"' in draft and 'id="src-1"' in draft
+        desk = c.get("/").text
+        assert "Siti più attivi" in desk and "Siti più costosi" in desk and "Ultime notizie" in desk
+        assert 'data-mode="desk"' in desk and c.get("/ui/activity?mode=page").status_code == 200
         settings = c.get("/settings").text
         assert ("Crea token" in settings) == (role == "owner")
         assert ("Persone della redazione" in settings) == (role == "owner")
