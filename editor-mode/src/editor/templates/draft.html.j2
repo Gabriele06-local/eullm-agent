@@ -144,6 +144,18 @@
       <p class="hint">{% if translations or wanted %}{{ _("Quando approvi l'originale, l'agente lo traduce da solo nelle altre lingue del sito. Ogni traduzione ha le stesse fonti e gli stessi controlli, si approva a parte e conta come un articolo del piano.") }}{% else %}{{ _('Il sito pubblica in una sola lingua. Le lingue in cui tradurre gli articoli approvati si scelgono in <a href="/site#h-languages">Sito e profilo</a>.') }}{% endif %}</p>
     </section>
 
+    <section class="card pad" aria-labelledby="h-delivery">
+      <h2 id="h-delivery">{{ _('Consegna') }}</h2>
+      <div class="row" style="flex-wrap: wrap;">
+        <a class="btn sm" href="/drafts/{{ d.id }}/package.zip" download>{{ _('Scarica il pacchetto') }}</a>
+        <button class="btn sm" type="button" data-copy="body-html">{{ _('Copia HTML') }}</button>
+        <button class="btn sm" type="button" data-copy="body-md">{{ _('Copia Markdown') }}</button>
+      </div>
+      <textarea id="body-html" hidden readonly>{{ body_html }}</textarea>
+      <textarea id="body-md" hidden readonly>{{ d.body_md }}</textarea>
+      <p class="hint">{{ _("Il pacchetto ZIP contiene la pagina pronta (article.html), il testo da incollare nel CMS (body.html), il Markdown per i siti statici, l'immagine e i campi per Google (meta.json). «Copia HTML» copia il testo senza titolo, da incollare nell'editor del CMS in modalità codice.") }}{% if d.status != 'approved' %} {{ _('Prima di pubblicarla, approva la bozza.') }}{% endif %}</p>
+    </section>
+
     <section class="card pad" aria-labelledby="h-pub">
       <h2 id="h-pub">{{ _('Pubblicazione') }}</h2>
       {% for p in pubs %}
@@ -171,4 +183,15 @@
   </div>
 </div>
 {% endif %}
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var label = b.textContent;
+    navigator.clipboard.writeText(document.getElementById(b.dataset.copy).value).then(function () {
+      b.textContent = {{ _('Copiato')|string|tojson }};
+      setTimeout(function () { b.textContent = label; }, 1500);
+    });
+  });
+});
+</script>
 {% endblock %}

@@ -74,6 +74,7 @@
 
 <section class="card pad" aria-labelledby="h-rec">
   <h2 id="h-rec">{{ _('Chi riceve il briefing') }}</h2>
+  <p class="hint">{{ _('I destinatari email ricevono anche ogni articolo approvato, con il pacchetto da pubblicare in allegato.') }}</p>
   {% for r in recipients %}
   <div class="list-row">
     <span><span class="chip">{{ _('Email') if r.channel == 'email' else 'Telegram' }}</span> <span class="num">{{ r.address }}</span>{% if r.enabled is sameas false %} <span class="hint">{{ _('disattivato') }}</span>{% endif %}</span>

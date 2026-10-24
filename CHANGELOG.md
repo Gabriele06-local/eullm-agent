@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.18.0
+
+### Added
+
+- Editor Mode, delivery of the approved articles, for the customers whose
+  site is not connected to a destination. The draft page has a "Consegna"
+  card: "Scarica il pacchetto" gives a ZIP with the page ready to open
+  (`article.html`, with the search fields, the schema.org data and the
+  image), the text alone to paste into any CMS (`body.html`), Markdown
+  with front matter for Hugo, Jekyll and Astro (`article.md`), the cover
+  image and every field for Google (`meta.json`); "Copia HTML" and "Copia
+  Markdown" copy the text without its title. At each approval the
+  newsroom's email recipients (Impostazioni) get the article in the
+  message with the package attached, a job of its own shown in Attività
+  (needs SMTP). In Sito e profilo › Come ricevi gli articoli the owner
+  creates the site's feed, JSON Feed 1.1 and RSS 2.0, with the last 50
+  approved articles complete with text, image and search fields
+  (`?lang=en` for one language), for Zapier, Make, n8n or a site that
+  imports a feed: its address holds an unguessable token, needs no login,
+  and can be changed. API: `GET /api/drafts/{id}/package` and
+  `POST /api/sites/{id}/feed`.
+
 ## 0.17.0
 
 ### Added

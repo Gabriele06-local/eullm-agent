@@ -1,0 +1,188 @@
+{
+ "<strong>Collegando il sito</strong> (WordPress, webhook, canale Telegram) da <a href=\"/publications\">Pubblicazioni</a>: l'articolo parte con immagine e campi per Google dopo il sì di un owner.": {
+  "de": "<strong>Durch Verbinden der Website</strong> (WordPress, Webhook, Telegram-Kanal) unter <a href=\"/publications\">Veröffentlichungen</a>: Der Artikel geht mit Bild und Google-Feldern hinaus, sobald ein Owner zustimmt.",
+  "en": "<strong>By connecting the site</strong> (WordPress, webhook, Telegram channel) in <a href=\"/publications\">Publications</a>: the article goes out with its image and Google fields after an owner says yes.",
+  "es": "<strong>Conectando el sitio</strong> (WordPress, webhook, canal de Telegram) desde <a href=\"/publications\">Publicaciones</a>: el artículo sale con su imagen y los campos para Google tras el sí de un owner.",
+  "fr": "<strong>En connectant le site</strong> (WordPress, webhook, canal Telegram) depuis <a href=\"/publications\">Publications</a> : l'article part avec son image et ses champs pour Google après l'accord d'un owner."
+ },
+ "<strong>Con il feed</strong> qui sotto, per Zapier, Make, n8n o un sito che importa un feed: contiene gli ultimi 50 articoli approvati, completi di testo, immagine e campi per Google.": {
+  "de": "<strong>Mit dem Feed</strong> unten, für Zapier, Make, n8n oder eine Website, die einen Feed importiert: Er enthält die letzten 50 genehmigten Artikel, vollständig mit Text, Bild und Google-Feldern.",
+  "en": "<strong>With the feed</strong> below, for Zapier, Make, n8n or a site that imports a feed: it holds the last 50 approved articles, complete with text, image and Google fields.",
+  "es": "<strong>Con el feed</strong> de abajo, para Zapier, Make, n8n o un sitio que importa un feed: contiene los últimos 50 artículos aprobados, con texto, imagen y campos para Google.",
+  "fr": "<strong>Avec le flux</strong> ci-dessous, pour Zapier, Make, n8n ou un site qui importe un flux : il contient les 50 derniers articles approuvés, avec texte, image et champs pour Google."
+ },
+ "<strong>Per email</strong>: a ogni approvazione i destinatari email della redazione (in <a href=\"/settings\">Impostazioni</a>) ricevono l'articolo con il pacchetto allegato.": {
+  "de": "<strong>Per E-Mail</strong>: Bei jeder Genehmigung erhalten die E-Mail-Empfänger der Redaktion (unter <a href=\"/settings\">Einstellungen</a>) den Artikel mit dem Paket im Anhang.",
+  "en": "<strong>By email</strong>: at each approval the newsroom's email recipients (in <a href=\"/settings\">Settings</a>) get the article with the package attached.",
+  "es": "<strong>Por email</strong>: con cada aprobación, los destinatarios de email de la redacción (en <a href=\"/settings\">Ajustes</a>) reciben el artículo con el paquete adjunto.",
+  "fr": "<strong>Par e-mail</strong> : à chaque approbation, les destinataires e-mail de la rédaction (dans <a href=\"/settings\">Paramètres</a>) reçoivent l'article avec le paquet en pièce jointe."
+ },
+ "<strong>Scaricando il pacchetto</strong> dalla pagina della bozza, o copiando l'HTML da incollare nel CMS.": {
+  "de": "<strong>Durch Herunterladen des Pakets</strong> auf der Seite des Entwurfs oder durch Kopieren des HTML zum Einfügen ins CMS.",
+  "en": "<strong>By downloading the package</strong> from the draft's page, or copying the HTML to paste into the CMS.",
+  "es": "<strong>Descargando el paquete</strong> desde la página del borrador, o copiando el HTML para pegarlo en el CMS.",
+  "fr": "<strong>En téléchargeant le paquet</strong> depuis la page du brouillon, ou en copiant le HTML à coller dans le CMS."
+ },
+ "Apri l'articolo": {
+  "de": "Artikel öffnen",
+  "en": "Open the article",
+  "es": "Abrir el artículo",
+  "fr": "Ouvrir l'article"
+ },
+ "Articoli approvati di {site}": {
+  "de": "Genehmigte Artikel von {site}",
+  "en": "Approved articles of {site}",
+  "es": "Artículos aprobados de {site}",
+  "fr": "Articles approuvés de {site}"
+ },
+ "Articolo approvato per {site}, pronto da pubblicare. In allegato il pacchetto: la pagina (article.html), il testo da incollare nel CMS (body.html), il Markdown per i siti statici, l'immagine e i campi per Google (meta.json).": {
+  "de": "Artikel für {site} genehmigt, bereit zur Veröffentlichung. Im Anhang das Paket: die Seite (article.html), der Text zum Einfügen ins CMS (body.html), Markdown für statische Websites, das Bild und die Google-Felder (meta.json).",
+  "en": "Article approved for {site}, ready to publish. The package is attached: the page (article.html), the text to paste into the CMS (body.html), Markdown for static sites, the image and the Google fields (meta.json).",
+  "es": "Artículo aprobado para {site}, listo para publicar. Adjunto va el paquete: la página (article.html), el texto para pegar en el CMS (body.html), el Markdown para sitios estáticos, la imagen y los campos para Google (meta.json).",
+  "fr": "Article approuvé pour {site}, prêt à publier. Le paquet est en pièce jointe : la page (article.html), le texte à coller dans le CMS (body.html), le Markdown pour les sites statiques, l'image et les champs pour Google (meta.json)."
+ },
+ "Articolo approvato: {title}": {
+  "de": "Artikel genehmigt: {title}",
+  "en": "Article approved: {title}",
+  "es": "Artículo aprobado: {title}",
+  "fr": "Article approuvé : {title}"
+ },
+ "Cambia gli indirizzi": {
+  "de": "Adressen ändern",
+  "en": "Change the addresses",
+  "es": "Cambiar las direcciones",
+  "fr": "Changer les adresses"
+ },
+ "Cambiare gli indirizzi? Quelli vecchi smettono di funzionare.": {
+  "de": "Adressen ändern? Die alten funktionieren dann nicht mehr.",
+  "en": "Change the addresses? The old ones stop working.",
+  "es": "¿Cambiar las direcciones? Las antiguas dejarán de funcionar.",
+  "fr": "Changer les adresses ? Les anciennes ne fonctionneront plus."
+ },
+ "Come ricevi gli articoli": {
+  "de": "Wie Sie die Artikel erhalten",
+  "en": "How you get the articles",
+  "es": "Cómo recibes los artículos",
+  "fr": "Comment vous recevez les articles"
+ },
+ "Consegna": {
+  "de": "Auslieferung",
+  "en": "Delivery",
+  "es": "Entrega",
+  "fr": "Livraison"
+ },
+ "Copia HTML": {
+  "de": "HTML kopieren",
+  "en": "Copy HTML",
+  "es": "Copiar HTML",
+  "fr": "Copier le HTML"
+ },
+ "Copia Markdown": {
+  "de": "Markdown kopieren",
+  "en": "Copy Markdown",
+  "es": "Copiar Markdown",
+  "fr": "Copier le Markdown"
+ },
+ "Copiato": {
+  "de": "Kopiert",
+  "en": "Copied",
+  "es": "Copiado",
+  "fr": "Copié"
+ },
+ "Crea il feed": {
+  "de": "Feed erstellen",
+  "en": "Create the feed",
+  "es": "Crear el feed",
+  "fr": "Créer le flux"
+ },
+ "Feed JSON (consigliato per Zapier, Make e n8n)": {
+  "de": "JSON-Feed (empfohlen für Zapier, Make und n8n)",
+  "en": "JSON feed (recommended for Zapier, Make and n8n)",
+  "es": "Feed JSON (recomendado para Zapier, Make y n8n)",
+  "fr": "Flux JSON (conseillé pour Zapier, Make et n8n)"
+ },
+ "Feed RSS": {
+  "de": "RSS-Feed",
+  "en": "RSS feed",
+  "es": "Feed RSS",
+  "fr": "Flux RSS"
+ },
+ "Feed creato: copia l'indirizzo nello strumento che pubblica per te.": {
+  "de": "Feed erstellt: Kopieren Sie die Adresse in das Tool, das für Sie veröffentlicht.",
+  "en": "Feed created: copy the address into the tool that publishes for you.",
+  "es": "Feed creado: copia la dirección en la herramienta que publica por ti.",
+  "fr": "Flux créé : copiez l'adresse dans l'outil qui publie pour vous."
+ },
+ "I destinatari email ricevono anche ogni articolo approvato, con il pacchetto da pubblicare in allegato.": {
+  "de": "E-Mail-Empfänger erhalten auch jeden genehmigten Artikel, mit dem Paket zum Veröffentlichen im Anhang.",
+  "en": "Email recipients also get every approved article, with the package to publish attached.",
+  "es": "Los destinatarios de email también reciben cada artículo aprobado, con el paquete para publicar adjunto.",
+  "fr": "Les destinataires par e-mail reçoivent aussi chaque article approuvé, avec le paquet à publier en pièce jointe."
+ },
+ "Il pacchetto ZIP contiene la pagina pronta (article.html), il testo da incollare nel CMS (body.html), il Markdown per i siti statici, l'immagine e i campi per Google (meta.json). «Copia HTML» copia il testo senza titolo, da incollare nell'editor del CMS in modalità codice.": {
+  "de": "Das ZIP-Paket enthält die fertige Seite (article.html), den Text zum Einfügen ins CMS (body.html), Markdown für statische Websites, das Bild und die Google-Felder (meta.json). „HTML kopieren“ kopiert den Text ohne Titel, zum Einfügen im Code-Modus des CMS-Editors.",
+  "en": "The ZIP package holds the ready page (article.html), the text to paste into the CMS (body.html), Markdown for static sites, the image and the Google fields (meta.json). \"Copy HTML\" copies the text without its title, to paste into the CMS editor in code mode.",
+  "es": "El paquete ZIP contiene la página lista (article.html), el texto para pegar en el CMS (body.html), el Markdown para sitios estáticos, la imagen y los campos para Google (meta.json). «Copiar HTML» copia el texto sin el título, para pegarlo en el editor del CMS en modo código.",
+  "fr": "Le paquet ZIP contient la page prête (article.html), le texte à coller dans le CMS (body.html), le Markdown pour les sites statiques, l'image et les champs pour Google (meta.json). « Copier le HTML » copie le texte sans le titre, à coller dans l'éditeur du CMS en mode code."
+ },
+ "Indirizzi del feed cambiati: quelli vecchi non funzionano più, aggiornali in Zapier, Make o n8n.": {
+  "de": "Feed-Adressen geändert: Die alten funktionieren nicht mehr, aktualisieren Sie sie in Zapier, Make oder n8n.",
+  "en": "Feed addresses changed: the old ones no longer work, update them in Zapier, Make or n8n.",
+  "es": "Direcciones del feed cambiadas: las antiguas ya no funcionan, actualízalas en Zapier, Make o n8n.",
+  "fr": "Adresses du flux changées : les anciennes ne fonctionnent plus, mettez-les à jour dans Zapier, Make ou n8n."
+ },
+ "Invio dell'articolo per email": {
+  "de": "Versand des Artikels per E-Mail",
+  "en": "Article sent by email",
+  "es": "Envío del artículo por email",
+  "fr": "Envoi de l'article par e-mail"
+ },
+ "Invio l'articolo approvato per email": {
+  "de": "Der genehmigte Artikel wird per E-Mail gesendet",
+  "en": "Sending the approved article by email",
+  "es": "Envío el artículo aprobado por email",
+  "fr": "J'envoie l'article approuvé par e-mail"
+ },
+ "La mandiamo anche per email ai destinatari della redazione, con il pacchetto da pubblicare.": {
+  "de": "Wir senden ihn auch per E-Mail an die Empfänger der Redaktion, mit dem Paket zum Veröffentlichen.",
+  "en": "We are also emailing it to the newsroom's recipients, with the package to publish.",
+  "es": "También lo enviamos por email a los destinatarios de la redacción, con el paquete para publicar.",
+  "fr": "Nous l'envoyons aussi par e-mail aux destinataires de la rédaction, avec le paquet à publier."
+ },
+ "Nessun destinatario email: aggiungilo in Impostazioni per ricevere gli articoli approvati.": {
+  "de": "Kein E-Mail-Empfänger: Fügen Sie einen unter Einstellungen hinzu, um die genehmigten Artikel zu erhalten.",
+  "en": "No email recipient: add one in Settings to get the approved articles.",
+  "es": "Ningún destinatario de email: añade uno en Ajustes para recibir los artículos aprobados.",
+  "fr": "Aucun destinataire e-mail : ajoutez-en un dans Paramètres pour recevoir les articles approuvés."
+ },
+ "Ogni articolo approvato si può pubblicare in quattro modi, anche insieme:": {
+  "de": "Jeder genehmigte Artikel lässt sich auf vier Wegen veröffentlichen, auch kombiniert:",
+  "en": "Every approved article can be published in four ways, also together:",
+  "es": "Cada artículo aprobado se puede publicar de cuatro maneras, también a la vez:",
+  "fr": "Chaque article approuvé peut être publié de quatre façons, même ensemble :"
+ },
+ "Per una sola lingua aggiungi ?lang= e il codice, per esempio ?lang=en. Chi conosce l'indirizzo legge gli articoli approvati: non pubblicarlo.": {
+  "de": "Für nur eine Sprache fügen Sie ?lang= und den Code hinzu, zum Beispiel ?lang=en. Wer die Adresse kennt, kann die genehmigten Artikel lesen: Veröffentlichen Sie sie nicht.",
+  "en": "For one language only, add ?lang= and its code, for example ?lang=en. Anyone who knows the address can read the approved articles: do not publish it.",
+  "es": "Para un solo idioma añade ?lang= y el código, por ejemplo ?lang=en. Quien conozca la dirección puede leer los artículos aprobados: no la publiques.",
+  "fr": "Pour une seule langue, ajoutez ?lang= et son code, par exemple ?lang=en. Quiconque connaît l'adresse lit les articles approuvés : ne la publiez pas."
+ },
+ "Prima di pubblicarla, approva la bozza.": {
+  "de": "Genehmigen Sie den Entwurf, bevor Sie ihn veröffentlichen.",
+  "en": "Approve the draft before publishing it.",
+  "es": "Aprueba el borrador antes de publicarlo.",
+  "fr": "Approuvez le brouillon avant de le publier."
+ },
+ "Scarica il pacchetto": {
+  "de": "Paket herunterladen",
+  "en": "Download the package",
+  "es": "Descargar el paquete",
+  "fr": "Télécharger le paquet"
+ },
+ "«{title}» inviato per email a {n} destinatari, con il pacchetto da pubblicare.": {
+  "de": "„{title}“ per E-Mail an {n} Empfänger gesendet, mit dem Paket zum Veröffentlichen.",
+  "en": "\"{title}\" emailed to {n} recipients, with the package to publish.",
+  "es": "«{title}» enviado por email a {n} destinatarios, con el paquete para publicar.",
+  "fr": "« {title} » envoyé par e-mail à {n} destinataires, avec le paquet à publier."
+ }
+}

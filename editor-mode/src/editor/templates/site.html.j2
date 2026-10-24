@@ -250,6 +250,29 @@
 </section>
 {% endif %}
 
+{% if site %}
+<section class="card pad" aria-labelledby="h-delivery-t" id="h-delivery">
+  <h2 id="h-delivery-t">{{ _('Come ricevi gli articoli') }}</h2>
+  <p class="hint">{{ _('Ogni articolo approvato si può pubblicare in quattro modi, anche insieme:') }}</p>
+  <ul>
+    <li>{{ _('<strong>Collegando il sito</strong> (WordPress, webhook, canale Telegram) da <a href="/publications">Pubblicazioni</a>: l\'articolo parte con immagine e campi per Google dopo il sì di un owner.') }}</li>
+    <li>{{ _('<strong>Per email</strong>: a ogni approvazione i destinatari email della redazione (in <a href="/settings">Impostazioni</a>) ricevono l\'articolo con il pacchetto allegato.') }}</li>
+    <li>{{ _('<strong>Scaricando il pacchetto</strong> dalla pagina della bozza, o copiando l\'HTML da incollare nel CMS.') }}</li>
+    <li>{{ _('<strong>Con il feed</strong> qui sotto, per Zapier, Make, n8n o un sito che importa un feed: contiene gli ultimi 50 articoli approvati, completi di testo, immagine e campi per Google.') }}</li>
+  </ul>
+  {% if feed_token %}
+  <label class="field">{{ _('Feed JSON (consigliato per Zapier, Make e n8n)') }}<input readonly value="{{ feed_base }}/feeds/{{ feed_token }}.json" onclick="this.select()"></label>
+  <label class="field">{{ _('Feed RSS') }}<input readonly value="{{ feed_base }}/feeds/{{ feed_token }}.rss" onclick="this.select()"></label>
+  <p class="hint">{{ _('Per una sola lingua aggiungi ?lang= e il codice, per esempio ?lang=en. Chi conosce l\'indirizzo legge gli articoli approvati: non pubblicarlo.') }}</p>
+  {% if caller.can('owner') %}
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/feed" onsubmit='return confirm({{ _("Cambiare gli indirizzi? Quelli vecchi smettono di funzionare.")|string|tojson }})'><input type="hidden" name="renew" value="1"><button class="btn sm" type="submit">{{ _('Cambia gli indirizzi') }}</button></form>
+  {% endif %}
+  {% elif caller.can('owner') %}
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/feed"><button class="btn" type="submit">{{ _('Crea il feed') }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if site and caller.can('owner') %}
 <section class="card pad" aria-labelledby="h-site-data" id="h-danger">
   <h2 id="h-site-data">{{ _('Dati del sito') }}</h2>

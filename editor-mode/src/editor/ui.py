@@ -20,8 +20,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
+from . import activity as act, accounts, auth, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
 from .i18n import N_, t
+from .markdown import to_html
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
@@ -733,6 +734,8 @@ def register(app, ctx) -> None:
                       domain_free=manage.can_change_domain(s, site.id) if site else False,
                       langs=tr.LANGUAGES, own_language=tr.main_language(s, site.id) if site else None,
                       site_langs=tr.site_languages(s, site.id) if site else [], max_languages=tr.allowed(s),
+                      feed_token=delivery.current_token(s, site.id) if site else None,
+                      feed_base=(getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/"),
                       body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "")
 
     @app.get("/site", response_class=HTMLResponse)
@@ -1103,6 +1106,7 @@ def register(app, ctx) -> None:
                           original=original, translations=[x for x in family if x.translation_of],
                           wanted=wanted, translating=translating, langs=tr.LANGUAGES, can_translate=ctx.core is not None,
                           image=image, img_busy=img_busy, images_on=getattr(ctx, "imager", None) is not None,
+                          body_html=to_html(delivery.body_md(d.body_md)),
                           sources=[{"n": refs[i], **items[i]._mapping} for i in order if i in items],
                           flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS,
                           sd=d.seo or {}, editing=bool(edit) and c.can("editor"), claims=claims, flagged_ordinals=flagged, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
@@ -1115,11 +1119,56 @@ def register(app, ctx) -> None:
         if accept != "1":
             return done(f"/drafts/{draft_id}", t("Bozza rifiutata."))
         todo = ctx.run_translations(c.tenant_id, draft_id)
+        mailed = getattr(ctx, "run_delivery", None) and ctx.run_delivery(c.tenant_id, draft_id)
+        extra = (" " + t("La mandiamo anche per email ai destinatari della redazione, con il pacchetto da pubblicare.")
+                 if mailed else "")
         if todo:
             return done(f"/drafts/{draft_id}", t("Bozza approvata. Traduzioni in scrittura ({languages}): le segui nel "
                                                  "riquadro Attività, ognuna conta come un articolo.",
-                                                 languages=", ".join(tr.LANGUAGES[x] for x in todo)))
-        return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione."))
+                                                 languages=", ".join(tr.LANGUAGES[x] for x in todo)) + extra)
+        return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione.") + extra)
+
+    @app.get("/drafts/{draft_id}/package.zip")
+    def ui_package(request: Request, draft_id: int, c: auth.Caller = Depends(ctx.need("viewer"))):
+        base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
+        with db.tenant(c.tenant_id) as s:
+            a = delivery.article(s, draft_id, base)
+        if a is None:
+            raise HTTPException(404, "draft not found")
+        name, data = delivery.package(a)
+        return Response(data, media_type="application/zip",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+    @app.post("/ui/sites/{site_id}/feed")
+    def ui_feed(site_id: int, renew: str = Form(""), c: auth.Caller = Depends(ctx.need("owner"))):
+        try:
+            delivery.feed_token(db, c.tenant_id, site_id, renew == "1")
+        except LookupError:
+            raise HTTPException(404, "site not found") from None
+        msg = (t("Indirizzi del feed cambiati: quelli vecchi non funzionano più, aggiornali in Zapier, Make o n8n.")
+               if renew == "1" else t("Feed creato: copia l'indirizzo nello strumento che pubblica per te."))
+        return done("/site#h-delivery", msg)
+
+    @app.get("/feeds/{name}")
+    def feed(request: Request, name: str, lang: str | None = None):
+        """The approved articles of a site, for the automation tools: the token
+        in the address is the key, no login."""
+        token, _, fmt = name.rpartition(".")
+        if fmt not in ("json", "rss"):
+            raise HTTPException(404, "feed not found")
+        found = delivery.by_token(db, token)
+        if found is None:
+            raise HTTPException(404, "feed not found")
+        base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
+        with db.tenant(found.tenant_id) as s:
+            site = s.execute(select(m.sites.c.domain).where(m.sites.c.id == found.site_id)).scalar()
+        arts = delivery.feed_articles(db, found.tenant_id, found.site_id, base, (lang or "").strip().lower()[:2] or None)
+        url = f"{base}/feeds/{name}"
+        headers = {"Cache-Control": "private, max-age=300", "X-Robots-Tag": "noindex"}
+        if fmt == "json":
+            return Response(json.dumps(delivery.json_feed(arts, site, url), ensure_ascii=False),
+                            media_type="application/feed+json", headers=headers)
+        return Response(delivery.rss(arts, site, url), media_type="application/rss+xml", headers=headers)
 
     @app.get("/media/{token}")
     def media(token: str):

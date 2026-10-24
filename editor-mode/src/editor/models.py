@@ -416,6 +416,16 @@ draft_images = Table(
     Column("created_at", _ts()),
 )
 
+feeds = Table(
+    "feeds",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    _tenant(),
+    Column("site_id", BigInteger, nullable=False),
+    Column("token", Text, nullable=False),
+    Column("created_at", _ts()),
+)
+
 draft_claims = Table(
     "draft_claims",
     metadata,

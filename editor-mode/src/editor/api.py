@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import bindparam, select, text
 from sqlalchemy.exc import IntegrityError
 
-from . import accounts, auth, console, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, quotas, repo, translate as tr, ui, vault
+from . import accounts, auth, console, delivery, drafts, i18n, jobs, models as m, profile as prof, proposals as props, publishing, queue, quotas, repo, translate as tr, ui, vault
 from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -180,6 +180,15 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
         with db.tenant(tenant) as s:
             site_id = s.execute(select(m.drafts.c.site_id).where(m.drafts.c.id == draft_id)).scalar()
         queue.enqueue(db, tenant, "image", f"draft {draft_id}", {"draft_id": draft_id, "site_id": site_id})
+
+    def run_delivery(tenant: str, draft_id: int) -> bool:
+        """Email the approved article to the newsroom's email recipients, if it has any."""
+        with db.tenant(tenant) as s:
+            if not delivery.email_recipients(s):
+                return False
+            site_id = s.execute(select(m.drafts.c.site_id).where(m.drafts.c.id == draft_id)).scalar()
+        queue.enqueue(db, tenant, "deliver", f"draft {draft_id}", {"draft_id": draft_id, "site_id": site_id})
+        return True
 
     def run_translations(tenant: str, draft_id: int) -> list[str]:
         """Translate an approved article into the site's other languages it is
@@ -354,7 +363,30 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
         out = {"status": "approved" if body.accept else "rejected"}
         if body.accept and (todo := run_translations(c.tenant_id, draft_id)):
             out["translating"] = todo
+        if body.accept and run_delivery(c.tenant_id, draft_id):
+            out["emailing"] = True
         return out
+
+    @app.get("/api/drafts/{draft_id}/package")
+    def draft_package(draft_id: int, c: auth.Caller = Depends(caller)):
+        """The article as a ZIP: page, text for the CMS, Markdown, cover image, search fields."""
+        with db.tenant(c.tenant_id) as s:
+            a = delivery.article(s, draft_id, public_url)
+        if a is None:
+            raise HTTPException(404, "draft not found")
+        name, data = delivery.package(a)
+        return Response(data, media_type="application/zip",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+    @app.post("/api/sites/{site_id}/feed")
+    def site_feed(site_id: int, renew: bool = False, c: auth.Caller = Depends(need("owner"))):
+        """The addresses of the site's feed of approved articles; `renew` changes them."""
+        try:
+            token = delivery.feed_token(db, c.tenant_id, site_id, renew)
+        except LookupError:
+            raise HTTPException(404, "site not found") from None
+        base = public_url.rstrip("/")
+        return {"json": f"{base}/feeds/{token}.json", "rss": f"{base}/feeds/{token}.rss"}
 
     @app.post("/api/drafts/{draft_id}/translations", status_code=202)
     def request_translation(draft_id: int, body: TranslationIn, c: auth.Caller = Depends(need("editor"))):
@@ -507,7 +539,8 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                                      run_analysis=run_analysis, run_discovery=run_discovery, run_draft=run_draft,
                                      run_proposals=run_proposals, run_titles=run_titles, run_collect=run_collect,
                                      run_publication=run_publication, run_translation=run_translation,
-                                     run_translations=run_translations, run_image=run_image, imager=imager))
+                                     run_translations=run_translations, run_image=run_image, imager=imager,
+                                     run_delivery=run_delivery))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))
 

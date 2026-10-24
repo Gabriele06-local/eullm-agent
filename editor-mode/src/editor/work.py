@@ -7,17 +7,20 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from . import drafts, images, models as m, picks, profile as prof, proposals, sources, translate as tr
+from . import delivery, drafts, images, models as m, picks, profile as prof, proposals, sources, translate as tr
 from .i18n import N_
 from .progress import step
 from .queue import Handlers, enqueue
 from .site import SiteCrawler
 
 
-def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imager=None) -> Handlers:
+def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imager=None, mail=None,
+             public_url: str = "") -> Handlers:
     """http_factory: () -> httpx.Client reading the web through the Core;
     core: CoreClient for the model; runner: schedule.Runner for the tick;
-    imager: images.Imager for the cover images (None: drafts have none).
+    imager: images.Imager for the cover images (None: drafts have none);
+    mail: delivery.smtp_sender for the approved articles (None: no SMTP);
+    public_url: the dashboard's address, for the image links in the emails.
     Work that needs a missing piece fails with a message instead of
     pretending to have run."""
 
@@ -91,6 +94,11 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
                           .where(m.drafts.c.id == did)).first()
         return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id, "language": d.language}
 
+    def deliver(tenant: str, subject: str, args: dict) -> dict:
+        step(N_("Invio l'articolo approvato per email"))
+        out = delivery.email(db, tenant, args["draft_id"], mail, public_url)
+        return {"draft_id": args["draft_id"], **out}
+
     def propose(tenant: str, subject: str, args: dict) -> dict:
         step(N_("Scelgo i temi migliori e scrivo le proposte"))
         ids = proposals.top_up(db, tenant, args["site_id"], datetime.fromisoformat(args["since"]), core_for(tenant),
@@ -132,4 +140,5 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
 
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
             "proposals": propose, "titles": titles, "archive": archive,
-            "collect": collect, "translate": translation, "image": image}
+            "collect": collect, "translate": translation, "image": image,
+            "deliver": deliver}

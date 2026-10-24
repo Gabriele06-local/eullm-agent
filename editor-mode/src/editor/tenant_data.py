@@ -25,7 +25,7 @@ from . import models as m
 
 # Children before parents, the tenant last.
 DELETE_ORDER = [
-    "publications", "publish_targets",
+    "publications", "publish_targets", "feeds",
     "draft_images", "draft_claim_sources", "draft_claims", "drafts",
     "proposal_citations", "proposals", "opportunity_scores",
     "feedback", "profile_reviews", "editorial_profiles", "site_analyses", "site_posts",
@@ -42,7 +42,7 @@ DELETE_ORDER = [
 ACCOUNT_TABLES = ("memberships", "sessions", "invites", "subscriptions", "payments")
 
 # Never exported: what would let someone act as the tenant.
-WITHHELD = {"access_tokens": {"token_sha256"}, "secrets": {"ciphertext", "key_id"}}
+WITHHELD = {"access_tokens": {"token_sha256"}, "feeds": {"token"}, "secrets": {"ciphertext", "key_id"}}
 
 DEFAULT_RETENTION_DAYS = 365
 
