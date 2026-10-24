@@ -58,21 +58,28 @@
 
 <div class="cols">
   <section class="card pad col-wide" aria-labelledby="h-map">
-    <div class="row" style="justify-content: space-between;"><h2 id="h-map">{{ _('Mappa dei temi') }}</h2>
-      <div class="legend"><span><i></i>{{ _('Opportunità alta') }}</span><span><i class="hype"></i>{{ _('Solo hype') }}</span></div></div>
+    <h2 id="h-map">{{ _('Mappa dei temi') }}</h2>
+    <p class="hint">{{ _('Ogni tema della settimana sta in uno dei quattro riquadri, secondo due punteggi da 0 a 100: Opportunità, quanto conviene a questo sito, e Hype, quanto se ne parla nel settore. La soglia è 50. Si scrive da «Scrivi ora» e «Nicchia utile».') }}</p>
     {% if dots %}
-    <div class="map" role="img" aria-label="{{ _('Temi disposti per hype (orizzontale) e opportunità (verticale)') }}">
-      <span class="mid-x"></span><span class="mid-y"></span>
-      <span class="q" style="right: 8px; top: 8px;">{{ _('Scrivi ora') }}</span>
-      <span class="q" style="left: 8px; top: 8px;">{{ _('Nicchia utile') }}</span>
-      <span class="q" style="right: 8px; bottom: 8px;">{{ _('Rumore') }}</span>
-      <span class="q" style="left: 8px; bottom: 8px;">{{ _('Ignora') }}</span>
-      {% for t in dots %}
-      {% set x = [[t.hype, 2]|max, 96]|min %}{% set y = [[t.opportunity, 2]|max, 96]|min %}
-      <span class="dot {% if t.opportunity < 50 %}far{% endif %}" style="left: {{ x|round|int }}%; bottom: {{ y|round|int }}%;{% if x > 60 %} flex-direction: row-reverse; transform: translate(calc(-100% + 6px), 6px);{% endif %}" title="{{ _('{label} · opportunità {opportunity} · hype {hype}', label=t.label, opportunity=t.opportunity|s100, hype=t.hype|s100) }}"><i></i><span>{{ t.label }}</span></span>
+    {% set quads = [
+      (_('Scrivi ora'), _('conviene al sito e se ne parla'), dots|selectattr('opportunity', 'ge', 50)|selectattr('hype', 'ge', 50)|list, 'green'),
+      (_('Nicchia utile'), _('conviene al sito, se ne parla poco'), dots|selectattr('opportunity', 'ge', 50)|selectattr('hype', 'lt', 50)|list, 'blue'),
+      (_('Rumore'), _('se ne parla, ma non è per il sito'), dots|selectattr('opportunity', 'lt', 50)|selectattr('hype', 'ge', 50)|list, 'amber'),
+      (_('Ignora'), _('poco interesse e poco adatto'), dots|selectattr('opportunity', 'lt', 50)|selectattr('hype', 'lt', 50)|list, ''),
+    ] %}
+    <div class="quads" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+      {% for name, what, items, color in quads %}
+      <div class="dashed" style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="row" style="justify-content: space-between;"><strong>{{ name }}</strong><span class="chip {{ color }}">{{ items|length }}</span></div>
+        <span class="hint">{{ what }}</span>
+        {% for t in (items|sort(attribute='opportunity', reverse=true))[:6] %}
+        <div class="row" style="justify-content: space-between; gap: 8px;"><span style="font-size: 14px;">{{ t.label }}</span><span class="num hint" title="{{ _('opportunità · hype') }}">{{ t.opportunity|s100 }} · {{ t.hype|s100 }}</span></div>
+        {% else %}
+        <span class="hint">–</span>
+        {% endfor %}
+        {% if items|length > 6 %}<span class="hint">{{ _('e altri {n}', n=items|length - 6) }}</span>{% endif %}
+      </div>
       {% endfor %}
-      <span class="axis-x">{{ _('Hype nel settore') }} →</span>
-      <span class="axis-y">{{ _('Opportunità per il sito') }} →</span>
     </div>
     {% else %}
     <p class="empty">{{ _('La mappa compare quando ci sono temi con entrambi i punteggi: serve un profilo approvato e almeno un giro di raccolta.') }}</p>

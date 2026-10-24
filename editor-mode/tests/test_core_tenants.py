@@ -49,6 +49,9 @@ def test_fetches_are_made_as_the_tenant_of_the_work():
             assert fetch.calls.last.request.headers[TENANT_HEADER] == "acme"
             client.get("https://site.example/")  # outside any tenant's work
             assert TENANT_HEADER not in fetch.calls.last.request.headers
+            with acting_for("_archive"):  # the Core refuses names starting with a symbol
+                client.get("https://site.example/")
+            assert fetch.calls.last.request.headers[TENANT_HEADER] == "shared.archive"
         with core_http_client("http://core.test", "tok") as client, acting_for("acme"):
             client.get("https://site.example/")
             assert TENANT_HEADER not in fetch.calls.last.request.headers
