@@ -49,6 +49,14 @@ class ChatResult:
 TENANT_HEADER = "X-EuLLM-Tenant"
 
 
+def core_tenant(tenant_id: str) -> str:
+    """The name the Core knows a tenant by. The Core takes names that start
+    with a letter or a digit: the shared archive (`_archive`) is
+    `shared.archive` there, a name no newsroom can have (their ids are
+    letters, digits and dashes)."""
+    return f"shared.{tenant_id[1:]}" if tenant_id.startswith("_") else tenant_id
+
+
 class CoreClient:
     def __init__(self, base_url: str, token: str, model: str = "default", client: httpx.Client | None = None,
                  guard=None, delegate: bool = False, tenant: str | None = None):
@@ -69,7 +77,7 @@ class CoreClient:
     def headers(self) -> dict:
         h = {"Authorization": f"Bearer {self.token}"}
         if self.tenant:
-            h[TENANT_HEADER] = self.tenant
+            h[TENANT_HEADER] = core_tenant(self.tenant)
         return h
 
     def for_tenant(self, db, tenant_id: str) -> "CoreClient":

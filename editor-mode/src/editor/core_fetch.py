@@ -17,7 +17,7 @@ from contextvars import ContextVar
 
 import httpx
 
-from .core_client import TENANT_HEADER
+from .core_client import TENANT_HEADER, core_tenant
 
 FORWARDED = ("accept", "accept-language", "if-none-match", "if-modified-since")
 
@@ -59,7 +59,7 @@ class CoreTransport(httpx.BaseTransport):
         auth = {"Authorization": f"Bearer {self.token}"}
         tenant = _acting_for.get()
         if self.delegate and tenant:
-            auth[TENANT_HEADER] = tenant
+            auth[TENANT_HEADER] = core_tenant(tenant)
         try:
             r = self.http.post(
                 self.endpoint,

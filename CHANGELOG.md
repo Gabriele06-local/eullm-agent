@@ -2,6 +2,17 @@
 
 ## 0.17.3
 
+### Fixed
+
+- Editor Mode on the server: every read of the shared archive and every
+  model call made for it (the hourly collection, the topic names) was
+  refused by the Core, which takes tenant names that start with a letter
+  or a digit, not `_archive`. Sites whose sources were read only by the
+  archive (eullm.eu, rag-pro.com) never got a news item, the others only
+  from collections started by hand, and topics kept names made of bare
+  keywords. The archive is now `shared.archive` for the Core. This was
+  also what suspended 46 sources this morning.
+
 ### Changed
 
 - Editor Mode, Trend e piano: the topic map is four boxes (Scrivi ora,
