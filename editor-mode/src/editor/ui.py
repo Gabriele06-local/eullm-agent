@@ -930,7 +930,7 @@ def register(app, ctx) -> None:
         with db.tenant(c.tenant_id) as s:
             sites, site = current_site(s, request)
             topics = topic_scores(s, site.id if site else None, 60) if site else []
-            dots = [t for t in topics if t.hype is not None and t.opportunity is not None][:14]
+            dots = [t for t in topics if t.hype is not None and t.opportunity is not None]
             plan = proposal_rows(s, site.id, ("proposed", "accepted", "drafted"), 20) if site else []
             # Written drafts stay in the plan for a week, then live under Bozze.
             week = datetime.now(UTC) - timedelta(days=7)

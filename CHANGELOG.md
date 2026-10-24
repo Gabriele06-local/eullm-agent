@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.3
+
+### Changed
+
+- Editor Mode, Trend e piano: the topic map is four boxes (Scrivi ora,
+  Nicchia utile, Rumore, Ignora) listing every topic of the week with its
+  Opportunity and Hype, instead of dots whose labels overlapped.
+
 ## 0.17.2
 
 ### Changed
