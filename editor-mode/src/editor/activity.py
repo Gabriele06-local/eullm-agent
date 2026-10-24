@@ -89,7 +89,11 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
     if kind == "collect":
         out = [t("{s} fonti lette, {n} notizie nuove, {k} temi nuovi.", s=r.get("sources", 0), n=r.get("new", 0),
                  k=r.get("new_topics", 0))]
-        if r.get("errors"):
+        if r.get("outage"):
+            out.append(t("{n} fonti su {s} non hanno risposto insieme: il guasto è dalla nostra parte (rete del "
+                         "server o Core), non nei siti. Non contano per la sospensione e riprovano al prossimo giro.",
+                         n=r["errors"], s=r.get("sources", 0)))
+        elif r.get("errors"):
             out.append(t("{n} fonti non hanno risposto: riprovano al prossimo giro.", n=r["errors"]))
         return out, "/trends", t("Vedi i trend")
     if kind in ("proposals", "titles"):

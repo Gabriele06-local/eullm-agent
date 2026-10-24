@@ -182,7 +182,8 @@ class Runner:
 
         def run():
             rep = collect_archive(self.db, archive, client, only)
-            out.update(sources=len(rep.sources), new=rep.new, errors=sum(1 for r in rep.sources if r.error))
+            out.update(sources=len(rep.sources), new=rep.new, errors=sum(1 for r in rep.sources if r.error),
+                       outage=rep.outage)
             progress(N_("Raggruppo le notizie in temi"))
             topics = detect_topics(self.db, archive, self.core_for(archive))
             out["new_topics"] = topics.new_topics

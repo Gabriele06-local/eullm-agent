@@ -141,6 +141,11 @@ def followed_by(site_id: int | None = None):
     return select(f.c.id).where(*cond).exists()
 
 
+# Failed reads in a row that suspend an archive source: about a day of
+# hourly reads, so a site down for a few hours, or the server's own network,
+# does not stop a feed for everyone. Before 0.17.1 five were enough.
+ERROR_LIMIT = 24
+
 # Errors of the Core, not of the source, as earlier versions recorded them;
 # before 0.9.3 the Core took a "304 Not Modified" for a redirect.
 CORE_TROUBLE = ("CoreTrouble", "Core unreachable", "Core fetch failed (429)", "limit reached",
@@ -157,11 +162,19 @@ def rescue_sources(s: Session) -> list[int]:
     back = [r.id for r in s.execute(select(src.c.id, src.c.status_reason, src.c.last_error, src.c.shared).where(
         src.c.status == "suspended", src.c.status_set_by.is_(None))).all()
         if (r.status_reason or "").endswith("failed fetches in a row")
-        and (not r.shared or any(k in (r.last_error or "") for k in CORE_TROUBLE))]
+        and (not r.shared or any(k in (r.last_error or "") for k in CORE_TROUBLE)
+             or _failures(r.status_reason) < ERROR_LIMIT)]
     if back:
         s.execute(update(src).where(src.c.id.in_(back)).values(
             status="active", status_reason=None, status_changed_at=datetime.now(UTC), consecutive_errors=0))
     return back
+
+
+def _failures(reason: str) -> int:
+    """The number in "5 failed fetches in a row": a source suspended by an
+    earlier, stricter rule goes back to work."""
+    head = reason.split(" ", 1)[0]
+    return int(head) if head.isdigit() else ERROR_LIMIT
 
 
 def active_sources(s: Session, only: set[int] | None = None) -> list:
