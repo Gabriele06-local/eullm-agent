@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, usage, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, usage, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -951,6 +951,25 @@ def register(app, ctx) -> None:
                           dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None,
                           writing=draft_jobs(s, [p.id for p in plan if p.status == "accepted" and not p.draft_id]),
                           snap=snap, day=day, moment=moment, local=lambda at: at.astimezone(zone(s)))
+
+    @app.get("/index", response_class=HTMLResponse)
+    def news_index(request: Request, at: int | None = None, section: str = "", c: auth.Caller = Depends(viewer)):
+        """The news index: the ranking of the moment, every three hours from
+        07:00, by section, each topic with its summary and news."""
+        with db.tenant(c.tenant_id) as s:
+            sites, site = current_site(s, request)
+            archive = repo.archive_of(db, c.tenant_id)
+            day = trends.today(s, archive, start_of_day(s))
+            snap = next((d for d in day if d.id == at), None) if at else None
+            snap = snap or trends.latest(s, archive)
+            topics = list(snap.topics) if snap else []
+            counts = {k: sum(1 for x in topics if (x.get("section") or "other") == k)
+                      for k in (*news_base.SECTIONS, "other")}
+            if section in counts:
+                topics = [x for x in topics if (x.get("section") or "other") == section]
+            return render(request, "index.html.j2", c, s, "index", _sites=(sites, site), snap=snap, day=day,
+                          topics=topics, counts=counts, section=section if section in counts else "",
+                          local=lambda v: v.astimezone(zone(s)))
 
     @app.post("/ui/trends/{topic_id}/titles")
     def ui_titles(request: Request, topic_id: int, c: auth.Caller = Depends(ctx.need("editor"))):

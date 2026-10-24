@@ -8,7 +8,7 @@ from editor.api import create_app
 from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
 
-PAGES = ["/", "/activity", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
+PAGES = ["/", "/activity", "/index", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
          "/publications", "/settings", "/guide"]
 
 

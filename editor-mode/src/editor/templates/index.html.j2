@@ -1,0 +1,58 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ _('Indice notizie') }}{% endblock %}
+{% block main %}
+{% set names = {'world': _('Mondo e politica'), 'economy': _('Economia'), 'tech': _('Tecnologia'), 'other': _('Dalle fonti dei siti')} %}
+<header class="head">
+  <div>
+    <span class="kicker">{{ _('tutti i siti') }}{% if snap %} · {{ _('aggiornato alle {time}', time=local(snap.taken_at).strftime('%H:%M')) }}{% endif %}</span>
+    <h1>{{ _('Indice notizie') }}</h1>
+    <p class="lead">{{ _("Ogni giorno alle 7:00, e poi ogni tre ore, la classifica dei temi più in crescita tra le notizie di tutte le fonti: la base internazionale (mondo, economia, tecnologia, in inglese e nelle lingue dei siti) e le fonti dei tuoi siti. Per ogni tema un riassunto, le notizie e quante fonti ne parlano.") }}</p>
+  </div>
+  {% if day|length > 1 %}
+  <form method="get" action="/index" class="row">
+    <label class="field" style="flex-direction: row; align-items: center; gap: 8px;">{{ _('Classifica delle') }}
+      <select name="at" onchange="this.form.submit()">
+        {% for d in day %}<option value="{{ d.id }}" {% if snap and d.id == snap.id %}selected{% endif %}>{{ local(d.taken_at).strftime('%H:%M') }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if section %}<input type="hidden" name="section" value="{{ section }}">{% endif %}
+    <noscript><button class="btn sm" type="submit">{{ _('Vai') }}</button></noscript>
+  </form>
+  {% endif %}
+</header>
+
+<nav class="tabs" aria-label="{{ _('Sezioni') }}">
+  {% set q = ('&at=' ~ snap.id) if snap and request.query_params.get('at') else '' %}
+  <a href="/index?section={{ q }}" {% if not section %}class="on"{% endif %}>{{ _('Tutte') }} <span class="num">{{ counts.values()|sum }}</span></a>
+  {% for k, n in counts.items() if n %}
+  <a href="/index?section={{ k }}{{ q }}" {% if section == k %}class="on"{% endif %}>{{ names[k] }} <span class="num">{{ n }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="card" aria-label="{{ _('Classifica') }}">
+  {% for x in topics %}
+  <article class="rank-item">
+    <span class="pos num">{{ loop.index }}</span>
+    <div class="body">
+      <div class="row" style="gap: 8px;">
+        <strong>{{ x.label }}</strong>
+        {% if x.section %}<span class="chip">{{ names[x.section] }}</span>{% endif %}
+      </div>
+      {% if x.summary %}<p>{{ x.summary }}</p>{% endif %}
+      <ul>
+        {% for n in x.news %}<li><a href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a></li>{% endfor %}
+      </ul>
+    </div>
+    <div class="side">
+      <div class="pair" style="grid-template-columns: 90px 36px;"><div class="bar"><i class="hype" style="width: {{ x.hype|round|int }}%"></i></div><span class="num">{{ x.hype|s100 }}</span></div>
+      <span class="hint">{{ x.sources|plural(_('fonte'), _('fonti')) }} · {{ x['items']|plural(_('notizia'), _('notizie')) }}</span>
+      {% if site and caller.can('editor') %}
+      <form class="inline" method="post" action="/ui/trends/{{ x.topic_id }}/titles"><button class="btn sm" type="submit" title="{{ _('Tre titoli per {site}, tra cui scegliere in Trend e piano', site=site.domain) }}">{{ _('Titoli per {site}', site=site.domain) }}</button></form>
+      {% endif %}
+    </div>
+  </article>
+  {% else %}
+  <p class="empty">{{ _("La prima classifica arriva con la prossima raccolta: dalle 7:00, ogni tre ore. Puoi anche lanciare la raccolta dal Desk.") }}</p>
+  {% endfor %}
+</section>
+{% endblock %}

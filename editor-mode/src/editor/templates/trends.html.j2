@@ -22,7 +22,7 @@
     <span class="chip blue">{{ _('Hype {n}', n=x.hype|s100) }}</span>
     <div class="what">
       <strong>{{ x.label }}</strong>
-      <span class="hint">{{ x.sources|plural(_('fonte'), _('fonti')) }} · {{ x.items|plural(_('notizia'), _('notizie')) }} · {{ _('opportunità {n}', n=x.opportunity|s100) }}</span>
+      <span class="hint">{{ x.sources|plural(_('fonte'), _('fonti')) }} · {{ x['items']|plural(_('notizia'), _('notizie')) }} · {{ _('opportunità {n}', n=x.opportunity|s100) }}</span>
       {% if x.summary %}<p style="margin: 4px 0;">{{ x.summary }}</p>{% endif %}
       <ul style="margin: 4px 0; padding-left: 18px;">
         {% for n in x.news %}<li><a href="{{ n.url }}" rel="noopener noreferrer" target="_blank">{{ n.title }}</a></li>{% endfor %}

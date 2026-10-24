@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select, text
 
-from . import briefing, jobs, models as m, opportunity, proposals, repo, sources, tenant_data, trends
+from . import briefing, jobs, models as m, news_base, opportunity, proposals, repo, sources, tenant_data, trends
 from .i18n import N_
 from .ingest import collect_archive
 from .progress import step as progress
@@ -175,6 +175,10 @@ class Runner:
         07:00 every three hours keep the trend of the moment. Returns what
         was read, for the dashboard."""
         out: dict = {}
+        if getattr(self.settings, "base_news", False):
+            # The news base is read for everyone, whatever the newsrooms follow.
+            base = news_base.ensure(self.db, archive)
+            only = None if only is None else only | base
 
         def run():
             rep = collect_archive(self.db, archive, client, only)

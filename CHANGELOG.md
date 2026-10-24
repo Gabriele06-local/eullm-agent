@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.15.0
+
+### Added
+
+- Editor Mode, the news base: 46 general news feeds read once an hour in the
+  shared archive for every newsroom, whatever its sites follow: world and
+  politics, economy and technology, in English (BBC, Guardian, NYT, Al
+  Jazeera, DW, France 24, Euronews, FT, Ars Technica, The Verge, TechCrunch,
+  Hacker News...) and in Italian, German, French and Spanish (ANSA,
+  Corriere, Repubblica, Il Sole 24 Ore, tagesschau, Spiegel, heise, Le
+  Monde, El País, Xataka...), so national news reach the sites of that
+  country. `EDITOR_BASE_NEWS=0` turns them off.
+- News index (/index): every three hours from 07:00, the 40 topics rising
+  most across all sources, ranked, each with a short summary, its news,
+  how many sources tell it and its section (world, economy, technology, or
+  the sites' own sources), with tabs per section and "Titoli per <sito>".
+
+### Changed
+
+- The keywords of a site's profile are written in the site's language and
+  again in English, so both national and international news are found.
+  Existing profiles get them at the next analysis ("Rianalizza").
+- Topic labels by the model are capped at the 10 largest topics touched by
+  each run, so the larger base does not multiply the cost; the others keep
+  their keyword labels until they grow.
+
+### Fixed
+
+- Trend e piano showed "<built-in method items>" instead of the number of
+  news of a topic.
+
 ## 0.14.0
 
 ### Changed

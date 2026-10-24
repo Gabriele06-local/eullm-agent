@@ -200,7 +200,7 @@ SYSTEM = (
     "and add a line to gaps. Never invent a sector, audience or source. Reply with JSON only:\n"
     '{"summary": {"value": "<two or three sentences, in the site language, on what the site publishes, for whom and how; or null>", "evidence": ["<url>"]},\n'
     ' "sector": {"value": "<sector or null>", "evidence": ["<url>"]},\n'
-    ' "subtopics": [{"name": "<subtopic>", "keywords": ["<3-8 lowercase keywords in the site language>"], "evidence": ["<url>"]}],\n'
+    ' "subtopics": [{"name": "<subtopic>", "keywords": ["<lowercase keywords: 3-6 in the site language, then the same ones in English, so news in both languages are found; a site in English lists them once>"], "evidence": ["<url>"]}],\n'
     ' "audience": {"value": "<who reads it, or null>", "evidence": ["<url>"]},\n'
     ' "style": {"tone": "<tone, or null>", "formats": ["news|guide|review|analysis|opinion|tutorial|interview|data"], "evidence": ["<url>"]},\n'
     ' "gaps": ["<what could not be determined>"]}'
@@ -268,7 +268,7 @@ def make_validator(allowed_urls: set[str]):
             kws = [k.lower() for k in s.get("keywords", []) if isinstance(k, str)]
             ev = ok_evidence(s.get("evidence"))
             if kws and ev:
-                out["subtopics"].append({"name": s["name"], "keywords": kws[:8], "evidence": ev[:5]})
+                out["subtopics"].append({"name": s["name"], "keywords": list(dict.fromkeys(kws))[:14], "evidence": ev[:5]})
         return out
 
     return validate
