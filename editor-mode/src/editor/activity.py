@@ -161,7 +161,7 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
     by_domain = {d: i for i, d in domains.items()}
     proposal_ids = [r.args.get("proposal_id") for r in rows if r.kind == "draft" and r.args]
     proposal_site = dict(s.execute(select(m.proposals.c.id, m.proposals.c.site_id)
-                                   .where(m.proposals.c.id.in_([x for x in proposal_ids if x])))) \
+                                   .where(m.proposals.c.id.in_([x for x in proposal_ids if x]))).all()) \
         if proposal_ids else {}
     running = any(r.status == "running" for r in rows)
     items, stalled = [], False

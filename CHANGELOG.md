@@ -14,6 +14,9 @@
   server's network, DNS, the Core), so the failures are shown but do not
   count towards suspension, and Attività says so. Sources suspended by the
   old rule go back to work by themselves at the next collection.
+- Editor Mode: "Accetta e scrivi la bozza" answered Internal Server Error,
+  and so did every page with the Attività box while a draft was being
+  written (the box read the proposals' sites the wrong way).
 
 ## 0.17.0
 
