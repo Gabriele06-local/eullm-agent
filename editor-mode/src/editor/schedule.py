@@ -269,8 +269,7 @@ class Runner:
         with self.db.tenant(tenant) as s:
             site_ids = list(s.execute(select(m.sites.c.id)).scalars())
         for site_id in site_ids:
-            ops = opportunity.score_site(self.db, tenant, site_id, now=now)
-            proposals.propose(self.db, tenant, site_id, ops, core)
+            proposals.plan(self.db, tenant, site_id, core, now=now)
         bid = briefing.build(self.db, tenant, day, language)
         if self.sender is not None:
             self.sender.send(self.db, tenant, bid)

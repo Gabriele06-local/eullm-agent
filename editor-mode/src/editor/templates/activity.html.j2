@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ _('Attività') }}{% endblock %}
+{% block main %}
+<header class="head">
+  <div>
+    <span class="kicker"><a href="/">{{ _('Desk') }}</a> · {{ _('tutti i siti') }}</span>
+    <h1>{{ _('Attività') }}</h1>
+    <p class="lead">{{ _('Ogni lavoro delle ultime 24 ore: cosa ha fatto, quanto è durato e cosa ha prodotto.') }}</p>
+  </div>
+  <a class="btn" href="/">{{ _('Torna al Desk') }}</a>
+</header>
+{% include "_activity.html.j2" %}
+{% endblock %}

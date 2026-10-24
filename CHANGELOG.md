@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.14.0
+
+### Changed
+
+- Editor Mode, proposals every day. Until now a proposal needed a topic
+  told by two sources, or one "strong" news item, and its closeness to the
+  site was a word-for-word match between the profile's keywords, in the
+  site's language, and news that come mostly in English: Italian sites got
+  "nothing to propose" in 0 seconds. Now the topics come first, as before,
+  and the rest of the day's number comes from the best single news items of
+  the last 72 hours for the site (its own sources first, then the shared
+  archive): scored without the model on word roots (so "inferenza" meets
+  "inference"), the site's sources and their rating, freshness, how many
+  sources tell the story and what the site already covered. One model call
+  reads the first 30 and picks the best, writing title and angle (before:
+  one call per proposal); without the model the formula's first ones are
+  taken. Each such proposal is marked "notizia singola" and says why it was
+  chosen. Nothing is proposed only when no news came in for 72 hours, and
+  the Attività box says so in red.
+- Desk, a cockpit of the whole newsroom: six figures at the top (decisions,
+  proposals, drafts, news in 24 hours, sources, model cost over 30 days),
+  decisions one line each with the details on click, the Attività box one
+  line per job with the full day on the new Attività page (/activity), the
+  sites table with each site's model cost over 30 days, and the most active
+  sites, the most expensive sites and the latest news.
+
+### Added
+
+- `proposals.basis`: what a proposal stands on (a topic, or a single news
+  item with its score and who picked it). Migration 0023 (SQLite 0012).
+
 ## 0.13.1
 
 ### Added

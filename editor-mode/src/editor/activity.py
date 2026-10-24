@@ -14,7 +14,6 @@ from sqlalchemy import or_, select
 
 from . import models as m
 from .i18n import N_, t
-from .proposals import MIN_OPPORTUNITY
 from .queue import PRIORITY_PERSON
 
 KINDS = {
@@ -92,16 +91,16 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
     if kind in ("proposals", "titles"):
         if r.get("proposals"):
             return [t("{n} proposte nuove da decidere.", n=r["proposals"])], "/", t("Decidi")
-        out = [t("Nessuna proposta nuova: nessun tema ha ancora due notizie di fonti diverse, o una notizia "
-                 "forte di una fonte affidabile. Prova dopo una raccolta.")]
-        best = r.get("best")
-        if best:
-            out.append(t("Il tema più vicino è «{label}»: opportunità {o}/100 (ne serve {min}), {n} notizie da {k} fonti.",
-                         label=best["label"], o=best["opportunity"], min=round(MIN_OPPORTUNITY),
-                         n=best["items"], k=best["sources"]))
-        elif kind == "proposals":
-            out.append(t("Non ci sono ancora temi con un'opportunità calcolata per questo sito: lancia la raccolta."))
-        return out, _site_link(site_id, "/trends"), t("Vedi i trend")
+        why = r.get("why")
+        if why == "no_news":
+            return [t("Nessuna notizia raccolta nelle ultime 72 ore: la raccolta è ferma o le fonti non rispondono. "
+                      "Lancia la raccolta dal Desk e controlla le fonti.")], "/sources", t("Vedi le fonti")
+        if why == "no_profile":
+            return [t("Prima approva il profilo del sito.")], _site_link(site_id, "/site"), t("Vedi il profilo")
+        if why == "all_proposed":
+            return [t("Tutte le notizie delle ultime 72 ore sono già state proposte a questo sito: "
+                      "le prossime arrivano con la raccolta, ogni ora.")], _site_link(site_id, "/trends"), t("Vedi i trend")
+        return [t("Nessuna proposta nuova.")], _site_link(site_id, "/trends"), t("Vedi i trend")
     if kind == "draft":
         text = t("Bozza pronta: «{title}».", title=r.get("title", ""))
         if r.get("status") == "needs_review":
@@ -117,9 +116,15 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
     return [], None, None
 
 
-def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datetime | None = None) -> dict:
+SHORT = 5  # jobs the compact box shows; the rest are on the Attività page
+
+
+def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datetime | None = None,
+           compact: bool = True) -> dict:
     """The jobs to show: those waiting or running, and those ended in the
-    last 15 minutes (the last day on the Desk)."""
+    last 15 minutes (the last day on the Desk and on the Attività page).
+    `compact`: one line per job, at most five on the Desk; the Attività
+    page shows every job with all it produced."""
     now = now or datetime.now(UTC)
     j = m.jobs.c
     since = now - (timedelta(hours=24) if full else RECENT)
@@ -127,7 +132,7 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
         j.kind.in_(KINDS), j.priority.is_not(None),
         or_(j.priority >= PRIORITY_PERSON, j.status == "running"),
         or_(j.status.in_(("queued", "running")), j.finished_at >= since),
-    ).order_by(j.id.desc()).limit(30 if full else 8)).all()
+    ).order_by(j.id.desc()).limit((30 if compact else 100) if full else 8)).all()
     domains = dict(s.execute(select(m.sites.c.id, m.sites.c.domain)).all())
     by_domain = {d: i for i, d in domains.items()}
     proposal_ids = [r.args.get("proposal_id") for r in rows if r.kind == "draft" and r.args]
@@ -150,7 +155,9 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
             except (KeyError, IndexError, ValueError):
                 step = r.progress["text"]
         item = {"id": r.id, "what": t(KINDS[r.kind]), "where": where, "status": r.status, "step": step,
-                "lines": [], "href": None, "link": None, "warn": None}
+                "lines": [], "href": None, "link": None, "warn": None,
+                # The hour it ended, or since when it waits or runs: the compact box's last column.
+                "at": _aware(r.finished_at or r.started_at or r.run_after, now).astimezone(tz).strftime("%H:%M")}
         if r.status == "queued":
             waited = now - _aware(r.run_after or r.started_at, now)
             item["state"] = t("In coda da {d}", d=_duration(waited))
@@ -170,6 +177,8 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
             item["step"] = None
             if r.kind == "analysis" and res.get("status") == "failed":
                 item["status"] = "failed"  # the work ran, but the site could not be read
+            elif r.kind == "proposals" and res.get("why") == "no_news":
+                item["status"] = "failed"  # nothing came in: the collection is stopped
             elif "incomplete" in res:
                 item["status"] = "partial"
         else:
@@ -180,8 +189,13 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
             item["step"] = None
         items.append(item)
     items.sort(key=lambda x: (x["status"] not in ("running", "queued"), x["status"] != "running"))
+    total = len(items)
+    if compact and full:
+        # The Desk keeps what is running and the latest ones; the rest is a click away.
+        items = items[:max(SHORT, sum(x["status"] in ("running", "queued") for x in items))]
     return {"items": items, "active": any(x["status"] in ("running", "queued") for x in items),
-            "stalled": stalled, "full": full}
+            "stalled": stalled, "full": full, "compact": compact, "total": total,
+            "mode": ("desk" if compact else "page") if full else "recent"}
 
 
 def _aware(value: datetime | None, now: datetime) -> datetime:

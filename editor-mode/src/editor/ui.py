@@ -443,10 +443,14 @@ def register(app, ctx) -> None:
                 article = t("Un articolo che riprende la notizia qui sotto e la spiega ai lettori del tuo sito.")
             else:
                 article = t("Un articolo che mette insieme le notizie qui sotto e le spiega ai lettori del tuo sito.")
+            basis = r.basis or {}
+            single = basis.get("kind") == "news"
+            matched = basis.get("matched") if single else comp.get("matched_subtopic")
             why = []
-            if comp.get("matched_subtopic"):
-                why.append(t("Rientra in «{topic}», uno degli argomenti del tuo profilo editoriale.",
-                             topic=comp["matched_subtopic"]))
+            if matched:
+                why.append(t("Rientra in «{topic}», uno degli argomenti del tuo profilo editoriale.", topic=matched))
+            elif single and basis.get("picked_by") == "model":
+                why.append(t("Il modello l'ha scelta tra le notizie delle ultime 72 ore come utile ai lettori del sito."))
             if model and r.why_now:
                 why.append(r.why_now)
             opp = round(r.opportunity or 0)
@@ -470,9 +474,13 @@ def register(app, ctx) -> None:
                 "format": t(FORMATS[r.format]) if r.format in FORMATS else r.format,
                 "news": cited,
                 "why": " ".join(why),
-                "opportunity": t("Opportunità {n}/100: quanto conviene a questo sito scriverne adesso, in base "
-                                 "alla vicinanza ai tuoi argomenti, alla novità e all'affidabilità delle fonti. "
-                                 "Da {min} in su l'agente la propone.", n=opp, min=round(props.MIN_OPPORTUNITY)),
+                "opportunity": t("Punteggio {n}/100 tra le notizie delle ultime 72 ore: vicinanza ai tuoi argomenti, "
+                                 "fonte seguita dal sito e sua affidabilità, freschezza, quante fonti la riportano, "
+                                 "novità rispetto a ciò che hai già scritto.", n=opp) if single else
+                t("Opportunità {n}/100: quanto conviene a questo sito scriverne adesso, in base "
+                  "alla vicinanza ai tuoi argomenti, alla novità e all'affidabilità delle fonti. "
+                  "Da {min} in su l'agente la propone.", n=opp, min=round(props.MIN_OPPORTUNITY)),
+                "single": single,
                 "hype": hype_text,
             }
         return out
@@ -484,12 +492,21 @@ def register(app, ctx) -> None:
     # --- Oggi -----------------------------------------------------------------------
 
     @app.get("/ui/activity", response_class=HTMLResponse)
-    def activity_box(request: Request, full: int = 0, c: auth.Caller = Depends(viewer)):
-        """The Attività box alone, fetched again while work runs."""
+    def activity_box(request: Request, mode: str = "recent", c: auth.Caller = Depends(viewer)):
+        """The Attività box alone, fetched again while work runs: as on every
+        page (recent), on the Desk (desk) or on the Attività page (page)."""
         with db.tenant(c.tenant_id) as s:
-            data = act.recent(s, zone(s), problem, full=bool(full))
+            data = act.recent(s, zone(s), problem, full=mode in ("desk", "page"), compact=mode != "page")
         return pages.TemplateResponse(request, "_activity.html.j2", {"activity": data},
                                       headers={"Cache-Control": "no-store"})
+
+    @app.get("/activity", response_class=HTMLResponse)
+    def activity_page(request: Request, c: auth.Caller = Depends(viewer)):
+        """Every job of the last day, with all it produced."""
+        with db.tenant(c.tenant_id) as s:
+            sites, site = current_site(s, request)
+            return render(request, "activity.html.j2", c, s, "today", _sites=(sites, site),
+                          activity=act.recent(s, zone(s), problem, full=True, compact=False))
 
     @app.get("/", response_class=HTMLResponse)
     def today(request: Request, c: auth.Caller = Depends(viewer)):
@@ -535,13 +552,6 @@ def register(app, ctx) -> None:
             new_today = s.execute(select(func.count()).select_from(m.proposals).where(
                 m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s))).scalar()
             usage = quotas.usage(s)
-            # Only what could become a proposal: the same rule as proposals.py.
-            tops = []
-            for x in sites:
-                tops += [{"domain": x.domain, "row": t} for t in topic_scores(s, x.id, 40) if t.opportunity is not None and (
-                    (t.items >= props.MIN_ITEMS and t.sources >= props.MIN_SOURCES)
-                    or (t.opportunity >= props.STRONG_OPPORTUNITY and (t.best_source or 0) >= props.STRONG_SOURCE))][:3]
-            tops = sorted(tops, key=lambda x: -x["row"].opportunity)[:5]
             # The archive sources this newsroom follows: when they were last read,
             # and fetches the Core could not make (down, or out of daily fetches).
             followed = list(repo.followed_archive(s))
@@ -556,13 +566,30 @@ def register(app, ctx) -> None:
             # A source the maintenance suspended is news, not a decision.
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs)
             desk = desk_rows(s, sites, lines, pending)
+            # The cockpit: the busiest and the most expensive sites, the latest news.
+            busiest = sorted((x for x in desk if x["news"] or x["proposals_week"] or x["drafts_week"]),
+                             key=lambda x: (-(x["news"] + 5 * x["proposals_week"] + 10 * x["drafts_week"]), x["domain"]))[:5]
+            costly = sorted((x for x in desk if x["calls"]), key=lambda x: (-x["cost"], -x["tokens"]))[:5]
+            u = m.llm_usage.c
+            month = s.execute(select(func.coalesce(func.sum(u.cost), 0.0), func.count()).where(
+                u.at >= datetime.now(UTC) - timedelta(days=30), u.error.is_(None))).one()
+            si = m.source_items
+            news_day = s.execute(select(func.count()).select_from(si).where(
+                repo.followed_by(), si.c.fetched_at >= datetime.now(UTC) - timedelta(hours=24))).scalar() or 0
+            latest = s.execute(
+                select(si.c.title, si.c.url, si.c.published_at, si.c.fetched_at, m.sources.c.name.label("source"))
+                .join(m.sources, m.sources.c.id == si.c.source_id)
+                .where(repo.followed_by(), si.c.duplicate_of.is_(None))
+                .order_by(si.c.fetched_at.desc(), si.c.id.desc()).limit(6)).all()
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk,
+                          busiest=busiest, costly=costly, cost_month=month[0], calls_month=month[1],
+                          news_day=news_day, latest=latest,
                           activity=act.recent(s, zone(s), problem, full=True),
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
                           proposed=proposed, explained=explained, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
-                          usage=usage, tops=tops, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions)
+                          usage=usage, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions)
 
     def draft_jobs(s, proposal_ids: list[int]) -> dict[int, dict]:
         """The latest draft job of each accepted proposal still without a
@@ -580,8 +607,16 @@ def register(app, ctx) -> None:
         """One row per site on the Desk: where it stands, its numbers, the
         work running on it and the next step."""
         day_ago = datetime.now(UTC) - timedelta(hours=24)
+        week_ago = datetime.now(UTC) - timedelta(days=7)
         j = m.jobs.c
         active = s.execute(select(j.kind, j.subject, j.args).where(j.status.in_(("queued", "running")))).all()
+        u = m.llm_usage.c
+        # What each site cost in the last 30 days, at the prices of core.yaml.
+        spent = {r.site_id: r for r in s.execute(
+            select(u.site_id, func.coalesce(func.sum(u.cost), 0.0).label("cost"), func.count().label("calls"),
+                   func.coalesce(func.sum(u.input_tokens), 0).label("tin"),
+                   func.coalesce(func.sum(u.output_tokens), 0).label("tout"))
+            .where(u.at >= datetime.now(UTC) - timedelta(days=30), u.error.is_(None)).group_by(u.site_id)).all()}
         rows = []
         for x in sites:
             def count(table, *where):
@@ -597,6 +632,10 @@ def register(app, ctx) -> None:
                 "news": count(m.source_items, repo.followed_by(x.id), m.source_items.c.fetched_at >= day_ago),
                 "proposals": count(m.proposals, m.proposals.c.site_id == x.id, m.proposals.c.status == "proposed"),
                 "drafts": count(m.drafts, m.drafts.c.site_id == x.id, m.drafts.c.status.in_(("draft", "needs_review"))),
+                "proposals_week": count(m.proposals, m.proposals.c.site_id == x.id, m.proposals.c.created_at >= week_ago),
+                "drafts_week": count(m.drafts, m.drafts.c.site_id == x.id, m.drafts.c.created_at >= week_ago),
+                "cost": spent[x.id].cost if x.id in spent else 0.0, "calls": spent[x.id].calls if x.id in spent else 0,
+                "tokens": (spent[x.id].tin + spent[x.id].tout) if x.id in spent else 0,
                 "next": nxt, "working": bool(working - {"collect", "tick", "draft"}),
             })
         return rows
@@ -630,8 +669,7 @@ def register(app, ctx) -> None:
              "href": "/trends", "busy": not count(m.proposals, of(m.proposals.c.site_id), m.proposals.c.status == "proposed"),
              "wait": (t("Hai scartato le proposte arrivate finora. ") if count(m.proposals, of(m.proposals.c.site_id), m.proposals.c.status == "rejected") else "")
              + t("Le prossime arrivano domattina all'ora del briefing, oppure subito con \"Proponi adesso\" in "
-                 "Trend e piano: servono due notizie di due fonti diverse sullo stesso tema, o una notizia forte "
-                 "(opportunità da 50/100) di una fonte affidabile."),
+                 "Trend e piano: prima i temi raccontati da più fonti, poi le notizie singole più adatte al sito."),
              "todo": t("Accetta le proposte che ti interessano e scarta le altre.")},
             {"title": t("Rileggi la prima bozza"), "past": t("Prima bozza approvata"), "done": count(m.drafts, of(m.drafts.c.site_id), m.drafts.c.status == "approved") > 0,
              "href": "/drafts", "busy": "draft" in working, "wait": t("La bozza è in scrittura."),
