@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, trends, usage, vault
+from . import activity as act, accounts, auth, billing, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
 from .i18n import N_, t
 
 COOKIE = "editor_token"
@@ -406,7 +406,8 @@ def register(app, ctx) -> None:
                 .order_by(m.trend_scores.c.computed_at.desc()).limit(1).scalar_subquery())
         cites = (select(func.count()).select_from(m.proposal_citations)
                  .where(m.proposal_citations.c.proposal_id == p.c.id).scalar_subquery())
-        draft = (select(func.max(m.drafts.c.id)).where(m.drafts.c.proposal_id == p.c.id).scalar_subquery())
+        draft = (select(func.max(m.drafts.c.id)).where(m.drafts.c.proposal_id == p.c.id,
+                                                       m.drafts.c.translation_of.is_(None)).scalar_subquery())
         q = (select(p, m.sites.c.domain, hype.label("hype"), cites.label("citations"), draft.label("draft_id"))
              .join(m.sites, m.sites.c.id == p.c.site_id).where(p.c.status.in_(statuses))
              .order_by(p.c.created_at.desc()).limit(limit))
@@ -730,6 +731,8 @@ def register(app, ctx) -> None:
                       comparison=prof.compare(approved.body, draft.body) if approved and draft else [],
                       jobs=[j for j in jobs.recent(s, 10) if j["status"] != "done"][:5],
                       domain_free=manage.can_change_domain(s, site.id) if site else False,
+                      langs=tr.LANGUAGES, own_language=tr.main_language(s, site.id) if site else None,
+                      site_langs=tr.site_languages(s, site.id) if site else [], max_languages=tr.allowed(s),
                       body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "")
 
     @app.get("/site", response_class=HTMLResponse)
@@ -1041,9 +1044,10 @@ def register(app, ctx) -> None:
                 claims = (select(func.count()).select_from(m.draft_claims)
                           .where(m.draft_claims.c.draft_id == d.c.id).scalar_subquery())
                 rows = s.execute(select(d.c.id, d.c.title, d.c.status, d.c.version, d.c.created_at, d.c.flags,
+                                        d.c.language, d.c.translation_of,
                                         claims.label("claims")).where(d.c.site_id == site.id)
                                  .order_by(d.c.created_at.desc()).limit(100)).all()
-            return render(request, "drafts.html.j2", c, s, "drafts", _sites=(sites, site), rows=rows)
+            return render(request, "drafts.html.j2", c, s, "drafts", _sites=(sites, site), rows=rows, langs=tr.LANGUAGES)
 
     @app.get("/drafts/{draft_id}", response_class=HTMLResponse)
     def draft_view(request: Request, draft_id: int, edit: int = 0, c: auth.Caller = Depends(viewer)):
@@ -1080,7 +1084,21 @@ def register(app, ctx) -> None:
                              .join(m.publish_targets, m.publish_targets.c.id == m.publications.c.target_id)
                              .where(m.publications.c.draft_id == draft_id).order_by(m.publications.c.id)).all()
             sites, site = current_site(s, request)
+            # The original and its translations, and the site's languages still missing.
+            root = d.translation_of or d.id
+            family = s.execute(select(m.drafts.c.id, m.drafts.c.language, m.drafts.c.status, m.drafts.c.title,
+                                      m.drafts.c.translation_of)
+                               .where(or_(m.drafts.c.id == root, m.drafts.c.translation_of == root))
+                               .order_by(m.drafts.c.id)).all()
+            original = next((x for x in family if x.id == root), None)
+            j = m.jobs.c
+            translating = {a.get("language") for a in s.execute(select(j.args).where(
+                j.kind == "translate", j.status.in_(("queued", "running")))).scalars() if a and a.get("draft_id") == root}
+            have = {x.language for x in family}
+            wanted = [x for x in tr.site_languages(s, d.site_id) if x not in have]
             return render(request, "draft.html.j2", c, s, "drafts", _sites=(sites, site), d=d, sections=sections,
+                          original=original, translations=[x for x in family if x.translation_of],
+                          wanted=wanted, translating=translating, langs=tr.LANGUAGES, can_translate=ctx.core is not None,
                           sources=[{"n": refs[i], **items[i]._mapping} for i in order if i in items],
                           flags=flags, checks=checks, targets=targets, pubs=pubs, kinds=TARGET_KINDS,
                           sd=d.seo or {}, editing=bool(edit) and c.can("editor"), claims=claims, flagged_ordinals=flagged, seo_checks=[{"label": t(SEO_CHECKS[x["key"]]), "ok": x["ok"]}
@@ -1090,8 +1108,46 @@ def register(app, ctx) -> None:
     def ui_draft_decision(draft_id: int, accept: str = Form(...), c: auth.Caller = Depends(ctx.need("editor"))):
         if not drafts.decide(db, c.tenant_id, draft_id, accept == "1", c.name):
             return done(f"/drafts/{draft_id}", t("Questa bozza era già stata decisa."))
-        return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione.")
-                    if accept == "1" else t("Bozza rifiutata."))
+        if accept != "1":
+            return done(f"/drafts/{draft_id}", t("Bozza rifiutata."))
+        todo = ctx.run_translations(c.tenant_id, draft_id)
+        if todo:
+            return done(f"/drafts/{draft_id}", t("Bozza approvata. Traduzioni in scrittura ({languages}): le segui nel "
+                                                 "riquadro Attività, ognuna conta come un articolo.",
+                                                 languages=", ".join(tr.LANGUAGES[x] for x in todo)))
+        return done(f"/drafts/{draft_id}", t("Bozza approvata: ora puoi chiederne la pubblicazione."))
+
+    @app.post("/ui/drafts/{draft_id}/translate")
+    def ui_translate(draft_id: int, language: str = Form(...), c: auth.Caller = Depends(ctx.need("editor"))):
+        if ctx.core is None:
+            return done(f"/drafts/{draft_id}", t("Nessun Core configurato: per tradurre serve un modello."))
+        with db.tenant(c.tenant_id) as s:
+            d = s.execute(select(m.drafts.c.site_id, m.drafts.c.translation_of).where(m.drafts.c.id == draft_id)).first()
+            if d is None:
+                raise HTTPException(404, "draft not found")
+            ok = language in tr.site_languages(s, d.site_id)
+        if not ok:
+            return done(f"/drafts/{draft_id}", t("Aggiungi prima la lingua al sito, in Sito e profilo."))
+        ctx.run_translation(c.tenant_id, d.translation_of or draft_id, language)
+        return done(f"/drafts/{draft_id}", t("Traduzione in {language} in scrittura: la segui nel riquadro Attività.",
+                                             language=tr.LANGUAGES[language]))
+
+    @app.post("/ui/sites/{site_id}/languages")
+    async def ui_languages(request: Request, site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        form = await request.form()
+        try:
+            chosen = tr.set_languages(db, c.tenant_id, site_id, [str(x) for x in form.getlist("languages")])
+        except LookupError:
+            raise HTTPException(404, "site not found") from None
+        except tr.LanguageError:
+            with db.tenant(c.tenant_id) as s:
+                limit = tr.allowed(s)
+            return done("/site#h-languages", t("Il piano permette {n} lingue per sito, compresa la sua: togline qualcuna "
+                                               "o passa a un piano più grande.", n=limit))
+        if not chosen:
+            return done("/site#h-languages", t("Gli articoli restano solo nella lingua del sito."))
+        return done("/site#h-languages", t("Ogni articolo approvato sarà tradotto in: {languages}.",
+                                           languages=", ".join(tr.LANGUAGES[x] for x in chosen)))
 
     @app.post("/ui/drafts/{draft_id}/publish")
     def ui_publish(draft_id: int, target_id: int = Form(...), mode: str = Form("draft"),

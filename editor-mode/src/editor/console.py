@@ -37,6 +37,7 @@ class LimitsIn(BaseModel):
     max_items_per_day: int | None = Field(None, ge=0)
     max_llm_cost_month: float | None = Field(None, ge=0)
     max_drafts_month: int | None = Field(None, ge=0)
+    max_languages: int | None = Field(None, ge=1)
 
 
 class _Settings(BaseModel):
@@ -326,12 +327,13 @@ def register(app, ctx) -> None:
     @app.post("/admin/newsrooms", response_class=HTMLResponse)
     def ui_create(request: Request, name: str = Form(...), owner_email: str = Form(...), plan: str = Form(""),
                   max_sites: str = Form(""), max_active_sources: str = Form(""), max_items_per_day: str = Form(""),
-                  max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), s=Depends(need_console)):
+                  max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), max_languages: str = Form(""),
+                  s=Depends(need_console)):
         try:
             limits = {"max_sites": _num(max_sites), "max_active_sources": _num(max_active_sources),
                       "max_items_per_day": _num(max_items_per_day),
                       "max_llm_cost_month": _num(max_llm_cost_month, money=True),
-                      "max_drafts_month": _num(max_drafts_month)}
+                      "max_drafts_month": _num(max_drafts_month), "max_languages": _num(max_languages)}
         except ValueError:
             return page(request, s, 400, error=t("I limiti sono numeri di zero o più; vuoto vuol dire senza limite."))
         spec = {"name": name, "owner_email": owner_email, "limits": limits} | ({"plan": plan.strip()[:60]} if plan.strip() else {})
@@ -350,12 +352,13 @@ def register(app, ctx) -> None:
     @app.post("/admin/newsrooms/{tenant_id}")
     def ui_update(tenant_id: str, name: str = Form(""), plan: str = Form(""), max_sites: str = Form(""),
                   max_active_sources: str = Form(""), max_items_per_day: str = Form(""),
-                  max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), s=Depends(need_console)):
+                  max_llm_cost_month: str = Form(""), max_drafts_month: str = Form(""), max_languages: str = Form(""),
+                  s=Depends(need_console)):
         try:
             limits = {"max_sites": _num(max_sites), "max_active_sources": _num(max_active_sources),
                       "max_items_per_day": _num(max_items_per_day),
                       "max_llm_cost_month": _num(max_llm_cost_month, money=True),
-                      "max_drafts_month": _num(max_drafts_month)}
+                      "max_drafts_month": _num(max_drafts_month), "max_languages": _num(max_languages)}
             res = newsrooms.update_newsroom(admin, tenant_id, {"limits": limits} | (
                 {"plan": plan.strip()[:60]} if plan.strip() else {}) | (
                 {"name": name.strip()} if name.strip() else {}), ctx.core)

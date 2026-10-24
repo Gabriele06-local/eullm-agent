@@ -3,7 +3,7 @@
 {% block main %}
 <header class="head">
   <div>
-    <span class="kicker"><a href="/drafts">{{ _('Bozze') }}</a> · {{ _('versione {n}', n=d.version) }} · {{ when(d.created_at) }}</span>
+    <span class="kicker"><a href="/drafts">{{ _('Bozze') }}</a> · {% if d.translation_of and original %}{{ _('traduzione in {language} di', language=langs.get(d.language, d.language)) }} <a href="/drafts/{{ original.id }}">«{{ original.title|truncate(60) }}»</a>{% else %}{{ _('versione {n}', n=d.version) }}{% endif %} · {{ when(d.created_at) }}</span>
     <div class="row">
       {% set st = {'draft': ('blue', _('Pronta da leggere')), 'needs_review': ('amber', _('Da rivedere a mano')), 'approved': ('green', _('Approvata')), 'rejected': ('', _('Rifiutata'))}.get(d.status, ('', d.status)) %}
       <span class="chip {{ st[0] }}">{{ st[1] }}</span>
@@ -98,6 +98,32 @@
         <li id="src-{{ x.n }}"><span class="n">{{ x.n }}</span><div><a href="{{ x.url }}" rel="noopener noreferrer" target="_blank">{{ x.title }}</a><small class="hint">{{ x.source }}{% if x.published_at %} · {{ when(x.published_at, 'day') }}{% endif %}</small></div></li>
         {% endfor %}
       </ol>
+    </section>
+
+    <section class="card pad" aria-labelledby="h-langs">
+      <h2 id="h-langs">{{ _('Lingue') }}</h2>
+      {% if original %}
+      <div class="list-row">
+        <span>{{ langs.get(original.language, original.language or '–') }} · {{ _('originale') }}</span>
+        {% if original.id == d.id %}<span class="hint">{{ _('questa') }}</span>{% else %}<a href="/drafts/{{ original.id }}">{{ _('Apri') }}</a>{% endif %}
+      </div>
+      {% endif %}
+      {% for x in translations %}
+      <div class="list-row">
+        <span>{{ langs.get(x.language, x.language) }}</span>
+        {% set ts = {'draft': ('blue', _('Pronta')), 'needs_review': ('amber', _('Da rivedere')), 'approved': ('green', _('Approvata')), 'rejected': ('', _('Rifiutata'))}.get(x.status, ('', x.status)) %}
+        {% if x.id == d.id %}<span class="chip {{ ts[0] }}">{{ ts[1] }}</span>{% else %}<a class="chip {{ ts[0] }}" href="/drafts/{{ x.id }}">{{ ts[1] }}</a>{% endif %}
+      </div>
+      {% endfor %}
+      {% for code in wanted %}
+      <div class="list-row">
+        <span>{{ langs.get(code, code) }}</span>
+        {% if code in translating %}<span class="chip teal"><span class="spin" aria-hidden="true"></span>{{ _('In traduzione') }}</span>
+        {% elif caller.can('editor') and can_translate %}<form class="inline" method="post" action="/ui/drafts/{{ d.id }}/translate"><input type="hidden" name="language" value="{{ code }}"><button class="btn sm" type="submit">{{ _('Traduci') }}</button></form>
+        {% else %}<span class="hint">{{ _('da tradurre') }}</span>{% endif %}
+      </div>
+      {% endfor %}
+      <p class="hint">{% if translations or wanted %}{{ _("Quando approvi l'originale, l'agente lo traduce da solo nelle altre lingue del sito. Ogni traduzione ha le stesse fonti e gli stessi controlli, si approva a parte e conta come un articolo del piano.") }}{% else %}{{ _('Il sito pubblica in una sola lingua. Le lingue in cui tradurre gli articoli approvati si scelgono in <a href="/site#h-languages">Sito e profilo</a>.') }}{% endif %}</p>
     </section>
 
     <section class="card pad" aria-labelledby="h-pub">

@@ -19,7 +19,7 @@
       <tbody>
       {% for r in rows %}
       <tr {% if r.status == 'rejected' %}class="off"{% endif %}>
-        <td style="max-width: 380px;"><a href="/drafts/{{ r.id }}"><strong>{{ r.title }}</strong></a>{% if r.version > 1 %}<small>{{ _('versione {n}', n=r.version) }}</small>{% endif %}</td>
+        <td style="max-width: 380px;"><a href="/drafts/{{ r.id }}"><strong>{{ r.title }}</strong></a>{% if r.translation_of %}<small>{{ _('traduzione in {language}', language=langs.get(r.language, r.language)) }}</small>{% elif r.version > 1 %}<small>{{ _('versione {n}', n=r.version) }}</small>{% endif %}</td>
         <td class="num">{{ r.claims }}</td>
         <td>{% if r.flags %}<span class="chip amber">{{ _('{n} frasi da rivedere', n=r.flags|length) }}</span>{% else %}<span class="chip green">{{ _('Superati') }}</span>{% endif %}</td>
         <td>{{ when(r.created_at) }}</td>

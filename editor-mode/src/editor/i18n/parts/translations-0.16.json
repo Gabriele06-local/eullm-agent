@@ -1,0 +1,164 @@
+{
+ "traduzione in {language} di": {
+  "en": "{language} translation of",
+  "de": "{language}-Übersetzung von",
+  "fr": "traduction en {language} de",
+  "es": "traducción al {language} de"
+ },
+ "originale": {
+  "en": "original",
+  "de": "Original",
+  "fr": "original",
+  "es": "original"
+ },
+ "questa": {
+  "en": "this one",
+  "de": "diese",
+  "fr": "celle-ci",
+  "es": "esta"
+ },
+ "In traduzione": {
+  "en": "Translating",
+  "de": "Wird übersetzt",
+  "fr": "En traduction",
+  "es": "Traduciendo"
+ },
+ "Traduci": {
+  "en": "Translate",
+  "de": "Übersetzen",
+  "fr": "Traduire",
+  "es": "Traducir"
+ },
+ "da tradurre": {
+  "en": "to translate",
+  "de": "zu übersetzen",
+  "fr": "à traduire",
+  "es": "por traducir"
+ },
+ "Quando approvi l'originale, l'agente lo traduce da solo nelle altre lingue del sito. Ogni traduzione ha le stesse fonti e gli stessi controlli, si approva a parte e conta come un articolo del piano.": {
+  "en": "When you approve the original, the agent translates it into the site's other languages by itself. Each translation has the same sources and checks, is approved separately and counts as one article of the plan.",
+  "de": "Wenn Sie das Original freigeben, übersetzt der Agent es selbst in die anderen Sprachen der Website. Jede Übersetzung hat dieselben Quellen und Prüfungen, wird separat freigegeben und zählt als ein Artikel des Tarifs.",
+  "fr": "Quand vous approuvez l'original, l'agent le traduit de lui-même dans les autres langues du site. Chaque traduction a les mêmes sources et les mêmes contrôles, s'approuve à part et compte comme un article de l'offre.",
+  "es": "Cuando apruebas el original, el agente lo traduce solo a los demás idiomas del sitio. Cada traducción tiene las mismas fuentes y comprobaciones, se aprueba por separado y cuenta como un artículo del plan."
+ },
+ "Il sito pubblica in una sola lingua. Le lingue in cui tradurre gli articoli approvati si scelgono in <a href=\"/site#h-languages\">Sito e profilo</a>.": {
+  "en": "The site publishes in one language. The languages to translate approved articles into are chosen in <a href=\"/site#h-languages\">Site and profile</a>.",
+  "de": "Die Website veröffentlicht in einer Sprache. Die Sprachen, in die freigegebene Artikel übersetzt werden, wählen Sie unter <a href=\"/site#h-languages\">Website und Profil</a>.",
+  "fr": "Le site publie dans une seule langue. Les langues dans lesquelles traduire les articles approuvés se choisissent dans <a href=\"/site#h-languages\">Site et profil</a>.",
+  "es": "El sitio publica en un solo idioma. Los idiomas a los que traducir los artículos aprobados se eligen en <a href=\"/site#h-languages\">Sitio y perfil</a>."
+ },
+ "traduzione in {language}": {
+  "en": "{language} translation",
+  "de": "{language}-Übersetzung",
+  "fr": "traduction en {language}",
+  "es": "traducción al {language}"
+ },
+ "Lingue degli articoli": {
+  "en": "Article languages",
+  "de": "Sprachen der Artikel",
+  "fr": "Langues des articles",
+  "es": "Idiomas de los artículos"
+ },
+ "Gli articoli si scrivono nella lingua del sito ({language}). Scegli in quali altre lingue tradurli: quando approvi un articolo, l'agente scrive una traduzione per ogni lingua, con le stesse fonti e gli stessi controlli, da approvare a parte. Ogni traduzione conta come un articolo del piano.": {
+  "en": "Articles are written in the site's language ({language}). Choose which other languages to translate them into: when you approve an article, the agent writes a translation for each language, with the same sources and checks, to be approved separately. Each translation counts as one article of the plan.",
+  "de": "Artikel werden in der Sprache der Website geschrieben ({language}). Wählen Sie, in welche weiteren Sprachen sie übersetzt werden: Wenn Sie einen Artikel freigeben, schreibt der Agent für jede Sprache eine Übersetzung mit denselben Quellen und Prüfungen, die separat freigegeben wird. Jede Übersetzung zählt als ein Artikel des Tarifs.",
+  "fr": "Les articles s'écrivent dans la langue du site ({language}). Choisissez dans quelles autres langues les traduire : quand vous approuvez un article, l'agent écrit une traduction pour chaque langue, avec les mêmes sources et les mêmes contrôles, à approuver à part. Chaque traduction compte comme un article de l'offre.",
+  "es": "Los artículos se escriben en el idioma del sitio ({language}). Elige a qué otros idiomas traducirlos: cuando apruebas un artículo, el agente escribe una traducción para cada idioma, con las mismas fuentes y comprobaciones, que se aprueba por separado. Cada traducción cuenta como un artículo del plan."
+ },
+ "Il tuo piano permette {n} lingue per sito, compresa la sua.": {
+  "en": "Your plan allows {n} languages per site, its own included.",
+  "de": "Ihr Tarif erlaubt {n} Sprachen pro Website, ihre eigene eingeschlossen.",
+  "fr": "Votre offre permet {n} langues par site, la sienne comprise.",
+  "es": "Tu plan permite {n} idiomas por sitio, incluido el suyo."
+ },
+ "Salva le lingue": {
+  "en": "Save languages",
+  "de": "Sprachen speichern",
+  "fr": "Enregistrer les langues",
+  "es": "Guardar los idiomas"
+ },
+ "Solo la lingua del sito.": {
+  "en": "Only the site's language.",
+  "de": "Nur die Sprache der Website.",
+  "fr": "Seulement la langue du site.",
+  "es": "Solo el idioma del sitio."
+ },
+ "Traduzione dell'articolo": {
+  "en": "Article translation",
+  "de": "Übersetzung des Artikels",
+  "fr": "Traduction de l'article",
+  "es": "Traducción del artículo"
+ },
+ "Traduzione in {language} pronta: «{title}».": {
+  "en": "{language} translation ready: “{title}”.",
+  "de": "{language}-Übersetzung fertig: „{title}“.",
+  "fr": "Traduction en {language} prête : « {title} ».",
+  "es": "Traducción al {language} lista: «{title}»."
+ },
+ "Leggi la traduzione": {
+  "en": "Read the translation",
+  "de": "Übersetzung lesen",
+  "fr": "Lire la traduction",
+  "es": "Lee la traducción"
+ },
+ "Il modello traduce l'articolo in {language}": {
+  "en": "The model translates the article into {language}",
+  "de": "Das Modell übersetzt den Artikel ins {language}",
+  "fr": "Le modèle traduit l'article en {language}",
+  "es": "El modelo traduce el artículo al {language}"
+ },
+ "Il modello corregge la traduzione": {
+  "en": "The model fixes the translation",
+  "de": "Das Modell korrigiert die Übersetzung",
+  "fr": "Le modèle corrige la traduction",
+  "es": "El modelo corrige la traducción"
+ },
+ "Traduzione in {language} in scrittura: la segui nel riquadro Attività.": {
+  "en": "{language} translation being written: follow it in the Activity box.",
+  "de": "{language}-Übersetzung wird geschrieben: Sie verfolgen sie im Feld Aktivität.",
+  "fr": "Traduction en {language} en cours d'écriture : suivez-la dans l'encadré Activité.",
+  "es": "Traducción al {language} en curso: síguela en el recuadro Actividad."
+ },
+ "Ogni articolo approvato sarà tradotto in: {languages}.": {
+  "en": "Every approved article will be translated into: {languages}.",
+  "de": "Jeder freigegebene Artikel wird übersetzt in: {languages}.",
+  "fr": "Chaque article approuvé sera traduit en : {languages}.",
+  "es": "Cada artículo aprobado se traducirá a: {languages}."
+ },
+ "Bozza approvata. Traduzioni in scrittura ({languages}): le segui nel riquadro Attività, ognuna conta come un articolo.": {
+  "en": "Draft approved. Translations being written ({languages}): follow them in the Activity box; each counts as one article.",
+  "de": "Entwurf freigegeben. Übersetzungen werden geschrieben ({languages}): Sie verfolgen sie im Feld Aktivität, jede zählt als ein Artikel.",
+  "fr": "Brouillon approuvé. Traductions en cours d'écriture ({languages}) : suivez-les dans l'encadré Activité, chacune compte comme un article.",
+  "es": "Borrador aprobado. Traducciones en curso ({languages}): síguelas en el recuadro Actividad; cada una cuenta como un artículo."
+ },
+ "Nessun Core configurato: per tradurre serve un modello.": {
+  "en": "No Core configured: translating needs a model.",
+  "de": "Kein Core konfiguriert: Zum Übersetzen wird ein Modell benötigt.",
+  "fr": "Aucun Core configuré : il faut un modèle pour traduire.",
+  "es": "No hay ningún Core configurado: para traducir hace falta un modelo."
+ },
+ "Aggiungi prima la lingua al sito, in Sito e profilo.": {
+  "en": "First add the language to the site, in Site and profile.",
+  "de": "Fügen Sie die Sprache zuerst unter Website und Profil hinzu.",
+  "fr": "Ajoutez d'abord la langue au site, dans Site et profil.",
+  "es": "Añade primero el idioma al sitio, en Sitio y perfil."
+ },
+ "Gli articoli restano solo nella lingua del sito.": {
+  "en": "Articles stay in the site's language only.",
+  "de": "Die Artikel bleiben nur in der Sprache der Website.",
+  "fr": "Les articles restent uniquement dans la langue du site.",
+  "es": "Los artículos quedan solo en el idioma del sitio."
+ },
+ "Il piano permette {n} lingue per sito, compresa la sua: togline qualcuna o passa a un piano più grande.": {
+  "en": "The plan allows {n} languages per site, its own included: remove some or move to a bigger plan.",
+  "de": "Der Tarif erlaubt {n} Sprachen pro Website, ihre eigene eingeschlossen: Entfernen Sie einige oder wechseln Sie zu einem größeren Tarif.",
+  "fr": "L'offre permet {n} langues par site, la sienne comprise : retirez-en quelques-unes ou passez à une offre supérieure.",
+  "es": "El plan permite {n} idiomas por sitio, incluido el suyo: quita alguno o pasa a un plan mayor."
+ },
+ "Se il sito ha altre lingue (Sito e profilo › Lingue degli articoli), approvando l'originale partono le traduzioni: compaiono qui come bozze da approvare, con le stesse fonti.": {
+  "en": "If the site has other languages (Site and profile › Article languages), approving the original starts the translations: they appear here as drafts to approve, with the same sources.",
+  "de": "Hat die Website weitere Sprachen (Website und Profil › Sprachen der Artikel), starten mit der Freigabe des Originals die Übersetzungen: Sie erscheinen hier als freizugebende Entwürfe, mit denselben Quellen.",
+  "fr": "Si le site a d'autres langues (Site et profil › Langues des articles), approuver l'original lance les traductions : elles apparaissent ici comme brouillons à approuver, avec les mêmes sources.",
+  "es": "Si el sitio tiene otros idiomas (Sitio y perfil › Idiomas de los artículos), al aprobar el original empiezan las traducciones: aparecen aquí como borradores por aprobar, con las mismas fuentes."
+ }
+}
