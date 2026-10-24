@@ -55,6 +55,10 @@ def populate(db, tenant, monkeypatch):
     from editor import jobs
     with jobs.track(db, tenant, "analysis", "x"):
         pass
+    from editor import trends  # the trend of the day, in the archive the newsroom reads
+    archive = repo.archive_of(db, tenant)
+    with db.tenant(archive) as s:
+        trends.snapshot(s, archive)
 
 
 @pytest.mark.postgres
