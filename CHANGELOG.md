@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.1
+
+### Added
+
+- Server compose: the Core receives `ANTHROPIC_API_KEY`, for a Claude model
+  (`type: anthropic` in core.yaml).
+
+### Fixed
+
+- Console, "Consumi" page: the "Esci" (log out) button was missing.
+
 ## 0.13.0
 
 ### Added
@@ -17,9 +28,6 @@
 - Reference prices per model (euro per million input and output tokens),
   set in the console: the cost of an article is estimated also when the
   model is free today.
-
-- Server compose: the Core receives `ANTHROPIC_API_KEY`, for a Claude model
-  (`type: anthropic` in core.yaml).
 
 ### Fixed
 

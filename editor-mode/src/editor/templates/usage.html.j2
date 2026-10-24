@@ -29,7 +29,10 @@
   <a href="#prezzi">{{ _('Prezzi di riferimento') }}</a>
   <a href="#articoli">{{ _('Costo per articolo') }}</a>
   <span class="grow"></span>
-  <div class="who"><span>{{ me.email }} · {{ _('operatore') }}</span></div>
+  <div class="who">
+    <span>{{ me.email }} · {{ _('operatore') }}</span>
+    <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
+  </div>
 </nav>
 <main class="main">
   <div class="topbar">{% include "_lang.html.j2" %}</div>
