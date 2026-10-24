@@ -76,15 +76,16 @@ def test_the_console_shows_tokens_per_step_model_site_and_article(db, tenant):
     c.post("/login", data={"email": op, "password": "password operatore"})
     page = c.get("/admin/usage?days=7").text
     assert 'action="/logout"' in page
-    assert "Consumi del modello" in page and "Scrittura delle bozze" in page and "3.000" in page
+    assert "Consumi del modello" in page and "Scrittura delle bozze" in page and "6.000" in page
     assert "Bari cablata in fibra" in page and "senza prezzo" in page
 
     # The model behind the fake Core has no price yet; with one, the cost is estimated.
     model = rows(db, tenant)[0].model
     page = c.post("/admin/usage/prices", data={"model": model, "input_per_mtok": "0,40", "output_per_mtok": "2"}).text
     assert "salvato" in page
-    # 3000 tokens in at 0.40 €/M + 800 out at 2 €/M = 0.0028 €
-    assert "€ 0,0028" in page
+    # Two calls (the draft is short, it is asked once to expand, the same answer is kept):
+    # 6000 tokens in at 0.40 €/M + 1600 out at 2 €/M = 0.0056 €
+    assert "€ 0,0056" in page
     assert "servono due numeri" in c.post("/admin/usage/prices", data={"model": model, "input_per_mtok": "x",
                                                                          "output_per_mtok": "1"}).text
     csv = c.get("/admin/usage.csv?days=7")

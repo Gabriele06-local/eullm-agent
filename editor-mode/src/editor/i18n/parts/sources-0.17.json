@@ -5,6 +5,12 @@
   "es": "Fuentes que no responden durante un día entero (24 lecturas seguidas) suspendidas y reintentadas cada día; 45 días sin noticias o fuera de tema: suspendidas y reevaluadas a los 14 días",
   "fr": "Sources qui ne répondent pas pendant une journée entière (24 lectures d'affilée) suspendues et réessayées chaque jour ; 45 jours sans actualités ou hors sujet : suspendues et réévaluées après 14 jours"
  },
+ "Il modello arricchisce la bozza: {words} parole su {target}": {
+  "de": "Das Modell erweitert den Entwurf: {words} von {target} Wörtern",
+  "en": "The model enriches the draft: {words} words of {target}",
+  "es": "El modelo amplía el borrador: {words} palabras de {target}",
+  "fr": "Le modèle enrichit le brouillon : {words} mots sur {target}"
+ },
  "\\1 letture fallite di fila: la riprovo da sola ogni giorno.": {
   "de": "\\1 fehlgeschlagene Abrufe in Folge: wird jeden Tag automatisch erneut versucht.",
   "en": "\\1 failed fetches in a row: I try it again by myself every day.",

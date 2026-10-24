@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.17.2
+
+### Changed
+
+- Editor Mode, richer articles: an article is at least 900 words (up to
+  2000, the site's usual length in between; before it could be 400), with
+  up to 12 more news items on the same subject as context, claims of one
+  to three sentences and the details the items carry. A draft still far
+  under its length is sent back once with the items it left out, and the
+  longer version is kept only if it passes every check (Attività shows
+  the step). The prompt now asks for a journalist's prose: varied
+  sentences, no stock phrases, no em dashes, no closing summaries.
+
 ## 0.17.1
 
 ### Fixed
@@ -17,6 +30,7 @@
 - Editor Mode: "Accetta e scrivi la bozza" answered Internal Server Error,
   and so did every page with the Attività box while a draft was being
   written (the box read the proposals' sites the wrong way).
+
 
 ## 0.17.0
 

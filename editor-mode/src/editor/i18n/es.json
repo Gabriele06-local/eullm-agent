@@ -393,6 +393,7 @@
  "Il link è partito per email a {email}.": "El enlace se ha enviado por email a {email}.",
  "Il link è scaduto o è già stato usato. Chiedine uno nuovo a chi te l'ha mandato.": "El enlace ha caducado o ya se ha usado. Pide uno nuevo a quien te lo envió.",
  "Il link è scaduto, è già stato usato o l'amministratore esiste già. Per un link nuovo, sul server: <code>docker compose exec editor-web editor setup-link</code>.": "El enlace ha caducado, ya se ha usado o el administrador ya existe. Para un enlace nuevo, en el servidor: <code>docker compose exec editor-web editor setup-link</code>.",
+ "Il modello arricchisce la bozza: {words} parole su {target}": "El modelo amplía el borrador: {words} palabras de {target}",
  "Il modello corregge la bozza: frasi senza fonte o numeri che le fonti non riportano": "El modelo corrige el borrador: frases sin fuente o cifras que las fuentes no dan",
  "Il modello corregge la traduzione": "El modelo corrige la traducción",
  "Il modello descrive l'immagine": "El modelo describe la imagen",
