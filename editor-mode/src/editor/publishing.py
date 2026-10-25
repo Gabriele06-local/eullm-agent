@@ -163,6 +163,16 @@ def github_config(config: dict) -> dict:
     return config
 
 
+def site_path(repo_path: str) -> str:
+    """The address on the site of a file in the repository: the folder the
+    generator serves as the site's root (public/ for Astro, Next, Vite;
+    static/ for Hugo, SvelteKit) is not part of it."""
+    for root in ("public/", "static/"):
+        if repo_path.startswith(root):
+            return "/" + repo_path[len(root):]
+    return "/" + repo_path
+
+
 def secret_variable(tenant_id: str, name: str) -> str:
     """The environment variable holding a tenant's secret ``name``.
 
@@ -460,7 +470,7 @@ class Publisher:
             ext = "png" if image.mime == "image/png" else "jpg"
             image_dir = target.config.get("image_path", "public/images")
             files.append((f"{image_dir}/{slug}.{ext}", bytes(image.content), f"editor: cover image for {slug}"))
-            image_ref = f"/{image_dir}/{slug}.{ext}"
+            image_ref = site_path(f"{image_dir}/{slug}.{ext}")
         published = next((x.get("datePublished") for x in payload.get("jsonld") or [] if x.get("datePublished")), None)
         fm = {"title": payload["title"], "description": payload.get("meta_description") or payload.get("subtitle"),
               "slug": slug, "date": published or datetime.now(UTC).isoformat(), "lang": payload.get("language"),

@@ -179,6 +179,8 @@ def test_github_target_needs_a_repository(db, tenant, monkeypatch):
         pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", "path": "a/../b"}, "GH")
     cfg = pub.github_config({"repo": " Me/Sito.it ", "branch": "/main/", "path": "", "image_path": "public/img"})
     assert cfg == {"repo": "Me/Sito.it", "branch": "main", "image_path": "public/img"}
+    assert pub.site_path("public/img/a.jpg") == "/img/a.jpg" and pub.site_path("static/a.png") == "/a.png"
+    assert pub.site_path("assets/a.jpg") == "/assets/a.jpg"
 
 
 def _github_routes(router, *, ref_branch="main", existing=None):

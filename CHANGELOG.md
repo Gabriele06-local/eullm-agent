@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.17.4
 
 ### Added
 
@@ -16,6 +16,8 @@
   with the same content counts as sent. `editor-mode/examples/import-editor-
   feed.yml` is a ready GitHub Action for the opposite direction: a site
   repository that pulls the approved articles from the site's feed.
+  The cover's address in the front matter leaves out the folder the site
+  serves as its root (`public/images/x.jpg` is `/images/x.jpg`).
 
 ## 0.17.3
 
