@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.17.4
+
+### Added
+
+- Editor Mode: publish targets of kind GitHub, for the sites deployed from
+  a repository (Vercel, GitHub Pages). An approved article is committed to
+  the repository as Markdown with front matter and cover image, and the
+  site publishes it at the deploy: a "draft" publication opens a pull
+  request on a branch of its own, a "publish" one commits to the site's
+  branch (configurable: repository, branch, articles folder, images
+  folder). The credential is a GitHub token stored like every other one
+  (encrypted in the dashboard or `EDITOR_SECRET_<TENANT>__<NAME>`); a send
+  interrupted after the commit is safe to repeat, as a file already there
+  with the same content counts as sent. `editor-mode/examples/import-editor-
+  feed.yml` is a ready GitHub Action for the opposite direction: a site
+  repository that pulls the approved articles from the site's feed.
+  The cover's address in the front matter leaves out the folder the site
+  serves as its root (`public/images/x.jpg` is `/images/x.jpg`).
+
 ## 0.17.3
 
 ### Fixed

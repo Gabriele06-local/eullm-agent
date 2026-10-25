@@ -42,7 +42,8 @@ FORMATS = {
     "explainer": N_("spiegazione"),
 }
 KINDS = {"rss": "RSS", "hackernews": "HN", "github": "GitHub", "huggingface": "Hugging Face", "arxiv": "arXiv"}
-TARGET_KINDS = {"wordpress": "WordPress", "webhook": "Webhook", "telegram_channel": N_("Canale Telegram")}
+TARGET_KINDS = {"wordpress": "WordPress", "github": N_("GitHub (repo del sito)"), "webhook": "Webhook",
+                "telegram_channel": N_("Canale Telegram")}
 QUOTA_LABELS = {
     "sites": N_("Siti"),
     "sources": N_("Fonti attive"),
@@ -682,7 +683,7 @@ def register(app, ctx) -> None:
              "href": "/drafts", "busy": "draft" in working, "wait": t("La bozza è in scrittura."),
              "todo": t("Quando accetti una proposta la bozza si scrive da sola: rileggila, guarda fonti e controlli automatici e approvala.")},
             {"title": t("Collega il sito per pubblicare"), "past": t("Sito collegato"), "done": count(m.publish_targets, of(m.publish_targets.c.site_id)) > 0, "href": "/publications",
-             "busy": False, "wait": "", "todo": t("Aggiungi WordPress, un webhook o un canale Telegram: nulla esce senza il tuo sì.")},
+             "busy": False, "wait": "", "todo": t("Aggiungi WordPress, GitHub, un webhook o un canale Telegram: nulla esce senza il tuo sì.")},
         ]
         if all(x["done"] for x in steps):
             return None
@@ -1299,10 +1300,19 @@ def register(app, ctx) -> None:
     def ui_add_target(site_id: int = Form(...), kind: str = Form(...), name: str = Form(...),
                       address: str = Form(""), user: str = Form(""), secret_env: str = Form(""),
                       secret: str = Form(""), indexnow_key: str = Form(""), jsonld: str = Form(""),
+                      branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
                       c: auth.Caller = Depends(ctx.need("owner"))):
         if kind not in TARGET_KINDS:
             raise HTTPException(400, "unknown kind")
-        config = {"chat_id": address.strip()} if kind == "telegram_channel" else {"url": address.strip()}
+        if kind == "telegram_channel":
+            config = {"chat_id": address.strip()}
+        elif kind == "github":
+            config = {"repo": address.strip()}
+            for key, value in (("branch", branch), ("path", path), ("image_path", image_path)):
+                if value.strip():
+                    config[key] = value.strip()
+        else:
+            config = {"url": address.strip()}
         if kind == "wordpress":
             config["user"] = user.strip()
             if jsonld:
@@ -1516,10 +1526,12 @@ def register(app, ctx) -> None:
     @app.post("/ui/targets/{target_id}")
     def ui_edit_target(target_id: int, name: str = Form(...), address: str = Form(""), user: str = Form(""),
                        indexnow_key: str = Form(""), jsonld: str = Form(""), enabled: str = Form(""),
+                       branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
                        c: auth.Caller = Depends(ctx.need("owner"))):
         try:
             manage.update_target(db, c.tenant_id, target_id, name=name, address=address, user=user,
-                                 indexnow_key=indexnow_key, jsonld=bool(jsonld), enabled=bool(enabled))
+                                 indexnow_key=indexnow_key, jsonld=bool(jsonld), enabled=bool(enabled),
+                                 branch=branch, path=path, image_path=image_path)
         except LookupError:
             raise HTTPException(404, "target not found") from None
         except manage.ManageError as e:

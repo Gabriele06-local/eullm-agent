@@ -9,13 +9,17 @@ the variable actually read is ``EDITOR_SECRET_<TENANT>__WP``, which the
 operator sets on the server, so a tenant can never reach the server's own
 variables or another tenant's. Every outcome is recorded.
 
-Adapters: WordPress REST API (as draft or published post), a signed webhook
-(for automation tools that post to LinkedIn, X, newsletters...), and a
-Telegram channel.
+Adapters: WordPress REST API (as draft or published post), a GitHub
+repository (the article as Markdown with front matter, and the cover image,
+committed for the static sites deployed from it — Vercel, GitHub Pages;
+a draft mode publication opens a pull request instead of committing), a
+signed webhook (for automation tools that post to LinkedIn, X,
+newsletters...), and a Telegram channel.
 """
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import logging
@@ -25,7 +29,7 @@ import os
 import re
 import socket
 from datetime import UTC, datetime
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import quote, urljoin, urlsplit
 
 import httpcore
 import httpx
@@ -128,6 +132,46 @@ SECRET_PREFIX = "EDITOR_SECRET_"
 TENANT_ID = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SECRET_NAME = re.compile(r"^[A-Z0-9]+(_[A-Z0-9]+)*$")
 
+GITHUB_API = "https://api.github.com"
+GITHUB_REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*$")
+
+
+def github_config(config: dict) -> dict:
+    """Validate a github target's config: ``repo`` as ``owner/name`` (the
+    only required key), optional ``branch`` (else the repository's default),
+    ``path`` for the articles (default ``content/blog``), ``image_path`` for
+    the covers (default ``public/images``) and ``api`` for a GitHub
+    Enterprise server (default github.com)."""
+    config = dict(config or {})
+    repo = str(config.get("repo", "")).strip()
+    if not GITHUB_REPO.fullmatch(repo) or ".." in repo:
+        raise PublishError("a GitHub target needs the repository as owner/name, e.g. primoco/miosito")
+    config["repo"] = repo
+    for key in ("branch", "path", "image_path"):
+        value = str(config.get(key, "")).strip().strip("/")
+        if ".." in value:
+            raise PublishError(f"{key} cannot be ..: it stays inside the repository")
+        if value:
+            config[key] = value
+        else:
+            config.pop(key, None)
+    if config.get("api"):
+        config["api"] = str(config["api"]).strip().rstrip("/")
+        check_public_url(config["api"])
+    else:
+        config.pop("api", None)
+    return config
+
+
+def site_path(repo_path: str) -> str:
+    """The address on the site of a file in the repository: the folder the
+    generator serves as the site's root (public/ for Astro, Next, Vite;
+    static/ for Hugo, SvelteKit) is not part of it."""
+    for root in ("public/", "static/"):
+        if repo_path.startswith(root):
+            return "/" + repo_path[len(root):]
+    return "/" + repo_path
+
 
 def secret_variable(tenant_id: str, name: str) -> str:
     """The environment variable holding a tenant's secret ``name``.
@@ -172,6 +216,8 @@ def _need(secret: str | None, target) -> str:
 def add_target(db, tenant_id: str, site_id: int, kind: str, name: str, config: dict, secret_env: str | None) -> int:
     if kind in ("wordpress", "webhook"):
         check_public_url(config.get("url", ""))
+    if kind == "github":
+        config = github_config(config)
     if kind == "telegram_channel" and not str(config.get("chat_id", "")).strip():
         raise PublishError("a Telegram channel needs chat_id")
     if any(k in config for k in ("password", "token", "secret", "api_key")):
@@ -387,3 +433,101 @@ class Publisher:
         _ensure_no_redirect(r, endpoint, self.resolver)
         r.raise_for_status()
         return str(r.json().get("result", {}).get("message_id")), None
+
+    def _github(self, target, pub, cms_url, secret, image=None):
+        """The article as Markdown with front matter (and its cover image)
+        committed to the repository the site is deployed from (Vercel,
+        GitHub Pages): the commit is the publication, the deploy follows it.
+        A ``draft`` publication opens a pull request on a branch of its own
+        instead of committing to the site's branch. A send interrupted after
+        the commit is safe to repeat: a file that is already there with the
+        same content counts as sent, with different content it is an error."""
+        from . import delivery
+
+        api = (target.config.get("api") or GITHUB_API).rstrip("/")
+        repo = target.config["repo"]
+        headers = {"Authorization": f"Bearer {_need(secret, target)}", "Accept": "application/vnd.github+json",
+                   "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "eullm-editor"}
+
+        def call(method: str, path: str, **kw) -> httpx.Response:
+            r = self.http.request(method, f"{api}{path}", headers={**headers, **kw.pop("headers", {})}, **kw)
+            _ensure_no_redirect(r, api, self.resolver)
+            return r
+
+        info = call("GET", f"/repos/{repo}")
+        if info.status_code == 404:
+            raise PublishError(f"repository {repo} not found, or the token cannot see it")
+        if info.status_code in (401, 403):
+            raise PublishError("GitHub refused the token (expired, or without write access to this repository)")
+        info.raise_for_status()
+        base = target.config.get("branch") or info.json()["default_branch"]
+
+        payload = pub.payload
+        slug = re.sub(r"[^a-z0-9-]+", "-", (payload.get("slug") or "").lower()).strip("-") or "article"
+        files: list[tuple[str, bytes, str]] = []  # (path in the repository, content, commit message)
+        image_ref = None
+        if image is not None:
+            ext = "png" if image.mime == "image/png" else "jpg"
+            image_dir = target.config.get("image_path", "public/images")
+            files.append((f"{image_dir}/{slug}.{ext}", bytes(image.content), f"editor: cover image for {slug}"))
+            image_ref = site_path(f"{image_dir}/{slug}.{ext}")
+        published = next((x.get("datePublished") for x in payload.get("jsonld") or [] if x.get("datePublished")), None)
+        fm = {"title": payload["title"], "description": payload.get("meta_description") or payload.get("subtitle"),
+              "slug": slug, "date": published or datetime.now(UTC).isoformat(), "lang": payload.get("language"),
+              "keywords": [payload["keyphrase"]] if payload.get("keyphrase") else [],
+              "image": image_ref, "image_alt": image.alt if image is not None else None}
+        md = "---\n" + "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in fm.items()
+                                 if v not in (None, "")) + "\n---\n\n"
+        if payload.get("subtitle"):
+            md += f"_{payload['subtitle']}_\n\n"
+        md += delivery.body_md(payload["markdown"]) + "\n"
+        files.append((f"{target.config.get('path', 'content/blog')}/{slug}.md", md.encode(),
+                      f"editor: {payload['title']}"))
+
+        def put(ref: str, path: str, content: bytes, message: str) -> tuple[str, str]:
+            """Create the file, or accept it as sent when identical content
+            is already there. Returns (url to the file, commit sha)."""
+            r = call("GET", f"/repos/{repo}/contents/{quote(path)}?ref={quote(ref)}")
+            if r.status_code == 200:
+                current = r.json().get("content") or ""
+                if base64.b64decode("".join(current.split())) == content:
+                    body = r.json()
+                    return (body.get("html_url") or f"https://github.com/{repo}/blob/{ref}/{path}"), ""
+                raise PublishError(f"{path} already exists in {repo} with other content: not overwritten")
+            if r.status_code != 404:
+                r.raise_for_status()
+            r = call("PUT", f"/repos/{repo}/contents/{quote(path)}",
+                     json={"message": message, "content": base64.b64encode(content).decode(), "branch": ref})
+            r.raise_for_status()
+            body = r.json()
+            sha = (body.get("commit") or {}).get("sha") or ""
+            url = (body.get("content") or {}).get("html_url") or f"https://github.com/{repo}/blob/{ref}/{path}"
+            return url, sha
+
+        ref, url, sha = base, None, ""
+        if pub.mode == "draft":
+            head = f"editor/publish-{pub.id}"
+            r = call("GET", f"/repos/{repo}/git/ref/heads/{quote(base)}")
+            r.raise_for_status()
+            made = call("POST", f"/repos/{repo}/git/refs",
+                        json={"ref": f"refs/heads/{head}", "sha": r.json()["object"]["sha"]})
+            if made.status_code not in (201, 422):  # 422: the branch is already there from an earlier attempt
+                made.raise_for_status()
+            ref = head
+        for path, content, message in files:
+            url, sha = put(ref, path, content, message)
+        if pub.mode == "draft":
+            owner = repo.split("/", 1)[0]
+            r = call("POST", f"/repos/{repo}/pulls",
+                     json={"title": payload["title"], "head": f"{owner}:{head}", "base": base})
+            if r.status_code == 422:  # the pull request is open already
+                r = call("GET", f"/repos/{repo}/pulls?head={quote(f'{owner}:{head}')}&state=open")
+                r.raise_for_status()
+                found = r.json()
+                if not found:
+                    raise PublishError(f"cannot open the pull request for {head}, and none is open")
+                return str(found[0]["number"]), found[0]["html_url"]
+            r.raise_for_status()
+            pr = r.json()
+            return str(pr["number"]), pr["html_url"]
+        return sha or None, url

@@ -168,3 +168,95 @@ def test_a_send_cut_short_is_never_repeated_on_its_own(db, tenant, monkeypatch):
     assert pub.mark_uncertain_failed(db, tenant, pid, "francesco")
     assert not pub.mark_uncertain_failed(db, tenant, pid, "francesco")
     assert pub.request(db, tenant, did, target, "publish", "redazione") != pid
+
+
+def test_github_target_needs_a_repository(db, tenant, monkeypatch):
+    did, site_id = approved_draft(db, tenant)
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    with pytest.raises(pub.PublishError, match="owner/name"):
+        pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "non-un-repo"}, "GH")
+    with pytest.raises(pub.PublishError, match=r"cannot be \.\."):
+        pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", "path": "a/../b"}, "GH")
+    cfg = pub.github_config({"repo": " Me/Sito.it ", "branch": "/main/", "path": "", "image_path": "public/img"})
+    assert cfg == {"repo": "Me/Sito.it", "branch": "main", "image_path": "public/img"}
+    assert pub.site_path("public/img/a.jpg") == "/img/a.jpg" and pub.site_path("static/a.png") == "/a.png"
+    assert pub.site_path("assets/a.jpg") == "/assets/a.jpg"
+
+
+def _github_routes(router, *, ref_branch="main", existing=None):
+    """The GitHub API a publication talks to; `existing` is the file's content
+    when the article was committed already."""
+    import base64
+    router.get("https://api.github.com/repos/me/site").mock(return_value=httpx.Response(200, json={"default_branch": "main"}))
+    router.get(f"https://api.github.com/repos/me/site/git/ref/heads/{ref_branch}").mock(
+        return_value=httpx.Response(200, json={"object": {"sha": "abc123"}}))
+    router.post("https://api.github.com/repos/me/site/git/refs").mock(return_value=httpx.Response(201, json={}))
+    if existing is None:
+        router.route(method="GET", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
+            return_value=httpx.Response(404, json={"message": "Not Found"}))
+    else:
+        router.route(method="GET", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
+            return_value=httpx.Response(200, json={
+                "content": base64.b64encode(existing).decode(), "html_url": "https://github.com/me/site/blob/main/x.md"}))
+    put = router.route(method="PUT", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
+        return_value=httpx.Response(201, json={"content": {"html_url": "https://github.com/me/site/blob/branch/x.md"},
+                                               "commit": {"sha": "c0ff33"}}))
+    return put
+
+
+def test_github_draft_opens_a_pull_request(db, tenant, monkeypatch):
+    import base64
+    did, site_id = approved_draft(db, tenant)
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    monkeypatch.setenv(pub.secret_variable(tenant, "GH"), "ghp_test123")
+    target = pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site"}, "GH")
+    pid = pub.request(db, tenant, did, target, "draft", "redazione")
+    pub.decide(db, tenant, pid, True, "francesco")
+    with respx.mock(assert_all_called=False) as router:
+        put = _github_routes(router)
+        router.post("https://api.github.com/repos/me/site/pulls").mock(
+            return_value=httpx.Response(201, json={"number": 9, "html_url": "https://github.com/me/site/pull/9"}))
+        out = pub.Publisher(resolver=public_resolver).run(db, tenant, pid)
+    assert out == {"status": "published", "url": "https://github.com/me/site/pull/9"}
+    req = put.calls[0].request
+    assert req.headers["authorization"] == "Bearer ghp_test123"
+    sent = json.loads(req.content)
+    assert sent["branch"] == f"editor/publish-{pid}"
+    md = base64.b64decode(sent["content"]).decode()
+    assert md.startswith("---\n") and 'title: "Bari in fibra"' in md and '\nimage:' not in md
+    assert "# Bari in fibra" not in md and "Open Fiber ha lavorato a Bari." in md  # the title is in the front matter
+
+
+def test_github_publish_commits_and_a_repeated_send_is_safe(db, tenant, monkeypatch):
+    import base64
+    did, site_id = approved_draft(db, tenant)
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    monkeypatch.setenv(pub.secret_variable(tenant, "GH"), "ghp_test123")
+    target = pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", "branch": "prod"}, "GH")
+    pid = pub.request(db, tenant, did, target, "publish", "redazione")
+    pub.decide(db, tenant, pid, True, "francesco")
+    publisher = pub.Publisher(resolver=public_resolver)
+    with respx.mock(assert_all_called=False) as router:
+        put = _github_routes(router, ref_branch="prod")
+        out = publisher.run(db, tenant, pid)
+        sent = json.loads(put.calls[0].request.content)
+        md = base64.b64decode(sent["content"])
+        assert sent["branch"] == "prod"
+        assert out["status"] == "published" and out["url"].startswith("https://github.com/me/site/blob/")
+    # The send stayed 'sending' (outcome unknown): the same content is already
+    # in the repository, so repeating it does not write a second commit.
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.publications SET status = 'approved' WHERE id = :p"), {"p": pid})
+    with respx.mock(assert_all_called=False) as router:
+        put = _github_routes(router, ref_branch="prod", existing=md)
+        out = publisher.run(db, tenant, pid)
+        assert not put.called
+    assert out["status"] == "published" and out["url"].startswith("https://github.com/me/site/blob/")
+    # Different content in the same file is refused, not overwritten.
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.publications SET status = 'approved' WHERE id = :p"), {"p": pid})
+    with respx.mock(assert_all_called=False) as router:
+        put = _github_routes(router, ref_branch="prod", existing=b"qualcosa di diverso")
+        out = publisher.run(db, tenant, pid)
+        assert not put.called
+    assert out["status"] == "failed" and "other content" in out["error"]

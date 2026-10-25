@@ -70,7 +70,7 @@
   {% for t in targets %}
   <div class="list-row">
     <span><strong>{{ t.name }}</strong> <span class="chip">{{ _(kinds.get(t.kind, t.kind)) }}</span></span>
-    <span class="hint num">{{ (t.config or {}).get('url') or (t.config or {}).get('chat_id') or '' }}{% if (t.config or {}).get('user') %} · {{ _('utente {user}', user=t.config.user) }}{% endif %}{% if t.secret_env %} · {% if t.secret_env in stored %}{{ _('credenziale {name} salvata cifrata', name=t.secret_env) }}{% else %}{{ _('credenziale in {var}', var=secret_var(t.secret_env)) }}{% endif %}{% endif %}{% if t.enabled is sameas false %} · {{ _('disattivata') }}{% endif %}</span>
+    <span class="hint num">{{ (t.config or {}).get('url') or (t.config or {}).get('repo') or (t.config or {}).get('chat_id') or '' }}{% if (t.config or {}).get('user') %} · {{ _('utente {user}', user=t.config.user) }}{% endif %}{% if t.secret_env %} · {% if t.secret_env in stored %}{{ _('credenziale {name} salvata cifrata', name=t.secret_env) }}{% else %}{{ _('credenziale in {var}', var=secret_var(t.secret_env)) }}{% endif %}{% endif %}{% if t.enabled is sameas false %} · {{ _('disattivata') }}{% endif %}</span>
   </div>
   {% if caller.can('owner') %}
   <details class="manage">
@@ -78,8 +78,11 @@
     {% set cf = t.config or {} %}
     <form method="post" action="/ui/targets/{{ t.id }}" class="form-grid">
       <label class="field">{{ _('Nome') }}<input name="name" value="{{ t.name }}" required maxlength="100"></label>
-      <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ cf.get('url') or cf.get('chat_id') or '' }}" required></label>
+      <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ cf.get('url') or cf.get('repo') or cf.get('chat_id') or '' }}" required></label>
       {% if t.kind == 'wordpress' %}<label class="field">{{ _('Utente (WordPress)') }}<input name="user" value="{{ cf.get('user') or '' }}" autocomplete="off" required></label>{% endif %}
+      {% if t.kind == 'github' %}<label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" value="{{ cf.get('branch') or '' }}" autocomplete="off" placeholder="main"></label>
+      <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" value="{{ cf.get('path') or '' }}" autocomplete="off" placeholder="content/blog"></label>
+      <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" value="{{ cf.get('image_path') or '' }}" autocomplete="off" placeholder="public/images"></label>{% endif %}
       <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" value="{{ cf.get('indexnow_key') or '' }}" autocomplete="off"></label>
       {% if t.kind == 'wordpress' %}<label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1" {% if cf.get('jsonld') %}checked{% endif %}> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>{% endif %}
       <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="enabled" value="1" {% if t.enabled is not sameas false %}checked{% endif %}> {{ _('Attiva: compare tra le destinazioni delle bozze') }}</label>
@@ -104,8 +107,11 @@
     <input type="hidden" name="site_id" value="{{ site.id }}">
     <label class="field">{{ _('Tipo') }}<select name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}">{{ _(label) }}</option>{% endfor %}</select></label>
     <label class="field">{{ _('Nome') }}<input name="name" required placeholder="{{ _('Blog principale') }}"></label>
-    <label class="field">{{ _('Indirizzo') }}<input name="address" placeholder="{{ _('https://… oppure @canale') }}"></label>
+    <label class="field">{{ _('Indirizzo') }}<input name="address" placeholder="{{ _('https://…, owner/repo oppure @canale') }}"></label>
     <label class="field">{{ _('Utente (WordPress)') }}<input name="user" autocomplete="off" placeholder="{{ _('redazione') }}"></label>
+    <label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" autocomplete="off" placeholder="main"></label>
+    <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" autocomplete="off" placeholder="content/blog"></label>
+    <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" autocomplete="off" placeholder="public/images"></label>
     <label class="field">{{ _('Nome della credenziale') }}<input name="secret_env" placeholder="WP_SITO"></label>
     <label class="field">{{ _('Credenziale') }}<input name="secret" type="password" autocomplete="new-password" placeholder="{{ _('password applicativa, chiave o token') }}"></label>
     <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" autocomplete="off" placeholder="{{ _('la stessa del file .txt nella radice del sito') }}"></label>
@@ -114,6 +120,7 @@
   </form>
   <p class="hint">{{ _("Con la chiave IndexNow, ogni articolo pubblicato viene segnalato subito a Bing e ai motori che la usano, e da lì alle risposte AI che leggono il loro indice. Il file con la chiave va messo nella radice del sito, per esempio https://tuosito.it/CHIAVE.txt. Google non ha un avviso immediato per gli articoli: li trova dalla sitemap e dai link interni.") }}</p>
   <p class="hint">{{ _("La credenziale (password applicativa di WordPress, chiave del webhook, token del bot Telegram) viene salvata cifrata e non viene più mostrata: puoi solo sostituirla. In alternativa lasciala vuota e l'amministratore del server imposta la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;.") }}</p>
+  <p class="hint">{{ _("GitHub: l'articolo approvato va nel repository come Markdown con front matter e copertina, e il sito (Vercel, GitHub Pages) pubblica da solo al commit. Come bozza apre una pull request, pubblicata subito committa nel ramo del sito. La credenziale è un token GitHub (fine-grained, solo quel repository, Contents in lettura e scrittura).") }}</p>
   {% endif %}
 </section>
 {% endif %}

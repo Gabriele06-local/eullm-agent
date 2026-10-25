@@ -29,12 +29,15 @@ profiles, sources and publications.
 | **Fonti** | Discovered sources with score, origin and status; activate, suspend or reject. |
 | **Trend e piano** | Hype against Opportunity on one map, and the plan to accept or discard. |
 | **Bozze** | The draft with numbered sources per sentence and the automatic checks. |
-| **Pubblicazioni** | Requests waiting for an owner, history, WordPress / webhook / Telegram targets. |
+| **Pubblicazioni** | Requests waiting for an owner, history, WordPress / GitHub / webhook / Telegram targets. |
 | **Impostazioni** | Plan meters, briefing recipients, people of the newsroom (invited by email, with a role), tokens for integrations. |
 
 An approved article reaches the customer's site in four ways, also
-together: a connected destination (WordPress, signed webhook, Telegram
-channel, after an owner's yes); an email to the newsroom's email
+together: a connected destination (WordPress, a GitHub repository — the
+article committed as Markdown for the static sites deployed from it,
+Vercel and GitHub Pages: a draft publication opens a pull request —,
+a signed webhook, a Telegram channel, after an owner's yes); an email
+to the newsroom's email
 recipients with the article and a ZIP package attached (needs SMTP); the
 package downloaded from the draft (`article.html` ready to open,
 `body.html` to paste into a CMS, `article.md` with front matter for static
@@ -129,7 +132,7 @@ Two installations, same code:
    | `EDITOR_TELEGRAM_TOKEN` | briefing by Telegram |
    | `EDITOR_PUBLIC_URL` | the address people open the dashboard at (https://editor.example.com): links of invites and password resets point there |
    | `EDITOR_SECRET_KEY` | key (32 bytes in base64, `editor secret-key` prints one) of the publishing credentials that owners enter in the dashboard: they are stored encrypted (AES-256-GCM) in `editor.secrets` and never shown again. Without it a server stores none; the local installation keeps its key in `editor-secret.key` next to the database |
-   | `EDITOR_SECRET_<TENANT>__<NAME>` | alternative to the dashboard: credentials of a publishing target (WordPress application password, webhook signing key, Telegram channel bot token) set by the operator. The tenant names the target's secret `<NAME>`; the tenant id is upper-cased with `-` as `_`, e.g. `EDITOR_SECRET_RAG_ENTERPRISE__WP`. A credential stored in the database comes first |
+   | `EDITOR_SECRET_<TENANT>__<NAME>` | alternative to the dashboard: credentials of a publishing target (WordPress application password, GitHub token, webhook signing key, Telegram channel bot token) set by the operator. The tenant names the target's secret `<NAME>`; the tenant id is upper-cased with `-` as `_`, e.g. `EDITOR_SECRET_RAG_ENTERPRISE__WP`. A credential stored in the database comes first |
    | (Core) `api.fetch.credentials` | optional: a GitHub token for `api.github.com`, set in the Core's config, raises the GitHub API rate limit for source discovery |
 
 4. **First tenant and site.**
