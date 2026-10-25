@@ -78,9 +78,11 @@ def _forget_unused_secrets(s, names: set[str]) -> None:
 
 
 def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str, user: str = "",
-                  indexnow_key: str = "", jsonld: bool = False, enabled: bool = True) -> None:
+                  indexnow_key: str = "", jsonld: bool = False, enabled: bool = True,
+                  branch: str = "", path: str = "", image_path: str = "") -> None:
     """Change a target's name, address and options. Its credential is
-    replaced on its own (vault)."""
+    replaced on its own (vault). branch, path and image_path are the github
+    target's places in the repository."""
     import re
 
     name = (name or "").strip()[:100]
@@ -93,6 +95,13 @@ def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str
         config = dict(row.config or {})
         if row.kind == "telegram_channel":
             config["chat_id"] = address.strip()
+        elif row.kind == "github":
+            config["repo"] = address.strip()
+            for key, value in (("branch", branch), ("path", path), ("image_path", image_path)):
+                if value.strip():
+                    config[key] = value.strip()
+                else:
+                    config.pop(key, None)
         else:
             config["url"] = address.strip()
         if row.kind == "wordpress":
@@ -108,7 +117,7 @@ def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str
             config["indexnow_key"] = key
         else:
             config.pop("indexnow_key", None)
-        if not (config.get("url") or config.get("chat_id")):
+        if not (config.get("url") or config.get("chat_id") or config.get("repo")):
             raise ManageError(t("Manca l'indirizzo della destinazione."))
         if row.kind == "wordpress" and not config.get("user"):
             raise ManageError(t("WordPress ha bisogno dell'utente della password applicativa."))
@@ -116,6 +125,12 @@ def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str
             from . import publishing
             try:
                 publishing.check_public_url(config["url"])
+            except publishing.PublishError as e:
+                raise ManageError(str(e)) from None
+        if row.kind == "github":
+            from . import publishing
+            try:
+                config = publishing.github_config(config)
             except publishing.PublishError as e:
                 raise ManageError(str(e)) from None
         s.execute(update(m.publish_targets).where(m.publish_targets.c.id == target_id).values(

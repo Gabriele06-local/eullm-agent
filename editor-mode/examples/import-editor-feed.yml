@@ -1,0 +1,93 @@
+# Import the approved articles from an Editor Mode feed, for a site deployed
+# from this repository (Vercel, GitHub Pages, any static generator).
+#
+# Setup, all in the site's own repository:
+#   1. copy this file to .github/workflows/import-editor-feed.yml
+#   2. set the repository secret EDITOR_FEED_URL to the feed's address
+#      (Editor Mode, Sito e profilo: /feeds/<token>.json)
+#   3. adjust POSTS_DIR and IMAGE_DIR below to where your generator keeps
+#      articles and images (Hugo: content/posts and static/images; Jekyll:
+#      _posts with a DATE-SLUG.md name; Astro: src/content/blog)
+# The action runs every 15 minutes, writes one Markdown file (and the cover)
+# per new approved article and commits; the push is the deploy. It is
+# idempotent: articles already imported are left alone.
+
+name: Import from Editor Mode feed
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-editor-feed
+  cancel-in-progress: false
+
+env:
+  POSTS_DIR: content/blog
+  IMAGE_DIR: public/images
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Import new articles
+        env:
+          FEED_URL: ${{ secrets.EDITOR_FEED_URL }}
+        run: |
+          python - <<'EOF'
+          import base64, json, os, pathlib, re, sys, urllib.request
+
+          feed_url = os.environ["FEED_URL"]
+          posts = pathlib.Path(os.environ["POSTS_DIR"])
+          images = pathlib.Path(os.environ["IMAGE_DIR"])
+          if not feed_url:
+              sys.exit("set the repository secret EDITOR_FEED_URL to the feed's address")
+
+          def get(url):
+              with urllib.request.urlopen(url, timeout=60) as r:  # noqa: S310 (https feed, token in the URL)
+                  return r.read()
+
+          feed = json.loads(get(feed_url))
+          for item in feed.get("items", []):
+              red = item.get("_redazia") or {}
+              slug = red.get("slug") or re.sub(r"[^a-z0-9-]+", "-", item.get("title", "article").lower()).strip("-")
+              post = posts / f"{slug}.md"
+              if post.exists():
+                  continue
+              fm = {"title": item.get("title"), "description": red.get("meta_description") or item.get("summary"),
+                    "slug": slug, "date": item.get("date_published"), "lang": item.get("language"),
+                    "keywords": item.get("tags") or ([red["keyphrase"]] if red.get("keyphrase") else []),
+                    "image": None, "image_alt": red.get("image_alt")}
+              body = red.get("markdown")
+              if not body:  # no Markdown in the feed: fall back to the HTML
+                  body = item.get("content_html") or ""
+              if item.get("image"):
+                  data = get(item["image"])
+                  ext = "png" if item["image"].split("?")[0].endswith(".png") else "jpg"
+                  images.mkdir(parents=True, exist_ok=True)
+                  (images / f"{slug}.{ext}").write_bytes(data)
+                  fm["image"] = f"/{images.name}/{slug}.{ext}"
+              front = "---\n" + "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}"
+                                         for k, v in fm.items() if v not in (None, "", [])) + "\n---\n\n"
+              if red.get("subtitle"):
+                  front += f"_{red['subtitle']}_\n\n"
+              posts.mkdir(parents=True, exist_ok=True)
+              post.write_text(front + body + "\n", encoding="utf-8")
+              print(f"imported {post}")
+          EOF
+      - name: Commit and push
+        run: |
+          git config user.name "Editor Mode"
+          git config user.email "editor-mode[bot]@users.noreply.github.com"
+          git add "$POSTS_DIR" "$IMAGE_DIR"
+          git diff --cached --quiet && echo "nothing new" && exit 0
+          git commit -m "Editor Mode: new approved articles"
+          git push

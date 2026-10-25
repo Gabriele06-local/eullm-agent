@@ -37,7 +37,9 @@ site, and keeps the editor in charge:
   topics worth covering.
 - **Drafts with citations.** Every claim in a draft points to a stored
   source, and numbers are checked against them.
-- **Publishes only with approval.** WordPress, webhooks and Telegram,
+- **Publishes only with approval.** WordPress, GitHub (a commit for the
+  static sites deployed from a repository: Vercel, GitHub Pages), webhooks
+  and Telegram,
   after a person says yes; credentials are stored encrypted.
 - **Many newsrooms, one server.** Each newsroom is a tenant isolated by
   PostgreSQL row-level security, with its own budget, queue and data

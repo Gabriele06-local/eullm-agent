@@ -51,7 +51,7 @@ class FeedbackIn(BaseModel):
 
 class TargetIn(BaseModel):
     site_id: int
-    kind: str = Field(..., pattern="^(wordpress|webhook|telegram_channel)$")
+    kind: str = Field(..., pattern="^(wordpress|webhook|telegram_channel|github)$")
     name: str = Field(..., max_length=100)
     config: dict = {}
     # The secret's short name. Its value is either given here (stored
