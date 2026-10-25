@@ -18,6 +18,10 @@
 - Editor Mode, Trend e piano: the topic map is four boxes (Scrivi ora,
   Nicchia utile, Rumore, Ignora) listing every topic of the week with its
   Opportunity and Hype, instead of dots whose labels overlapped.
+- Each topic in the map shows the title of its latest news item (linked)
+  and how many items and sources it has, five per box and then "e altri N".
+  Topics still named by bare keywords are renamed by the model, ten more at
+  every hourly collection, starting from the largest.
 
 ## 0.17.2
 

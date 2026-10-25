@@ -390,7 +390,12 @@ def register(app, ctx) -> None:
                    (SELECT count(DISTINCT si.source_id) FROM editor.topic_items ti
                      JOIN editor.source_items si ON si.id = ti.item_id WHERE ti.topic_id = t.id) AS sources,
                    (SELECT max(src.score) FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
-                     JOIN editor.sources src ON src.id = si.source_id WHERE ti.topic_id = t.id) AS best_source
+                     JOIN editor.sources src ON src.id = si.source_id WHERE ti.topic_id = t.id) AS best_source,
+                   t.summary,
+                   (SELECT si.title FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
+                     WHERE ti.topic_id = t.id ORDER BY si.published_at DESC NULLS LAST, si.id DESC LIMIT 1) AS headline,
+                   (SELECT si.url FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id
+                     WHERE ti.topic_id = t.id ORDER BY si.published_at DESC NULLS LAST, si.id DESC LIMIT 1) AS headline_url
             FROM editor.topics t WHERE t.updated_at > :since
               -- Topics of the archive with news from a source the site follows.
               AND EXISTS (SELECT 1 FROM editor.topic_items ti JOIN editor.source_items si ON si.id = ti.item_id

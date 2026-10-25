@@ -162,6 +162,15 @@ def detect_topics(
             select(ti.c.topic_id, func.count()).where(ti.c.topic_id.in_([c.topic_id for c in clusters if c.item_ids]))
             .group_by(ti.c.topic_id)).all())
         touched = sorted(sizes, key=lambda t: (-sizes[t], t))[:LABELS_PER_RUN]
+        # Then as many of the week's topics still named by their keywords
+        # (written before a model was there, or when it failed), the largest
+        # first: in a few hours every topic on the pages has a real name.
+        size = select(func.count()).where(ti.c.topic_id == m.topics.c.id).scalar_subquery()
+        touched += list(s.execute(
+            select(m.topics.c.id).where(m.topics.c.labelled_by == "keywords",
+                                        m.topics.c.updated_at >= now - timedelta(days=7),
+                                        m.topics.c.id.not_in(touched or [0]))
+            .order_by(size.desc(), m.topics.c.id).limit(LABELS_PER_RUN)).scalars())
 
     if core is not None:
         for topic_id in touched:

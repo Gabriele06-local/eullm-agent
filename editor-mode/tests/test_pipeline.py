@@ -221,3 +221,16 @@ def test_topics_without_core_use_keyword_labels(db, tenant):
     with db.tenant(tenant) as s:
         label, by = s.execute(text("SELECT label, labelled_by FROM editor.topics")).one()
     assert by == "keywords" and "starlink" in label
+
+    # A model arrives: the next collection names the week's keyword topics
+    # too, not only those that got news in this round.
+    feed(db, tenant, sid, [Item(url="https://x.example/3", title="Pizza napoletana premiata a Londra")])
+    respx_router = respx.mock()
+    with respx_router as router:
+        router.post("http://core.test/v1/llm/chat").mock(return_value=httpx.Response(200, json={
+            "content": '{"label": "Starlink sul telefono in Italia", "summary": "Direct to cell.", "keywords": []}',
+            "tool_calls": [], "usage": {"input_tokens": 1, "output_tokens": 1}, "cost": 0.0}))
+        detect_topics(db, tenant, CoreClient("http://core.test", "tok"))
+    with db.tenant(tenant) as s:
+        by = dict(s.execute(text("SELECT labelled_by, count(*) FROM editor.topics GROUP BY labelled_by")).all())
+    assert by == {"model": 2}

@@ -72,12 +72,16 @@
       <div class="dashed" style="display: flex; flex-direction: column; gap: 6px;">
         <div class="row" style="justify-content: space-between;"><strong>{{ name }}</strong><span class="chip {{ color }}">{{ items|length }}</span></div>
         <span class="hint">{{ what }}</span>
-        {% for t in (items|sort(attribute='opportunity', reverse=true))[:6] %}
-        <div class="row" style="justify-content: space-between; gap: 8px;"><span style="font-size: 14px;">{{ t.label }}</span><span class="num hint" title="{{ _('opportunità · hype') }}">{{ t.opportunity|s100 }} · {{ t.hype|s100 }}</span></div>
+        {% for t in (items|sort(attribute='opportunity', reverse=true))[:5] %}
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div class="row" style="justify-content: space-between; gap: 8px; align-items: baseline;"><strong style="font-size: 14px; font-weight: 500;">{{ t.label }}</strong><span class="num hint" title="{{ _('opportunità · hype') }}">{{ t.opportunity|s100 }} · {{ t.hype|s100 }}</span></div>
+          {% if t.headline %}<a class="hint" href="{{ t.headline_url }}" rel="noopener noreferrer" target="_blank">{{ t.headline|truncate(110) }}</a>{% endif %}
+          <span class="hint">{{ t.items|plural(_('notizia'), _('notizie')) }} · {{ t.sources|plural(_('fonte'), _('fonti')) }}</span>
+        </div>
         {% else %}
         <span class="hint">–</span>
         {% endfor %}
-        {% if items|length > 6 %}<span class="hint">{{ _('e altri {n}', n=items|length - 6) }}</span>{% endif %}
+        {% if items|length > 5 %}<span class="hint">{{ _('e altri {n}', n=items|length - 5) }}</span>{% endif %}
       </div>
       {% endfor %}
     </div>
