@@ -38,7 +38,7 @@ from .text import tokens
 
 log = logging.getLogger(__name__)
 
-DEFAULT_SETTINGS = {"proposals_per_day": 3, "min_relevance": 0.15, "exclude": []}
+DEFAULT_SETTINGS = {"proposals_per_day": 6, "min_relevance": 0.15, "exclude": []}
 # Raised when the analysis itself improves: a profile approved under an
 # older method is offered again, rebuilt, even if the site did not change.
 METHOD = "profile-v2"
@@ -402,6 +402,19 @@ def _next_version(s, site_id: int) -> int:
     quotas.lock(s, f"editor-profile-version:{site_id}")
     v = s.execute(select(func.max(m.editorial_profiles.c.version)).where(m.editorial_profiles.c.site_id == site_id)).scalar()
     return (v or 0) + 1
+
+
+def set_proposals_per_day(s, site_id: int, n: int) -> bool:
+    """The number of proposals a day, changed in place on the line in use
+    and on a version waiting for approval: a setting, not a new version."""
+    n = max(0, min(50, int(n)))
+    p = m.editorial_profiles
+    rows = s.execute(select(p.c.id, p.c.body).where(p.c.site_id == site_id, p.c.status.in_(("approved", "draft")))).all()
+    for r in rows:
+        body = dict(r.body)
+        body["settings"] = {**DEFAULT_SETTINGS, **(body.get("settings") or {}), "proposals_per_day": n}
+        s.execute(update(p).where(p.c.id == r.id).values(body=body))
+    return bool(rows)
 
 
 def approved_profile(s, site_id: int):

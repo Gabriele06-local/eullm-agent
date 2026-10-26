@@ -20,6 +20,8 @@ from . import repo, usage
 from .core_client import CoreClient, CoreError
 from .opportunity import Opportunity
 
+PER_DAY = 6  # profile.DEFAULT_SETTINGS, for a profile saved without it
+
 log = logging.getLogger(__name__)
 
 FORMATS = ["news", "analysis", "guide", "tutorial", "review", "comparison", "opinion", "interview", "data"]
@@ -126,7 +128,7 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
         prof = s.execute(select(p).where(p.c.site_id == site_id, p.c.status == "approved")).first()
         if prof is None:
             return []
-        limit = limit or prof.body.get("settings", {}).get("proposals_per_day", 3)
+        limit = limit or prof.body.get("settings", {}).get("proposals_per_day", PER_DAY)
         picks = [o for o in opportunities if o.score >= MIN_OPPORTUNITY and o.components.get("not_repeated", 1)]
         work = []
         for o in picks:
@@ -183,7 +185,7 @@ def plan(db, tenant_id: str, site_id: int, core: CoreClient | None = None, limit
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
     if body is None:
         return []
-    limit = limit or body.get("settings", {}).get("proposals_per_day", 3)
+    limit = limit or body.get("settings", {}).get("proposals_per_day", PER_DAY)
     ids = propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=limit)
     return ids + picks.fill(db, tenant_id, site_id, limit - len(ids), core, now=now)
 
@@ -288,7 +290,7 @@ def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient |
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
         if body is None:
             return []
-        per_day = body.get("settings", {}).get("proposals_per_day", 3)
+        per_day = body.get("settings", {}).get("proposals_per_day", PER_DAY)
         left = per_day if manual else per_day - made_today(s, site_id, since)
     if left <= 0:
         return []

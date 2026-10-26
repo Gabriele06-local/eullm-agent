@@ -1330,5 +1330,22 @@
  "{who} ha invitato {email} come {role}.": "{who} ha invitado a {email} como {role}.",
  "{who} ha invitato {email}.": "{who} ha invitado a {email}.",
  "«{title}» inviato per email a {n} destinatari, con il pacchetto da pubblicare.": "«{title}» enviado por email a {n} destinatarios, con el paquete para publicar.",
- "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "Es la cuenta de quien gestiona el servicio: crea las redacciones, define sus planes y límites e invita a sus responsables."
+ "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "Es la cuenta de quien gestiona el servicio: crea las redacciones, define sus planes y límites e invita a sus responsables.",
+ "Il sito in numeri": "El sitio en cifras",
+ "approvato · {n} versioni": "aprobado · {n} versiones",
+ "nessuno approvato": "ninguno aprobado",
+ "{c} candidate · {s} sospese": "{c} candidatas · {s} suspendidas",
+ "{n} in 7 giorni": "{n} en 7 días",
+ "Proposte da decidere": "Propuestas por decidir",
+ "{t} oggi · {a} accettate · {r} scartate": "{t} hoy · {a} aceptadas · {r} descartadas",
+ "Bozze da rileggere": "Borradores por revisar",
+ "{a} approvate · {r} scartate": "{a} aprobados · {r} descartados",
+ "{n} non riuscite": "{n} fallidas",
+ "{n} da approvare": "{n} por aprobar",
+ "destinazione": "destino",
+ "destinazioni": "destinos",
+ "Proposte al giorno per questo sito": "Propuestas al día para este sitio",
+ "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": "Una propuesta cuesta una llamada al modelo; solo se escribe lo que aceptas.",
+ "Da ora {n} proposte al giorno per questo sito.": "Desde ahora, {n} propuestas al día para este sitio.",
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": "Aprueba primero el perfil: las propuestas parten de la línea aprobada."
 }

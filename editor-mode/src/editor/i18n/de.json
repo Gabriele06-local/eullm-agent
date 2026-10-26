@@ -1330,5 +1330,22 @@
  "{who} ha invitato {email} come {role}.": "{who} hat {email} als {role} eingeladen.",
  "{who} ha invitato {email}.": "{who} hat {email} eingeladen.",
  "«{title}» inviato per email a {n} destinatari, con il pacchetto da pubblicare.": "„{title}“ per E-Mail an {n} Empfänger gesendet, mit dem Paket zum Veröffentlichen.",
- "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "Das ist das Konto des Dienstbetreibers: Es legt Redaktionen an, bestimmt deren Tarife und Limits und lädt ihre Verantwortlichen ein."
+ "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "Das ist das Konto des Dienstbetreibers: Es legt Redaktionen an, bestimmt deren Tarife und Limits und lädt ihre Verantwortlichen ein.",
+ "Il sito in numeri": "Die Website in Zahlen",
+ "approvato · {n} versioni": "freigegeben · {n} Versionen",
+ "nessuno approvato": "keines freigegeben",
+ "{c} candidate · {s} sospese": "{c} Kandidaten · {s} pausiert",
+ "{n} in 7 giorni": "{n} in 7 Tagen",
+ "Proposte da decidere": "Offene Vorschläge",
+ "{t} oggi · {a} accettate · {r} scartate": "{t} heute · {a} angenommen · {r} verworfen",
+ "Bozze da rileggere": "Entwürfe zum Prüfen",
+ "{a} approvate · {r} scartate": "{a} freigegeben · {r} verworfen",
+ "{n} non riuscite": "{n} fehlgeschlagen",
+ "{n} da approvare": "{n} freizugeben",
+ "destinazione": "Ziel",
+ "destinazioni": "Ziele",
+ "Proposte al giorno per questo sito": "Vorschläge pro Tag für diese Website",
+ "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": "Ein Vorschlag kostet einen Modellaufruf; geschrieben wird nur, was Sie annehmen.",
+ "Da ora {n} proposte al giorno per questo sito.": "Ab jetzt {n} Vorschläge pro Tag für diese Website.",
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": "Geben Sie zuerst das Profil frei: Vorschläge gehen von der freigegebenen Linie aus."
 }

@@ -1,0 +1,19 @@
+{
+ "Il sito in numeri": {"en": "The site in numbers", "de": "Die Website in Zahlen", "fr": "Le site en chiffres", "es": "El sitio en cifras"},
+ "approvato · {n} versioni": {"en": "approved · {n} versions", "de": "freigegeben · {n} Versionen", "fr": "approuvé · {n} versions", "es": "aprobado · {n} versiones"},
+ "nessuno approvato": {"en": "none approved", "de": "keines freigegeben", "fr": "aucun approuvé", "es": "ninguno aprobado"},
+ "{c} candidate · {s} sospese": {"en": "{c} candidates · {s} suspended", "de": "{c} Kandidaten · {s} pausiert", "fr": "{c} candidates · {s} suspendues", "es": "{c} candidatas · {s} suspendidas"},
+ "{n} in 7 giorni": {"en": "{n} in 7 days", "de": "{n} in 7 Tagen", "fr": "{n} en 7 jours", "es": "{n} en 7 días"},
+ "Proposte da decidere": {"en": "Proposals to decide", "de": "Offene Vorschläge", "fr": "Propositions à décider", "es": "Propuestas por decidir"},
+ "{t} oggi · {a} accettate · {r} scartate": {"en": "{t} today · {a} accepted · {r} discarded", "de": "{t} heute · {a} angenommen · {r} verworfen", "fr": "{t} aujourd'hui · {a} acceptées · {r} écartées", "es": "{t} hoy · {a} aceptadas · {r} descartadas"},
+ "Bozze da rileggere": {"en": "Drafts to review", "de": "Entwürfe zum Prüfen", "fr": "Brouillons à relire", "es": "Borradores por revisar"},
+ "{a} approvate · {r} scartate": {"en": "{a} approved · {r} discarded", "de": "{a} freigegeben · {r} verworfen", "fr": "{a} approuvés · {r} écartés", "es": "{a} aprobados · {r} descartados"},
+ "{n} non riuscite": {"en": "{n} failed", "de": "{n} fehlgeschlagen", "fr": "{n} échouées", "es": "{n} fallidas"},
+ "{n} da approvare": {"en": "{n} to approve", "de": "{n} freizugeben", "fr": "{n} à approuver", "es": "{n} por aprobar"},
+ "destinazione": {"en": "destination", "de": "Ziel", "fr": "destination", "es": "destino"},
+ "destinazioni": {"en": "destinations", "de": "Ziele", "fr": "destinations", "es": "destinos"},
+ "Proposte al giorno per questo sito": {"en": "Proposals a day for this site", "de": "Vorschläge pro Tag für diese Website", "fr": "Propositions par jour pour ce site", "es": "Propuestas al día para este sitio"},
+ "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": {"en": "A proposal costs one model call; only what you accept gets written.", "de": "Ein Vorschlag kostet einen Modellaufruf; geschrieben wird nur, was Sie annehmen.", "fr": "Une proposition coûte un appel au modèle ; seul ce que vous acceptez est rédigé.", "es": "Una propuesta cuesta una llamada al modelo; solo se escribe lo que aceptas."},
+ "Da ora {n} proposte al giorno per questo sito.": {"en": "From now on, {n} proposals a day for this site.", "de": "Ab jetzt {n} Vorschläge pro Tag für diese Website.", "fr": "Désormais {n} propositions par jour pour ce site.", "es": "Desde ahora, {n} propuestas al día para este sitio."},
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": {"en": "Approve the profile first: proposals start from the approved line.", "de": "Geben Sie zuerst das Profil frei: Vorschläge gehen von der freigegebenen Linie aus.", "fr": "Approuvez d'abord le profil : les propositions partent de la ligne approuvée.", "es": "Aprueba primero el perfil: las propuestas parten de la línea aprobada."}
+}

@@ -39,6 +39,55 @@
 
 {{ job_panel() }}
 
+{% if numbers %}
+{% set n = numbers %}
+<section class="kpis" aria-label="{{ _('Il sito in numeri') }}">
+  <a class="card kpi{% if draft %} warn{% endif %}" href="#h-profile">
+    <span class="label">{{ _('Profilo') }}</span>
+    <span class="value">{% if approved %}v{{ approved.version }}{% else %}–{% endif %}</span>
+    <span class="note">{% if draft %}{{ _('v{version} da approvare', version=draft.version) }}{% elif approved %}{{ _('approvato · {n} versioni', n=n.versions) }}{% else %}{{ _('nessuno approvato') }}{% endif %}</span>
+  </a>
+  <a class="card kpi{% if not n.sources.get('active') %} bad{% endif %}" href="/sources">
+    <span class="label">{{ _('Fonti attive') }}</span>
+    <span class="value">{{ n.sources.get('active', 0) }}</span>
+    <span class="note">{{ _('{c} candidate · {s} sospese', c=n.sources.get('candidate', 0), s=n.sources.get('suspended', 0)) }}</span>
+  </a>
+  <a class="card kpi{% if n.sources.get('active') and not n.news_day %} bad{% endif %}" href="/trends">
+    <span class="label">{{ _('Notizie in 24 ore') }}</span>
+    <span class="value">{{ n.news_day }}</span>
+    <span class="note">{{ _('{n} in 7 giorni', n=n.news_week) }}</span>
+  </a>
+  <a class="card kpi" href="/trends#h-plan">
+    <span class="label">{{ _('Proposte da decidere') }}</span>
+    <span class="value">{{ n.proposals.get('proposed', 0) }}</span>
+    <span class="note">{{ _('{t} oggi · {a} accettate · {r} scartate', t=n.proposals_today, a=n.proposals.get('accepted', 0) + n.proposals.get('drafted', 0), r=n.proposals.get('rejected', 0)) }}</span>
+  </a>
+  <a class="card kpi" href="/drafts">
+    <span class="label">{{ _('Bozze da rileggere') }}</span>
+    <span class="value">{{ n.drafts.get('draft', 0) + n.drafts.get('needs_review', 0) }}</span>
+    <span class="note">{{ _('{a} approvate · {r} scartate', a=n.drafts.get('approved', 0), r=n.drafts.get('rejected', 0)) }}</span>
+  </a>
+  <a class="card kpi{% if n.publications.get('failed') %} bad{% elif n.publications.get('pending_approval') %} warn{% endif %}" href="/publications">
+    <span class="label">{{ _('Pubblicazioni') }}</span>
+    <span class="value">{{ n.publications.get('published', 0) }}</span>
+    <span class="note">{% if n.publications.get('failed') %}{{ _('{n} non riuscite', n=n.publications.failed) }}{% elif n.publications.get('pending_approval') %}{{ _('{n} da approvare', n=n.publications.pending_approval) }}{% else %}{{ n.targets|plural(_('destinazione'), _('destinazioni')) }}{% endif %}</span>
+  </a>
+  <div class="card kpi">
+    <span class="label">{{ _('Costo modello, 30 giorni') }}</span>
+    <span class="value">{{ n.cost|num(2) }}</span>
+    <span class="note" title="{{ _('ai prezzi di core.yaml') }}">{{ _('{n} chiamate', n=n.calls|tok) }}</span>
+  </div>
+</section>
+{% if n.per_day is not none and caller.can('owner') %}
+<form class="row" method="post" action="/ui/sites/{{ site.id }}/per-day" style="align-items: center; gap: 8px;">
+  <span class="hint">{{ _('Proposte al giorno per questo sito') }}</span>
+  <input name="n" type="number" min="0" max="50" value="{{ n.per_day }}" style="width: 5em;">
+  <button class="btn" type="submit">{{ _('Salva') }}</button>
+  <span class="hint">{{ _('Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.') }}</span>
+</form>
+{% endif %}
+{% endif %}
+
 {% if analysis and analysis.problems %}
 <div class="dashed"><strong>{{ _("Note sulla lettura del sito") if analysis.status == 'complete' else _("Perché la lettura del sito è parziale") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}
@@ -127,7 +176,7 @@
       <li>{{ _('<strong>cerca le fonti</strong> che scrivono di {topics}, in tre modi: le testate che gli articoli del sito già citano, ricerche con le parole chiave dei temi (Hacker News, GitHub, Hugging Face, arXiv) e le testate che il modello indica per questi temi. Ogni fonte è letta e valutata prima di essere usata; in Fonti vedi da dove arriva ciascuna;', topics=subs|map(attribute='name')|join(', ') if subs else _('questi temi')) }}</li>
       <li>{{ _('<strong>raccoglie le notizie</strong> ogni ora e tiene quelle vicine ai temi (pertinenza almeno {pct}%)', pct=((st.get('min_relevance', 0.15)) * 100)|round|int) }}{% if st.get('exclude') %}{{ _(', scartando {terms}', terms=st.get('exclude')|join(', ')) }}{% endif %};</li>
       <li>{{ _("<strong>misura i trend</strong> con due punteggi separati: Hype, quanto se ne parla in giro, e Opportunità, quanto il tema è vicino al sito e quanto non l'avete già coperto;") }}</li>
-      <li>{{ _('<strong>propone {n} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;', n=st.get('proposals_per_day', 3)) }}</li>
+      <li>{{ _('<strong>propone {n} articoli al giorno</strong> nel piano, con le fonti; decidi tu quali scrivere;', n=st.get('proposals_per_day', 6)) }}</li>
       <li>{{ _('<strong>scrive le bozze</strong> in {language}', language=b.get('language') or _('lingua del sito')) }}{% if sty.get('tone') %}{{ _(', tono {tone}', tone=sty.get('tone')) }}{% endif %}{% if sty.get('typical_words') %}{{ _(', circa {n} parole', n=sty.get('typical_words')) }}{% endif %}{{ _(', con le fonti citate. Nulla si pubblica senza il tuo sì.') }}</li>
     </ul>
     {% if b.get('read_at') %}<p class="hint" style="margin: 0;">{{ _('{domain} porta a {target}: è stato letto quel sito.', domain=site.domain, target=b.get('read_at')) }}</p>{% endif %}
