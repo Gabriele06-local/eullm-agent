@@ -1330,5 +1330,22 @@
  "{who} ha invitato {email} come {role}.": "{who} invited {email} as {role}.",
  "{who} ha invitato {email}.": "{who} invited {email}.",
  "«{title}» inviato per email a {n} destinatari, con il pacchetto da pubblicare.": "\"{title}\" emailed to {n} recipients, with the package to publish.",
- "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "This is the account of whoever runs the service: it creates newsrooms, sets their plans and limits, and invites their managers."
+ "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "This is the account of whoever runs the service: it creates newsrooms, sets their plans and limits, and invites their managers.",
+ "Il sito in numeri": "The site in numbers",
+ "approvato · {n} versioni": "approved · {n} versions",
+ "nessuno approvato": "none approved",
+ "{c} candidate · {s} sospese": "{c} candidates · {s} suspended",
+ "{n} in 7 giorni": "{n} in 7 days",
+ "Proposte da decidere": "Proposals to decide",
+ "{t} oggi · {a} accettate · {r} scartate": "{t} today · {a} accepted · {r} discarded",
+ "Bozze da rileggere": "Drafts to review",
+ "{a} approvate · {r} scartate": "{a} approved · {r} discarded",
+ "{n} non riuscite": "{n} failed",
+ "{n} da approvare": "{n} to approve",
+ "destinazione": "destination",
+ "destinazioni": "destinations",
+ "Proposte al giorno per questo sito": "Proposals a day for this site",
+ "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": "A proposal costs one model call; only what you accept gets written.",
+ "Da ora {n} proposte al giorno per questo sito.": "From now on, {n} proposals a day for this site.",
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approve the profile first: proposals start from the approved line."
 }

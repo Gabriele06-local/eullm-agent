@@ -1330,5 +1330,22 @@
  "{who} ha invitato {email} come {role}.": "{who} a invité {email} en tant que {role}.",
  "{who} ha invitato {email}.": "{who} a invité {email}.",
  "«{title}» inviato per email a {n} destinatari, con il pacchetto da pubblicare.": "« {title} » envoyé par e-mail à {n} destinataires, avec le paquet à publier.",
- "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "C'est le compte de la personne qui gère le service : il crée les rédactions, définit leurs offres et limites, et invite leurs responsables."
+ "È l'account di chi gestisce il servizio: crea le redazioni, ne imposta piani e limiti e invita i loro responsabili.": "C'est le compte de la personne qui gère le service : il crée les rédactions, définit leurs offres et limites, et invite leurs responsables.",
+ "Il sito in numeri": "Le site en chiffres",
+ "approvato · {n} versioni": "approuvé · {n} versions",
+ "nessuno approvato": "aucun approuvé",
+ "{c} candidate · {s} sospese": "{c} candidates · {s} suspendues",
+ "{n} in 7 giorni": "{n} en 7 jours",
+ "Proposte da decidere": "Propositions à décider",
+ "{t} oggi · {a} accettate · {r} scartate": "{t} aujourd'hui · {a} acceptées · {r} écartées",
+ "Bozze da rileggere": "Brouillons à relire",
+ "{a} approvate · {r} scartate": "{a} approuvés · {r} écartés",
+ "{n} non riuscite": "{n} échouées",
+ "{n} da approvare": "{n} à approuver",
+ "destinazione": "destination",
+ "destinazioni": "destinations",
+ "Proposte al giorno per questo sito": "Propositions par jour pour ce site",
+ "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": "Une proposition coûte un appel au modèle ; seul ce que vous acceptez est rédigé.",
+ "Da ora {n} proposte al giorno per questo sito.": "Désormais {n} propositions par jour pour ce site.",
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approuvez d'abord le profil : les propositions partent de la ligne approuvée."
 }

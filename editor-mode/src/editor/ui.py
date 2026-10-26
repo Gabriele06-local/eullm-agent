@@ -694,6 +694,38 @@ def register(app, ctx) -> None:
 
     # --- Sito e profilo -------------------------------------------------------------
 
+    def site_numbers(s, site) -> dict:
+        """Everything a site has, in numbers, from profile to publications:
+        the top of its page, each number opening the page with the list."""
+        def count(table, *where):
+            return s.execute(select(func.count()).select_from(table).where(*where)).scalar() or 0
+        now = datetime.now(UTC)
+        day_ago, week_ago, month_ago = now - timedelta(hours=24), now - timedelta(days=7), now - timedelta(days=30)
+        src, it, pr, dr = m.sources.c, m.source_items.c, m.proposals.c, m.drafts.c
+        p, pt = m.publications.c, m.publish_targets.c
+        of = src.site_id == site.id
+        statuses = dict(s.execute(select(src.status, func.count()).where(of).group_by(src.status)).all())
+        planned = dict(s.execute(select(pr.status, func.count()).where(pr.site_id == site.id).group_by(pr.status)).all())
+        drafts = dict(s.execute(select(dr.status, func.count()).where(dr.site_id == site.id).group_by(dr.status)).all())
+        pubs = dict(s.execute(select(p.status, func.count()).select_from(
+            m.publications.join(m.publish_targets, pt.id == p.target_id))
+            .where(pt.site_id == site.id).group_by(p.status)).all())
+        u = m.llm_usage.c
+        cost = s.execute(select(func.coalesce(func.sum(u.cost), 0.0), func.count()).where(
+            u.site_id == site.id, u.at >= month_ago, u.error.is_(None))).one()
+        body = s.execute(select(m.editorial_profiles.c.body).where(
+            m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "approved")).scalar()
+        return {
+            "versions": count(m.editorial_profiles, m.editorial_profiles.c.site_id == site.id),
+            "sources": statuses, "news_day": count(m.source_items, repo.followed_by(site.id), it.fetched_at >= day_ago),
+            "news_week": count(m.source_items, repo.followed_by(site.id), it.fetched_at >= week_ago),
+            "proposals": planned, "proposals_today": count(m.proposals, pr.site_id == site.id, pr.created_at >= start_of_day(s)),
+            "per_day": ((body or {}).get("settings") or {}).get("proposals_per_day", props.PER_DAY) if body else None,
+            "drafts": drafts, "publications": pubs,
+            "targets": count(m.publish_targets, pt.site_id == site.id, pt.enabled.is_not(False)),
+            "cost": cost[0], "calls": cost[1],
+        }
+
     def site_page(request, c, s, sites, site, editing: bool = False, status_code: int = 200, error: str | None = None):
         p = m.editorial_profiles
         profiles = s.execute(select(p).where(p.c.site_id == site.id).order_by(p.c.version.desc())).all() if site else []
@@ -735,6 +767,7 @@ def register(app, ctx) -> None:
         return render(request, "site.html.j2", c, s, "site", status_code=status_code, _sites=(sites, site),
                       profiles=profiles, approved=approved, draft=draft, shown=shown, analysis=analysis,
                       rows=rows, evidence=ev, editing=editing, error=error,
+                      numbers=site_numbers(s, site) if site else None,
                       comparison=prof.compare(approved.body, draft.body) if approved and draft else [],
                       jobs=[j for j in jobs.recent(s, 10) if j["status"] != "done"][:5],
                       domain_free=manage.can_change_domain(s, site.id) if site else False,
@@ -782,6 +815,13 @@ def register(app, ctx) -> None:
                 raise HTTPException(404, "version not found")
         ctx.run_discovery(c.tenant_id, site_id)
         return done("/site", t("Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.", version=version))
+
+    @app.post("/ui/sites/{site_id}/per-day")
+    def ui_per_day(site_id: int, n: int = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            if not prof.set_proposals_per_day(s, site_id, n):
+                return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
+        return done("/site", t("Da ora {n} proposte al giorno per questo sito.", n=max(0, min(50, n))))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):

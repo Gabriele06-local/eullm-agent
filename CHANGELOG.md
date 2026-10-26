@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.18.0
+
+### Changed
+
+- Editor Mode: six proposals a day per site instead of three. The sites
+  still on the old default (3) move to 6; a number someone chose stays.
+  The number is set on the site's page, with one field, and applies at
+  once (it is a setting, not a new profile version).
+
+### Added
+
+- Editor Mode, Sito e profilo: the site in numbers at the top of its page,
+  each opening the page with the list: profile version and the one waiting
+  for approval, sources active, candidate and suspended, news in 24 hours
+  and 7 days, proposals to decide, made today, accepted and discarded,
+  drafts to review, approved and discarded, publications (published,
+  waiting, failed, destinations) and the model's cost in 30 days.
+
 ## 0.17.4
 
 ### Added
