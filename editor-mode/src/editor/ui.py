@@ -490,6 +490,7 @@ def register(app, ctx) -> None:
                   "Da {min} in su l'agente la propone.", n=opp, min=round(props.MIN_OPPORTUNITY)),
                 "single": single,
                 "hype": hype_text,
+                "opp": opp, "hype_n": hype,
             }
         return out
 
@@ -997,6 +998,9 @@ def register(app, ctx) -> None:
                     x["titles"] = [p for p in offered if p.topic_id == x["topic_id"]]
                 shown = {p.id for x in moment for p in x["titles"]}
                 plan = [p for p in plan if p.id not in shown]
+            # What waits for a decision first, then what is being written, then the rest.
+            order = {"proposed": 0, "accepted": 1, "drafted": 2}
+            plan = sorted(plan, key=lambda p: order.get(p.status, 3))
             explained = proposal_details(s, plan)
             hour = s.execute(select(m.tenants.c.briefing_hour)).scalar()
             return render(request, "trends.html.j2", c, s, "trends", _sites=(sites, site), topics=topics,

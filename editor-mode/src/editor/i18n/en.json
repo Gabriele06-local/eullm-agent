@@ -1347,5 +1347,7 @@
  "Proposte al giorno per questo sito": "Proposals a day for this site",
  "Una proposta costa una chiamata al modello; si scrive solo ciò che accetti.": "A proposal costs one model call; only what you accept gets written.",
  "Da ora {n} proposte al giorno per questo sito.": "From now on, {n} proposals a day for this site.",
- "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approve the profile first: proposals start from the approved line."
+ "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approve the profile first: proposals start from the approved line.",
+ "Come funziona il piano": "How the plan works",
+ "Opportunità {n}": "Opportunity {n}"
 }

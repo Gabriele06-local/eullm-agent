@@ -1,6 +1,6 @@
 {# What a proposal is, in plain words: needs `p` and `explained`. #}
 {% set d = explained.get(p.id) %}
-<strong>{{ d.title if d else p.title }}</strong>{% if d and d.single %} <span class="chip">{{ _('notizia singola') }}</span>{% endif %}
+{% if not no_title %}<strong>{{ d.title if d else p.title }}</strong>{% if d and d.single %} <span class="chip">{{ _('notizia singola') }}</span>{% endif %}{% endif %}
 {% if d %}
 <dl class="prop">
   <dt>{{ _('Articolo proposto') }}{% if d.format %} · {{ d.format }}{% endif %}</dt>

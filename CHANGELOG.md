@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.18.1
+
+### Changed
+
+- Editor Mode, Trend e piano: the editorial plan is one line per proposal
+  (title; format, source, Opportunity and Hype) with the buttons on the
+  right; the article, the news and the reasons open on a click. Proposals
+  to decide come first, then the drafts being written. The explanation of
+  the plan is folded under "Come funziona il piano".
+- Accepting or discarding a proposal keeps the page where it was (the row,
+  or the next one), on Trend e piano and on the Desk, instead of going back
+  to the top.
+
 ## 0.18.0
 
 ### Changed

@@ -106,6 +106,16 @@ details.prop-line > summary .more { flex: none; font-size: 12px; }
 details.prop-line[open] > summary .more { visibility: hidden; }
 details.prop-line[open] > summary .what strong { white-space: normal; }
 details.prop-line .detail { padding: 0 20px 14px; }
+.plan-line { align-items: flex-start; scroll-margin-top: 16px; }
+.plan-line > .chip { margin-top: 2px; }
+.plan-line .plan-what { flex: 1 1 auto; min-width: 0; }
+.plan-line .plan-what > summary { display: flex; flex-direction: column; cursor: pointer; list-style: none; min-width: 0; }
+.plan-line .plan-what > summary::-webkit-details-marker { display: none; }
+.plan-line .plan-what > summary strong { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-line .plan-what[open] > summary strong { white-space: normal; }
+.plan-line .plan-what > summary .one { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-line .plan-what[open] > summary .more { visibility: hidden; }
+.plan-line .plan-what .detail { padding-top: 8px; }
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .trio > div { display: flex; flex-direction: column; }
 .trio .num { font-size: 20px; }
