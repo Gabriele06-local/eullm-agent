@@ -30,6 +30,7 @@ from .i18n import t
 SESSION_DAYS = 30
 INVITE_DAYS = 7
 RESET_HOURS = 24
+RESET_GAP_MINUTES = 10  # a reset link per address at most this often
 MAX_FAILED_LOGINS = 5
 LOCK_MINUTES = 15
 MIN_PASSWORD = 10
@@ -290,6 +291,14 @@ def resolve_session(admin, token: str | None, now: datetime | None = None) -> Se
 
 
 # --- invites and resets --------------------------------------------------------------
+
+def reset_sent_recently(admin, email: str, minutes: int = RESET_GAP_MINUTES, now: datetime | None = None) -> bool:
+    since = _now(now) - timedelta(minutes=minutes)
+    with admin.engine.connect() as conn:
+        return conn.execute(select(m.invites.c.token_sha256).where(
+            m.invites.c.email == normalise_email(email), m.invites.c.kind == "reset",
+            m.invites.c.created_at >= since).limit(1)).first() is not None
+
 
 def create_invite(admin, email: str, created_by: str, tenant_id: str | None = None, role: str | None = None,
                   operator: bool = False, kind: str = "invite", now: datetime | None = None) -> str:

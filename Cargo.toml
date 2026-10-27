@@ -1,6 +1,6 @@
 [package]
 name = "eullm-agent"
-version = "0.18.2"
+version = "0.18.3"
 edition = "2021"
 license = "AGPL-3.0-or-later"
 description = "EULLM Agent — autonomous ReAct agent with multi-provider LLM support"
@@ -25,7 +25,7 @@ serde_json = "1"
 serde-saphyr = "2.0.0"
 
 # Telegram bot — rustls: pure Rust TLS, mirrors reqwest above
-teloxide = { version = "0.12", default-features = false, features = ["macros", "rustls", "auto-send", "ctrlc_handler"] }
+teloxide = { version = "0.17", default-features = false, features = ["macros", "rustls", "ctrlc_handler"] }
 
 # Error handling
 anyhow = "1"

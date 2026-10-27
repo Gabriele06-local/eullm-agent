@@ -90,7 +90,7 @@ async fn dispatch(bot: Bot, msg: Message, core: Arc<Core>) -> Result<()> {
         return Ok(());
     };
     // Channel posts and anonymous admins have no sender: never authorised.
-    let Some(uid) = msg.from().map(|u| u.id.0 as i64) else {
+    let Some(uid) = msg.from.as_ref().map(|u| u.id.0 as i64) else {
         warn!("Rejected message without a sender");
         return Ok(());
     };

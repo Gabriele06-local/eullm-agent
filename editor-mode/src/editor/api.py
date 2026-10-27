@@ -116,6 +116,23 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
     i18n.install(pages.env)
 
     @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        # No page inside another site's frame, no guessing of content types,
+        # no full addresses sent to the sites a page links to; over HTTPS the
+        # browser keeps to HTTPS. Scripts and styles of the pages are inline.
+        resp = await call_next(request)
+        h = resp.headers
+        h.setdefault("X-Frame-Options", "DENY")
+        h.setdefault("X-Content-Type-Options", "nosniff")
+        h.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        h.setdefault("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https:; "
+                     "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+                     "frame-ancestors 'none'; base-uri 'none'; object-src 'none'")
+        if request.url.scheme == "https":
+            h.setdefault("Strict-Transport-Security", "max-age=31536000")
+        return resp
+
+    @app.middleware("http")
     async def language(request: Request, call_next):
         # Every page, notice and error of this request in the chosen language.
         token = i18n.use(i18n.pick(request.cookies.get(i18n.COOKIE), request.headers.get("accept-language")))

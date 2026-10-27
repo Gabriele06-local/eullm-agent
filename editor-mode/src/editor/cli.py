@@ -280,7 +280,11 @@ def cmd_briefing(a):
 
 def cmd_serve(a):
     import uvicorn
-    uvicorn.run("editor.api:default_app", factory=True, host=a.host, port=a.port, proxy_headers=True)
+    # Behind the reverse proxy (Caddy) the request comes from Docker's
+    # gateway, not 127.0.0.1: without this the scheme stays http and the
+    # session cookie loses Secure. The ports listen on 127.0.0.1 only.
+    uvicorn.run("editor.api:default_app", factory=True, host=a.host, port=a.port, proxy_headers=True,
+                forwarded_allow_ips=os.environ.get("FORWARDED_ALLOW_IPS", "*"))
 
 
 def cmd_worker(a):
