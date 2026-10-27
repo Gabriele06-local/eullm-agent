@@ -60,7 +60,6 @@ def store_items(s, tenant_id: str, source_id: int, items: list[Item], report: So
         canon = canonical_url(it.url)
         uhash = sha256_hex(canon)
         chash = content_hash(it.title, it.summary)
-        sig = minhash(f"{it.title} {it.summary}")
         existing = s.execute(
             select(m.source_items.c.id).where(m.source_items.c.url_hash == uhash)
         ).scalar()
@@ -70,6 +69,8 @@ def store_items(s, tenant_id: str, source_id: int, items: list[Item], report: So
         if existing is None:
             if room is not None:
                 room -= 1
+            # Only a new item needs its signature: a feed brings back mostly known ones.
+            sig = minhash(f"{it.title} {it.summary}")
             same = s.execute(
                 select(m.source_items.c.id)
                 .where(m.source_items.c.content_hash == chash, m.source_items.c.duplicate_of.is_(None))

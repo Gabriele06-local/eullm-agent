@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.18.2
+
+### Fixed
+
+- Editor Mode: the source search kept a CPU at 100% for hours. To judge
+  how original a candidate source is, each of its items was signed again
+  for every known signature (2000 and more, a few milliseconds each):
+  about ten minutes per candidate, hours for a site. Each item is now
+  signed once. The hourly collection signs only the new items, and the
+  Opportunity score reads the words of the site's past articles once.
+
 ## 0.18.1
 
 ### Changed

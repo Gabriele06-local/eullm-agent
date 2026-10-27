@@ -179,3 +179,14 @@ def test_old_hacker_news_searches_follow_what_is_new(db, tenant):
     with db.tenant(tenant) as s:
         r = s.execute(select(m.sources).where(m.sources.c.id == sid)).one()
     assert r.url == HN_RECENT and r.status == "active"
+
+
+def test_rate_signs_each_item_once(monkeypatch):
+    # Signed inside the comparison, an item was signed again for every known
+    # signature: hours of CPU for a source search with thousands of them.
+    calls = []
+    real = src.minhash
+    monkeypatch.setattr(src, "minhash", lambda text: calls.append(text) or real(text))
+    items = [Item(url=f"u{i}", title=f"Fibra {i}", summary="rete", published_at=NOW) for i in range(5)]
+    src.rate(items, {"fibra"}, known=[real(f"altro {k}") for k in range(300)])
+    assert len(calls) == 5

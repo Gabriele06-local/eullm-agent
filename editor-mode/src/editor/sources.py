@@ -107,7 +107,11 @@ def rate(
     comp["frequency"] = round(_sat(len(month) / 4.3, 5), 3) if dates else 0.0
     comp["freshness"] = round(min(1.0, math.exp(-(now - max(dates)).days / 14)), 3) if dates else 0.0
     if items and known:
-        dup = sum(1 for i in items if any(similarity(minhash(f"{i.title} {i.summary}"), k) >= 0.8 for k in known))
+        # One signature per item, compared with each known one: computed
+        # inside the comparison it was redone for every known signature
+        # (2000 and more), minutes of CPU for each candidate source.
+        sigs = [minhash(f"{i.title} {i.summary}") for i in items]
+        dup = sum(1 for sig in sigs if any(similarity(sig, k) >= 0.8 for k in known))
         comp["originality"] = round(1 - dup / len(items), 3)
     else:
         comp["originality"] = 1.0 if items else 0.0
