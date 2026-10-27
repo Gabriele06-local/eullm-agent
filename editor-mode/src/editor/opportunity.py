@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from functools import lru_cache
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
@@ -61,15 +62,21 @@ def relevance(topic_terms: set[str], profile: dict) -> tuple[float, str | None]:
     return round(best, 3), name
 
 
+@lru_cache(maxsize=20000)
+def _terms(title: str) -> frozenset[str]:
+    # The site's history is compared with every topic: its words once.
+    return frozenset(tokens(title))
+
+
 def novelty(titles: list[str], history: list[tuple[str, list[int]]]) -> float:
     """1 when nothing in the site's history looks like the topic."""
     if not history:
         return 1.0
     worst = 0.0
     for t in titles[:10]:
-        sig, terms = minhash(t), set(tokens(t))
+        sig, terms = minhash(t), _terms(t)
         for h_title, h_sig in history:
-            h_terms = set(tokens(h_title))
+            h_terms = _terms(h_title)
             overlap = len(terms & h_terms) / min(len(terms), len(h_terms)) if terms and h_terms else 0
             worst = max(worst, similarity(sig, h_sig), overlap if len(terms & h_terms) >= 3 else 0)
     return round(1 - min(worst, 1.0), 3)
