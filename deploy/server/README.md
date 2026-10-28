@@ -229,6 +229,7 @@ release is out (its job on GitHub Actions has published the images), in
 the installation folder:
 
     cd ~/eullm-server
+    ./backup.sh                                                # see BACKUP.md
     sed -i 's/^EULLM_VERSION=.*/EULLM_VERSION=X.Y.Z/' .env    # or empty: always the latest
     docker compose pull && docker compose up -d
     docker compose ps                                          # editor-migrate: exited (0)
@@ -271,8 +272,8 @@ Core: add them under `core:` → `environment:` as in
 | Logs | `docker compose logs -f core editor-worker` |
 | Update | see [Updating](#updating) |
 | Try a branch | `git checkout <branch> && docker compose up -d --build`: compiles the Core and Editor Mode from the checkout |
-| Backup | `docker compose exec postgres pg_dump -U postgres -Fc eullm > eullm-$(date +%F).dump` |
-| Restore | `docker compose exec -T postgres pg_restore -U postgres -d eullm --clean < file.dump` |
+| Backup | `./backup.sh`: one dated archive with the database, `.env` and the configuration; nightly with cron, see [BACKUP.md](BACKUP.md) |
+| Restore | same server or a new one: [BACKUP.md](BACKUP.md) |
 | Stop | `docker compose down` (data stays in the `pgdata` volume) |
 | A tenant's data | `docker compose exec editor-web editor tenant-export acme > acme.json` |
 | Delete a tenant | `docker compose exec editor-web editor tenant-delete acme --confirm acme` (for good) |
