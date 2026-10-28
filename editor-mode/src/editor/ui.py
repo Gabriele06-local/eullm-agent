@@ -20,7 +20,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import activity as act, accounts, auth, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
+from . import queue
+from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
 from .i18n import N_, t
 from .markdown import to_html
 
@@ -726,6 +727,12 @@ def register(app, ctx) -> None:
             "per_day": ((body or {}).get("settings") or {}).get("proposals_per_day", props.PER_DAY) if body else None,
             "cover_style": ((body or {}).get("settings") or {}).get("cover_style") or "impact",
             "cover_text": bool(((body or {}).get("settings") or {}).get("cover_text")),
+            "auto": autopilot.settings_of(body or s.execute(select(m.editorial_profiles.c.body).where(
+                m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "draft")
+                .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar()),
+            "auto_today": autopilot.today(s, site.id, start_of_day(s)),
+            "auto_targets": s.execute(select(pt.id, pt.name, pt.kind).where(
+                pt.site_id == site.id, pt.enabled.is_not(False)).order_by(pt.id)).all(),
             "drafts": drafts, "publications": pubs,
             "targets": count(m.publish_targets, pt.site_id == site.id, pt.enabled.is_not(False)),
             "cost": cost[0], "calls": cost[1],
@@ -837,6 +844,52 @@ def register(app, ctx) -> None:
             if not prof.set_cover(s, site_id, style, bool(text)):
                 return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
         return done("/site", t("Stile delle copertine salvato: vale dalla prossima immagine."))
+
+    @app.post("/ui/sites/{site_id}/auto")
+    def ui_auto(site_id: int, brief: str = Form(""), sections: str = Form(""), directives: str = Form(""),
+                avoid: str = Form(""), per_day: int = Form(6), min_opportunity: float = Form(40),
+                min_sources: int = Form(2), start: int = Form(7), end: int = Form(23), target_id: str = Form(""),
+                enabled: str = Form(""), credit: str = Form(""), language: str = Form("it"),
+                action: str = Form("save"), c: auth.Caller = Depends(ctx.need("owner"))):
+        def lines(x: str) -> list[str]:
+            return [y.strip() for y in re.split(r"[\n,;]", x) if y.strip()]
+        values = {"enabled": bool(enabled), "brief": brief.strip(), "sections": lines(sections),
+                  "directives": directives.strip(), "avoid": lines(avoid), "per_day": per_day,
+                  "min_opportunity": min_opportunity, "min_sources": min_sources, "hours": [start, end],
+                  "target_id": int(target_id) if target_id.isdigit() else None, "credit": bool(credit)}
+        try:
+            values = autopilot.check_settings(values)
+        except ValueError as e:
+            return done("/site#h-auto", t("Impostazioni non salvate: {e}.", e=e))
+        with db.tenant(c.tenant_id) as s:
+            if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
+                raise HTTPException(404, "site not found")
+            saved = autopilot.save(s, site_id, values)
+        if action == "profile":
+            if not values["brief"]:
+                return done("/site#h-auto", t("Scrivi prima il contesto: il profilo si ricava da lì."))
+            queue.enqueue(db, c.tenant_id, "brief", f"site {site_id}",
+                          {"site_id": site_id, "language": language if language in autopilot.LANGS else "it",
+                           "auto": values})
+            return done("/site", t("Il modello scrive il profilo dal contesto: lo segui nel riquadro Attività, "
+                                   "poi lo approvi qui sotto."))
+        if not saved:
+            return done("/site#h-auto", t("Il sito non ha ancora un profilo: premi \"Crea il profilo dal contesto\"."))
+        if values["enabled"]:
+            return done("/site#h-auto", t("Redazione automatica accesa: dal prossimo giro orario sceglie, scrive e "
+                                          "pubblica fino a {n} articoli al giorno, dalle {start} alle {end}.",
+                                          n=values["per_day"], start=values["hours"][0], end=values["hours"][1]))
+        return done("/site#h-auto", t("Impostazioni salvate. La redazione automatica è spenta."))
+
+    @app.post("/ui/sites/{site_id}/auto/stop")
+    def ui_auto_stop(site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        with db.tenant(c.tenant_id) as s:
+            body = s.execute(select(m.editorial_profiles.c.body).where(
+                m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+            if body is not None:
+                autopilot.save(s, site_id, {**autopilot.settings_of(body), "enabled": False})
+        return done("/site#h-auto", t("Redazione automatica fermata: non parte nessun articolo nuovo. Quelli già in "
+                                      "scrittura restano bozze da rileggere."))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -1329,7 +1382,7 @@ def register(app, ctx) -> None:
                           history=[{**r._mapping, "uncertain": r.status == "sending" and r.decided_at is not None
                                     and r.decided_at < datetime.now(UTC) - timedelta(minutes=10)}
                                    for r in rows if r.status != "pending_approval"],
-                          targets=targets, kinds=TARGET_KINDS, stored=vault.stored(s),
+                          targets=targets, kinds=TARGET_KINDS, stored=vault.stored(s), langs=tr.LANGUAGES,
                           secret_var=lambda name: _secret_var(c.tenant_id, name))
 
     @app.post("/ui/publications/{pub_id}/decision")
@@ -1359,7 +1412,7 @@ def register(app, ctx) -> None:
                       address: str = Form(""), user: str = Form(""), secret_env: str = Form(""),
                       secret: str = Form(""), indexnow_key: str = Form(""), jsonld: str = Form(""),
                       branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
-                      article_url: str = Form(""), verify: str = Form(""),
+                      article_url: str = Form(""), verify: str = Form(""), language: str = Form(""),
                       c: auth.Caller = Depends(ctx.need("owner"))):
         if kind not in TARGET_KINDS:
             raise HTTPException(400, "unknown kind")
@@ -1376,6 +1429,8 @@ def register(app, ctx) -> None:
             config["user"] = user.strip()
             if jsonld:
                 config["jsonld"] = True
+        if language in tr.LANGUAGES:
+            config["language"] = language
         key = indexnow_key.strip()
         if key:
             if not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
@@ -1586,13 +1641,13 @@ def register(app, ctx) -> None:
     def ui_edit_target(target_id: int, name: str = Form(...), address: str = Form(""), user: str = Form(""),
                        indexnow_key: str = Form(""), jsonld: str = Form(""), enabled: str = Form(""),
                        branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
-                       article_url: str = Form(""), verify: str = Form(""),
+                       article_url: str = Form(""), verify: str = Form(""), language: str = Form(""),
                        c: auth.Caller = Depends(ctx.need("owner"))):
         try:
             manage.update_target(db, c.tenant_id, target_id, name=name, address=address, user=user,
                                  indexnow_key=indexnow_key, jsonld=bool(jsonld), enabled=bool(enabled),
                                  branch=branch, path=path, image_path=image_path,
-                                 article_url=article_url, verify=bool(verify))
+                                 article_url=article_url, verify=bool(verify), language=language)
         except LookupError:
             raise HTTPException(404, "target not found") from None
         except manage.ManageError as e:

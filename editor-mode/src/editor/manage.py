@@ -80,7 +80,7 @@ def _forget_unused_secrets(s, names: set[str]) -> None:
 def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str, user: str = "",
                   indexnow_key: str = "", jsonld: bool = False, enabled: bool = True,
                   branch: str = "", path: str = "", image_path: str = "", article_url: str = "",
-                  verify: bool = True) -> None:
+                  verify: bool = True, language: str = "") -> None:
     """Change a target's name, address and options. Its credential is
     replaced on its own (vault). branch, path and image_path are the github
     target's places in the repository."""
@@ -112,6 +112,12 @@ def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str
                 config["jsonld"] = True
             else:
                 config.pop("jsonld", None)
+        from .translate import LANGUAGES
+
+        if language in LANGUAGES:
+            config["language"] = language
+        else:
+            config.pop("language", None)
         key = indexnow_key.strip()
         if key and not re.fullmatch(r"[A-Za-z0-9-]{8,128}", key):
             raise ManageError(t("La chiave IndexNow va da 8 a 128 caratteri tra lettere, numeri e trattini."))

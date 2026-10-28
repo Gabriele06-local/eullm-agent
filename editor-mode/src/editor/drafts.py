@@ -276,6 +276,8 @@ def _sources(s, ids: list[int]) -> dict[int, Source]:
 
 
 def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] | None = None) -> str:
+    from .autopilot import brief_lines
+
     style = profile.get("style", {})
     target = target_words(profile)
     lines = [
@@ -285,6 +287,7 @@ def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] 
         f"Proposal: {proposal.title}",
         f"Angle: {proposal.angle}",
         f"Format: {proposal.format}",
+        *brief_lines(profile),
         "Items (those marked MAIN are the news the article is about; the others give context):",
     ]
     for src in sources.values():

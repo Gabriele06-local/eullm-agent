@@ -1,0 +1,296 @@
+{
+ "Lingua degli articoli": {
+  "en": "Language of the articles",
+  "de": "Sprache der Artikel",
+  "fr": "Langue des articles",
+  "es": "Idioma de los artículos"
+ },
+ "Tutte (o la lingua del sito)": {
+  "en": "All (or the site's language)",
+  "de": "Alle (oder die Sprache der Website)",
+  "fr": "Toutes (ou la langue du site)",
+  "es": "Todos (o el idioma del sitio)"
+ },
+ "Redazione automatica": {
+  "en": "Automatic newsroom",
+  "de": "Automatische Redaktion",
+  "fr": "Rédaction automatique",
+  "es": "Redacción automática"
+ },
+ "Accesa": {
+  "en": "On",
+  "de": "An",
+  "fr": "Activée",
+  "es": "Activada"
+ },
+ "Ferma subito": {
+  "en": "Stop now",
+  "de": "Sofort anhalten",
+  "fr": "Arrêter maintenant",
+  "es": "Detener ahora"
+ },
+ "Spenta": {
+  "en": "Off",
+  "de": "Aus",
+  "fr": "Désactivée",
+  "es": "Desactivada"
+ },
+ "Il sito scrive e pubblica da solo: ogni ora sceglie le notizie migliori che rispettano le tue regole, scrive l'articolo con le fonti, fa la copertina, lo fa rileggere a un caporedattore AI e lo pubblica. Ogni articolo dice che è scritto dall'intelligenza artificiale senza revisione umana, come chiede l'AI Act.": {
+  "en": "The site writes and publishes on its own: every hour it picks the best news that follows your rules, writes the article with its sources, makes the cover, has an AI editor-in-chief read it and publishes it. Every article says it was written by artificial intelligence without human review, as the AI Act requires.",
+  "de": "Die Website schreibt und veröffentlicht selbst: Jede Stunde wählt sie die besten Nachrichten, die Ihren Regeln entsprechen, schreibt den Artikel mit Quellen, erstellt das Titelbild, lässt ihn von einem KI-Chefredakteur prüfen und veröffentlicht ihn. Jeder Artikel weist darauf hin, dass er von künstlicher Intelligenz ohne menschliche Prüfung geschrieben wurde, wie es der AI Act verlangt.",
+  "fr": "Le site écrit et publie tout seul : chaque heure, il choisit les meilleures actualités qui respectent vos règles, rédige l'article avec ses sources, crée la couverture, le fait relire par un rédacteur en chef IA et le publie. Chaque article indique qu'il a été écrit par une intelligence artificielle sans relecture humaine, comme l'exige l'AI Act.",
+  "es": "El sitio escribe y publica solo: cada hora elige las mejores noticias que cumplen tus reglas, escribe el artículo con sus fuentes, crea la portada, lo hace revisar por un redactor jefe de IA y lo publica. Cada artículo indica que fue escrito por inteligencia artificial sin revisión humana, como exige la AI Act."
+ },
+ "Oggi: {p} pubblicati, {h} fermati dal caporedattore AI.": {
+  "en": "Today: {p} published, {h} stopped by the AI editor-in-chief.",
+  "de": "Heute: {p} veröffentlicht, {h} vom KI-Chefredakteur angehalten.",
+  "fr": "Aujourd'hui : {p} publiés, {h} arrêtés par le rédacteur en chef IA.",
+  "es": "Hoy: {p} publicados, {h} detenidos por el redactor jefe de IA."
+ },
+ "fermato": {
+  "en": "stopped",
+  "de": "angehalten",
+  "fr": "arrêté",
+  "es": "detenido"
+ },
+ "pubblicato": {
+  "en": "published",
+  "de": "veröffentlicht",
+  "fr": "publié",
+  "es": "publicado"
+ },
+ "pubblicazione non riuscita": {
+  "en": "publishing failed",
+  "de": "Veröffentlichung fehlgeschlagen",
+  "fr": "publication échouée",
+  "es": "publicación fallida"
+ },
+ "approvato": {
+  "en": "approved",
+  "de": "freigegeben",
+  "fr": "approuvé",
+  "es": "aprobado"
+ },
+ "in lavorazione": {
+  "en": "in progress",
+  "de": "in Arbeit",
+  "fr": "en cours",
+  "es": "en curso"
+ },
+ "Contesto: di cosa parla il sito, per chi, con quale obiettivo": {
+  "en": "Brief: what the site is about, for whom, with what goal",
+  "de": "Kontext: Worum es auf der Website geht, für wen, mit welchem Ziel",
+  "fr": "Contexte : de quoi parle le site, pour qui, avec quel objectif",
+  "es": "Contexto: de qué trata el sitio, para quién, con qué objetivo"
+ },
+ "Es.: notizie dal mondo per lettori italiani curiosi; obiettivo: più lettori possibili, titoli che invogliano senza ingannare.": {
+  "en": "E.g.: world news for curious Italian readers; goal: as many readers as possible, titles that invite without misleading.",
+  "de": "Z. B.: Weltnachrichten für neugierige italienische Leser; Ziel: möglichst viele Leser, Titel, die neugierig machen, ohne zu täuschen.",
+  "fr": "Ex. : actualités du monde pour des lecteurs italiens curieux ; objectif : le plus de lecteurs possible, des titres qui donnent envie sans tromper.",
+  "es": "Ej.: noticias del mundo para lectores italianos curiosos; objetivo: el mayor número de lectores, títulos que invitan sin engañar."
+ },
+ "Rubriche, una per riga": {
+  "en": "Sections, one per line",
+  "de": "Rubriken, eine pro Zeile",
+  "fr": "Rubriques, une par ligne",
+  "es": "Secciones, una por línea"
+ },
+ "Direttive: come scrivere, cosa preferire": {
+  "en": "Directives: how to write, what to prefer",
+  "de": "Richtlinien: wie geschrieben wird, was Vorrang hat",
+  "fr": "Directives : comment écrire, que privilégier",
+  "es": "Directrices: cómo escribir, qué preferir"
+ },
+ "Argomenti da non trattare mai, separati da virgola": {
+  "en": "Topics never to cover, separated by commas",
+  "de": "Themen, die nie behandelt werden, durch Kommas getrennt",
+  "fr": "Sujets à ne jamais traiter, séparés par des virgules",
+  "es": "Temas que no se tratan nunca, separados por comas"
+ },
+ "Articoli al giorno": {
+  "en": "Articles a day",
+  "de": "Artikel pro Tag",
+  "fr": "Articles par jour",
+  "es": "Artículos al día"
+ },
+ "Opportunità minima": {
+  "en": "Minimum Opportunity",
+  "de": "Mindest-Opportunity",
+  "fr": "Opportunité minimale",
+  "es": "Oportunidad mínima"
+ },
+ "Fonti diverse minime": {
+  "en": "Minimum different sources",
+  "de": "Mindestzahl verschiedener Quellen",
+  "fr": "Sources différentes minimales",
+  "es": "Fuentes distintas mínimas"
+ },
+ "Dalle ore": {
+  "en": "From",
+  "de": "Von",
+  "fr": "De",
+  "es": "Desde las"
+ },
+ "Alle ore": {
+  "en": "To",
+  "de": "Bis",
+  "fr": "À",
+  "es": "Hasta las"
+ },
+ "La prima adatta": {
+  "en": "The first that fits",
+  "de": "Die erste passende",
+  "fr": "La première adaptée",
+  "es": "La primera adecuada"
+ },
+ "Lingua del sito": {
+  "en": "Site language",
+  "de": "Sprache der Website",
+  "fr": "Langue du site",
+  "es": "Idioma del sitio"
+ },
+ "Sotto ogni articolo il link a Redazia": {
+  "en": "A link to Redazia under every article",
+  "de": "Unter jedem Artikel ein Link zu Redazia",
+  "fr": "Un lien vers Redazia sous chaque article",
+  "es": "Un enlace a Redazia bajo cada artículo"
+ },
+ "Accendi la redazione automatica": {
+  "en": "Turn on the automatic newsroom",
+  "de": "Automatische Redaktion einschalten",
+  "fr": "Activer la rédaction automatique",
+  "es": "Activar la redacción automática"
+ },
+ "Il caporedattore AI ferma sempre: accuse non confermate contro persone o aziende, privati e minori, consigli medici, legali o finanziari, odio, violenza descritta nei dettagli, voci date per certe, titoli che promettono ciò che l'articolo non dice.": {
+  "en": "The AI editor-in-chief always stops: unconfirmed accusations against people or companies, private individuals and minors, medical, legal or financial advice, hate, violence described in detail, rumours presented as facts, titles that promise what the article does not say.",
+  "de": "Der KI-Chefredakteur hält immer an: unbestätigte Vorwürfe gegen Personen oder Unternehmen, Privatpersonen und Minderjährige, medizinische, rechtliche oder finanzielle Ratschläge, Hass, detailliert geschilderte Gewalt, Gerüchte als Tatsachen, Titel, die versprechen, was der Artikel nicht sagt.",
+  "fr": "Le rédacteur en chef IA arrête toujours : accusations non confirmées contre des personnes ou des entreprises, particuliers et mineurs, conseils médicaux, juridiques ou financiers, haine, violence décrite en détail, rumeurs présentées comme des faits, titres qui promettent ce que l'article ne dit pas.",
+  "es": "El redactor jefe de IA siempre detiene: acusaciones no confirmadas contra personas o empresas, particulares y menores, consejos médicos, legales o financieros, odio, violencia descrita en detalle, rumores presentados como hechos, títulos que prometen lo que el artículo no dice."
+ },
+ "Crea il profilo dal contesto": {
+  "en": "Create the profile from the brief",
+  "de": "Profil aus dem Kontext erstellen",
+  "fr": "Créer le profil à partir du contexte",
+  "es": "Crear el perfil desde el contexto"
+ },
+ "Per un sito nuovo, senza articoli da leggere: il profilo nasce dal contesto e dalle rubriche, poi lo approvi.": {
+  "en": "For a new site with no articles to read: the profile comes from the brief and the sections, then you approve it.",
+  "de": "Für eine neue Website ohne Artikel: Das Profil entsteht aus Kontext und Rubriken, danach geben Sie es frei.",
+  "fr": "Pour un site nouveau, sans articles à lire : le profil naît du contexte et des rubriques, puis vous l'approuvez.",
+  "es": "Para un sitio nuevo, sin artículos que leer: el perfil nace del contexto y las secciones, luego lo apruebas."
+ },
+ "Profilo dal contesto": {
+  "en": "Profile from the brief",
+  "de": "Profil aus dem Kontext",
+  "fr": "Profil à partir du contexte",
+  "es": "Perfil desde el contexto"
+ },
+ "«{title}» approvato dal caporedattore AI e inviato a {target}.": {
+  "en": "“{title}” approved by the AI editor-in-chief and sent to {target}.",
+  "de": "„{title}“ vom KI-Chefredakteur freigegeben und an {target} gesendet.",
+  "fr": "« {title} » approuvé par le rédacteur en chef IA et envoyé à {target}.",
+  "es": "«{title}» aprobado por el redactor jefe de IA y enviado a {target}."
+ },
+ "«{title}» approvato dal caporedattore AI: nessuna destinazione per pubblicarlo, è nel feed e nel pacchetto.": {
+  "en": "“{title}” approved by the AI editor-in-chief: no destination to publish it, it is in the feed and the package.",
+  "de": "„{title}“ vom KI-Chefredakteur freigegeben: kein Ziel zum Veröffentlichen, er steht im Feed und im Paket.",
+  "fr": "« {title} » approuvé par le rédacteur en chef IA : aucune destination pour le publier, il est dans le flux et le paquet.",
+  "es": "«{title}» aprobado por el redactor jefe de IA: ningún destino para publicarlo, está en el feed y en el paquete."
+ },
+ "Traduzioni in arrivo: {languages}.": {
+  "en": "Translations on the way: {languages}.",
+  "de": "Übersetzungen folgen: {languages}.",
+  "fr": "Traductions en cours : {languages}.",
+  "es": "Traducciones en camino: {languages}."
+ },
+ "Profilo scritto dal contesto (versione {version}): controllalo e approvalo.": {
+  "en": "Profile written from the brief (version {version}): check it and approve it.",
+  "de": "Profil aus dem Kontext geschrieben (Version {version}): prüfen und freigeben.",
+  "fr": "Profil rédigé à partir du contexte (version {version}) : vérifiez-le et approuvez-le.",
+  "es": "Perfil escrito desde el contexto (versión {version}): revísalo y apruébalo."
+ },
+ "Traduzione fermata: «{title}».": {
+  "en": "Translation stopped: “{title}”.",
+  "de": "Übersetzung angehalten: „{title}“.",
+  "fr": "Traduction arrêtée : « {title} ».",
+  "es": "Traducción detenida: «{title}»."
+ },
+ "Motivi: {why}": {
+  "en": "Reasons: {why}",
+  "de": "Gründe: {why}",
+  "fr": "Motifs : {why}",
+  "es": "Motivos: {why}"
+ },
+ "Traduzione in {language} inviata a {target}: «{title}».": {
+  "en": "Translation in {language} sent to {target}: “{title}”.",
+  "de": "Übersetzung ({language}) an {target} gesendet: „{title}“.",
+  "fr": "Traduction en {language} envoyée à {target} : « {title} ».",
+  "es": "Traducción ({language}) enviada a {target}: «{title}»."
+ },
+ "Fermato dal caporedattore AI: «{title}». Resta una bozza da rileggere.": {
+  "en": "Stopped by the AI editor-in-chief: “{title}”. It stays a draft to review.",
+  "de": "Vom KI-Chefredakteur angehalten: „{title}“. Er bleibt ein Entwurf zum Prüfen.",
+  "fr": "Arrêté par le rédacteur en chef IA : « {title} ». Il reste un brouillon à relire.",
+  "es": "Detenido por el redactor jefe de IA: «{title}». Queda como borrador para revisar."
+ },
+ "Pubblicazione su {name}": {
+  "en": "Publishing to {name}",
+  "de": "Veröffentlichung auf {name}",
+  "fr": "Publication sur {name}",
+  "es": "Publicación en {name}"
+ },
+ "Il caporedattore AI rilegge l'articolo": {
+  "en": "The AI editor-in-chief reads the article",
+  "de": "Der KI-Chefredakteur prüft den Artikel",
+  "fr": "Le rédacteur en chef IA relit l'article",
+  "es": "El redactor jefe de IA revisa el artículo"
+ },
+ "Impostazioni salvate. La redazione automatica è spenta.": {
+  "en": "Settings saved. The automatic newsroom is off.",
+  "de": "Einstellungen gespeichert. Die automatische Redaktion ist aus.",
+  "fr": "Réglages enregistrés. La rédaction automatique est désactivée.",
+  "es": "Ajustes guardados. La redacción automática está desactivada."
+ },
+ "Redazione automatica fermata: non parte nessun articolo nuovo. Quelli già in scrittura restano bozze da rileggere.": {
+  "en": "Automatic newsroom stopped: no new article starts. Those already being written stay drafts to review.",
+  "de": "Automatische Redaktion angehalten: Kein neuer Artikel startet. Bereits begonnene bleiben Entwürfe zum Prüfen.",
+  "fr": "Rédaction automatique arrêtée : aucun nouvel article ne part. Ceux déjà en cours restent des brouillons à relire.",
+  "es": "Redacción automática detenida: no empieza ningún artículo nuevo. Los que ya se están escribiendo quedan como borradores para revisar."
+ },
+ "Il modello scrive il profilo dal contesto: lo segui nel riquadro Attività, poi lo approvi qui sotto.": {
+  "en": "The model is writing the profile from the brief: follow it in the Activity box, then approve it below.",
+  "de": "Das Modell schreibt das Profil aus dem Kontext: Verfolgen Sie es im Feld Aktivität und geben Sie es dann unten frei.",
+  "fr": "Le modèle rédige le profil à partir du contexte : suivez-le dans l'encadré Activité, puis approuvez-le ci-dessous.",
+  "es": "El modelo escribe el perfil desde el contexto: síguelo en el recuadro Actividad y luego apruébalo abajo."
+ },
+ "Il sito non ha ancora un profilo: premi \"Crea il profilo dal contesto\".": {
+  "en": "The site has no profile yet: press \"Create the profile from the brief\".",
+  "de": "Die Website hat noch kein Profil: Klicken Sie auf \"Profil aus dem Kontext erstellen\".",
+  "fr": "Le site n'a pas encore de profil : cliquez sur \"Créer le profil à partir du contexte\".",
+  "es": "El sitio aún no tiene perfil: pulsa \"Crear el perfil desde el contexto\"."
+ },
+ "Redazione automatica accesa: dal prossimo giro orario sceglie, scrive e pubblica fino a {n} articoli al giorno, dalle {start} alle {end}.": {
+  "en": "Automatic newsroom on: from the next hourly round it picks, writes and publishes up to {n} articles a day, from {start} to {end}.",
+  "de": "Automatische Redaktion an: Ab der nächsten stündlichen Runde wählt, schreibt und veröffentlicht sie bis zu {n} Artikel pro Tag, von {start} bis {end} Uhr.",
+  "fr": "Rédaction automatique activée : dès la prochaine tournée horaire, elle choisit, écrit et publie jusqu'à {n} articles par jour, de {start} h à {end} h.",
+  "es": "Redacción automática activada: desde la próxima ronda horaria elige, escribe y publica hasta {n} artículos al día, de {start} a {end}."
+ },
+ "Impostazioni non salvate: {e}.": {
+  "en": "Settings not saved: {e}.",
+  "de": "Einstellungen nicht gespeichert: {e}.",
+  "fr": "Réglages non enregistrés : {e}.",
+  "es": "Ajustes no guardados: {e}."
+ },
+ "Scrivi prima il contesto: il profilo si ricava da lì.": {
+  "en": "Write the brief first: the profile comes from it.",
+  "de": "Schreiben Sie zuerst den Kontext: Das Profil entsteht daraus.",
+  "fr": "Écrivez d'abord le contexte : le profil en découle.",
+  "es": "Escribe primero el contexto: el perfil sale de ahí."
+ },
+ "Il modello ricava il profilo dal contesto": {
+  "en": "The model draws the profile from the brief",
+  "de": "Das Modell leitet das Profil aus dem Kontext ab",
+  "fr": "Le modèle tire le profil du contexte",
+  "es": "El modelo saca el perfil del contexto"
+ }
+}

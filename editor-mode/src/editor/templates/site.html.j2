@@ -97,6 +97,49 @@
 {% endif %}
 {% endif %}
 
+{% if numbers and caller.can('owner') %}
+{% set a = numbers.auto %}{% set day = numbers.auto_today %}
+<section class="card pad" aria-labelledby="h-auto" id="h-auto">
+  <div class="row" style="justify-content: space-between; align-items: center;">
+    <h2 id="h-auto">{{ _('Redazione automatica') }}</h2>
+    {% if a.enabled %}
+    <div class="row" style="align-items: center; gap: 8px;">
+      <span class="chip green">{{ _('Accesa') }}</span>
+      <form class="inline" method="post" action="/ui/sites/{{ site.id }}/auto/stop"><button class="btn" type="submit">{{ _('Ferma subito') }}</button></form>
+    </div>
+    {% else %}<span class="chip">{{ _('Spenta') }}</span>{% endif %}
+  </div>
+  <p class="lead">{{ _("Il sito scrive e pubblica da solo: ogni ora sceglie le notizie migliori che rispettano le tue regole, scrive l'articolo con le fonti, fa la copertina, lo fa rileggere a un caporedattore AI e lo pubblica. Ogni articolo dice che è scritto dall'intelligenza artificiale senza revisione umana, come chiede l'AI Act.") }}</p>
+  {% if day['items'] %}
+  <p class="hint">{{ _('Oggi: {p} pubblicati, {h} fermati dal caporedattore AI.', p=day.published, h=day.held) }}</p>
+  <ul class="plain">{% for x in day['items'][:10] %}<li><a href="/drafts/{{ x.id }}">{{ x.title }}</a> · {% if x.held %}<span class="chip amber" title="{{ x.held }}">{{ _('fermato') }}</span>{% elif x.publication == 'published' %}<span class="chip green">{{ _('pubblicato') }}</span>{% elif x.publication == 'failed' %}<span class="chip red">{{ _('pubblicazione non riuscita') }}</span>{% elif x.status == 'approved' %}<span class="chip">{{ _('approvato') }}</span>{% else %}<span class="chip">{{ _('in lavorazione') }}</span>{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  <form method="post" action="/ui/sites/{{ site.id }}/auto" style="display: flex; flex-direction: column; gap: 12px;">
+    <label class="field">{{ _('Contesto: di cosa parla il sito, per chi, con quale obiettivo') }}<textarea name="brief" rows="4" maxlength="4000" placeholder="{{ _('Es.: notizie dal mondo per lettori italiani curiosi; obiettivo: più lettori possibili, titoli che invogliano senza ingannare.') }}">{{ a.brief }}</textarea></label>
+    <label class="field">{{ _('Rubriche, una per riga') }}<textarea name="sections" rows="4">{{ a.sections|join('\n') }}</textarea></label>
+    <label class="field">{{ _('Direttive: come scrivere, cosa preferire') }}<textarea name="directives" rows="3" maxlength="4000">{{ a.directives }}</textarea></label>
+    <label class="field">{{ _('Argomenti da non trattare mai, separati da virgola') }}<input name="avoid" value="{{ a.avoid|join(', ') }}"></label>
+    <div class="row" style="gap: 12px; flex-wrap: wrap;">
+      <label class="field">{{ _('Articoli al giorno') }}<input name="per_day" type="number" min="1" max="48" value="{{ a.per_day }}" style="width: 6em;"></label>
+      <label class="field">{{ _('Opportunità minima') }}<input name="min_opportunity" type="number" min="0" max="100" value="{{ a.min_opportunity|int }}" style="width: 6em;"></label>
+      <label class="field">{{ _('Fonti diverse minime') }}<input name="min_sources" type="number" min="1" max="3" value="{{ a.min_sources }}" style="width: 6em;"></label>
+      <label class="field">{{ _('Dalle ore') }}<input name="start" type="number" min="0" max="23" value="{{ a.hours[0] }}" style="width: 5em;"></label>
+      <label class="field">{{ _('Alle ore') }}<input name="end" type="number" min="1" max="24" value="{{ a.hours[1] }}" style="width: 5em;"></label>
+      <label class="field">{{ _('Destinazione') }}<select name="target_id"><option value="">{{ _('La prima adatta') }}</option>{% for x in numbers.auto_targets %}<option value="{{ x.id }}" {% if a.target_id == x.id %}selected{% endif %}>{{ x.name }} ({{ x.kind }})</option>{% endfor %}</select></label>
+      <label class="field">{{ _('Lingua del sito') }}<select name="language">{% for k in ['it', 'en', 'de', 'fr', 'es'] %}<option value="{{ k }}" {% if (site.language or 'it')[:2] == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
+    </div>
+    <label class="row" style="gap: 6px; align-items: center;"><input type="checkbox" name="credit" value="1" {% if a.credit %}checked{% endif %}> {{ _('Sotto ogni articolo il link a Redazia') }}</label>
+    <label class="row" style="gap: 6px; align-items: center;"><input type="checkbox" name="enabled" value="1" {% if a.enabled %}checked{% endif %}> {{ _('Accendi la redazione automatica') }}</label>
+    <p class="hint">{{ _("Il caporedattore AI ferma sempre: accuse non confermate contro persone o aziende, privati e minori, consigli medici, legali o finanziari, odio, violenza descritta nei dettagli, voci date per certe, titoli che promettono ciò che l'articolo non dice.") }}</p>
+    <div class="row">
+      <button class="btn pri" type="submit" name="action" value="save">{{ _('Salva') }}</button>
+      <button class="btn" type="submit" name="action" value="profile">{{ _('Crea il profilo dal contesto') }}</button>
+      <span class="hint">{{ _('Per un sito nuovo, senza articoli da leggere: il profilo nasce dal contesto e dalle rubriche, poi lo approvi.') }}</span>
+    </div>
+  </form>
+</section>
+{% endif %}
+
 {% if analysis and analysis.problems %}
 <div class="dashed"><strong>{{ _("Note sulla lettura del sito") if analysis.status == 'complete' else _("Perché la lettura del sito è parziale") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}

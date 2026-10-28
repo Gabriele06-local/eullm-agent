@@ -150,6 +150,7 @@ class Runner:
                     tenant_data.prune(self.db, tenant, now=now)
                 self.step(tenant, "maintain", done, failed, maintain)
             self.retry_profiles(tenant, now)
+            self.autopilot(tenant, now, tz, done, failed)
             if review_due(local, last_review):
                 self.step(tenant, "review", done, failed, lambda: self.review(tenant, client))
             with self.db.tenant(tenant) as s:
@@ -258,6 +259,23 @@ class Runner:
         for domain in due:
             enqueue(self.db, tenant, "analysis", domain, {"retry": True}, priority=PRIORITY_TICK + 1)
         return due
+
+    def autopilot(self, tenant: str, now: datetime, tz: str, done: list[str], failed: list[str]) -> None:
+        """The automatic newsroom of each site that has it on: this hour's
+        articles are accepted and queued, each as an `auto` job."""
+        from . import autopilot
+        from .queue import enqueue
+
+        p = m.editorial_profiles.c
+        with self.db.tenant(tenant) as s:
+            sites = [r.site_id for r in s.execute(select(p.site_id, p.body).where(p.status == "approved")).all()
+                     if autopilot.settings_of(r.body)["enabled"]]
+        for site_id in sites:
+            def go(site_id=site_id):
+                autopilot.run(self.db, tenant, site_id, self.core_for(tenant), now, tz,
+                              lambda pid: enqueue(self.db, tenant, "auto", f"proposal {pid}",
+                                                  {"proposal_id": pid, "site_id": site_id}))
+            self.step(tenant, "autopilot", done, failed, go)
 
     def review(self, tenant: str, client) -> None:
         from .site import SiteCrawler
