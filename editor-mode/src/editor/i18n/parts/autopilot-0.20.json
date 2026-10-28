@@ -292,5 +292,41 @@
   "de": "Das Modell leitet das Profil aus dem Kontext ab",
   "fr": "Le modèle tire le profil du contexte",
   "es": "El modelo saca el perfil del contexto"
+ },
+ "Utente WordPress": {
+  "en": "WordPress user",
+  "de": "WordPress-Benutzer",
+  "fr": "Utilisateur WordPress",
+  "es": "Usuario de WordPress"
+ },
+ "Ramo": {
+  "en": "Branch",
+  "de": "Branch",
+  "fr": "Branche",
+  "es": "Rama"
+ },
+ "Cartella degli articoli": {
+  "en": "Articles folder",
+  "de": "Ordner der Artikel",
+  "fr": "Dossier des articles",
+  "es": "Carpeta de los artículos"
+ },
+ "Cartella delle immagini": {
+  "en": "Images folder",
+  "de": "Ordner der Bilder",
+  "fr": "Dossier des images",
+  "es": "Carpeta de las imágenes"
+ },
+ "Indirizzo degli articoli": {
+  "en": "Articles' address",
+  "de": "Adresse der Artikel",
+  "fr": "Adresse des articles",
+  "es": "Dirección de los artículos"
+ },
+ "Aggiungi la destinazione": {
+  "en": "Add the destination",
+  "de": "Ziel hinzufügen",
+  "fr": "Ajouter la destination",
+  "es": "Añadir el destino"
  }
 }

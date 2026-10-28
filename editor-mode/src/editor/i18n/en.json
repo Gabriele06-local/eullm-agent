@@ -1407,5 +1407,11 @@
  "Redazione automatica accesa: dal prossimo giro orario sceglie, scrive e pubblica fino a {n} articoli al giorno, dalle {start} alle {end}.": "Automatic newsroom on: from the next hourly round it picks, writes and publishes up to {n} articles a day, from {start} to {end}.",
  "Impostazioni non salvate: {e}.": "Settings not saved: {e}.",
  "Scrivi prima il contesto: il profilo si ricava da lì.": "Write the brief first: the profile comes from it.",
- "Il modello ricava il profilo dal contesto": "The model draws the profile from the brief"
+ "Il modello ricava il profilo dal contesto": "The model draws the profile from the brief",
+ "Utente WordPress": "WordPress user",
+ "Ramo": "Branch",
+ "Cartella degli articoli": "Articles folder",
+ "Cartella delle immagini": "Images folder",
+ "Indirizzo degli articoli": "Articles' address",
+ "Aggiungi la destinazione": "Add the destination"
 }

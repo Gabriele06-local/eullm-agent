@@ -1407,5 +1407,11 @@
  "Redazione automatica accesa: dal prossimo giro orario sceglie, scrive e pubblica fino a {n} articoli al giorno, dalle {start} alle {end}.": "Redacción automática activada: desde la próxima ronda horaria elige, escribe y publica hasta {n} artículos al día, de {start} a {end}.",
  "Impostazioni non salvate: {e}.": "Ajustes no guardados: {e}.",
  "Scrivi prima il contesto: il profilo si ricava da lì.": "Escribe primero el contexto: el perfil sale de ahí.",
- "Il modello ricava il profilo dal contesto": "El modelo saca el perfil del contexto"
+ "Il modello ricava il profilo dal contesto": "El modelo saca el perfil del contexto",
+ "Utente WordPress": "Usuario de WordPress",
+ "Ramo": "Rama",
+ "Cartella degli articoli": "Carpeta de los artículos",
+ "Cartella delle immagini": "Carpeta de las imágenes",
+ "Indirizzo degli articoli": "Dirección de los artículos",
+ "Aggiungi la destinazione": "Añadir el destino"
 }

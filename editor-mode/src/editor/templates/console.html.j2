@@ -11,7 +11,7 @@
 {% set labels = {'sites': _('Siti'), 'sources': _('Fonti attive'), 'items': _('Notizie oggi'), 'drafts': _('Bozze nel mese'), 'llm_cost': _('Costo modello nel mese')} %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></div>
+  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></a>
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>
@@ -24,8 +24,11 @@
   {% for x in mine %}<a href="/admin/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
   <span class="grow"></span>
   <div class="who">
-    <span>{{ me.email }} · {{ _('operatore') }}</span>
-    <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
+    <span class="name" title="{{ me.email }}">{{ me.email }}</span>
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <span>{{ _('operatore') }}</span>
+      <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
+    </div>
   </div>
 </nav>
 <main class="main">

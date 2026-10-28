@@ -76,20 +76,28 @@
   <details class="manage">
     <summary>{{ _('Modifica o elimina {name}', name=t.name) }}</summary>
     {% set cf = t.config or {} %}
-    <form method="post" action="/ui/targets/{{ t.id }}" class="form-grid">
-      <label class="field">{{ _('Nome') }}<input name="name" value="{{ t.name }}" required maxlength="100"></label>
-      <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ cf.get('url') or cf.get('repo') or cf.get('chat_id') or '' }}" required></label>
-      {% if t.kind == 'wordpress' %}<label class="field">{{ _('Utente (WordPress)') }}<input name="user" value="{{ cf.get('user') or '' }}" autocomplete="off" required></label>{% endif %}
-      {% if t.kind == 'github' %}<label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" value="{{ cf.get('branch') or '' }}" autocomplete="off" placeholder="main"></label>
-      <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" value="{{ cf.get('path') or '' }}" autocomplete="off" placeholder="content/blog"></label>
-      <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" value="{{ cf.get('image_path') or '' }}" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
-      <label class="field">{{ _('Indirizzo degli articoli (GitHub, facoltativo)') }}<input name="article_url" value="{{ cf.get('url') or '' }}" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
-      <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="verify" value="1" {% if cf.get('verify') is not sameas false %}checked{% endif %}> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>{% endif %}
-      <label class="field">{{ _('Lingua degli articoli') }}<select name="language"><option value="">{{ _('Tutte (o la lingua del sito)') }}</option>{% for k, v in langs.items() %}<option value="{{ k }}" {% if cf.get('language') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
-      <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" value="{{ cf.get('indexnow_key') or '' }}" autocomplete="off"></label>
-      {% if t.kind == 'wordpress' %}<label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1" {% if cf.get('jsonld') %}checked{% endif %}> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>{% endif %}
-      <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="enabled" value="1" {% if t.enabled is not sameas false %}checked{% endif %}> {{ _('Attiva: compare tra le destinazioni delle bozze') }}</label>
-      <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+    <form method="post" action="/ui/targets/{{ t.id }}" class="target-form">
+      <div class="cols">
+        <label class="field">{{ _('Nome') }}<input name="name" value="{{ t.name }}" required maxlength="100"></label>
+        <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ (cf.get('repo') if t.kind == 'github' else cf.get('url') or cf.get('chat_id')) or '' }}" required></label>
+        <label class="field">{{ _('Lingua degli articoli') }}<select name="language"><option value="">{{ _('Tutte (o la lingua del sito)') }}</option>{% for k, v in langs.items() %}<option value="{{ k }}" {% if cf.get('language') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+        {% if t.kind == 'wordpress' %}<label class="field">{{ _('Utente WordPress') }}<input name="user" value="{{ cf.get('user') or '' }}" autocomplete="off" required></label>{% endif %}
+      </div>
+      {% if t.kind == 'github' %}
+      <div class="cols">
+        <label class="field">{{ _('Ramo') }}<input name="branch" value="{{ cf.get('branch') or '' }}" autocomplete="off" placeholder="main"></label>
+        <label class="field">{{ _('Cartella degli articoli') }}<input name="path" value="{{ cf.get('path') or '' }}" autocomplete="off" placeholder="content/blog"></label>
+        <label class="field">{{ _('Cartella delle immagini') }}<input name="image_path" value="{{ cf.get('image_path') or '' }}" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
+        <label class="field">{{ _('Indirizzo degli articoli') }}<input name="article_url" value="{{ cf.get('url') or '' }}" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
+      </div>
+      {% endif %}
+      <div class="cols">
+        <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" value="{{ cf.get('indexnow_key') or '' }}" autocomplete="off"></label>
+      </div>
+      {% if t.kind == 'github' %}<label class="check"><input type="checkbox" name="verify" value="1" {% if cf.get('verify') is not sameas false %}checked{% endif %}> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>{% endif %}
+      {% if t.kind == 'wordpress' %}<label class="check"><input type="checkbox" name="jsonld" value="1" {% if cf.get('jsonld') %}checked{% endif %}> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>{% endif %}
+      <label class="check"><input type="checkbox" name="enabled" value="1" {% if t.enabled is not sameas false %}checked{% endif %}> {{ _('Attiva: compare tra le destinazioni delle bozze') }}</label>
+      <div><button class="btn pri" type="submit">{{ _('Salva') }}</button></div>
     </form>
     {% if t.secret_env %}
     <form method="post" action="/ui/secrets/{{ t.secret_env }}" class="form-grid">
@@ -106,23 +114,31 @@
   <p class="hint">{{ _('Nessuna destinazione: le bozze approvate restano qui finché non ne aggiungi una.') }}</p>
   {% endfor %}
   {% if caller.can('owner') %}
-  <form method="post" action="/ui/targets" class="form-grid" style="margin-top: 8px;">
+  <form method="post" action="/ui/targets" class="target-form">
     <input type="hidden" name="site_id" value="{{ site.id }}">
-    <label class="field">{{ _('Tipo') }}<select name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}">{{ _(label) }}</option>{% endfor %}</select></label>
-    <label class="field">{{ _('Nome') }}<input name="name" required placeholder="{{ _('Blog principale') }}"></label>
-    <label class="field">{{ _('Indirizzo') }}<input name="address" placeholder="{{ _('https://…, owner/repo oppure @canale') }}"></label>
-    <label class="field">{{ _('Utente (WordPress)') }}<input name="user" autocomplete="off" placeholder="{{ _('redazione') }}"></label>
-    <label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" autocomplete="off" placeholder="main"></label>
-    <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" autocomplete="off" placeholder="content/blog"></label>
-    <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
-    <label class="field">{{ _('Indirizzo degli articoli (GitHub, facoltativo)') }}<input name="article_url" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
-    <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="verify" value="1" checked> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>
-    <label class="field">{{ _('Lingua degli articoli') }}<select name="language"><option value="">{{ _('Tutte (o la lingua del sito)') }}</option>{% for k, v in langs.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
-    <label class="field">{{ _('Nome della credenziale') }}<input name="secret_env" placeholder="WP_SITO"></label>
-    <label class="field">{{ _('Credenziale') }}<input name="secret" type="password" autocomplete="new-password" placeholder="{{ _('password applicativa, chiave o token') }}"></label>
-    <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" autocomplete="off" placeholder="{{ _('la stessa del file .txt nella radice del sito') }}"></label>
-    <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1"> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>
-    <div><button class="btn" type="submit">{{ _('Aggiungi') }}</button></div>
+    <div class="cols">
+      <label class="field">{{ _('Tipo') }}<select name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}">{{ _(label) }}</option>{% endfor %}</select></label>
+      <label class="field">{{ _('Nome') }}<input name="name" required placeholder="{{ _('Blog principale') }}"></label>
+      <label class="field">{{ _('Indirizzo') }}<input name="address" placeholder="{{ _('https://…, owner/repo oppure @canale') }}"></label>
+      <label class="field">{{ _('Lingua degli articoli') }}<select name="language"><option value="">{{ _('Tutte (o la lingua del sito)') }}</option>{% for k, v in langs.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="cols only-wordpress">
+      <label class="field">{{ _('Utente WordPress') }}<input name="user" autocomplete="off" placeholder="{{ _('redazione') }}"></label>
+    </div>
+    <div class="cols only-github">
+      <label class="field">{{ _('Ramo') }}<input name="branch" autocomplete="off" placeholder="main"></label>
+      <label class="field">{{ _('Cartella degli articoli') }}<input name="path" autocomplete="off" placeholder="content/blog"></label>
+      <label class="field">{{ _('Cartella delle immagini') }}<input name="image_path" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
+      <label class="field">{{ _('Indirizzo degli articoli') }}<input name="article_url" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
+    </div>
+    <div class="cols">
+      <label class="field">{{ _('Nome della credenziale') }}<input name="secret_env" placeholder="WP_SITO"></label>
+      <label class="field">{{ _('Credenziale') }}<input name="secret" type="password" autocomplete="new-password" placeholder="{{ _('password applicativa, chiave o token') }}"></label>
+      <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" autocomplete="off" placeholder="{{ _('la stessa del file .txt nella radice del sito') }}"></label>
+    </div>
+    <label class="check only-github"><input type="checkbox" name="verify" value="1" checked> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>
+    <label class="check only-wordpress"><input type="checkbox" name="jsonld" value="1"> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>
+    <div><button class="btn pri" type="submit">{{ _('Aggiungi la destinazione') }}</button></div>
   </form>
   <p class="hint">{{ _("Con la chiave IndexNow, ogni articolo pubblicato viene segnalato subito a Bing e ai motori che la usano, e da lì alle risposte AI che leggono il loro indice. Il file con la chiave va messo nella radice del sito, per esempio https://tuosito.it/CHIAVE.txt. Google non ha un avviso immediato per gli articoli: li trova dalla sitemap e dai link interni.") }}</p>
   <p class="hint">{{ _("La credenziale (password applicativa di WordPress, chiave del webhook, token del bot Telegram) viene salvata cifrata e non viene più mostrata: puoi solo sostituirla. In alternativa lasciala vuota e l'amministratore del server imposta la variabile EDITOR_SECRET_&lt;TENANT&gt;__&lt;NOME&gt;.") }}</p>

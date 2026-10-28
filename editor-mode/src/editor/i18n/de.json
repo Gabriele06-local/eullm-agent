@@ -1407,5 +1407,11 @@
  "Redazione automatica accesa: dal prossimo giro orario sceglie, scrive e pubblica fino a {n} articoli al giorno, dalle {start} alle {end}.": "Automatische Redaktion an: Ab der nächsten stündlichen Runde wählt, schreibt und veröffentlicht sie bis zu {n} Artikel pro Tag, von {start} bis {end} Uhr.",
  "Impostazioni non salvate: {e}.": "Einstellungen nicht gespeichert: {e}.",
  "Scrivi prima il contesto: il profilo si ricava da lì.": "Schreiben Sie zuerst den Kontext: Das Profil entsteht daraus.",
- "Il modello ricava il profilo dal contesto": "Das Modell leitet das Profil aus dem Kontext ab"
+ "Il modello ricava il profilo dal contesto": "Das Modell leitet das Profil aus dem Kontext ab",
+ "Utente WordPress": "WordPress-Benutzer",
+ "Ramo": "Branch",
+ "Cartella degli articoli": "Ordner der Artikel",
+ "Cartella delle immagini": "Ordner der Bilder",
+ "Indirizzo degli articoli": "Adresse der Artikel",
+ "Aggiungi la destinazione": "Ziel hinzufügen"
 }
