@@ -79,7 +79,8 @@ def _forget_unused_secrets(s, names: set[str]) -> None:
 
 def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str, user: str = "",
                   indexnow_key: str = "", jsonld: bool = False, enabled: bool = True,
-                  branch: str = "", path: str = "", image_path: str = "") -> None:
+                  branch: str = "", path: str = "", image_path: str = "", article_url: str = "",
+                  verify: bool = True) -> None:
     """Change a target's name, address and options. Its credential is
     replaced on its own (vault). branch, path and image_path are the github
     target's places in the repository."""
@@ -97,7 +98,8 @@ def update_target(db, tenant_id: str, target_id: int, *, name: str, address: str
             config["chat_id"] = address.strip()
         elif row.kind == "github":
             config["repo"] = address.strip()
-            for key, value in (("branch", branch), ("path", path), ("image_path", image_path)):
+            config["verify"] = verify
+            for key, value in (("branch", branch), ("path", path), ("image_path", image_path), ("url", article_url)):
                 if value.strip():
                     config[key] = value.strip()
                 else:

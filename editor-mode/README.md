@@ -33,9 +33,13 @@ profiles, sources and publications.
 | **Impostazioni** | Plan meters, briefing recipients, people of the newsroom (invited by email, with a role), tokens for integrations. |
 
 An approved article reaches the customer's site in four ways, also
-together: a connected destination (WordPress, a GitHub repository — the
-article committed as Markdown for the static sites deployed from it,
-Vercel and GitHub Pages: a draft publication opens a pull request —,
+together: a connected destination (WordPress, a GitHub repository — for
+the static sites deployed from it, Vercel, Netlify, GitHub Pages: the
+article in the shape of the blog's own posts, read before writing (front
+matter keys and date format, `.md` or `.mdx`, a folder per post, where the
+image goes), with its cover, a line in `llms.txt` and the sitemap when it
+is a file, in one commit on a pull request merged only once the site's
+preview deploy passes; a draft publication stops at the pull request —,
 a signed webhook, a Telegram channel, after an owner's yes); an email
 to the newsroom's email
 recipients with the article and a ZIP package attached (needs SMTP); the
@@ -125,7 +129,7 @@ Two installations, same code:
    | `EDITOR_CORE_DELEGATE` | `true` when the Core token has `delegate: true`: each tenant acts as Core tenant `<token tenant>/<tenant>` |
    | `EDITOR_WORKER_CONCURRENCY` | tenants the worker runs at the same time (default 2, PostgreSQL) |
    | `EDITOR_TIMEZONE`, `EDITOR_BRIEFING_HOUR` | defaults: Europe/Rome, 8 |
-   | `EDITOR_IMAGES_API_KEY`, `EDITOR_IMAGES_MODEL`, `EDITOR_IMAGES_URL` | cover images drawn by FLUX (Black Forest Labs): the key, the model (default `flux-2-pro`), the endpoint (default the EU one, `https://api.eu.bfl.ai/v1`); no key, no images |
+   | `EDITOR_IMAGES_API_KEY`, `EDITOR_IMAGES_MODEL`, `EDITOR_IMAGES_QUALITY`, `EDITOR_IMAGES_PROVIDER`, `EDITOR_IMAGES_URL` | cover images: an OpenRouter key (`sk-or-`) draws with `openai/gpt-image-2` at quality `medium`, any other key with FLUX of Black Forest Labs (`flux-2-pro`, EU endpoint); the model, quality, provider (`openrouter` or `bfl`) and endpoint can be changed; no key, no images |
    | `EDITOR_BASE_NEWS` | default on: about 46 general news feeds (world, economy, technology; English, Italian, German, French, Spanish) read for every newsroom in the shared archive, for the news index and the proposals; `0` turns them off |
    | `EDITOR_RETENTION_DAYS` | collected items and finished jobs older than this are deleted at the daily maintenance (default 365, `0` keeps everything); items cited by a proposal or a draft and model usage are kept |
    | `EDITOR_SMTP_HOST`, `EDITOR_SMTP_PORT`, `EDITOR_SMTP_USER`, `EDITOR_SMTP_PASSWORD`, `EDITOR_MAIL_FROM` | email (STARTTLS): briefing, invites, password resets |

@@ -20,7 +20,7 @@ import logging
 import math
 from collections import Counter
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 from sqlalchemy import delete, func, select, update
@@ -38,7 +38,8 @@ from .text import tokens
 
 log = logging.getLogger(__name__)
 
-DEFAULT_SETTINGS = {"proposals_per_day": 6, "min_relevance": 0.15, "exclude": []}
+DEFAULT_SETTINGS = {"proposals_per_day": 6, "min_relevance": 0.15, "exclude": [],
+                    "cover_style": "impact", "cover_text": False}
 # Raised when the analysis itself improves: a profile approved under an
 # older method is offered again, rebuilt, even if the site did not change.
 METHOD = "profile-v2"
@@ -79,6 +80,8 @@ class _Settings(_Part):
     proposals_per_day: int = Field(DEFAULT_SETTINGS["proposals_per_day"], ge=0, le=50)
     min_relevance: float = Field(DEFAULT_SETTINGS["min_relevance"], ge=0, le=1)
     exclude: list[_Text] = Field(default_factory=list, max_length=200)
+    cover_style: Literal["impact", "editorial"] = DEFAULT_SETTINGS["cover_style"]
+    cover_text: bool = DEFAULT_SETTINGS["cover_text"]
 
 
 class _ProfileEdit(_Part):
@@ -404,17 +407,29 @@ def _next_version(s, site_id: int) -> int:
     return (v or 0) + 1
 
 
-def set_proposals_per_day(s, site_id: int, n: int) -> bool:
-    """The number of proposals a day, changed in place on the line in use
-    and on a version waiting for approval: a setting, not a new version."""
-    n = max(0, min(50, int(n)))
+def _set_settings(s, site_id: int, **values) -> bool:
+    """Settings changed in place on the line in use and on a version waiting
+    for approval: a setting, not a new version."""
     p = m.editorial_profiles
     rows = s.execute(select(p.c.id, p.c.body).where(p.c.site_id == site_id, p.c.status.in_(("approved", "draft")))).all()
     for r in rows:
         body = dict(r.body)
-        body["settings"] = {**DEFAULT_SETTINGS, **(body.get("settings") or {}), "proposals_per_day": n}
+        body["settings"] = {**DEFAULT_SETTINGS, **(body.get("settings") or {}), **values}
         s.execute(update(p).where(p.c.id == r.id).values(body=body))
     return bool(rows)
+
+
+def set_proposals_per_day(s, site_id: int, n: int) -> bool:
+    """The number of proposals a day."""
+    return _set_settings(s, site_id, proposals_per_day=max(0, min(50, int(n))))
+
+
+def set_cover(s, site_id: int, style: str, text: bool) -> bool:
+    """The style of the cover images: "impact" or "editorial", and whether
+    an impact cover carries a short headline."""
+    if style not in ("impact", "editorial"):
+        raise ValueError(style)
+    return _set_settings(s, site_id, cover_style=style, cover_text=bool(text) and style == "impact")
 
 
 def approved_profile(s, site_id: int):

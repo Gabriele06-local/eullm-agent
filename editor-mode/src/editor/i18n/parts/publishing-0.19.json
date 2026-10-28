@@ -1,0 +1,56 @@
+{
+ "come negli articoli del sito": {
+  "en": "as in the site's posts",
+  "de": "wie in den Beiträgen der Website",
+  "fr": "comme dans les articles du site",
+  "es": "como en los artículos del sitio"
+ },
+ "Indirizzo degli articoli (GitHub, facoltativo)": {
+  "en": "Address of the articles (GitHub, optional)",
+  "de": "Adresse der Artikel (GitHub, optional)",
+  "fr": "Adresse des articles (GitHub, facultatif)",
+  "es": "Dirección de los artículos (GitHub, opcional)"
+ },
+ "Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)": {
+  "en": "Publish only if the preview deploy succeeds (Vercel, Netlify)",
+  "de": "Nur veröffentlichen, wenn das Vorschau-Deployment gelingt (Vercel, Netlify)",
+  "fr": "Publier seulement si le déploiement d'aperçu réussit (Vercel, Netlify)",
+  "es": "Publicar solo si el despliegue de vista previa funciona (Vercel, Netlify)"
+ },
+ "Copertine": {
+  "en": "Covers",
+  "de": "Titelbilder",
+  "fr": "Images de couverture",
+  "es": "Portadas"
+ },
+ "Stile delle copertine": {
+  "en": "Style of the covers",
+  "de": "Stil der Titelbilder",
+  "fr": "Style des images de couverture",
+  "es": "Estilo de las portadas"
+ },
+ "D'impatto: fatte per farsi cliccare": {
+  "en": "Striking: made to be clicked",
+  "de": "Auffällig: gemacht, um angeklickt zu werden",
+  "fr": "Percutantes : faites pour être cliquées",
+  "es": "Impactantes: hechas para que hagan clic"
+ },
+ "Editoriali: foto di cronaca sobria": {
+  "en": "Editorial: a plain news photo",
+  "de": "Redaktionell: ein schlichtes Nachrichtenfoto",
+  "fr": "Éditoriales : une photo d'actualité sobre",
+  "es": "Editoriales: una foto de actualidad sobria"
+ },
+ "con un titolo di 2-4 parole nell'immagine": {
+  "en": "with a 2-4 word headline in the image",
+  "de": "mit einer Überschrift aus 2-4 Wörtern im Bild",
+  "fr": "avec un titre de 2 à 4 mots dans l'image",
+  "es": "con un titular de 2-4 palabras en la imagen"
+ },
+ "Stile delle copertine salvato: vale dalla prossima immagine.": {
+  "en": "Cover style saved: it applies from the next image.",
+  "de": "Stil der Titelbilder gespeichert: Er gilt ab dem nächsten Bild.",
+  "fr": "Style des images de couverture enregistré : il s'applique dès la prochaine image.",
+  "es": "Estilo de las portadas guardado: se aplica desde la próxima imagen."
+ }
+}

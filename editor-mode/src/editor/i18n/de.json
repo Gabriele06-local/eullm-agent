@@ -1349,5 +1349,14 @@
  "Da ora {n} proposte al giorno per questo sito.": "Ab jetzt {n} Vorschläge pro Tag für diese Website.",
  "Approva prima il profilo: le proposte partono dalla linea approvata.": "Geben Sie zuerst das Profil frei: Vorschläge gehen von der freigegebenen Linie aus.",
  "Come funziona il piano": "So funktioniert der Plan",
- "Opportunità {n}": "Chance {n}"
+ "Opportunità {n}": "Chance {n}",
+ "come negli articoli del sito": "wie in den Beiträgen der Website",
+ "Indirizzo degli articoli (GitHub, facoltativo)": "Adresse der Artikel (GitHub, optional)",
+ "Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)": "Nur veröffentlichen, wenn das Vorschau-Deployment gelingt (Vercel, Netlify)",
+ "Copertine": "Titelbilder",
+ "Stile delle copertine": "Stil der Titelbilder",
+ "D'impatto: fatte per farsi cliccare": "Auffällig: gemacht, um angeklickt zu werden",
+ "Editoriali: foto di cronaca sobria": "Redaktionell: ein schlichtes Nachrichtenfoto",
+ "con un titolo di 2-4 parole nell'immagine": "mit einer Überschrift aus 2-4 Wörtern im Bild",
+ "Stile delle copertine salvato: vale dalla prossima immagine.": "Stil der Titelbilder gespeichert: Er gilt ab dem nächsten Bild."
 }
