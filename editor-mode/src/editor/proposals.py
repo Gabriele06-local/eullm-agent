@@ -91,6 +91,8 @@ def _items_for(s, topic_id: int, site_id: int | None = None, limit: int = 12):
 
 
 def _prompt(profile: dict, label: str, items) -> str:
+    from .autopilot import brief_lines
+
     style = profile.get("style", {})
     lines = [
         f"Site: {profile.get('name')} ({profile.get('domain')}), language: {profile.get('language')}",
@@ -98,6 +100,7 @@ def _prompt(profile: dict, label: str, items) -> str:
         f"Audience: {(profile.get('audience') or {}).get('value') or 'not determined'}",
         f"Tone: {style.get('tone') or 'not determined'}; usual formats: {', '.join(style.get('formats', [])) or 'unknown'}",
         f"Subtopics: {', '.join(s['name'] for s in profile.get('subtopics', []))}",
+        *brief_lines(profile),
         f"Topic: {label}",
         "Items:",
     ]

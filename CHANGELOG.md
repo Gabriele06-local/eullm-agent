@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.20.0
+
+### Added
+
+- Editor Mode, automatic newsroom (Sito e profilo › Redazione automatica):
+  a site that writes and publishes by itself. The owner gives a brief,
+  the sections, directives, topics never to cover, articles a day, hours,
+  the minimum Opportunity and the minimum number of different sources.
+  Every hourly round, inside the hours, the day's articles are spread over
+  the hours left: the best proposals that pass the guardrails are accepted
+  (those on a topic to avoid are turned down) and each one goes to an
+  `auto` job: draft with the usual checks, cover, then an AI
+  editor-in-chief reads it against fixed rules (unconfirmed accusations,
+  private people and minors, medical, legal or financial advice, hate,
+  graphic violence, rumours as facts, misleading titles) and the
+  directives. What passes is approved and published to the site's
+  destination; what does not stays a draft with the reasons. "Ferma
+  subito" stops it; the page lists the day's articles and how each ended.
+- Every article of the automatic newsroom ends with the AI label in the
+  site's language ("written by artificial intelligence from the sources
+  cited, without human review", AI Act art. 50(4)), followed by a link to
+  Redazia that the owner can turn off.
+- Translations in the automatic newsroom: an article that passed is
+  translated into the site's languages and each translation is published
+  by itself, with its own label.
+- Publishing destinations have a language: a translation goes to the
+  destination of its language (for example the English folder of the same
+  repository), the original to one without a language.
+- Profile from the brief, for a new site with nothing to read yet: the
+  model writes sector, audience, tone and one topic per section, with
+  keywords in the site's language and in English; it is a version to
+  approve like any other.
+- The brief, the sections, the directives and the topics to avoid also go
+  into the prompts of proposals and drafts, with or without the automatic
+  mode.
+
 ## 0.19.0
 
 ### Added

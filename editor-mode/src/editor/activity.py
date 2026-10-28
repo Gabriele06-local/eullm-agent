@@ -29,6 +29,8 @@ KINDS = {
     "deliver": N_("Invio dell'articolo per email"),
     "publish": N_("Pubblicazione"),
     "tick": N_("Giro orario automatico"),
+    "auto": N_("Redazione automatica"),
+    "brief": N_("Profilo dal contesto"),
 }
 RECENT = timedelta(minutes=15)  # how long an ended job stays on every page
 STALLED = timedelta(minutes=3)  # queued this long with nothing running: the worker is not taking work
@@ -114,6 +116,30 @@ def _result(kind: str, r: dict, site_id, humanize: Callable[[str], str]) -> tupl
         if r.get("status") == "needs_review":
             text += " " + t("Alcuni controlli non sono passati: rileggila con attenzione.")
         return [text], f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts", t("Leggi la bozza")
+    if kind == "auto":
+        link = f"/drafts/{r['draft_id']}" if r.get("draft_id") else "/drafts"
+        if r.get("held"):
+            return [t("Fermato dal caporedattore AI: «{title}». Resta una bozza da rileggere.", title=r.get("title", "")),
+                    t("Motivi: {why}", why="; ".join(humanize(x) for x in r["held"]))], link, t("Leggi la bozza")
+        out = [t("«{title}» approvato dal caporedattore AI e inviato a {target}.", title=r.get("title", ""),
+                 target=r["target"]) if r.get("target")
+               else t("«{title}» approvato dal caporedattore AI: nessuna destinazione per pubblicarlo, è nel feed e "
+                      "nel pacchetto.", title=r.get("title", ""))]
+        if r.get("translations"):
+            out.append(t("Traduzioni in arrivo: {languages}.",
+                         languages=", ".join(LANGUAGES.get(x, x) for x in r["translations"])))
+        return out, link, t("Apri l'articolo")
+    if kind == "brief":
+        return [t("Profilo scritto dal contesto (versione {version}): controllalo e approvalo.", version=r.get("version"))], \
+            _site_link(site_id, "/site#h-profile"), t("Vedi il profilo")
+    if kind == "translate" and r.get("held"):
+        return [t("Traduzione fermata: «{title}».", title=r.get("title", "")),
+                t("Motivi: {why}", why="; ".join(humanize(x) for x in r["held"]))], \
+            f"/drafts/{r['draft_id']}", t("Leggi la traduzione")
+    if kind == "translate" and r.get("target"):
+        return [t("Traduzione in {language} inviata a {target}: «{title}».",
+                  language=LANGUAGES.get(r.get("language"), r.get("language")), target=r["target"],
+                  title=r.get("title", ""))], f"/drafts/{r['draft_id']}", t("Leggi la traduzione")
     if kind == "translate":
         text = t("Traduzione in {language} pronta: «{title}».", language=LANGUAGES.get(r.get("language"), r.get("language")),
                  title=r.get("title", ""))
@@ -159,7 +185,7 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
     ).order_by(j.id.desc()).limit((30 if compact else 100) if full else 8)).all()
     domains = dict(s.execute(select(m.sites.c.id, m.sites.c.domain)).all())
     by_domain = {d: i for i, d in domains.items()}
-    proposal_ids = [r.args.get("proposal_id") for r in rows if r.kind == "draft" and r.args]
+    proposal_ids = [r.args.get("proposal_id") for r in rows if r.kind in ("draft", "auto") and r.args]
     proposal_site = dict(s.execute(select(m.proposals.c.id, m.proposals.c.site_id)
                                    .where(m.proposals.c.id.in_([x for x in proposal_ids if x]))).all()) \
         if proposal_ids else {}

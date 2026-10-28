@@ -3,15 +3,18 @@ work (queue.enqueue); the worker runs it with these handlers."""
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 
 from sqlalchemy import select
 
-from . import delivery, drafts, images, models as m, picks, profile as prof, proposals, sources, translate as tr
+from . import autopilot, delivery, drafts, images, models as m, picks, profile as prof, proposals, sources, translate as tr
 from .i18n import N_
 from .progress import step
 from .queue import Handlers, enqueue
 from .site import SiteCrawler
+
+log = logging.getLogger(__name__)
 
 
 def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imager=None, mail=None,
@@ -77,6 +80,35 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
             enqueue(db, tenant, "image", f"draft {did}", {"draft_id": did, "site_id": d.site_id})
         return {"draft_id": did, "title": d.title, "status": d.status, "site_id": d.site_id}
 
+    def auto(tenant: str, subject: str, args: dict) -> dict:
+        """One article of the automatic newsroom, from the accepted proposal
+        to the publication: draft, cover, editor-in-chief, then the site."""
+        need(core, "model (Core)")
+        if http_factory is None:
+            did = drafts.write_draft(db, tenant, args["proposal_id"], core_for(tenant), None)
+        else:
+            with http_factory() as client:
+                did = drafts.write_draft(db, tenant, args["proposal_id"], core_for(tenant), client)
+        if imager is not None:
+            step(N_("Immagine di copertina"))
+            try:
+                images.make(db, tenant, did, imager, core_for(tenant))
+            except Exception as e:  # an article without a cover still goes out
+                log.warning("cover for draft %s failed: %s", did, e)
+        return autopilot.finish(db, tenant, did, core_for(tenant), publish_job(tenant, args["site_id"]),
+                                lambda language: enqueue(db, tenant, "translate", f"draft {did} {language}", {
+                                    "draft_id": did, "language": language, "site_id": args["site_id"], "auto": True}))
+
+    def publish_job(tenant: str, site_id):
+        return lambda pub_id: enqueue(db, tenant, "publish", f"publication {pub_id}",
+                                      {"publication_id": pub_id, "site_id": site_id})
+
+    def brief(tenant: str, subject: str, args: dict) -> dict:
+        step(N_("Il modello ricava il profilo dal contesto"))
+        version = autopilot.profile_from_brief(db, tenant, args["site_id"], args["language"],
+                                               need(core_for(tenant), "model (Core)"), args.get("auto"))
+        return {"site_id": args["site_id"], "version": version}
+
     def image(tenant: str, subject: str, args: dict) -> dict:
         images.make(db, tenant, args["draft_id"], need(imager, "image service (EDITOR_IMAGES_API_KEY)"),
                     core_for(tenant))
@@ -89,6 +121,8 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
 
     def translation(tenant: str, subject: str, args: dict) -> dict:
         did = tr.translate(db, tenant, args["draft_id"], args["language"], need(core_for(tenant), "model (Core)"))
+        if args.get("auto"):
+            return autopilot.finish_translation(db, tenant, did, publish_job(tenant, args.get("site_id")))
         with db.tenant(tenant) as s:
             d = s.execute(select(m.drafts.c.title, m.drafts.c.status, m.drafts.c.site_id, m.drafts.c.language)
                           .where(m.drafts.c.id == did)).first()
@@ -141,4 +175,4 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
     return {"analysis": analysis, "discovery": discovery, "draft": draft, "publish": publish, "tick": tick,
             "proposals": propose, "titles": titles, "archive": archive,
             "collect": collect, "translate": translation, "image": image,
-            "deliver": deliver}
+            "deliver": deliver, "auto": auto, "brief": brief}

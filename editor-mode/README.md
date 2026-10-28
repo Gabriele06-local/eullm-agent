@@ -57,6 +57,17 @@ newsroom with plan, limits and usage; create, suspend, delete, invite
 owners; API keys for the billing system, which creates a newsroom with
 `POST /api/operator/tenants` when a payment goes through (see
 [deploy/server](../deploy/server/README.md#newsrooms-people-and-the-billing-system)).
+**Automatic newsroom.** A site can also run with no one in the loop
+(Sito e profilo › Redazione automatica): the owner gives a brief, the
+sections, directives, topics to avoid, articles a day and hours; every
+hour the best proposals that pass those guardrails are written, given a
+cover, read by an AI editor-in-chief against fixed rules (unconfirmed
+accusations, private people, medical or financial advice, hate, rumours
+as facts, misleading titles) and published, translations included. Each
+article says it was written by AI without human review (AI Act art.
+50(4)); one button stops everything. A new site with no articles gets its
+profile from the brief.
+
 Plans, the 7-day trial, customers' billing data, Mollie payments and
 resellers are in [Selling](../deploy/server/README.md#selling-plans-trial-payments-resellers).
 
