@@ -53,7 +53,8 @@ CHECK_SYSTEM = (
     + "; ".join(f"({n}) {r}" for n, r in enumerate(RULES, 1))
     + ". Refuse it also if it goes against the newsroom's directives or is about a topic it must avoid. Do not "
     "refuse for style, length or a dull title. Reply with JSON only: "
-    '{"publish": true|false, "problems": ["<each rule broken, one sentence each, in English>"]}'
+    '{"publish": true|false, "problems": ["<each rule broken, one sentence each, in English>"], '
+    '"section": "<the one of the site\'s sections the article belongs to, written exactly as listed, or null>"}'
 )
 
 LABELS = {
@@ -249,7 +250,7 @@ def _check_validator(v) -> dict:
     problems = [str(x)[:300] for x in v.get("problems") or [] if str(x).strip()][:6]
     if not v["publish"] and not problems:
         problems = ["refused without a reason"]
-    return {"publish": v["publish"], "problems": problems}
+    return {"publish": v["publish"], "problems": problems, "section": str(v.get("section") or "").strip()[:80]}
 
 
 def editor_check(db, tenant_id: str, d, body: dict, core: CoreClient) -> dict:
@@ -323,6 +324,11 @@ def finish(db, tenant_id: str, draft_id: int, core: CoreClient, publish, transla
             held.append(f"the editor-in-chief did not answer: {e}")
         else:
             held += verdict["problems"] if not verdict["publish"] else []
+            section = next((x for x in cfg["sections"] if x.lower() == verdict["section"].lower()), None)
+            if section:  # the site files the article under it
+                with db.tenant(tenant_id) as s:
+                    s.execute(update(m.drafts).where(m.drafts.c.id == draft_id).values(
+                        seo={**(d.seo or {}), "section": section}))
     if held:
         with db.tenant(tenant_id) as s:
             proposals.record_feedback(s, tenant_id, "draft", draft_id, "down", AUTO, "; ".join(held)[:1000], d.site_id)

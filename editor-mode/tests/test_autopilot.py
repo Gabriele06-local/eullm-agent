@@ -94,14 +94,14 @@ def _written(db, tenant, again=None):
 def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     did, site_id, prop = _written(db, tenant)
-    settings(db, tenant, site_id, min_sources=1)
+    settings(db, tenant, site_id, min_sources=1, sections=["Rete", "Mondo"])
     main = pub.add_target(db, tenant, site_id, "webhook", "sito", {"url": "https://hooks.example/it"}, None)
     english = pub.add_target(db, tenant, site_id, "webhook", "site en", {"url": "https://hooks.example/en",
                                                                          "language": "en"}, None)
     tr.set_languages(db, tenant, site_id, ["en"])
     sent, translations = [], []
     with respx.mock() as router:
-        check = router.post(CORE).mock(return_value=chat(json.dumps({"publish": True, "problems": []})))
+        check = router.post(CORE).mock(return_value=chat(json.dumps({"publish": True, "problems": [], "section": "rete"})))
         out = ap.finish(db, tenant, did, core(), sent.append, translations.append)
         assert "editor-in-chief" in json.loads(check.calls[0].request.content)["messages"][0]["content"]
     assert out["target"] == "sito" and translations == ["en"] and sent == [out["publication_id"]]
@@ -110,7 +110,7 @@ def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch
         p = s.execute(select(m.publications).where(m.publications.c.id == sent[0])).one()
     assert d.status == "approved" and d.decided_by == ap.AUTO and "senza revisione umana" in d.body_md
     assert p.status == "approved" and p.target_id == main and p.mode == "publish" and p.requested_by == ap.AUTO
-    assert "senza revisione umana" in p.payload["markdown"]
+    assert "senza revisione umana" in p.payload["markdown"] and p.payload["section"] == "Rete"
     # The translation goes to the English destination, with the English label.
     with respx.mock() as router:
         router.post(CORE).mock(return_value=chat(json.dumps(ENGLISH)))
@@ -119,6 +119,7 @@ def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch
     with db.tenant(tenant) as s:
         p = s.execute(select(m.publications).where(m.publications.c.id == sent[-1])).one()
     assert out["target"] == "site en" and p.target_id == english and "without human review" in p.payload["markdown"]
+    assert p.payload["section"] == "Rete"  # the translation is in its original's section
 
     # The next one breaks a rule: it stays a draft, with the reason.
     did2, _, _ = _written(db, tenant, prop)

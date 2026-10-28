@@ -12,6 +12,11 @@
 - The logo goes back to the Desk (to the console in Amministrazione); the
   account at the bottom of the menu is on two lines, the name and then
   role and "Esci".
+- Articles carry their section: in the automatic newsroom the AI
+  editor-in-chief files each article under one of the site's sections, a
+  translation keeps its original's; the payload has `section` and a
+  GitHub post gets it in its front matter (`section`, or the blog's own
+  `category` key).
 - The small settings on Sito e profilo (proposals a day, covers) and the
   text boxes of the automatic newsroom have the same look as the other
   fields.

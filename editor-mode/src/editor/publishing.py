@@ -259,8 +259,11 @@ def search_fields(s, d) -> dict:
                                         .join(dc, dc.c.id == dcs.c.claim_id).where(dc.c.draft_id == d.id)).scalars()))
     faq = [(q, " ".join(c.text for c in claims if c.section == q)) for q in sd.get("faq", [])]
     description = sd.get("description") or d.subtitle or ""
+    section = sd.get("section")
+    if not section and d.translation_of:  # a translation is in its original's section
+        section = (s.execute(select(m.drafts.c.seo).where(m.drafts.c.id == d.translation_of)).scalar() or {}).get("section")
     return {
-        "site_domain": site.domain if site else None,
+        "site_domain": site.domain if site else None, "section": section,
         "slug": sd.get("slug") or seo.slugify(d.title), "seo_title": sd.get("title") or d.title,
         "meta_description": description, "keyphrase": sd.get("keyphrase") or "",
         "jsonld": seo.jsonld(title=d.title, description=description, language=d.language, url=None,
