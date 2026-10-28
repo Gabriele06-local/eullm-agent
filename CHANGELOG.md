@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.18.3
+
+### Security
+
+- Dependencies with known advisories updated: teloxide 0.12 to 0.17 (it
+  brought an old reqwest with rustls 0.21, rustls-webpki 0.101, h2 0.3 and
+  webpki-roots 0.25), rustls 0.23.46, rustls-webpki 0.103.16, webpki-roots
+  1.0.11, ctutils 0.4.6; certifi 2026.10.23 in Editor Mode. `cargo audit`
+  and `pip-audit` report no vulnerability left (one unmaintained
+  build-time crate, proc-macro-error2, used by teloxide's macros).
+- Editor Mode behind a reverse proxy: the address it is reached at is
+  taken from the proxy (`FORWARDED_ALLOW_IPS`, default every address, as
+  the ports listen on 127.0.0.1 only), so over HTTPS the session cookie
+  is `Secure` again.
+- Every page carries security headers: no framing by other sites
+  (clickjacking), `nosniff`, a referrer policy, a Content-Security-Policy,
+  and HSTS over HTTPS.
+- "Password dimenticata" sends one link per address every 10 minutes, so
+  the form cannot flood a mailbox.
+- The return address after an action refuses control characters
+  (`/\t/evil.com` became `//evil.com` in browsers).
+- Server guide: only Editor Mode goes on the internet; the Core stays on
+  127.0.0.1 and is reached through an SSH tunnel.
+
 ## 0.18.2
 
 ### Fixed

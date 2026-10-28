@@ -334,3 +334,21 @@ def test_migrate_makes_the_administrator_from_the_environment(db, admin, capsys,
     assert accounts.authenticate(admin, "boss@example.com", "password boss").operator
     cli.main(["migrate"])
     assert "exists already" in capsys.readouterr().out
+
+
+def test_a_reset_link_is_sent_once_every_few_minutes_and_pages_carry_security_headers(db, admin):
+    accounts.create_user(admin, "reset-once@example.com", password="password di anna")
+    c, sent = app_for(db, mail=True, public_url="https://editor.example.com")
+    for _ in range(3):
+        assert c.post("/forgot", data={"email": "reset-once@example.com"}).status_code == 200
+    assert len(sent) == 1 and "https://editor.example.com/invite/" in sent[0][2]
+    h = c.get("/login").headers
+    assert h["x-frame-options"] == "DENY" and h["x-content-type-options"] == "nosniff"
+    assert "frame-ancestors 'none'" in h["content-security-policy"]
+
+
+def test_going_back_stays_on_this_site():
+    from editor.ui import safe_path
+    assert safe_path("/trends#p-3") == "/trends#p-3"
+    for bad in ("//evil.com", "/\t/evil.com", "/\\evil.com", "https://evil.com", "/\n/x"):
+        assert safe_path(bad) == "/"

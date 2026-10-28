@@ -212,9 +212,14 @@ A reverse proxy on the same machine, for example Caddy
     editor.example.com {
         reverse_proxy 127.0.0.1:8090
     }
-    agent.example.com {
-        reverse_proxy 127.0.0.1:8088
-    }
+
+Only Editor Mode goes on the internet. The Core (8088) serves Editor Mode
+inside Docker's network and the administrator: leave it on 127.0.0.1 and
+reach its web interface through an SSH tunnel
+(`ssh -L 8088:127.0.0.1:8088 server`, then http://127.0.0.1:8088). Keep
+`BIND=127.0.0.1` in `.env`: Docker publishes ports past the firewall
+(ufw), so a port on 0.0.0.0 would be open to everyone. Open only 22, 80
+and 443.
 
 ## Updating
 

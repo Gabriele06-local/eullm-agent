@@ -82,8 +82,9 @@ class LoginRequired(Exception):
 
 def safe_path(value: str | None, default: str = "/") -> str:
     """A local path to go back to; anything else becomes the default."""
+    # No control character either: browsers drop a tab, so "/\t/evil.com" would become "//evil.com".
     if (value and value.startswith("/") and not value.startswith("//") and "\\" not in value
-            and "\n" not in value and "\r" not in value):
+            and not any(ord(ch) < 32 or ord(ch) == 127 for ch in value)):
         return value
     return default
 
@@ -362,7 +363,8 @@ def register(app, ctx) -> None:
                 e = accounts.normalise_email(email)
                 with accounts._read(admin) as conn:
                     u = accounts.find_user(conn, e)
-                if u is not None and u.disabled_at is None:
+                # One link every few minutes per address: the form cannot flood a mailbox.
+                if u is not None and u.disabled_at is None and not accounts.reset_sent_recently(admin, e):
                     token = accounts.create_invite(admin, e, "password dimenticata", kind="reset")
                     base = (getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/")
                     mail(e, *accounts.link_text("reset", f"{base}/invite/{token}", None, ""))
