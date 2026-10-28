@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.20.1
+
+### Changed
+
+- Editor Mode, Pubblicazioni: the form of a destination shows only the
+  fields of the type chosen (WordPress, GitHub), in a grid with short
+  labels on one line; the same layout when a destination is changed. The
+  address of a GitHub destination shows the repository again, not the
+  articles' address.
+- The logo goes back to the Desk (to the console in Amministrazione); the
+  account at the bottom of the menu is on two lines, the name and then
+  role and "Esci".
+- The small settings on Sito e profilo (proposals a day, covers) and the
+  text boxes of the automatic newsroom have the same look as the other
+  fields.
+
 ## 0.20.0
 
 ### Added
