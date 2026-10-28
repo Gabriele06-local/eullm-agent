@@ -1349,5 +1349,14 @@
  "Da ora {n} proposte al giorno per questo sito.": "From now on, {n} proposals a day for this site.",
  "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approve the profile first: proposals start from the approved line.",
  "Come funziona il piano": "How the plan works",
- "Opportunità {n}": "Opportunity {n}"
+ "Opportunità {n}": "Opportunity {n}",
+ "come negli articoli del sito": "as in the site's posts",
+ "Indirizzo degli articoli (GitHub, facoltativo)": "Address of the articles (GitHub, optional)",
+ "Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)": "Publish only if the preview deploy succeeds (Vercel, Netlify)",
+ "Copertine": "Covers",
+ "Stile delle copertine": "Style of the covers",
+ "D'impatto: fatte per farsi cliccare": "Striking: made to be clicked",
+ "Editoriali: foto di cronaca sobria": "Editorial: a plain news photo",
+ "con un titolo di 2-4 parole nell'immagine": "with a 2-4 word headline in the image",
+ "Stile delle copertine salvato: vale dalla prossima immagine.": "Cover style saved: it applies from the next image."
 }

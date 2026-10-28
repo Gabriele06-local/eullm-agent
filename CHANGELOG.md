@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.19.0
+
+### Added
+
+- Editor Mode, publishing to a site's GitHub repository (Vercel, Netlify,
+  GitHub Pages) as one of its own posts. Before writing, the newest posts
+  of the articles folder are read and the new one copies them: front
+  matter keys, order and date format (`pubDate: 'Jul 08 2026'`, `date:
+  2026-07-08`...), the values every post shares (author, layout), `.md` or
+  `.mdx` (braces and angle brackets escaped), one folder per post, the
+  image as an address on the site or beside the post (`./cover.png`). The
+  blog's list then shows the article and its thumbnail like the others.
+- One commit per publication with the article, its cover, a line in the
+  site's `llms.txt` and the article in `sitemap.xml` when the site keeps it
+  as a file (a sitemap generated at the build updates itself): one deploy.
+- Safe publishing: the commit goes on a pull request that is merged only
+  when the site's checks pass (Vercel's or Netlify's preview deploy, read
+  from commit statuses and check runs; up to 15 minutes, `wait_minutes`).
+  A failed build leaves the site as it was, the pull request open and the
+  link to the failed deploy in the publication. Without checks on the
+  repository it is merged after 90 seconds. "Pubblica solo se il deploy di
+  anteprima riesce" off commits straight on the site's branch.
+- The publication's address is the article on the site, not the file on
+  GitHub: learned from `llms.txt` or the sitemap, else the articles folder
+  on the site's domain, or set as "Indirizzo degli articoli"
+  (`https://site/blog/{slug}`). IndexNow gets that address.
+- Cover images through OpenRouter's image API: a key starting with
+  `sk-or-` draws with `openai/gpt-image-2` (quality `medium`, about 0.05 $;
+  `EDITOR_IMAGES_QUALITY=low` under 0.02 $), any model of OpenRouter with
+  `EDITOR_IMAGES_MODEL=owner/name`. A Black Forest Labs key still draws with
+  FLUX. The image's real size is stored.
+- Covers made to be clicked: each site chooses, in Sito e profilo, between
+  "D'impatto" (the default: the story's most striking subject, dramatic
+  light, strong contrast, saturated colours, readable as a thumbnail,
+  never showing what the article does not say), optionally with a 2-4 word
+  headline drawn in, and "Editoriali" (a plain news photo).
+- `deploy/server/backup.sh` and [BACKUP.md](deploy/server/BACKUP.md):
+  backup and restore of a server installation.
+
+### Upgrading
+
+- The GitHub token of a target needs, besides Contents, Pull requests
+  (read and write) and, to read Vercel's result, Commit statuses (read);
+  Checks (read) is optional. Without Pull requests, untick "Pubblica solo
+  se il deploy di anteprima riesce" on the target.
+- For OpenRouter covers put the key in `EDITOR_IMAGES_API_KEY`. A
+  `compose.yaml` that sets `EDITOR_IMAGES_MODEL` to `flux-2-pro` keeps
+  working: a FLUX name is replaced by the OpenRouter default.
+
 ## 0.18.3
 
 ### Security

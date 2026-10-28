@@ -183,80 +183,182 @@ def test_github_target_needs_a_repository(db, tenant, monkeypatch):
     assert pub.site_path("assets/a.jpg") == "/assets/a.jpg"
 
 
-def _github_routes(router, *, ref_branch="main", existing=None):
-    """The GitHub API a publication talks to; `existing` is the file's content
-    when the article was committed already."""
-    import base64
-    router.get("https://api.github.com/repos/me/site").mock(return_value=httpx.Response(200, json={"default_branch": "main"}))
-    router.get(f"https://api.github.com/repos/me/site/git/ref/heads/{ref_branch}").mock(
-        return_value=httpx.Response(200, json={"object": {"sha": "abc123"}}))
-    router.post("https://api.github.com/repos/me/site/git/refs").mock(return_value=httpx.Response(201, json={}))
-    if existing is None:
-        router.route(method="GET", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
-            return_value=httpx.Response(404, json={"message": "Not Found"}))
-    else:
-        router.route(method="GET", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
-            return_value=httpx.Response(200, json={
-                "content": base64.b64encode(existing).decode(), "html_url": "https://github.com/me/site/blob/main/x.md"}))
-    put = router.route(method="PUT", url__regex=r"https://api\.github\.com/repos/me/site/contents/.+").mock(
-        return_value=httpx.Response(201, json={"content": {"html_url": "https://github.com/me/site/blob/branch/x.md"},
-                                               "commit": {"sha": "c0ff33"}}))
-    return put
+ASTRO_POST = """---
+title: 'Vecchio articolo'
+description: 'Una descrizione'
+pubDate: 'Jul 08 2026'
+heroImage: '/blog/vecchio.jpg'
+author: 'Redazione I3K'
+tags: ["ai"]
+draft: false
+---
+
+Testo.
+"""
+
+ASTRO_POST_2 = ASTRO_POST.replace("Vecchio articolo", "Altro").replace("Jul 08 2026", "Jun 01 2026").replace(
+    "/blog/vecchio.jpg", "/blog/altro.jpg")
 
 
-def test_github_draft_opens_a_pull_request(db, tenant, monkeypatch):
-    import base64
-    did, site_id = approved_draft(db, tenant)
+def _target(db, tenant, site_id, monkeypatch, **config):
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     monkeypatch.setenv(pub.secret_variable(tenant, "GH"), "ghp_test123")
-    target = pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site"}, "GH")
-    pid = pub.request(db, tenant, did, target, "draft", "redazione")
+    return pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", **config}, "GH")
+
+
+def _send(db, tenant, did, target, mode, gh, publisher=None):
+    from github_fake import FakeGitHub  # noqa: F401
+    pid = pub.request(db, tenant, did, target, mode, "redazione")
     pub.decide(db, tenant, pid, True, "francesco")
+    publisher = publisher or pub.Publisher(resolver=public_resolver, sleep=lambda s: None)
     with respx.mock(assert_all_called=False) as router:
-        put = _github_routes(router)
-        router.post("https://api.github.com/repos/me/site/pulls").mock(
-            return_value=httpx.Response(201, json={"number": 9, "html_url": "https://github.com/me/site/pull/9"}))
-        out = pub.Publisher(resolver=public_resolver).run(db, tenant, pid)
-    assert out == {"status": "published", "url": "https://github.com/me/site/pull/9"}
-    req = put.calls[0].request
-    assert req.headers["authorization"] == "Bearer ghp_test123"
-    sent = json.loads(req.content)
-    assert sent["branch"] == f"editor/publish-{pid}"
-    md = base64.b64decode(sent["content"]).decode()
-    assert md.startswith("---\n") and 'title: "Bari in fibra"' in md and '\nimage:' not in md
+        gh.route(router)
+        out = publisher.run(db, tenant, pid)
+    return pid, out
+
+
+def test_github_target_options(db, tenant, monkeypatch):
+    did, site_id = approved_draft(db, tenant)
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    with pytest.raises(pub.PublishError, match="owner/name"):
+        pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "non-un-repo"}, "GH")
+    with pytest.raises(pub.PublishError, match=r"cannot be \.\."):
+        pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", "path": "a/../b"}, "GH")
+    with pytest.raises(pub.PublishError, match="slug"):
+        pub.github_config({"repo": "me/site", "url": "https://sito.it/blog/"})
+    cfg = pub.github_config({"repo": " Me/Sito.it ", "branch": "/main/", "path": "", "image_path": "public/img",
+                             "url": "https://sito.it/blog/{slug}/", "verify": False, "wait_minutes": "90"})
+    assert cfg == {"repo": "Me/Sito.it", "branch": "main", "image_path": "public/img",
+                   "url": "https://sito.it/blog/{slug}/", "verify": False, "wait_minutes": 60}
+    assert pub.github_config({"repo": "me/site", "verify": True}) == {"repo": "me/site"}
+    assert pub.site_path("public/img/a.jpg") == "/img/a.jpg" and pub.site_path("static/a.png") == "/a.png"
+    assert pub.site_path("assets/a.jpg") == "/assets/a.jpg"
+
+
+def test_github_draft_opens_a_pull_request_only(db, tenant, monkeypatch):
+    from github_fake import FakeGitHub
+    did, site_id = approved_draft(db, tenant)
+    target = _target(db, tenant, site_id, monkeypatch)
+    gh = FakeGitHub({"README.md": "sito"})
+    pid, out = _send(db, tenant, did, target, "draft", gh)
+    assert out == {"status": "published", "url": "https://github.com/me/site/pull/1"}
+    assert gh.token == "Bearer ghp_test123"
+    assert gh.pulls[0]["state"] == "open" and "content/blog/bari-in-fibra.md" not in gh.files()
+    md = gh.text("content/blog/bari-in-fibra.md", f"editor/publish-{pid}")
+    assert md.startswith("---\n") and 'title: "Bari in fibra"' in md and "\nimage:" not in md
     assert "# Bari in fibra" not in md and "Open Fiber ha lavorato a Bari." in md  # the title is in the front matter
 
 
-def test_github_publish_commits_and_a_repeated_send_is_safe(db, tenant, monkeypatch):
-    import base64
+def test_github_publish_copies_the_blog_and_merges_after_the_checks(db, tenant, monkeypatch):
+    """An Astro blog: front matter keys, date format, image place and the
+    author shared by every post are copied; llms.txt and the static sitemap
+    get the article; everything is one commit, merged once Vercel's preview
+    deploy is green."""
+    from github_fake import FakeGitHub
     did, site_id = approved_draft(db, tenant)
-    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
-    monkeypatch.setenv(pub.secret_variable(tenant, "GH"), "ghp_test123")
-    target = pub.add_target(db, tenant, site_id, "github", "sito", {"repo": "me/site", "branch": "prod"}, "GH")
-    pid = pub.request(db, tenant, did, target, "publish", "redazione")
-    pub.decide(db, tenant, pid, True, "francesco")
-    publisher = pub.Publisher(resolver=public_resolver)
-    with respx.mock(assert_all_called=False) as router:
-        put = _github_routes(router, ref_branch="prod")
-        out = publisher.run(db, tenant, pid)
-        sent = json.loads(put.calls[0].request.content)
-        md = base64.b64decode(sent["content"])
-        assert sent["branch"] == "prod"
-        assert out["status"] == "published" and out["url"].startswith("https://github.com/me/site/blob/")
-    # The send stayed 'sending' (outcome unknown): the same content is already
-    # in the repository, so repeating it does not write a second commit.
+    with db.tenant(tenant) as s:
+        s.execute(text("INSERT INTO editor.draft_images (tenant_id, draft_id, token, prompt, alt, model, mime, width,"
+                       " height, content) VALUES (:t, :d, 'tok', 'p', 'Una strada cablata', 'm', 'image/jpeg', 10, 10,"
+                       " :c)"), {"t": tenant, "d": did, "c": b"\xff\xd8jpeg"})
+    target = _target(db, tenant, site_id, monkeypatch, path="src/content/blog")
+    gh = FakeGitHub({
+        "src/content/blog/vecchio-articolo.md": ASTRO_POST, "src/content/blog/altro.md": ASTRO_POST_2,
+        "public/llms.txt": "# Sito\n\n## Blog\n\n- [Vecchio articolo](https://sito.it/blog/vecchio-articolo/): x\n\n## Altro\n\n- [Chi siamo](https://sito.it/chi/)\n",
+        "public/sitemap.xml": '<?xml version="1.0"?>\n<urlset>\n  <url><loc>https://sito.it/</loc></url>\n</urlset>\n'})
+    gh.checks["*"] = ["pending", "pending", "success"]
+    before = len(gh.commits)
+    pid, out = _send(db, tenant, did, target, "publish", gh)
+    assert out["status"] == "published", out
+    assert out["url"] == "https://sito.it/blog/bari-in-fibra/"
+    md = gh.text("src/content/blog/bari-in-fibra.md")
+    fm = md.split("---\n")[1]
+    assert fm.splitlines()[0] == 'title: "Bari in fibra"'
+    assert "\npubDate: '" in fm and "heroImage: \"/blog/bari-in-fibra.jpg\"" in fm
+    assert "author: 'Redazione I3K'" in fm and "draft: false" in fm
+    assert gh.files()["public/blog/bari-in-fibra.jpg"] == b"\xff\xd8jpeg"
+    llms = gh.text("public/llms.txt")
+    assert llms.index("bari-in-fibra") < llms.index("## Altro")
+    assert "<loc>https://sito.it/blog/bari-in-fibra/</loc>" in gh.text("public/sitemap.xml")
+    # one commit with every file, then the merge
+    assert len(gh.commits) == before + 2 and gh.pulls[0]["state"] == "merged"
+    assert f"editor/publish-{pid}" not in gh.branches
+
+
+def test_github_failed_checks_leave_the_site_as_it_was(db, tenant, monkeypatch):
+    from github_fake import FakeGitHub
+    did, site_id = approved_draft(db, tenant)
+    target = _target(db, tenant, site_id, monkeypatch)
+    gh = FakeGitHub({"README.md": "sito"})
+    gh.checks["*"] = ["pending", "failure"]
+    pid, out = _send(db, tenant, did, target, "publish", gh)
+    assert out["status"] == "failed" and "https://vercel.com/me/site/dpl_1" in out["error"]
+    assert "content/blog/bari-in-fibra.md" not in gh.files() and gh.pulls[0]["state"] == "open"
+
+
+def test_github_without_checks_merges_and_a_repeated_send_is_safe(db, tenant, monkeypatch):
+    from github_fake import FakeGitHub
+    did, site_id = approved_draft(db, tenant)
+    target = _target(db, tenant, site_id, monkeypatch, branch="prod")
+    gh = FakeGitHub({"README.md": "sito"}, default="prod")
+    clock = iter(range(0, 10_000, 30))
+    publisher = pub.Publisher(resolver=public_resolver, sleep=lambda s: None)
+    import editor.sitegit as sg
+    monkeypatch.setattr(sg.time, "monotonic", lambda: next(clock))
+    pid, out = _send(db, tenant, did, target, "publish", gh, publisher)
+    assert out["status"] == "published" and "content/blog/bari-in-fibra.md" in gh.files("prod")
+    # Sent again (outcome was unknown): the same article is there, nothing new is written.
+    commits = len(gh.commits)
     with db.tenant(tenant) as s:
         s.execute(text("UPDATE editor.publications SET status = 'approved' WHERE id = :p"), {"p": pid})
     with respx.mock(assert_all_called=False) as router:
-        put = _github_routes(router, ref_branch="prod", existing=md)
+        gh.route(router)
         out = publisher.run(db, tenant, pid)
-        assert not put.called
-    assert out["status"] == "published" and out["url"].startswith("https://github.com/me/site/blob/")
-    # Different content in the same file is refused, not overwritten.
+    assert out["status"] == "published" and len(gh.commits) == commits
+    # Other content in the same file is refused, not overwritten.
+    gh.trees[gh.commits[gh.branches["prod"]]["tree"]]["content/blog/bari-in-fibra.md"] = b"altro"
     with db.tenant(tenant) as s:
         s.execute(text("UPDATE editor.publications SET status = 'approved' WHERE id = :p"), {"p": pid})
     with respx.mock(assert_all_called=False) as router:
-        put = _github_routes(router, ref_branch="prod", existing=b"qualcosa di diverso")
+        gh.route(router)
         out = publisher.run(db, tenant, pid)
-        assert not put.called
     assert out["status"] == "failed" and "other content" in out["error"]
+
+
+def test_github_folder_posts_mdx_and_image_beside_the_post(db, tenant, monkeypatch):
+    from github_fake import FakeGitHub
+    did, site_id = approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        s.execute(text("INSERT INTO editor.draft_images (tenant_id, draft_id, token, prompt, alt, model, mime, width,"
+                       " height, content) VALUES (:t, :d, 'tok', 'p', 'alt', 'm', 'image/png', 10, 10, :c)"),
+                  {"t": tenant, "d": did, "c": b"\x89PNG..."})
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.drafts SET body_md = body_md || :x WHERE id = :d"),
+                  {"d": did, "x": "\n\nCosto {stimato} < 5 euro"})
+    target = _target(db, tenant, site_id, monkeypatch, verify=False, url="https://sito.it/news/{slug}")
+    post = "---\ntitle: Primo\ndate: 2026-10-01\ncover:\n  src: ./cover.jpg\n  alt: Una foto\n---\n\nCiao\n"
+    gh = FakeGitHub({"content/blog/primo/index.mdx": post, "content/blog/primo/cover.jpg": b"x"})
+    pid, out = _send(db, tenant, did, target, "publish", gh)
+    assert out == {"status": "published", "url": "https://sito.it/news/bari-in-fibra"}
+    files = gh.files()
+    assert files["content/blog/bari-in-fibra/cover.png"] == b"\x89PNG..."
+    md = files["content/blog/bari-in-fibra/index.mdx"].decode()
+    assert "cover:\n  src: \"./cover.png\"\n  alt: \"alt\"" in md and "\ndate: 20" in md
+    assert "Costo \\{stimato\\} &lt; 5 euro" in md
+    assert not gh.pulls  # verify: false goes straight on the branch
+
+
+def test_sitegit_formats():
+    from editor import sitegit as sg
+    from datetime import datetime
+    assert sg.format_date(datetime(2026, 7, 8), ("human", "'")) == "'Jul 08 2026'"
+    assert sg.format_date(datetime(2026, 7, 8), ("date", "")) == "2026-07-08"
+    keys = sg.parse_front_matter("title: A\ntags:\n  - x\n  - y\nimage:\n  url: /a.jpg\n")
+    assert [k for k, _ in keys] == ["title", "tags", "image"] and sg.nested(keys[2][1]) == {"url": "/a.jpg"}
+    assert sg.add_to_llms("# S\n", "T", "https://s/b/t", None, None).endswith("## Blog\n\n- [T](https://s/b/t)\n")
+    assert sg.add_to_llms("- [T](https://s/b/t)\n", "T", "https://s/b/t", None, None) is None
+    assert sg.add_to_sitemap("<sitemapindex></sitemapindex>", "https://s/x", datetime(2026, 1, 1)) is None
+    fmt = sg.learn([sg.Post("content/posts/a.md", [("title", "A"), ("date", "2026-01-01")], "a")])
+    assert sg.guess_url(fmt, "content/posts", "s.it", []) == "https://s.it/posts/{slug}"
+    assert sg.guess_url(fmt, "content/posts", "s.it", ["- [A](https://s.it/articoli/aaaa/)"]) == "https://s.it/posts/{slug}"
+    fmt.samples[0].slug = "aaaa"
+    assert sg.guess_url(fmt, "content/posts", "s.it", ["- [A](https://s.it/articoli/aaaa/)"]) == "https://s.it/articoli/{slug}/"

@@ -1349,5 +1349,14 @@
  "Da ora {n} proposte al giorno per questo sito.": "Désormais {n} propositions par jour pour ce site.",
  "Approva prima il profilo: le proposte partono dalla linea approvata.": "Approuvez d'abord le profil : les propositions partent de la ligne approuvée.",
  "Come funziona il piano": "Comment fonctionne le plan",
- "Opportunità {n}": "Opportunité {n}"
+ "Opportunità {n}": "Opportunité {n}",
+ "come negli articoli del sito": "comme dans les articles du site",
+ "Indirizzo degli articoli (GitHub, facoltativo)": "Adresse des articles (GitHub, facultatif)",
+ "Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)": "Publier seulement si le déploiement d'aperçu réussit (Vercel, Netlify)",
+ "Copertine": "Images de couverture",
+ "Stile delle copertine": "Style des images de couverture",
+ "D'impatto: fatte per farsi cliccare": "Percutantes : faites pour être cliquées",
+ "Editoriali: foto di cronaca sobria": "Éditoriales : une photo d'actualité sobre",
+ "con un titolo di 2-4 parole nell'immagine": "avec un titre de 2 à 4 mots dans l'image",
+ "Stile delle copertine salvato: vale dalla prossima immagine.": "Style des images de couverture enregistré : il s'applique dès la prochaine image."
 }

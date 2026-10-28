@@ -82,7 +82,9 @@
       {% if t.kind == 'wordpress' %}<label class="field">{{ _('Utente (WordPress)') }}<input name="user" value="{{ cf.get('user') or '' }}" autocomplete="off" required></label>{% endif %}
       {% if t.kind == 'github' %}<label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" value="{{ cf.get('branch') or '' }}" autocomplete="off" placeholder="main"></label>
       <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" value="{{ cf.get('path') or '' }}" autocomplete="off" placeholder="content/blog"></label>
-      <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" value="{{ cf.get('image_path') or '' }}" autocomplete="off" placeholder="public/images"></label>{% endif %}
+      <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" value="{{ cf.get('image_path') or '' }}" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
+      <label class="field">{{ _('Indirizzo degli articoli (GitHub, facoltativo)') }}<input name="article_url" value="{{ cf.get('url') or '' }}" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
+      <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="verify" value="1" {% if cf.get('verify') is not sameas false %}checked{% endif %}> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>{% endif %}
       <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" value="{{ cf.get('indexnow_key') or '' }}" autocomplete="off"></label>
       {% if t.kind == 'wordpress' %}<label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="jsonld" value="1" {% if cf.get('jsonld') %}checked{% endif %}> {{ _('Aggiungi i dati strutturati JSON-LD (WordPress, utente amministratore)') }}</label>{% endif %}
       <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="enabled" value="1" {% if t.enabled is not sameas false %}checked{% endif %}> {{ _('Attiva: compare tra le destinazioni delle bozze') }}</label>
@@ -111,7 +113,9 @@
     <label class="field">{{ _('Utente (WordPress)') }}<input name="user" autocomplete="off" placeholder="{{ _('redazione') }}"></label>
     <label class="field">{{ _('Ramo (GitHub, facoltativo)') }}<input name="branch" autocomplete="off" placeholder="main"></label>
     <label class="field">{{ _('Cartella degli articoli (GitHub, facoltativa)') }}<input name="path" autocomplete="off" placeholder="content/blog"></label>
-    <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" autocomplete="off" placeholder="public/images"></label>
+    <label class="field">{{ _('Cartella delle immagini (GitHub, facoltativa)') }}<input name="image_path" autocomplete="off" placeholder="{{ _('come negli articoli del sito') }}"></label>
+    <label class="field">{{ _('Indirizzo degli articoli (GitHub, facoltativo)') }}<input name="article_url" autocomplete="off" placeholder="https://sito.it/blog/{slug}"></label>
+    <label class="field" style="flex-direction: row; align-items: center; gap: 8px;"><input type="checkbox" name="verify" value="1" checked> {{ _("Pubblica solo se il deploy di anteprima riesce (Vercel, Netlify)") }}</label>
     <label class="field">{{ _('Nome della credenziale') }}<input name="secret_env" placeholder="WP_SITO"></label>
     <label class="field">{{ _('Credenziale') }}<input name="secret" type="password" autocomplete="new-password" placeholder="{{ _('password applicativa, chiave o token') }}"></label>
     <label class="field">{{ _('Chiave IndexNow (facoltativa)') }}<input name="indexnow_key" autocomplete="off" placeholder="{{ _('la stessa del file .txt nella radice del sito') }}"></label>

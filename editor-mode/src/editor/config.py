@@ -44,11 +44,14 @@ class Settings:
     # for every newsroom. On by default on a server; tests build Settings
     # without it.
     base_news: bool = False
-    # Cover images (images.py): Black Forest Labs' FLUX, on its EU endpoint.
-    # No key: drafts have no image.
+    # Cover images (images.py): OpenRouter (a key starting with sk-or-) or
+    # Black Forest Labs' FLUX on its EU endpoint. No key: drafts have no image.
+    # Empty provider, url and model: chosen from the key.
     images_api_key: str = ""
-    images_url: str = "https://api.eu.bfl.ai/v1"
-    images_model: str = "flux-2-pro"
+    images_provider: str = ""
+    images_url: str = ""
+    images_model: str = ""
+    images_quality: str = "medium"
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -74,6 +77,8 @@ class Settings:
             mollie_api_key=env.get("EDITOR_MOLLIE_API_KEY", "").strip(),
             base_news=env.get("EDITOR_BASE_NEWS", "1").strip().lower() not in ("0", "false", "no"),
             images_api_key=env.get("EDITOR_IMAGES_API_KEY", "").strip(),
-            images_url=env.get("EDITOR_IMAGES_URL", cls.images_url).strip().rstrip("/"),
-            images_model=env.get("EDITOR_IMAGES_MODEL", cls.images_model).strip(),
+            images_provider=env.get("EDITOR_IMAGES_PROVIDER", "").strip().lower(),
+            images_url=env.get("EDITOR_IMAGES_URL", "").strip().rstrip("/"),
+            images_model=env.get("EDITOR_IMAGES_MODEL", "").strip(),
+            images_quality=env.get("EDITOR_IMAGES_QUALITY", cls.images_quality).strip().lower(),
         )

@@ -187,14 +187,20 @@ ends without a payment. Its data stay, and its owner can still sign in to
   reachable from the internet. `POST /api/operator/tenants/{id}/checkout`
   gives the payment address to the public site instead. Without a key,
   plans are paid by bank transfer and recorded from the console.
-- **Cover images** (FLUX by Black Forest Labs, on `api.eu.bfl.ai`): set
-  `EDITOR_IMAGES_API_KEY` in `.env` (and in `compose.yaml`, under
-  `x-editor-env`, the lines `EDITOR_IMAGES_API_KEY: ${EDITOR_IMAGES_API_KEY:-}`
-  and `EDITOR_IMAGES_MODEL: ${EDITOR_IMAGES_MODEL:-flux-2-pro}` for a
-  compose written before 0.17.0). Each draft then gets an image drawn for
-  it, kept in the database and served at `/media/<token>`; WordPress
-  receives it as the featured image, webhooks as `image.url` (an absolute
-  address needs `EDITOR_PUBLIC_URL`). The cost of each image is in Consumi.
+- **Cover images**: set `EDITOR_IMAGES_API_KEY` in `.env`. An OpenRouter
+  key (`sk-or-...`) draws with `openai/gpt-image-2` (about 0.05 $ at
+  `EDITOR_IMAGES_QUALITY=medium`, under 0.02 $ at `low`; another model with
+  `EDITOR_IMAGES_MODEL=owner/name`); a Black Forest Labs key draws with
+  FLUX on `api.eu.bfl.ai` (`flux-2-pro`). Each draft then gets an image
+  drawn for it, kept in the database and served at `/media/<token>`;
+  WordPress receives it as the featured image, a GitHub site in its
+  repository, webhooks as `image.url` (an absolute address needs
+  `EDITOR_PUBLIC_URL`). Each site chooses, in Sito e profilo, covers made
+  to be clicked (the default: one bold subject, dramatic light, strong
+  colours, readable as a thumbnail, optionally a 2-4 word headline drawn
+  in) or plain editorial photos. The cost of each image is in Consumi. A
+  `compose.yaml` written before 0.17.0 needs the `EDITOR_IMAGES_*` lines of
+  [compose.yaml](compose.yaml) under `x-editor-env`.
 - **What happens by itself** (every hour, in the worker): an email to the
   owner two days before the trial ends; the hold when the trial ends, or
   three days after a paid period ends without a renewal.

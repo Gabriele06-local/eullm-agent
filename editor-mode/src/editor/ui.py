@@ -724,6 +724,8 @@ def register(app, ctx) -> None:
             "news_week": count(m.source_items, repo.followed_by(site.id), it.fetched_at >= week_ago),
             "proposals": planned, "proposals_today": count(m.proposals, pr.site_id == site.id, pr.created_at >= start_of_day(s)),
             "per_day": ((body or {}).get("settings") or {}).get("proposals_per_day", props.PER_DAY) if body else None,
+            "cover_style": ((body or {}).get("settings") or {}).get("cover_style") or "impact",
+            "cover_text": bool(((body or {}).get("settings") or {}).get("cover_text")),
             "drafts": drafts, "publications": pubs,
             "targets": count(m.publish_targets, pt.site_id == site.id, pt.enabled.is_not(False)),
             "cost": cost[0], "calls": cost[1],
@@ -825,6 +827,16 @@ def register(app, ctx) -> None:
             if not prof.set_proposals_per_day(s, site_id, n):
                 return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
         return done("/site", t("Da ora {n} proposte al giorno per questo sito.", n=max(0, min(50, n))))
+
+    @app.post("/ui/sites/{site_id}/cover")
+    def ui_cover(site_id: int, style: str = Form(...), text: str = Form(""),
+                 c: auth.Caller = Depends(ctx.need("owner"))):
+        if style not in ("impact", "editorial"):
+            raise HTTPException(400, "unknown style")
+        with db.tenant(c.tenant_id) as s:
+            if not prof.set_cover(s, site_id, style, bool(text)):
+                return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
+        return done("/site", t("Stile delle copertine salvato: vale dalla prossima immagine."))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -1347,14 +1359,15 @@ def register(app, ctx) -> None:
                       address: str = Form(""), user: str = Form(""), secret_env: str = Form(""),
                       secret: str = Form(""), indexnow_key: str = Form(""), jsonld: str = Form(""),
                       branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
+                      article_url: str = Form(""), verify: str = Form(""),
                       c: auth.Caller = Depends(ctx.need("owner"))):
         if kind not in TARGET_KINDS:
             raise HTTPException(400, "unknown kind")
         if kind == "telegram_channel":
             config = {"chat_id": address.strip()}
         elif kind == "github":
-            config = {"repo": address.strip()}
-            for key, value in (("branch", branch), ("path", path), ("image_path", image_path)):
+            config = {"repo": address.strip(), "verify": bool(verify)}
+            for key, value in (("branch", branch), ("path", path), ("image_path", image_path), ("url", article_url)):
                 if value.strip():
                     config[key] = value.strip()
         else:
@@ -1573,11 +1586,13 @@ def register(app, ctx) -> None:
     def ui_edit_target(target_id: int, name: str = Form(...), address: str = Form(""), user: str = Form(""),
                        indexnow_key: str = Form(""), jsonld: str = Form(""), enabled: str = Form(""),
                        branch: str = Form(""), path: str = Form(""), image_path: str = Form(""),
+                       article_url: str = Form(""), verify: str = Form(""),
                        c: auth.Caller = Depends(ctx.need("owner"))):
         try:
             manage.update_target(db, c.tenant_id, target_id, name=name, address=address, user=user,
                                  indexnow_key=indexnow_key, jsonld=bool(jsonld), enabled=bool(enabled),
-                                 branch=branch, path=path, image_path=image_path)
+                                 branch=branch, path=path, image_path=image_path,
+                                 article_url=article_url, verify=bool(verify))
         except LookupError:
             raise HTTPException(404, "target not found") from None
         except manage.ManageError as e:

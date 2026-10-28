@@ -109,3 +109,48 @@ def test_the_draft_page_shows_the_image_and_can_redo_it(db, tenant):
     c.post(f"/ui/drafts/{did}/image/delete")
     with db.tenant(tenant) as s:
         assert images.of(s, did) is None
+
+
+def test_openrouter_draws_an_impact_cover_with_its_headline(db, tenant):
+    import base64
+    import struct
+    from editor import profile as prof
+    did, site_id = approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        assert prof.set_cover(s, site_id, "impact", True)
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 1536, 864) + b"rest"
+    with respx.mock() as router:
+        draw = router.post("https://openrouter.ai/api/v1/images").mock(return_value=httpx.Response(200, json={
+            "data": [{"b64_json": base64.b64encode(png).decode(), "media_type": "image/png"}],
+            "usage": {"cost": 0.053}}))
+        chat_route = router.post("http://core.test/v1/llm/chat").mock(return_value=chat(json.dumps({
+            "prompt": "A glowing fibre cable bursting through a street, dramatic light",
+            "headline": "Bari corre", "alt": "Un cavo in fibra"})))
+        st = __import__("editor.config", fromlist=["Settings"]).Settings(images_api_key="sk-or-v1-abc",
+                                                                          images_model="flux-2-pro")
+        imager_ = images.from_settings(st)
+        assert imager_.name == "openrouter" and imager_.model == images.OPENROUTER_MODEL
+        images.make(db, tenant, did, imager_, CoreClient("http://core.test", "tok"))
+    system = json.loads(chat_route.calls[0].request.content)["messages"][0]["content"]
+    assert "stop scrolling" in system and "headline" in system
+    sent = json.loads(draw.calls[0].request.content)
+    assert draw.calls[0].request.headers["authorization"] == "Bearer sk-or-v1-abc"
+    assert sent["model"] == "openai/gpt-image-2" and sent["aspect_ratio"] == "16:9" and sent["quality"] == "medium"
+    assert sent["prompt"].endswith('"Bari corre".')
+    with db.tenant(tenant) as s:
+        img = images.of(s, did)
+        cost = s.execute(text("SELECT cost FROM editor.llm_usage WHERE purpose = 'image' ORDER BY id DESC")).scalar()
+    assert (img.mime, img.width, img.height) == ("image/png", 1536, 864) and abs(cost - 0.053) < 1e-9
+
+
+def test_editorial_style_and_the_provider_from_the_key():
+    from editor.config import Settings
+    assert images.system_for({"settings": {"cover_style": "editorial", "cover_text": True}}) == images.SYSTEM
+    assert "headline" not in images.system_for({"settings": {"cover_style": "impact"}})
+    assert images.style_of({}) == ("impact", False)
+    bfl = images.from_settings(Settings(images_api_key="bfl-key"))
+    assert bfl.name == "bfl" and bfl.model == "flux-2-pro" and bfl.url == images.BFL
+    assert images.from_settings(Settings()) is None
+    assert images.from_settings(Settings(images_api_key="k", images_provider="openrouter",
+                                         images_model="google/gemini-3.1-flash-image")).model == "google/gemini-3.1-flash-image"
+    assert images.size_of(b"\xff\xd8\xff\xc0\x00\x11\x08\x02\x00\x03\x00" + b"\x00" * 10) == (768, 512)
