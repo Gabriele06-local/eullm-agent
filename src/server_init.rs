@@ -488,7 +488,10 @@ pub fn server_init(opts: Options) -> Result<()> {
         (None, None) => println!("\nSign in at {base} (administration: {base}/admin)."),
     }
     println!("  Put a reverse proxy with HTTPS in front to reach it from outside.");
-    println!("\nTo update from /admin › Aggiornamenti, once as root: cd {} && sudo ./update.sh install", dir.display());
+    println!(
+        "\nTo update from /admin › Aggiornamenti, once as root: cd {} && sudo ./update.sh install",
+        dir.display()
+    );
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
     println!("  EDITOR_SECRET_KEY in it encrypts the publishing credentials; without it they must be entered again.");
     Ok(())
