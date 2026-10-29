@@ -24,6 +24,21 @@ ENGLISH = {"title": "Bari gets full fibre", "subtitle": "The network is complete
                    "slug": "bari-full-fibre"}}
 
 
+def test_a_site_whose_language_was_not_read_has_no_language_of_its_own(db, tenant):
+    # A site not read yet has language "und": it is not a language. Its own
+    # language still takes a slot of the plan, whatever it will turn out to be.
+    with db.tenant(tenant) as s:
+        from editor import repo
+        site_id = repo.add_site(s, tenant, "unread.example")
+        assert s.execute(text("SELECT language FROM editor.sites WHERE id = :i"), {"i": site_id}).scalar() == "und"
+        assert tr.main_language(s, site_id) is None
+    set_plan(db, tenant, max_languages=1)
+    with pytest.raises(tr.LanguageError):
+        tr.set_languages(db, tenant, site_id, ["en"])
+    set_plan(db, tenant, max_languages=2)
+    assert tr.set_languages(db, tenant, site_id, ["en"]) == ["en"]
+
+
 def test_the_plan_decides_how_many_languages(db, tenant):
     did, site_id = approved_draft(db, tenant)
     assert tr.set_languages(db, tenant, site_id, ["en", "it", "EN"]) == ["en"]  # its own language is not one more

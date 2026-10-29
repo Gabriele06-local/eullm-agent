@@ -37,12 +37,15 @@ class LanguageError(ValueError):
 
 
 def main_language(s, site_id: int) -> str | None:
-    """The site's own language: its approved profile's, else the one read on the site."""
+    """The site's own language: its approved profile's, else the one read on
+    the site. None when neither says it: an unread site has "und", which is
+    not a language and must not be counted (nor shown) as one."""
     body = s.execute(select(m.editorial_profiles.c.body)
                      .where(m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")
                      .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar() or {}
     lang = body.get("language") or s.execute(select(m.sites.c.language).where(m.sites.c.id == site_id)).scalar()
-    return (lang or "")[:2].lower() or None
+    lang = (lang or "").strip().lower()
+    return None if not lang or lang == "und" else lang[:2] or None
 
 
 def site_languages(s, site_id: int) -> list[str]:
