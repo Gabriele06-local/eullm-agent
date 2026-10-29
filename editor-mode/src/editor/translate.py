@@ -70,10 +70,7 @@ def set_languages(db, tenant_id: str, site_id: int, languages: list[str]) -> lis
         if unknown:
             raise LanguageError(f"unknown language: {', '.join(unknown)}")
         limit = allowed(s)
-        # The plan counts the site's own language too, but only when the site
-        # has one: a site read as "und" must not reserve a slot for it.
-        own_slots = 1 if own else 0
-        if limit is not None and own_slots + len(wanted) > limit:
+        if limit is not None and 1 + len(wanted) > limit:
             raise LanguageError(f"the plan allows {limit} languages per site, the site's own included")
         s.execute(update(m.sites).where(m.sites.c.id == site_id).values(languages=wanted))
     return wanted
