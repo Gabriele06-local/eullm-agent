@@ -25,9 +25,8 @@ ENGLISH = {"title": "Bari gets full fibre", "subtitle": "The network is complete
 
 
 def test_a_site_whose_language_was_not_read_has_no_language_of_its_own(db, tenant):
-    # A site not read yet has language "und": it is not a language, so it must
-    # not take one of the plan's language slots, and one language must fit a
-    # plan of one.
+    # A site not read yet has language "und": it is not a language. Its own
+    # language still takes a slot of the plan, whatever it will turn out to be.
     with db.tenant(tenant) as s:
         from editor import repo
         site_id = repo.add_site(s, tenant, "unread.example")
