@@ -25,6 +25,15 @@ def test_slug_title_and_description_are_clamped():
     assert missing.title == "Bari cablata in fibra" and missing.slug == "bari-cablata-in-fibra" and missing.keyphrase == ""
 
 
+def test_a_title_without_spaces_is_still_cut_to_the_limit():
+    # rsplit on a title with no space in the first TITLE_MAX+1 characters
+    # returns the whole string: the clamp must not keep 61 characters.
+    assert len(seo.parse({"title": "a" * 70}, "Titolo").title) <= seo.TITLE_MAX
+    long_word_then_text = "Supercalifragilistichespiralidoso" + " e altro testo che allunga ancora il titolo"
+    sd = seo.parse({"title": long_word_then_text}, "Titolo")
+    assert len(sd.title) <= seo.TITLE_MAX and len(sd.title) >= 20
+
+
 def test_checks_say_what_is_missing():
     sd = seo.Seo(keyphrase="fibra Bari", title="Fibra a Bari: cosa cambia per le case",
                  description="La rete in fibra di Bari è completa: chi è coperto, quanto va veloce e cosa fare per attivarla da subito.",
