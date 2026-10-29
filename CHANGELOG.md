@@ -2,6 +2,13 @@
 
 ## 0.20.1
 
+### Added
+
+- Editor Mode, Sito e profilo › "Fonti negli articoli pubblicati": a
+  site can show its sources discreetly, with no numbers in the text and
+  one line at the end naming each source once. The draft keeps its notes,
+  only the published text changes. The default stays the notes.
+
 ### Changed
 
 - Editor Mode, Pubblicazioni: the form of a destination shows only the

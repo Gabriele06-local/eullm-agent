@@ -727,6 +727,7 @@ def register(app, ctx) -> None:
             "per_day": ((body or {}).get("settings") or {}).get("proposals_per_day", props.PER_DAY) if body else None,
             "cover_style": ((body or {}).get("settings") or {}).get("cover_style") or "impact",
             "cover_text": bool(((body or {}).get("settings") or {}).get("cover_text")),
+            "sources_style": ((body or {}).get("settings") or {}).get("sources_style") or "notes",
             "auto": autopilot.settings_of(body or s.execute(select(m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "draft")
                 .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar()),
@@ -890,6 +891,15 @@ def register(app, ctx) -> None:
                 autopilot.save(s, site_id, {**autopilot.settings_of(body), "enabled": False})
         return done("/site#h-auto", t("Redazione automatica fermata: non parte nessun articolo nuovo. Quelli già in "
                                       "scrittura restano bozze da rileggere."))
+
+    @app.post("/ui/sites/{site_id}/sources-style")
+    def ui_sources_style(site_id: int, style: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        if style not in ("notes", "list"):
+            raise HTTPException(400, "unknown style")
+        with db.tenant(c.tenant_id) as s:
+            if not prof.set_sources_style(s, site_id, style):
+                return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
+        return done("/site", t("Fonti negli articoli salvate: valgono dalla prossima pubblicazione."))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):

@@ -1413,5 +1413,9 @@
  "Cartella degli articoli": "Articles folder",
  "Cartella delle immagini": "Images folder",
  "Indirizzo degli articoli": "Articles' address",
- "Aggiungi la destinazione": "Add the destination"
+ "Aggiungi la destinazione": "Add the destination",
+ "Fonti negli articoli pubblicati": "Sources in published articles",
+ "Discrete: una riga in fondo, testo pulito": "Discreet: one line at the end, clean text",
+ "Note: un numero dopo ogni frase": "Notes: a number after each sentence",
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Sources setting saved: it applies from the next publication."
 }

@@ -1413,5 +1413,9 @@
  "Cartella degli articoli": "Dossier des articles",
  "Cartella delle immagini": "Dossier des images",
  "Indirizzo degli articoli": "Adresse des articles",
- "Aggiungi la destinazione": "Ajouter la destination"
+ "Aggiungi la destinazione": "Ajouter la destination",
+ "Fonti negli articoli pubblicati": "Sources dans les articles publiés",
+ "Discrete: una riga in fondo, testo pulito": "Discrètes : une ligne à la fin, texte épuré",
+ "Note: un numero dopo ogni frase": "Notes : un numéro après chaque phrase",
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Réglage des sources enregistré : il s'applique dès la prochaine publication."
 }

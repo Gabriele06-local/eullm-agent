@@ -1413,5 +1413,9 @@
  "Cartella degli articoli": "Ordner der Artikel",
  "Cartella delle immagini": "Ordner der Bilder",
  "Indirizzo degli articoli": "Adresse der Artikel",
- "Aggiungi la destinazione": "Ziel hinzufügen"
+ "Aggiungi la destinazione": "Ziel hinzufügen",
+ "Fonti negli articoli pubblicati": "Quellen in veröffentlichten Artikeln",
+ "Discrete: una riga in fondo, testo pulito": "Dezent: eine Zeile am Ende, sauberer Text",
+ "Note: un numero dopo ogni frase": "Fußnoten: eine Zahl nach jedem Satz",
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Quellen-Einstellung gespeichert: Sie gilt ab der nächsten Veröffentlichung."
 }

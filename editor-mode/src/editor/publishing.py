@@ -36,7 +36,7 @@ import httpx
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from . import models as m
+from . import drafts, models as m
 from . import seo
 from .markdown import to_html
 
@@ -284,7 +284,13 @@ def request(db, tenant_id: str, draft_id: int, target_id: int, mode: str, by: st
             raise PublishError("only approved drafts can be published")
         if t.site_id != d.site_id or not t.enabled:
             raise PublishError("target not available for this site")
-        payload = {"title": d.title, "subtitle": d.subtitle, "markdown": d.body_md, "html": to_html(d.body_md),
+        body = d.body_md
+        settings = (s.execute(select(m.editorial_profiles.c.body).where(
+            m.editorial_profiles.c.site_id == d.site_id, m.editorial_profiles.c.status == "approved")).scalar()
+            or {}).get("settings") or {}
+        if settings.get("sources_style") == "list":
+            body = drafts.discreet_sources(body)
+        payload = {"title": d.title, "subtitle": d.subtitle, "markdown": body, "html": to_html(body),
                    "language": d.language, **search_fields(s, d)}
         return s.execute(insert(m.publications).values(
             tenant_id=tenant_id, draft_id=draft_id, target_id=target_id, mode=mode, payload=payload, requested_by=by,
