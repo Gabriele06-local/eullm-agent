@@ -114,9 +114,9 @@ services:
     volumes:
       - ./updates:/var/lib/editor/updates
     command: ["editor", "worker"]
-    # On stop the worker takes no new job and lets the running ones finish;
-    # one cut short after this is queued again once its heartbeat is 5 minutes old.
-    stop_grace_period: 2m
+    # On stop the worker takes no new job, gives the running ones 20 seconds,
+    # then puts them back in the queue and exits: a restart takes seconds.
+    stop_grace_period: 30s
 
 volumes:
   pgdata:

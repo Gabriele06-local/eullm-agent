@@ -44,6 +44,7 @@ log = logging.getLogger(__name__)
 HEARTBEAT_SECONDS = 30
 STALE_SECONDS = 300  # no heartbeat for this long: the worker is gone
 POLL_SECONDS = 2.0
+STOP_GRACE_SECONDS = 20  # on stop, how long the running jobs may take before they go back in the queue
 # A job stopped by a model provider that is down runs again after 10, 20,
 # 30... minutes, up to this many attempts (about 4 hours in all).
 RETRY_AFTER = timedelta(minutes=10)
@@ -230,11 +231,23 @@ def enqueue_ticks(db, now: datetime | None = None) -> int:
     return len(tenants)
 
 
+def release(db, job: Job) -> None:
+    """Back in the queue at once: the worker stops before the job ends. It
+    runs again from the start on the next worker, without waiting for its
+    heartbeat to grow stale."""
+    with db.tenant(job.tenant_id) as s:
+        s.execute(update(m.jobs).where(m.jobs.c.id == job.id, m.jobs.c.status == "running").values(
+            status="queued", worker=None, run_after=datetime.now(UTC), attempts=max(0, job.attempts - 1),
+            error="interrupted by a restart, queued again"))
+
+
 class Worker:
     """`concurrency` threads that claim and run jobs, plus the clock that
     queues every tenant's tick at the start of each hour. SIGTERM and SIGINT
-    stop the claims; the running jobs finish before the process exits (a job
-    cut short by a hard kill is queued again by requeue_stale)."""
+    stop the claims; the running jobs have STOP_GRACE_SECONDS to finish,
+    then go back in the queue and the process exits, so a restart (an
+    update) takes seconds, not minutes. A job cut short by a hard kill is
+    queued again by requeue_stale."""
 
     def __init__(self, db, handlers: Handlers, concurrency: int = 1, name: str | None = None, hourly=None):
         self.db = db
@@ -243,6 +256,7 @@ class Worker:
         self.concurrency = max(1, concurrency)
         self.name = name or f"{socket.gethostname()}:{os.getpid()}"
         self.stopping = threading.Event()
+        self.running: dict[int, Job] = {}
 
     def stop(self, *_):
         if not self.stopping.is_set():
@@ -251,11 +265,18 @@ class Worker:
 
     def _loop(self, n: int):
         while not self.stopping.is_set():
+            busy = False
             try:
-                busy = run_next(self.db, self.handlers, f"{self.name}/{n}")
+                job = claim(self.db, f"{self.name}/{n}")
+                if job is not None:
+                    busy = True
+                    self.running[n] = job
+                    try:
+                        run(self.db, job, self.handlers)
+                    finally:
+                        self.running.pop(n, None)
             except Exception:
                 log.exception("worker loop error")
-                busy = False
             if not busy:
                 self.stopping.wait(POLL_SECONDS)
 
@@ -288,5 +309,18 @@ class Worker:
         for t in threads:
             t.start()
         log.info("worker %s running with %d slots", self.name, self.concurrency)
-        for t in threads[1:]:
-            t.join()
+        workers = threads[1:]
+        while not self.stopping.wait(1):
+            pass
+        deadline = time.monotonic() + STOP_GRACE_SECONDS
+        for t in workers:
+            t.join(max(0, deadline - time.monotonic()))
+        left = list(self.running.values())
+        for job in left:
+            try:
+                release(self.db, job)
+                log.info("%s for tenant %s queued again: the worker is stopping", job.kind, job.tenant_id)
+            except Exception:
+                log.exception("job %s not released", job.id)
+        if left:
+            os._exit(0)  # the threads still inside a job would hold the process: their jobs are queued already

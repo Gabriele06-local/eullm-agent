@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.20.3
+
+### Changed
+
+- The worker stops in seconds: on SIGTERM it gives the running jobs 20
+  seconds, then puts them back in the queue (attempt not spent) and exits.
+  Before, a restart or an update could wait up to two minutes for a long
+  model call. `stop_grace_period` of the worker in compose: 30s.
+- Il mio piano: on trial the menu and the page say the days left ("Prova ·
+  5 giorni rimasti"); the billing details are a two-column form instead of
+  one long row; the menu entry shows the plan under its name.
+
 ## 0.20.2
 
 ### Added

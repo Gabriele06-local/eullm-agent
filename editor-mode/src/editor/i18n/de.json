@@ -1433,8 +1433,6 @@
  "Il piano della redazione: cosa comprende, quanto ne hai usato questo mese e, per il proprietario, la scelta del piano, il pagamento e i dati di fatturazione.": "Der Tarif der Redaktion: was er umfasst, wie viel Sie diesen Monat davon genutzt haben und, für den Inhaber, die Wahl des Tarifs, die Zahlung und die Rechnungsdaten.",
  "In prova vedi i giorni che restano. Scegli il piano e paghi con Mollie: torni qui e, appena il pagamento è confermato (di solito entro un minuto), la redazione risulta attiva con la data del rinnovo.": "Während des Tests sehen Sie die verbleibenden Tage. Wählen Sie den Tarif und bezahlen Sie mit Mollie: Sie kehren hierher zurück, und sobald die Zahlung bestätigt ist (meist innerhalb einer Minute), ist die Redaktion mit dem Verlängerungsdatum aktiv.",
  "Le barre vicine al limite: quando una voce è piena, quel lavoro si ferma finché il mese non riparte o finché non passi a un piano più grande. Compila i dati di fatturazione prima di pagare.": "Die Balken nahe am Limit: Ist eine Position voll, stoppt diese Arbeit, bis der Monat neu beginnt oder Sie in einen größeren Tarif wechseln. Füllen Sie die Rechnungsdaten vor der Zahlung aus.",
- "{n} giorno di prova": "noch {n} Testtag",
- "{n} giorni di prova": "noch {n} Testtage",
  "Quanto hai usato": "Ihre Nutzung",
  "Quando un limite è raggiunto la redazione si ferma su quella voce e te lo dice, senza costi a sorpresa. Il mese riparte il primo giorno del mese.": "Ist ein Limit erreicht, stoppt die Redaktion bei dieser Position und sagt es Ihnen, ohne überraschende Kosten. Der Monat beginnt am ersten Tag des Monats neu.",
  "Il piano e il pagamento li gestisce il proprietario della redazione.": "Tarif und Zahlung verwaltet der Inhaber der Redaktion.",
@@ -1471,5 +1469,7 @@
  "GitHub non ha risposto: {error}": "GitHub hat nicht geantwortet: {error}",
  "È disponibile la versione {version}.": "Version {version} ist verfügbar.",
  "Versione non disponibile.": "Version nicht verfügbar.",
- "Un aggiornamento è già in corso.": "Eine Aktualisierung läuft bereits."
+ "Un aggiornamento è già in corso.": "Eine Aktualisierung läuft bereits.",
+ "{n} giorno rimasto": "noch {n} Tag",
+ "{n} giorni rimasti": "noch {n} Tage"
 }

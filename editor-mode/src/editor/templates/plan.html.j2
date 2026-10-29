@@ -7,7 +7,7 @@
     <span class="kicker">{{ _('Il mio piano') }}</span>
     <h1>{{ sub.plan_name if sub else plan_name or _('Il mio piano') }}</h1>
   </div>
-  {% if sub %}<span class="chip {{ 'teal' if sub.status == 'trialing' else 'green' if sub.status == 'active' else 'amber' }}">{{ sub.label }}</span>{% endif %}
+  {% if sub %}<span class="chip {{ 'teal' if sub.status == 'trialing' else 'green' if sub.status == 'active' else 'amber' }}">{% if sub.status == 'trialing' %}{{ sub.label }} · {{ _('{n} giorno rimasto', n=sub.days_left) if sub.days_left == 1 else _('{n} giorni rimasti', n=sub.days_left) }}{% else %}{{ sub.label }}{% endif %}</span>{% endif %}
 </header>
 {% with page="plan" %}{% include "_help.html.j2" %}{% endwith %}
 
