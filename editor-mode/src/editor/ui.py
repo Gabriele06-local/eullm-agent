@@ -21,7 +21,7 @@ from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
 from . import queue
-from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
+from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, trials, usage, vault
 from .i18n import N_, t
 from .markdown import to_html
 
@@ -803,6 +803,8 @@ def register(app, ctx) -> None:
         d = normalise_domain(domain)
         try:
             ctx.run_analysis(c.tenant_id, d)
+        except trials.TrialUsed:
+            return done("/settings#h-sites", t("{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.", domain=d))
         except quotas.QuotaExceeded:
             return done("/settings#h-sites", t("Il piano non ha posto per un altro sito: scegline uno più grande in Abbonamento."))
         with db.tenant(c.tenant_id) as s:
@@ -1611,6 +1613,12 @@ def register(app, ctx) -> None:
             with db.tenant(c.tenant_id) as s:
                 if s.execute(select(m.sites.c.id).where(m.sites.c.domain == new)).scalar() is not None:
                     return done("/site", t("{domain} c'è già tra i siti della redazione.", domain=new))
+            if ctx.admin is not None:
+                try:
+                    trials.check_domain(ctx.admin, c.tenant_id, new)
+                except trials.TrialUsed:
+                    d = new
+                    return done("/site", t("{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.", domain=d))
             try:
                 manage.delete_site(db, c.tenant_id, site_id)
             except manage.ManageError as e:

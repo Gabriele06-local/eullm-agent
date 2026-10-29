@@ -187,6 +187,27 @@
     {% else %}
     <p class="empty">{{ _('Nessun cliente: arrivano dal sito con <code>POST /api/operator/signup</code>, o dai rivenditori.') }}</p>
     {% endif %}
+    <div class="pad" id="prove-negate">
+      <h3>{{ _('Seconde prove negate') }}</h3>
+      <p class="hint">{{ _('La prova gratuita si dà una volta sola: chi torna con la stessa email, P.IVA, codice fiscale o telefono, o con un sito già provato in un\'altra redazione, ha la redazione ferma finché non sceglie un piano. Se è un errore, ridai la prova dalla redazione, in Abbonamento.') }}</p>
+      {% if refusals %}
+      <table class="tbl">
+        <thead><tr><th>{{ _('Quando') }}</th><th>{{ _('Redazione') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Già usato') }}</th></tr></thead>
+        <tbody>
+        {% for r in refusals %}
+        <tr>
+          <td class="hint num">{{ r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at.strftime is defined else r.created_at }}</td>
+          <td>{{ r.newsroom }}</td>
+          <td>{% if r.name %}{{ r.name }}<br><span class="hint">{{ r.email }}</span>{% else %}<span class="hint">–</span>{% endif %}</td>
+          <td class="hint">{% for x in r.reasons %}<div>{{ _(trial_kinds[x.kind]) }} {{ x.value }}{% if x.newsroom %} ({{ x.newsroom }}){% endif %}</div>{% endfor %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">{{ _('Nessuna: finora ogni prova è andata a chi non l\'aveva mai avuta.') }}</p>
+      {% endif %}
+    </div>
   </section>
 
   <div class="cols">

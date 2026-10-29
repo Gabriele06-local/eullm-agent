@@ -76,9 +76,18 @@ CUSTOMER = {"kind": "company", "name": "Rossi Media srl", "email": "Amministrazi
             "province": "rm", "country": "it", "sdi_code": "abc1234"}
 
 
+def fresh_ids() -> dict:
+    """A VAT number and tax code of their own: the free trial is given once
+    per company, and on PostgreSQL the tests share a database."""
+    import random
+    n = f"{random.randrange(10**10, 10**11)}"
+    return {"vat_number": n, "tax_code": n}
+
+
 def signup(c, headers, ref="web-1", email=None, **extra):
     """On PostgreSQL the tests share a database: each one signs up its own people."""
-    customer = extra.pop("customer", CUSTOMER) | ({"email": email} if email else {})
+    customer = extra.pop("customer", None) or CUSTOMER | fresh_ids()
+    customer = customer | ({"email": email} if email else {})
     body = {"customer": customer, "newsroom": "Rossi News", "external_ref": ref} | extra
     return c.post("/api/operator/signup", json=body, headers=headers)
 
@@ -110,12 +119,12 @@ def test_public_plans_and_signup_with_a_trial(db, admin):
     assert [p["code"] for p in plans.json()["plans"]] == ["starter", "pro", "business"] and plans.json()["trial_days"] == 7
     assert c.post("/api/operator/signup", json={"customer": CUSTOMER}).status_code == 401
     headers = key(db)
-    ref, email = unique("web"), f"{unique('amm')}@rossi.it"
-    r = signup(c, headers, ref, email)
+    ref, email, ids = unique("web"), f"{unique('amm')}@rossi.it", fresh_ids()
+    r = signup(c, headers, ref, email, customer=CUSTOMER | ids)
     assert r.status_code == 201, r.text
     out = r.json()
     tid = out["tenant"]["tenant_id"]
-    assert out["customer"]["vat_number"] == "01234567890" and out["customer"]["tenants"] == [tid]
+    assert out["customer"]["vat_number"] == ids["vat_number"] and out["customer"]["tenants"] == [tid]
     assert out["subscription"]["status"] == "trialing" and out["subscription"]["plan_code"] == "trial"
     assert out["subscription"]["days_left"] == 7
     # The trial plan's limits are on the newsroom.
@@ -322,11 +331,12 @@ def test_the_console_shows_customers_resellers_and_plans(db, admin):
     c, sent = client(db)
     op = f"{unique('op')}@example.com"
     accounts.create_user(admin, op, password="password operatore", operator=True)
-    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    ids = fresh_ids()
+    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it", customer=CUSTOMER | ids).json()["tenant"]["tenant_id"]
     c.post("/login", data={"email": op, "password": "password operatore"})
     page = c.get("/admin")
     assert page.status_code == 200
-    for words in ("Clienti", "Rossi Media srl", "P.IVA 01234567890", "SDI ABC1234", "Rivenditori", "Piani",
+    for words in ("Clienti", "Rossi Media srl", f"P.IVA {ids['vat_number']}", "Seconde prove negate", "SDI ABC1234", "Rivenditori", "Piani",
                   "Prova · In prova", "Abbonamento"):
         assert words in page.text, words
     r = c.post("/admin/plans/starter", data={"name": "Starter", "price_month": "59,00", "price_year": "590",
@@ -373,3 +383,59 @@ def test_the_billing_data_of_a_newsroom_that_does_not_exist_are_refused(db, admi
                follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"].startswith("/account")
     assert "Redazione non trovata" in c.get("/account").text
+
+
+@pytest.mark.postgres
+def test_a_second_newsroom_for_someone_with_an_account_is_announced(db, admin):
+    c, sent = client(db)
+    headers = key(db)
+    email = f"{unique('amm')}@rossi.it"
+    signup(c, headers, unique("web"), email)
+    token = sent[0][2].split("\n")[-2].rsplit("/", 1)[1]
+    c.post(f"/invite/{token}", data={"password": "password del capo", "again": "password del capo"})
+    out = signup(c, headers, unique("web"), email, newsroom="Rossi Sport").json()
+    # No password to choose: the email says where to sign in.
+    assert out["owner"]["invite"]["existing"] and out["owner"]["invite"]["sent"]
+    assert out["owner"]["invite"]["url"] == "https://editor.example.com/login"
+    assert sent[-1][0] == email and "Rossi Sport" in sent[-1][1] and "https://editor.example.com/login" in sent[-1][2]
+
+
+def test_the_free_trial_is_given_once():
+    from editor import trials
+    assert trials.norm_email(" Mario.Rossi+redazia@GoogleMail.com") == "mariorossi@gmail.com"
+    assert trials.norm_email("m.rossi+x@rossi.it") == "m.rossi@rossi.it"
+    assert trials.norm_phone("+39 333 123 4567") == trials.norm_phone("3331234567") == "331234567"
+    assert trials.norm_domain("https://WWW.Rossi.it/blog") == "rossi.it"
+    assert trials.masked("email", "mariorossi@gmail.com") == "ma…@gmail.com"
+
+
+@pytest.mark.postgres
+def test_a_second_trial_waits_for_a_plan(db, admin):
+    from editor import trials
+    c, sent = client(db)
+    headers = key(db)
+    ids = fresh_ids()
+    first = signup(c, headers, unique("web"), f"{unique('amm')}@rossi.it", customer=CUSTOMER | ids).json()
+    assert first["subscription"]["status"] == "trialing" and first["trial_used"] == []
+    # Same company, a new email: the newsroom is made, on hold until a plan is paid.
+    again = signup(c, headers, unique("web"), f"{unique('altro')}@rossi.it", customer=CUSTOMER | ids,
+                   newsroom="Rossi Bis").json()
+    tid = again["tenant"]["tenant_id"]
+    assert again["subscription"]["status"] == "expired" and {x["kind"] for x in again["trial_used"]} == {"vat", "tax_code"}
+    assert again["owner"]["invite"]["sent"]  # the owner can still sign in and pay
+    with admin.engine.connect() as conn:
+        refused = trials.refusals(conn)
+    assert refused[0]["newsroom"] == tid and refused[0]["reasons"][0]["newsroom"] == first["tenant"]["tenant_id"]
+    # A site that had its trial in the first newsroom cannot have it again.
+    domain = f"{unique('rossi')}.it"
+    trials.check_domain(admin, first["tenant"]["tenant_id"], domain)
+    third = signup(c, headers, unique("web"), f"{unique('terzo')}@rossi.it", newsroom="Rossi Ter").json()
+    with pytest.raises(trials.TrialUsed):
+        trials.check_domain(admin, third["tenant"]["tenant_id"], f"https://www.{domain}/")
+    trials.check_domain(admin, third["tenant"]["tenant_id"], f"{unique('nuovo')}.it")
+    # The operator sees why.
+    op = f"{unique('op')}@example.com"
+    accounts.create_user(admin, op, password="password operatore", operator=True)
+    c.post("/login", data={"email": op, "password": "password operatore"})
+    page = c.get("/admin").text
+    assert "Seconde prove negate" in page and f"…{ids['vat_number'][-4:]}" in page

@@ -13,6 +13,18 @@
   subdomain or under /news. The webhook now sends the article's section.
 - An email that cannot be sent (invite, password reset) writes the reason
   in the log (`editor.mail`): before, only "not sent" was shown.
+- The free trial is given once. At every signup from the site the
+  customer's email (Gmail dots and +tags ignored), VAT number, tax code and
+  phone, and the owner's email, are compared with every earlier customer;
+  a site added to a newsroom on trial is compared with the sites of every
+  other newsroom. Who comes back gets the newsroom on hold until a plan is
+  paid, the site added is refused. Only hashes are kept (`trial_marks`),
+  so a deleted newsroom still counts. /admin › Clienti lists the second
+  trials refused and why; the operator can give the trial again in
+  Abbonamento. The signup API answers `trial_used`.
+- A signup for someone who already has an account: no password to choose,
+  so the email says the newsroom is ready and where to sign in (before,
+  no email at all). The API answers `owner.invite.existing`.
 
 ### Changed
 

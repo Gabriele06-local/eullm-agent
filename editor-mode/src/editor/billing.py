@@ -583,6 +583,26 @@ def lifecycle(admin, now: datetime | None = None, mail=None, public_url: str = "
     return report
 
 
+def _trial_once(admin, tenant_id: str, customer_id: int, customer: dict, owner_email: str,
+                now: datetime | None) -> list[dict]:
+    """The trial is given once: with the data of an earlier signup the
+    newsroom waits for a plan in /account at once. Returns what matched."""
+    from . import trials
+
+    now = _now(now)
+    pairs = trials.keys(customer, owner_email)
+    with admin.engine.begin() as conn:
+        matches = trials.earlier(conn, pairs, tenant_id, customer_id)
+        trials.mark(conn, pairs, tenant_id, customer_id)
+        if matches:
+            conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tenant_id)
+                         .values(status="expired", trial_ends_at=now, updated_at=now))
+            _hold(conn, tenant_id)
+            trials.refused(conn, tenant_id, customer_id, matches)
+            log.info("newsroom %s without trial: %s used before", tenant_id, ", ".join(x["kind"] for x in matches))
+    return [{"kind": x["kind"]} for x in matches]
+
+
 def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None, now: datetime | None = None) -> dict:
     """A new customer from the public site (or a reseller): billing data,
     a newsroom on `plan` (the trial by default) and its owner invited.
@@ -613,9 +633,12 @@ def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None
                                    "owner_name": spec.get("owner_name"), "external_ref": room_ref,
                                    "language": lang}, by, core)
     tid = res["tenant_id"]
+    trial_used: list[dict] = []
     if res["created"] or subscription(admin, tid) is None:
         provider = "reseller" if reseller_id is not None else "manual"
-        start(admin, tid, plan_code, cid, provider, interval, core=core, now=now)
+        sub = start(admin, tid, plan_code, cid, provider, interval, core=core, now=now)
+        if res["created"] and sub["status"] == "trialing":
+            trial_used = _trial_once(admin, tid, cid, clean_customer(cust), res["owner_email"], now)
     if desired:
         with admin.engine.begin() as conn:
             conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tid, m.subscriptions.c.status == "trialing")
@@ -623,6 +646,7 @@ def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None
     sub = subscription(admin, tid)
     return {"customer_id": cid, "customer_created": created, "tenant_id": tid, "created": res["created"],
             "owner_email": res["owner_email"], "invite": res["invite"], "warning": res["warning"],
+            "existing_user": res.get("existing_user", False), "trial_used": trial_used,
             "plan": sub["plan_code"] if sub else None, "status": sub["status"] if sub else None,
             "desired_plan": sub.get("desired_plan") if sub else None}
 

@@ -1,0 +1,80 @@
+{
+ "La redazione {newsroom} è pronta": {
+  "en": "The newsroom {newsroom} is ready",
+  "de": "Die Redaktion {newsroom} ist bereit",
+  "fr": "La rédaction {newsroom} est prête",
+  "es": "La redacción {newsroom} está lista"
+ },
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: la trovi tra le tue redazioni.": {
+  "en": "The newsroom {newsroom} is ready. Sign in with your usual account: you will find it among your newsrooms.",
+  "de": "Die Redaktion {newsroom} ist bereit. Melden Sie sich mit Ihrem gewohnten Konto an: Sie finden sie unter Ihren Redaktionen.",
+  "fr": "La rédaction {newsroom} est prête. Connectez-vous avec votre compte habituel : vous la trouverez parmi vos rédactions.",
+  "es": "La redacción {newsroom} está lista. Entra con tu cuenta de siempre: la encontrarás entre tus redacciones."
+ },
+ "Seconde prove negate": {
+  "en": "Second trials refused",
+  "de": "Abgelehnte zweite Testphasen",
+  "fr": "Secondes périodes d'essai refusées",
+  "es": "Segundas pruebas denegadas"
+ },
+ "La prova gratuita si dà una volta sola: chi torna con la stessa email, P.IVA, codice fiscale o telefono, o con un sito già provato in un'altra redazione, ha la redazione ferma finché non sceglie un piano. Se è un errore, ridai la prova dalla redazione, in Abbonamento.": {
+  "en": "The free trial is given only once: whoever comes back with the same email, VAT number, tax code or phone, or with a site already tried in another newsroom, has the newsroom on hold until they choose a plan. If it is a mistake, give the trial again from the newsroom, in Subscription.",
+  "de": "Die kostenlose Testphase gibt es nur einmal: Wer mit derselben E-Mail, USt-IdNr., Steuernummer oder Telefonnummer oder mit einer bereits in einer anderen Redaktion getesteten Website zurückkommt, hat die Redaktion angehalten, bis er einen Plan wählt. Ist es ein Irrtum, gewähren Sie die Testphase erneut in der Redaktion unter Abonnement.",
+  "fr": "L'essai gratuit n'est accordé qu'une fois : qui revient avec le même e-mail, numéro de TVA, code fiscal ou téléphone, ou avec un site déjà essayé dans une autre rédaction, a la rédaction en pause jusqu'à ce qu'il choisisse une formule. En cas d'erreur, redonnez l'essai depuis la rédaction, dans Abonnement.",
+  "es": "La prueba gratuita se da una sola vez: quien vuelve con el mismo email, NIF/IVA, código fiscal o teléfono, o con un sitio ya probado en otra redacción, tiene la redacción detenida hasta que elija un plan. Si es un error, vuelve a dar la prueba desde la redacción, en Suscripción."
+ },
+ "Quando": {
+  "en": "When",
+  "de": "Wann",
+  "fr": "Quand",
+  "es": "Cuándo"
+ },
+ "Già usato": {
+  "en": "Already used",
+  "de": "Bereits verwendet",
+  "fr": "Déjà utilisé",
+  "es": "Ya usado"
+ },
+ "Nessuna: finora ogni prova è andata a chi non l'aveva mai avuta.": {
+  "en": "None: so far every trial went to someone who never had one.",
+  "de": "Keine: Bisher ging jede Testphase an jemanden, der noch nie eine hatte.",
+  "fr": "Aucune : jusqu'ici chaque essai est allé à quelqu'un qui n'en avait jamais eu.",
+  "es": "Ninguna: hasta ahora cada prueba fue para quien nunca la había tenido."
+ },
+ "email": {
+  "en": "email",
+  "de": "E-Mail",
+  "fr": "e-mail",
+  "es": "email"
+ },
+ "P.IVA": {
+  "en": "VAT no.",
+  "de": "USt-IdNr.",
+  "fr": "N° TVA",
+  "es": "NIF-IVA"
+ },
+ "codice fiscale": {
+  "en": "tax code",
+  "de": "Steuernummer",
+  "fr": "code fiscal",
+  "es": "código fiscal"
+ },
+ "telefono": {
+  "en": "phone",
+  "de": "Telefon",
+  "fr": "téléphone",
+  "es": "teléfono"
+ },
+ "sito": {
+  "en": "site",
+  "de": "Website",
+  "fr": "site",
+  "es": "sitio"
+ },
+ "{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.": {
+  "en": "{domain} already had its free trial in another newsroom: to work on it, choose a plan in Subscription.",
+  "de": "{domain} hatte bereits eine kostenlose Testphase in einer anderen Redaktion: Um daran zu arbeiten, wählen Sie einen Plan unter Abonnement.",
+  "fr": "{domain} a déjà eu son essai gratuit dans une autre rédaction : pour y travailler, choisissez une formule dans Abonnement.",
+  "es": "{domain} ya tuvo su prueba gratuita en otra redacción: para trabajar en él, elige un plan en Suscripción."
+ }
+}

@@ -1417,5 +1417,17 @@
  "Fonti negli articoli pubblicati": "Sources in published articles",
  "Discrete: una riga in fondo, testo pulito": "Discreet: one line at the end, clean text",
  "Note: un numero dopo ogni frase": "Notes: a number after each sentence",
- "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Sources setting saved: it applies from the next publication."
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Sources setting saved: it applies from the next publication.",
+ "La redazione {newsroom} è pronta": "The newsroom {newsroom} is ready",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: la trovi tra le tue redazioni.": "The newsroom {newsroom} is ready. Sign in with your usual account: you will find it among your newsrooms.",
+ "Seconde prove negate": "Second trials refused",
+ "La prova gratuita si dà una volta sola: chi torna con la stessa email, P.IVA, codice fiscale o telefono, o con un sito già provato in un'altra redazione, ha la redazione ferma finché non sceglie un piano. Se è un errore, ridai la prova dalla redazione, in Abbonamento.": "The free trial is given only once: whoever comes back with the same email, VAT number, tax code or phone, or with a site already tried in another newsroom, has the newsroom on hold until they choose a plan. If it is a mistake, give the trial again from the newsroom, in Subscription.",
+ "Quando": "When",
+ "Già usato": "Already used",
+ "Nessuna: finora ogni prova è andata a chi non l'aveva mai avuta.": "None: so far every trial went to someone who never had one.",
+ "email": "email",
+ "codice fiscale": "tax code",
+ "telefono": "phone",
+ "sito": "site",
+ "{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.": "{domain} already had its free trial in another newsroom: to work on it, choose a plan in Subscription."
 }

@@ -137,9 +137,13 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         return f"{base(request)}/api/billing/{gateway.name}/webhook" if gateway else ""
 
     def invite_out(request, res, newsroom_name):
-        if not res["invite"]:
-            return None
-        return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
+        if res["invite"]:
+            return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
+        if res["created"] and res.get("existing_user"):
+            # The owner signs in as always: an email says the newsroom is there.
+            out = send(request, "", "ready", res["owner_email"], newsroom_name, "EuLLM Editor")
+            return {**out, "existing": True}
+        return None
 
     def reseller_id(request: Request) -> int | None:
         return getattr(request.state, "reseller_id", None)
@@ -172,7 +176,7 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             out = {"customer": billing.customer(admin, res["customer_id"]), "tenant": room,
                    "subscription": billing.subscription(admin, res["tenant_id"]), "created": res["created"],
                    "owner": {"email": res["owner_email"], "invite": invite_out(request, res, room["name"])},
-                   "warning": res["warning"]}
+                   "trial_used": res.get("trial_used", []), "warning": res["warning"]}
             return out if res["created"] else JSONResponse(_json(out), status_code=200)
         finally:
             if token is not None:

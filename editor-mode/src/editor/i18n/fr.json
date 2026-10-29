@@ -1417,5 +1417,17 @@
  "Fonti negli articoli pubblicati": "Sources dans les articles publiés",
  "Discrete: una riga in fondo, testo pulito": "Discrètes : une ligne à la fin, texte épuré",
  "Note: un numero dopo ogni frase": "Notes : un numéro après chaque phrase",
- "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Réglage des sources enregistré : il s'applique dès la prochaine publication."
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": "Réglage des sources enregistré : il s'applique dès la prochaine publication.",
+ "La redazione {newsroom} è pronta": "La rédaction {newsroom} est prête",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: la trovi tra le tue redazioni.": "La rédaction {newsroom} est prête. Connectez-vous avec votre compte habituel : vous la trouverez parmi vos rédactions.",
+ "Seconde prove negate": "Secondes périodes d'essai refusées",
+ "La prova gratuita si dà una volta sola: chi torna con la stessa email, P.IVA, codice fiscale o telefono, o con un sito già provato in un'altra redazione, ha la redazione ferma finché non sceglie un piano. Se è un errore, ridai la prova dalla redazione, in Abbonamento.": "L'essai gratuit n'est accordé qu'une fois : qui revient avec le même e-mail, numéro de TVA, code fiscal ou téléphone, ou avec un site déjà essayé dans une autre rédaction, a la rédaction en pause jusqu'à ce qu'il choisisse une formule. En cas d'erreur, redonnez l'essai depuis la rédaction, dans Abonnement.",
+ "Quando": "Quand",
+ "Già usato": "Déjà utilisé",
+ "Nessuna: finora ogni prova è andata a chi non l'aveva mai avuta.": "Aucune : jusqu'ici chaque essai est allé à quelqu'un qui n'en avait jamais eu.",
+ "email": "e-mail",
+ "codice fiscale": "code fiscal",
+ "telefono": "téléphone",
+ "sito": "site",
+ "{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.": "{domain} a déjà eu son essai gratuit dans une autre rédaction : pour y travailler, choisissez une formule dans Abonnement."
 }
