@@ -90,7 +90,8 @@ def test_the_local_installation_keeps_its_key_next_to_the_database(tmp_path, mon
     first = vault.key_for(db)
     keyfile = Path(tmp_path) / vault.KEY_FILE
     assert len(first) == 32 and keyfile.exists()
-    assert stat.S_IMODE(os.stat(keyfile).st_mode) == 0o600
+    if os.name != "nt":  # Windows has no POSIX modes: os.open's 0o600 is ignored there
+        assert stat.S_IMODE(os.stat(keyfile).st_mode) == 0o600
     assert vault.key_for(db) == first  # the same key on every start
 
 
