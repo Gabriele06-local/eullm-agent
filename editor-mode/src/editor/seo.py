@@ -65,7 +65,9 @@ def parse(value, title: str) -> Seo:
     seo = Seo(keyphrase=text("keyphrase")[:80], title=text("title") or title, description=text("description"))
     if len(seo.title) > TITLE_MAX:
         cut = seo.title[:TITLE_MAX + 1].rsplit(" ", 1)[0]
-        seo.title = cut if len(cut) >= 20 else seo.title[:TITLE_MAX]
+        # A title with no space in its first TITLE_MAX+1 characters comes back
+        # whole from rsplit: it must still be cut, or it keeps its length.
+        seo.title = cut if 20 <= len(cut) <= TITLE_MAX else seo.title[:TITLE_MAX]
     if len(seo.description) > DESCRIPTION[1]:
         seo.description = seo.description[:DESCRIPTION[1] - 1].rsplit(" ", 1)[0] + "…"
     seo.slug = slugify(text("slug") or seo.keyphrase or title)
