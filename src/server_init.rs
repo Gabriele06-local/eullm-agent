@@ -16,6 +16,8 @@ const COMPOSE: &str = include_str!("../deploy/server/compose.yaml");
 const ROLES: &str = include_str!("../deploy/server/initdb/10-roles.sh");
 const ENV: &str = include_str!("../deploy/server/.env.example");
 const CORE: &str = include_str!("../deploy/server/core.example.yaml");
+const BACKUP: &str = include_str!("../deploy/server/backup.sh");
+const UPDATE: &str = include_str!("../deploy/server/update.sh");
 
 /// The provider block of `core.example.yaml` that the choice replaces.
 const EXAMPLE_PROVIDER: &str =
@@ -359,6 +361,20 @@ pub fn server_init(opts: Options) -> Result<()> {
         }
         println!("written: compose.yaml, initdb/10-roles.sh (images of release {version})");
     }
+    // The backup, and the updates asked from /admin (run by root's cron
+    // after `sudo ./update.sh install`).
+    for (name, body) in [("backup.sh", BACKUP), ("update.sh", UPDATE)] {
+        let path = dir.join(name);
+        if !path.exists() {
+            std::fs::write(&path, body)?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))?;
+            }
+            println!("written: {name}");
+        }
+    }
 
     let core_path = dir.join("core.yaml");
     let env_path = dir.join(".env");
@@ -472,6 +488,7 @@ pub fn server_init(opts: Options) -> Result<()> {
         (None, None) => println!("\nSign in at {base} (administration: {base}/admin)."),
     }
     println!("  Put a reverse proxy with HTTPS in front to reach it from outside.");
+    println!("\nTo update from /admin › Aggiornamenti, once as root: cd {} && sudo ./update.sh install", dir.display());
     println!("\nKeep a copy of {} somewhere safe:", env_path.display());
     println!("  EDITOR_SECRET_KEY in it encrypts the publishing credentials; without it they must be entered again.");
     Ok(())

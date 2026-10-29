@@ -31,6 +31,8 @@ x-editor-env: &editor-env
   EDITOR_WORKER_CONCURRENCY: ${EDITOR_WORKER_CONCURRENCY:-2}
   EDITOR_SECRET_KEY: ${EDITOR_SECRET_KEY:-}
   EDITOR_RETENTION_DAYS: ${EDITOR_RETENTION_DAYS:-365}
+  # Updates from the console: the folder shared with update.sh (README.md).
+  EDITOR_UPDATES_DIR: /var/lib/editor/updates
 
 services:
   postgres:
@@ -96,6 +98,8 @@ services:
       editor-migrate: {condition: service_completed_successfully}
       core: {condition: service_started}
     environment: *editor-env
+    volumes:
+      - ./updates:/var/lib/editor/updates
     ports:
       - ${BIND:-127.0.0.1}:${EDITOR_PORT:-8090}:8090
 
@@ -107,6 +111,8 @@ services:
       editor-migrate: {condition: service_completed_successfully}
       core: {condition: service_started}
     environment: *editor-env
+    volumes:
+      - ./updates:/var/lib/editor/updates
     command: ["editor", "worker"]
     # On stop the worker takes no new job and lets the running ones finish;
     # one cut short after this is queued again once its heartbeat is 5 minutes old.

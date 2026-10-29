@@ -256,6 +256,32 @@ again, which writes only the missing files and changes nothing else.
 In a checkout of the sources (`deploy/server`) it is the same, with
 `git pull` first.
 
+## Updating from the console
+
+/admin › Aggiornamenti shows the installed version and the latest release
+(read from GitHub every six hours, or with "Controlla adesso"), and with
+"Aggiorna alla X.Y.Z" updates the server without a terminal. The dashboard
+has no Docker socket and no root: it only writes the version asked in
+`updates/request.json`. `update.sh`, run every minute by root's cron,
+takes the request, runs `backup.sh`, pulls the images of that version
+(retrying for 10 minutes while the release publishes them), writes it in
+`.env`, restarts and waits for the dashboard to answer. How it went shows
+in the console, with the log. It never goes back on its own: if the new
+version does not answer, the backup made just before is in `backup/`.
+
+Once, as root, in the installation folder (`server-init` writes
+`update.sh`; an older installation downloads it first):
+
+    cd /opt/eullm-server
+    curl -fsSL -o update.sh https://raw.githubusercontent.com/eullm/eullm-agent/main/deploy/server/update.sh
+    sudo sh update.sh install
+
+`install` creates `updates/` (owned by the dashboard's user, uid 999),
+adds `/etc/cron.d/eullm-update`, and, when `compose.yaml` comes from a
+release before this one, writes `compose.override.yaml` with the shared
+folder; then it restarts. The backups of `update.sh` use the `BACKUP_*`
+settings of `backup.sh`: to keep them elsewhere, put them in the cron line.
+
 ## A spare model
 
 Free model services have rate limits and bad days. `fallback:` in

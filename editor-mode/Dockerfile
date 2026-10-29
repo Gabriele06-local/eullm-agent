@@ -6,7 +6,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
-RUN uv sync --locked --no-dev && useradd --system --no-create-home editor
+RUN uv sync --locked --no-dev && useradd --system --uid 999 --no-create-home editor
 ENV PATH="/app/.venv/bin:$PATH"
 USER editor
 EXPOSE 8090

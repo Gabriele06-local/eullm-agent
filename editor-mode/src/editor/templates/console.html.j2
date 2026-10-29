@@ -19,6 +19,7 @@
   <a href="#piani">{{ _('Piani') }}</a>
   <a href="#operatori">{{ _('Operatori') }}</a>
   <a href="#api">{{ _('Chiavi API') }}</a>
+  <a href="#aggiornamenti">{{ _('Aggiornamenti') }}{% if updates.newer %} <span class="chip teal">{{ updates.available.version }}</span>{% endif %}</a>
   <a href="/admin/usage">{{ _('Consumi') }}</a>
   {% if mine %}<span class="hint" style="padding: 12px 12px 4px;">{{ _('Le tue redazioni') }}</span>
   {% for x in mine %}<a href="/admin/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
@@ -35,6 +36,7 @@
   <div class="topbar">{% include "_lang.html.j2" %}</div>
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if updates.newer and not updates.pending %}<p class="notice" role="status" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;"><span>{{ _('È disponibile la versione {version} (installata: {installed}).', version=updates.available.version, installed=updates.installed) }}</span><a href="#aggiornamenti">{{ _('Aggiorna') }}</a></p>{% endif %}
   {% if new %}
   <section class="card pad" style="border-color: var(--accent);" aria-labelledby="h-new">
     <h2 id="h-new">{{ new.what }}</h2>
@@ -280,6 +282,40 @@
     </form>
     <p class="hint">{{ _('Il sito pubblico legge i piani da <code>/api/public/plans</code>. Il piano "Prova" è quello di chi si iscrive.') }}</p>
     </div>
+  </section>
+
+  <section class="card pad" id="aggiornamenti" aria-labelledby="h-updates">
+    <h2 id="h-updates">{{ _('Aggiornamenti') }}</h2>
+    {% set st = updates.status or {} %}
+    {% set av = updates.available or {} %}
+    <div class="list-row"><span>{{ _('Versione installata') }}</span><span class="num">{{ updates.installed }}</span></div>
+    {% if updates.enabled %}
+    <div class="list-row"><span>{{ _('Ultima versione') }}</span><span class="num">{% if av.version %}{% if av.url %}<a href="{{ av.url }}" rel="noopener" target="_blank">{{ av.version }}</a>{% else %}{{ av.version }}{% endif %}{% else %}–{% endif %}</span></div>
+    {% if av.checked_at %}<p class="hint">{{ _('Controllata il {date} alle {time}. Il controllo si ripete ogni 6 ore.', date=av.checked_at[8:10] ~ '/' ~ av.checked_at[5:7], time=av.checked_at[11:16] ~ ' UTC') }}{% if av.error %} {{ _('Ultimo controllo non riuscito: {error}', error=av.error) }}{% endif %}</p>{% endif %}
+    {% if updates.pending %}
+      {% if updates.stale %}<p class="error">{{ _('La richiesta di aggiornamento alla {version} aspetta da più di 5 minuti: sul server lo script update.sh non è installato o il cron non gira (vedi deploy/server/README.md, "Updating from the console").', version=updates.pending.version) }}</p>
+      {% else %}<p class="lead">{{ _('Aggiornamento alla {version} chiesto: il server lo prende entro un minuto.', version=updates.pending.version) }}</p>{% endif %}
+    {% elif st.state == 'running' %}
+      <p class="lead">{{ _('Aggiornamento alla {version} in corso: {step}.', version=st.version, step={'backup': _('backup del database'), 'pull': _('download della versione'), 'restart': _('riavvio'), 'check': _('verifica')}.get(st.step, st.step)) }}</p>
+    {% elif updates.newer %}
+      <form method="post" action="/admin/updates/apply" onsubmit='return confirm({{ _('Aggiornare alla versione {version}? Prima viene fatto un backup; il pannello resta fermo per qualche secondo.', version=av.version)|string|tojson }})'>
+        <input type="hidden" name="version" value="{{ av.version }}">
+        <button class="btn pri" type="submit">{{ _('Aggiorna alla {version}', version=av.version) }}</button>
+      </form>
+      <p class="hint">{{ _('Leggi le note della versione prima di aggiornare: il link è sul numero di versione.') }}</p>
+    {% else %}
+      <p class="hint">{{ _('Il server è aggiornato.') }}</p>
+    {% endif %}
+    {% if st.state in ('done', 'failed') %}
+      {% if st.state == 'done' %}<p class="hint">{{ _('Ultimo aggiornamento: dalla {old} alla {version}, il {date}.', old=st['from'], version=st.version, date=st.at[8:10] ~ '/' ~ st.at[5:7] ~ ' ' ~ st.at[11:16] ~ ' UTC') }}</p>
+      {% else %}<p class="error">{{ _('Aggiornamento alla {version} non riuscito durante: {step}.', version=st.version, step={'backup': _('backup del database'), 'pull': _('download della versione'), 'restart': _('riavvio'), 'check': _('verifica')}.get(st.step, st.step)) }}
+        {% if st.step in ('backup', 'pull') %}{{ _('Non è cambiato niente: il server è ancora alla {old}.', old=st['from']) }}{% else %}{{ _('La {version} è installata ma non risponde come dovrebbe: guarda il registro. Il backup fatto prima è nella cartella backup del server.', version=st.version) }}{% endif %}</p>{% endif %}
+      {% if updates.log %}<details><summary class="hint">{{ _('Registro') }}</summary><pre style="white-space: pre-wrap; font-size: 12px;">{{ updates.log }}</pre></details>{% endif %}
+    {% endif %}
+    <form method="post" action="/admin/updates/check" style="margin-top: 8px;"><button class="btn sm" type="submit">{{ _('Controlla adesso') }}</button></form>
+    {% else %}
+    <p class="hint">{{ _('Per aggiornare da qui serve lo script update.sh sul server: vedi deploy/server/README.md, "Updating from the console". Senza, si aggiorna dal terminale.') }}</p>
+    {% endif %}
   </section>
 
   <div class="cols">

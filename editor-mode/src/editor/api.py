@@ -90,13 +90,15 @@ def normalise_domain(value: str) -> str:
     return d
 
 
-def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gateway=None, imager=None) -> FastAPI:
+def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gateway=None, imager=None,
+               updates_dir: str = "") -> FastAPI:
     """admin: the owner connection, for accounts and the operator (by
     default the database's own `admin_url`, else `db`); mail: (to,
     subject, text) -> None, for invites (None: links are shown instead);
     public_url: the address people open, for the links in invites;
     gateway: online payments (gateway.Mollie), None for bank transfers;
-    imager: the cover images service (images.Imager), None for no images."""
+    imager: the cover images service (images.Imager), None for no images;
+    updates_dir: the folder shared with the host for updates (updates.py)."""
     app = FastAPI(title="EuLLM Agent · Editor Mode", docs_url=None, redoc_url=None)
     if admin is None:
         from .db import Database
@@ -567,7 +569,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                                      run_translations=run_translations, run_image=run_image, imager=imager,
                                      run_delivery=run_delivery, gateway=gateway))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
-                                          public_url=public_url, gateway=gateway))
+                                          public_url=public_url, gateway=gateway, updates_dir=updates_dir))
 
     @app.exception_handler(HTTPException)
     def errors(request: Request, exc: HTTPException):
@@ -590,4 +592,5 @@ def default_app() -> FastAPI:
     from . import images
 
     return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
-                      accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st), images.from_settings(st))
+                      accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st), images.from_settings(st),
+                      st.updates_dir)
