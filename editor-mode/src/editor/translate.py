@@ -37,12 +37,15 @@ class LanguageError(ValueError):
 
 
 def main_language(s, site_id: int) -> str | None:
-    """The site's own language: its approved profile's, else the one read on the site."""
+    """The site's own language: its approved profile's, else the one read on
+    the site. None when neither says it: an unread site has "und", which is
+    not a language and must not be counted (nor shown) as one."""
     body = s.execute(select(m.editorial_profiles.c.body)
                      .where(m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")
                      .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar() or {}
     lang = body.get("language") or s.execute(select(m.sites.c.language).where(m.sites.c.id == site_id)).scalar()
-    return (lang or "")[:2].lower() or None
+    lang = (lang or "").strip().lower()
+    return None if not lang or lang == "und" else lang[:2] or None
 
 
 def site_languages(s, site_id: int) -> list[str]:
@@ -67,7 +70,10 @@ def set_languages(db, tenant_id: str, site_id: int, languages: list[str]) -> lis
         if unknown:
             raise LanguageError(f"unknown language: {', '.join(unknown)}")
         limit = allowed(s)
-        if limit is not None and 1 + len(wanted) > limit:
+        # The plan counts the site's own language too, but only when the site
+        # has one: a site read as "und" must not reserve a slot for it.
+        own_slots = 1 if own else 0
+        if limit is not None and own_slots + len(wanted) > limit:
             raise LanguageError(f"the plan allows {limit} languages per site, the site's own included")
         s.execute(update(m.sites).where(m.sites.c.id == site_id).values(languages=wanted))
     return wanted
