@@ -8,6 +8,9 @@
   site can show its sources discreetly, with no numbers in the text and
   one line at the end naming each source once. The draft keeps its notes,
   only the published text changes. The default stays the notes.
+- Guide "Preparare il proprio sito per Redazia" (editor-mode/docs):
+  WordPress, static sites on GitHub, webhook, and a new site on a
+  subdomain or under /news. The webhook now sends the article's section.
 
 ### Changed
 

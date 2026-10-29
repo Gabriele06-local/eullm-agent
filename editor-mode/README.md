@@ -57,6 +57,10 @@ newsroom with plan, limits and usage; create, suspend, delete, invite
 owners; API keys for the billing system, which creates a newsroom with
 `POST /api/operator/tenants` when a payment goes through (see
 [deploy/server](../deploy/server/README.md#newsrooms-people-and-the-billing-system)).
+**Getting a site ready.** What a WordPress site, a static site on GitHub
+or a custom CMS (webhook) needs to receive the articles, in Italian:
+[docs/sito-pronto-per-redazia.md](docs/sito-pronto-per-redazia.md).
+
 **Automatic newsroom.** A site can also run with no one in the loop
 (Sito e profilo › Redazione automatica): the owner gives a brief, the
 sections, directives, topics to avoid, articles a day and hours; every

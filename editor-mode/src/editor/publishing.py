@@ -439,7 +439,7 @@ class Publisher:
             cover = {"url": f"{self.public_url}/media/{image.token}", "alt": image.alt, "type": image.mime}
         data = json.dumps({"event": "publication", "mode": pub.mode, "publication_id": pub.id,
                            "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")},
-                           **{k: pub.payload.get(k) for k in ("slug", "seo_title", "meta_description", "keyphrase", "jsonld")},
+                           **{k: pub.payload.get(k) for k in ("slug", "section", "seo_title", "meta_description", "keyphrase", "jsonld")},
                            "image": cover},
                           ensure_ascii=False).encode()
         sig = hmac.new(_need(secret, target).encode(), data, hashlib.sha256).hexdigest()
