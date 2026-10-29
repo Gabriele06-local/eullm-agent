@@ -353,3 +353,16 @@ def test_going_back_stays_on_this_site():
     assert safe_path("/trends#p-3") == "/trends#p-3"
     for bad in ("//evil.com", "/\t/evil.com", "/\\evil.com", "https://evil.com", "/\n/x"):
         assert safe_path(bad) == "/"
+
+
+def test_a_failed_email_says_why_in_the_log(caplog):
+    from types import SimpleNamespace
+
+    def refused(*a, **k):
+        raise ConnectionRefusedError("connection refused")
+
+    st = SimpleNamespace(smtp_host="mail.example", smtp_port=587, smtp_user="", smtp_password="", mail_from="a@example.com")
+    send = accounts.smtp_mailer(st, smtp_factory=refused)
+    with pytest.raises(ConnectionRefusedError):
+        send("b@example.com", "s", "b")
+    assert "email to b@example.com not sent via mail.example:587: ConnectionRefusedError" in caplog.text

@@ -11,6 +11,8 @@
 - Guide "Preparare il proprio sito per Redazia" (editor-mode/docs):
   WordPress, static sites on GitHub, webhook, and a new site on a
   subdomain or under /news. The webhook now sends the article's section.
+- An email that cannot be sent (invite, password reset) writes the reason
+  in the log (`editor.mail`): before, only "not sent" was shown.
 
 ### Changed
 
