@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.20.1
+## 0.20.2
 
 ### Added
 
@@ -12,6 +12,17 @@
   cron, every minute) backs up, pulls the images, writes the version in
   `.env`, restarts and checks; the console shows how it went and the log.
   `server-init` now writes `backup.sh` and `update.sh` too.
+
+### Upgrading
+
+- To update from /admin from now on, once on the server as root:
+  `curl -fsSL -o update.sh https://raw.githubusercontent.com/eullm/eullm-agent/main/deploy/server/update.sh && sudo sh update.sh install`
+  (deploy/server/README.md, "Updating from the console").
+
+## 0.20.1
+
+### Added
+
 - Editor Mode, "Il mio piano" at the bottom of the newsroom menu, with the
   plan's name and the days of trial left under it. Its page shows the plan,
   how much of it was used this month (the model's cost only to the
@@ -58,13 +69,6 @@
 - The small settings on Sito e profilo (proposals a day, covers) and the
   text boxes of the automatic newsroom have the same look as the other
   fields.
-
-### Upgrading
-
-- To update from /admin from now on, once on the server as root (the
-  migration of 0.20.1 runs as usual):
-  `curl -fsSL -o update.sh https://raw.githubusercontent.com/eullm/eullm-agent/main/deploy/server/update.sh && sudo sh update.sh install`
-  (deploy/server/README.md, "Updating from the console").
 
 ## 0.20.0
 
