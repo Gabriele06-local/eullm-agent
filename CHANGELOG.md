@@ -13,6 +13,16 @@
   `.env`, restarts and checks; the console shows how it went and the log.
   `server-init` now writes `backup.sh` and `update.sh` too.
 
+### Fixed
+
+- SEO: a search title with no space in its first 61 characters is cut
+  to the limit too.
+- A site whose language was not read yet ("und") has no language of its
+  own: it is no longer shown or counted as "un". Its own language still
+  takes one of the plan's languages.
+- Tests: the vault key's file mode is checked only where POSIX modes
+  exist.
+
 ### Upgrading
 
 - To update from /admin from now on, once on the server as root:
