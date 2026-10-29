@@ -13,6 +13,7 @@ Two ways in, both checked here:
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from importlib import metadata
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, Form, HTTPException, Request
@@ -20,12 +21,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
-from . import accounts, billing, commerce, newsrooms, repo, trials, usage
+from . import accounts, billing, commerce, newsrooms, repo, trials, updates, usage
 from . import models as m
 from .auth import ROLES
 from .i18n import t
 
 COOKIE = "editor_token"
+INSTALLED = metadata.version("eullm-editor-mode")
 SITE_COOKIE = "editor_site"
 NOTICE_COOKIE = "editor_notice"
 
@@ -245,7 +247,9 @@ def register(app, ctx) -> None:
             "customers": billing.customers(admin), "resellers": billing.resellers(admin), "plans": billing.plans(admin),
             "subs": billing.subscriptions(admin), "reseller_names": {r["id"]: r["name"] for r in billing.resellers(admin)},
             "statuses": billing.STATUS_LABELS, "money": billing.money, "online": ctx.gateway is not None,
-            "refusals": refusals(), "trial_kinds": trials.LABELS, "new": None, **data}, status_code=status_code)
+            "refusals": refusals(), "trial_kinds": trials.LABELS,
+            "updates": updates.state(updates.folder(ctx.updates_dir), INSTALLED), "new": None, **data},
+            status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
         return resp
@@ -327,6 +331,34 @@ def register(app, ctx) -> None:
         if s is None:
             return RedirectResponse("/login", status_code=303)
         return page(request, s)
+
+    @app.post("/admin/updates/check")
+    def ui_updates_check(s=Depends(need_console)):
+        where = updates.folder(ctx.updates_dir)
+        if where is None:
+            return back(t("Aggiornamenti dal pannello non attivi su questo server."))
+        found = updates.check(where, force=True)
+        if found.get("error"):
+            return back(t("GitHub non ha risposto: {error}", error=found["error"]))
+        v = found.get("version") or ""
+        if updates.newer(v, INSTALLED):
+            return back(t("È disponibile la versione {version}.", version=v))
+        return back(t("Nessun aggiornamento: la {version} è l'ultima.", version=INSTALLED))
+
+    @app.post("/admin/updates/apply")
+    def ui_updates_apply(version: str = Form(...), s=Depends(need_console)):
+        where = updates.folder(ctx.updates_dir)
+        if where is None:
+            return back(t("Aggiornamenti dal pannello non attivi su questo server."))
+        known = updates.state(where, INSTALLED)
+        # Only the release GitHub announced, and only forward.
+        if version != (known["available"] or {}).get("version") or not known["newer"]:
+            return back(t("Versione non disponibile."))
+        if known["pending"] or (known["status"] or {}).get("state") == "running":
+            return back(t("Un aggiornamento è già in corso."))
+        updates.request(where, version, s.email)
+        return back(t("Aggiornamento alla {version} chiesto: entro un minuto il server fa il backup, scarica la "
+                      "versione e riavvia. Il pannello resta irraggiungibile per qualche secondo.", version=version))
 
     @app.post("/admin/newsrooms", response_class=HTMLResponse)
     def ui_create(request: Request, name: str = Form(...), owner_email: str = Form(...), plan: str = Form(""),

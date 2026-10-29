@@ -52,6 +52,9 @@ class Settings:
     images_url: str = ""
     images_model: str = ""
     images_quality: str = "medium"
+    # A folder shared with the host for updates from the console (updates.py,
+    # deploy/server/update.sh); empty: the console only says how to update.
+    updates_dir: str = ""
     extra: dict = field(default_factory=dict)
 
     @classmethod
@@ -81,4 +84,5 @@ class Settings:
             images_url=env.get("EDITOR_IMAGES_URL", "").strip().rstrip("/"),
             images_model=env.get("EDITOR_IMAGES_MODEL", "").strip(),
             images_quality=env.get("EDITOR_IMAGES_QUALITY", cls.images_quality).strip().lower(),
+            updates_dir=env.get("EDITOR_UPDATES_DIR", "").strip(),
         )

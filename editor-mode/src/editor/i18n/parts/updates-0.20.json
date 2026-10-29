@@ -1,0 +1,194 @@
+{
+ "Aggiornamenti": {
+  "en": "Updates",
+  "de": "Aktualisierungen",
+  "fr": "Mises à jour",
+  "es": "Actualizaciones"
+ },
+ "È disponibile la versione {version} (installata: {installed}).": {
+  "en": "Version {version} is available (installed: {installed}).",
+  "de": "Version {version} ist verfügbar (installiert: {installed}).",
+  "fr": "La version {version} est disponible (installée : {installed}).",
+  "es": "La versión {version} está disponible (instalada: {installed})."
+ },
+ "Aggiorna": {
+  "en": "Update",
+  "de": "Aktualisieren",
+  "fr": "Mettre à jour",
+  "es": "Actualizar"
+ },
+ "Versione installata": {
+  "en": "Installed version",
+  "de": "Installierte Version",
+  "fr": "Version installée",
+  "es": "Versión instalada"
+ },
+ "Ultima versione": {
+  "en": "Latest version",
+  "de": "Neueste Version",
+  "fr": "Dernière version",
+  "es": "Última versión"
+ },
+ "Controllata il {date} alle {time}. Il controllo si ripete ogni 6 ore.": {
+  "en": "Checked on {date} at {time}. The check runs every 6 hours.",
+  "de": "Geprüft am {date} um {time}. Die Prüfung läuft alle 6 Stunden.",
+  "fr": "Vérifiée le {date} à {time}. La vérification se répète toutes les 6 heures.",
+  "es": "Comprobada el {date} a las {time}. La comprobación se repite cada 6 horas."
+ },
+ "Ultimo controllo non riuscito: {error}": {
+  "en": "Last check failed: {error}",
+  "de": "Letzte Prüfung fehlgeschlagen: {error}",
+  "fr": "Dernière vérification échouée : {error}",
+  "es": "La última comprobación falló: {error}"
+ },
+ "La richiesta di aggiornamento alla {version} aspetta da più di 5 minuti: sul server lo script update.sh non è installato o il cron non gira (vedi deploy/server/README.md, \"Updating from the console\").": {
+  "en": "The request to update to {version} has been waiting for more than 5 minutes: on the server the update.sh script is not installed or cron is not running (see deploy/server/README.md, \"Updating from the console\").",
+  "de": "Die Anfrage zur Aktualisierung auf {version} wartet seit mehr als 5 Minuten: Auf dem Server ist das Skript update.sh nicht installiert oder cron läuft nicht (siehe deploy/server/README.md, \"Updating from the console\").",
+  "fr": "La demande de mise à jour vers la {version} attend depuis plus de 5 minutes : sur le serveur, le script update.sh n’est pas installé ou cron ne tourne pas (voir deploy/server/README.md, \"Updating from the console\").",
+  "es": "La solicitud de actualizar a la {version} lleva más de 5 minutos esperando: en el servidor el script update.sh no está instalado o cron no funciona (ver deploy/server/README.md, \"Updating from the console\")."
+ },
+ "Aggiornamento alla {version} chiesto: il server lo prende entro un minuto.": {
+  "en": "Update to {version} requested: the server picks it up within a minute.",
+  "de": "Aktualisierung auf {version} angefordert: Der Server übernimmt sie innerhalb einer Minute.",
+  "fr": "Mise à jour vers la {version} demandée : le serveur la prend en charge dans la minute.",
+  "es": "Actualización a la {version} solicitada: el servidor la recoge en un minuto."
+ },
+ "Aggiornamento alla {version} in corso: {step}.": {
+  "en": "Updating to {version}: {step}.",
+  "de": "Aktualisierung auf {version} läuft: {step}.",
+  "fr": "Mise à jour vers la {version} en cours : {step}.",
+  "es": "Actualizando a la {version}: {step}."
+ },
+ "backup del database": {
+  "en": "database backup",
+  "de": "Datenbanksicherung",
+  "fr": "sauvegarde de la base de données",
+  "es": "copia de seguridad de la base de datos"
+ },
+ "download della versione": {
+  "en": "downloading the version",
+  "de": "Herunterladen der Version",
+  "fr": "téléchargement de la version",
+  "es": "descarga de la versión"
+ },
+ "riavvio": {
+  "en": "restart",
+  "de": "Neustart",
+  "fr": "redémarrage",
+  "es": "reinicio"
+ },
+ "verifica": {
+  "en": "check",
+  "de": "Prüfung",
+  "fr": "vérification",
+  "es": "comprobación"
+ },
+ "Aggiornare alla versione {version}? Prima viene fatto un backup; il pannello resta fermo per qualche secondo.": {
+  "en": "Update to version {version}? A backup is made first; the panel stops for a few seconds.",
+  "de": "Auf Version {version} aktualisieren? Zuerst wird eine Sicherung erstellt; das Panel ist einige Sekunden nicht erreichbar.",
+  "fr": "Mettre à jour vers la version {version} ? Une sauvegarde est faite d’abord ; le panneau s’arrête quelques secondes.",
+  "es": "¿Actualizar a la versión {version}? Primero se hace una copia de seguridad; el panel se detiene unos segundos."
+ },
+ "Aggiorna alla {version}": {
+  "en": "Update to {version}",
+  "de": "Auf {version} aktualisieren",
+  "fr": "Mettre à jour vers la {version}",
+  "es": "Actualizar a la {version}"
+ },
+ "Leggi le note della versione prima di aggiornare: il link è sul numero di versione.": {
+  "en": "Read the release notes before updating: the link is on the version number.",
+  "de": "Lesen Sie vor der Aktualisierung die Versionshinweise: Der Link liegt auf der Versionsnummer.",
+  "fr": "Lisez les notes de version avant de mettre à jour : le lien est sur le numéro de version.",
+  "es": "Lee las notas de la versión antes de actualizar: el enlace está en el número de versión."
+ },
+ "Il server è aggiornato.": {
+  "en": "The server is up to date.",
+  "de": "Der Server ist aktuell.",
+  "fr": "Le serveur est à jour.",
+  "es": "El servidor está actualizado."
+ },
+ "Ultimo aggiornamento: dalla {old} alla {version}, il {date}.": {
+  "en": "Last update: from {old} to {version}, on {date}.",
+  "de": "Letzte Aktualisierung: von {old} auf {version}, am {date}.",
+  "fr": "Dernière mise à jour : de la {old} à la {version}, le {date}.",
+  "es": "Última actualización: de la {old} a la {version}, el {date}."
+ },
+ "Aggiornamento alla {version} non riuscito durante: {step}.": {
+  "en": "Update to {version} failed during: {step}.",
+  "de": "Aktualisierung auf {version} fehlgeschlagen bei: {step}.",
+  "fr": "La mise à jour vers la {version} a échoué pendant : {step}.",
+  "es": "La actualización a la {version} falló durante: {step}."
+ },
+ "Non è cambiato niente: il server è ancora alla {old}.": {
+  "en": "Nothing changed: the server is still on {old}.",
+  "de": "Nichts hat sich geändert: Der Server ist noch auf {old}.",
+  "fr": "Rien n’a changé : le serveur est toujours en {old}.",
+  "es": "No ha cambiado nada: el servidor sigue en la {old}."
+ },
+ "La {version} è installata ma non risponde come dovrebbe: guarda il registro. Il backup fatto prima è nella cartella backup del server.": {
+  "en": "{version} is installed but does not answer as it should: look at the log. The backup made before is in the server's backup folder.",
+  "de": "{version} ist installiert, antwortet aber nicht wie erwartet: Sehen Sie im Protokoll nach. Die vorher erstellte Sicherung liegt im Ordner backup des Servers.",
+  "fr": "La {version} est installée mais ne répond pas comme prévu : consultez le journal. La sauvegarde faite avant se trouve dans le dossier backup du serveur.",
+  "es": "La {version} está instalada pero no responde como debería: mira el registro. La copia hecha antes está en la carpeta backup del servidor."
+ },
+ "Registro": {
+  "en": "Log",
+  "de": "Protokoll",
+  "fr": "Journal",
+  "es": "Registro"
+ },
+ "Controlla adesso": {
+  "en": "Check now",
+  "de": "Jetzt prüfen",
+  "fr": "Vérifier maintenant",
+  "es": "Comprobar ahora"
+ },
+ "Per aggiornare da qui serve lo script update.sh sul server: vedi deploy/server/README.md, \"Updating from the console\". Senza, si aggiorna dal terminale.": {
+  "en": "To update from here the server needs the update.sh script: see deploy/server/README.md, \"Updating from the console\". Without it, update from the terminal.",
+  "de": "Für Aktualisierungen von hier braucht der Server das Skript update.sh: siehe deploy/server/README.md, \"Updating from the console\". Ohne das Skript aktualisieren Sie im Terminal.",
+  "fr": "Pour mettre à jour d’ici, le serveur a besoin du script update.sh : voir deploy/server/README.md, \"Updating from the console\". Sinon, la mise à jour se fait dans le terminal.",
+  "es": "Para actualizar desde aquí el servidor necesita el script update.sh: ver deploy/server/README.md, \"Updating from the console\". Sin él, se actualiza desde el terminal."
+ },
+ "Nessun aggiornamento: la {version} è l'ultima.": {
+  "en": "No update: {version} is the latest.",
+  "de": "Keine Aktualisierung: {version} ist die neueste.",
+  "fr": "Pas de mise à jour : la {version} est la dernière.",
+  "es": "Sin actualizaciones: la {version} es la última."
+ },
+ "Aggiornamento alla {version} chiesto: entro un minuto il server fa il backup, scarica la versione e riavvia. Il pannello resta irraggiungibile per qualche secondo.": {
+  "en": "Update to {version} requested: within a minute the server backs up, downloads the version and restarts. The panel is unreachable for a few seconds.",
+  "de": "Aktualisierung auf {version} angefordert: Innerhalb einer Minute sichert der Server, lädt die Version herunter und startet neu. Das Panel ist einige Sekunden nicht erreichbar.",
+  "fr": "Mise à jour vers la {version} demandée : dans la minute, le serveur fait la sauvegarde, télécharge la version et redémarre. Le panneau est inaccessible quelques secondes.",
+  "es": "Actualización a la {version} solicitada: en un minuto el servidor hace la copia, descarga la versión y reinicia. El panel no está disponible unos segundos."
+ },
+ "Aggiornamenti dal pannello non attivi su questo server.": {
+  "en": "Updates from the panel are not active on this server.",
+  "de": "Aktualisierungen über das Panel sind auf diesem Server nicht aktiv.",
+  "fr": "Les mises à jour depuis le panneau ne sont pas actives sur ce serveur.",
+  "es": "Las actualizaciones desde el panel no están activas en este servidor."
+ },
+ "GitHub non ha risposto: {error}": {
+  "en": "GitHub did not answer: {error}",
+  "de": "GitHub hat nicht geantwortet: {error}",
+  "fr": "GitHub n’a pas répondu : {error}",
+  "es": "GitHub no ha respondido: {error}"
+ },
+ "È disponibile la versione {version}.": {
+  "en": "Version {version} is available.",
+  "de": "Version {version} ist verfügbar.",
+  "fr": "La version {version} est disponible.",
+  "es": "La versión {version} está disponible."
+ },
+ "Versione non disponibile.": {
+  "en": "Version not available.",
+  "de": "Version nicht verfügbar.",
+  "fr": "Version non disponible.",
+  "es": "Versión no disponible."
+ },
+ "Un aggiornamento è già in corso.": {
+  "en": "An update is already running.",
+  "de": "Eine Aktualisierung läuft bereits.",
+  "fr": "Une mise à jour est déjà en cours.",
+  "es": "Ya hay una actualización en curso."
+ }
+}

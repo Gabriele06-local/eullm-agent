@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.20.2
+
+### Added
+
+- Server installation, updates from the console: /admin › Aggiornamenti
+  shows the installed version and the latest release (checked on GitHub
+  every six hours, or now), and "Aggiorna alla X.Y.Z" updates the server.
+  The dashboard gets no Docker socket and no root: it leaves the request in
+  a folder shared with the host, where `deploy/server/update.sh` (root's
+  cron, every minute) backs up, pulls the images, writes the version in
+  `.env`, restarts and checks; the console shows how it went and the log.
+  `server-init` now writes `backup.sh` and `update.sh` too.
+
+### Upgrading
+
+- To update from /admin from now on, once on the server as root:
+  `curl -fsSL -o update.sh https://raw.githubusercontent.com/eullm/eullm-agent/main/deploy/server/update.sh && sudo sh update.sh install`
+  (deploy/server/README.md, "Updating from the console").
+
 ## 0.20.1
 
 ### Added

@@ -290,7 +290,7 @@ def cmd_serve(a):
 def cmd_worker(a):
     import logging
 
-    from . import accounts, billing, queue
+    from . import accounts, billing, queue, updates
     from .runtime import admin_database, database, handlers, settings
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     db = database()
@@ -299,8 +299,11 @@ def cmd_worker(a):
     st = settings()
     mail = accounts.smtp_mailer(st)
 
-    def hourly():  # trial reminders, and the hold when a trial or a paid period ends
+    def hourly():  # trial reminders, the hold when a trial or a paid period ends, new releases
         billing.lifecycle(admin_database(), mail=mail, public_url=st.public_url)
+        where = updates.folder(st.updates_dir)
+        if where is not None:
+            updates.check(where)
     queue.Worker(db, handlers(), concurrency=slots, hourly=hourly).run()
 
 
