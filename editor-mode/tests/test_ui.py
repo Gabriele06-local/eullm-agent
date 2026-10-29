@@ -9,7 +9,7 @@ from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
 
 PAGES = ["/", "/activity", "/index", "/site", "/site?edit=1", "/sources", "/sources?status=all", "/trends", "/drafts",
-         "/publications", "/settings", "/guide"]
+         "/publications", "/plan", "/settings", "/guide"]
 
 
 def logged_in(db, tenant, role):

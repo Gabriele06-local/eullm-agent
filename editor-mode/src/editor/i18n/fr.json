@@ -1429,5 +1429,15 @@
  "codice fiscale": "code fiscal",
  "telefono": "téléphone",
  "sito": "site",
- "{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.": "{domain} a déjà eu son essai gratuit dans une autre rédaction : pour y travailler, choisissez une formule dans Abonnement."
+ "{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.": "{domain} a déjà eu son essai gratuit dans une autre rédaction : pour y travailler, choisissez une formule dans Abonnement.",
+ "Il piano della redazione: cosa comprende, quanto ne hai usato questo mese e, per il proprietario, la scelta del piano, il pagamento e i dati di fatturazione.": "La formule de la rédaction : ce qu'elle comprend, ce que vous en avez utilisé ce mois-ci et, pour le propriétaire, le choix de la formule, le paiement et les coordonnées de facturation.",
+ "In prova vedi i giorni che restano. Scegli il piano e paghi con Mollie: torni qui e, appena il pagamento è confermato (di solito entro un minuto), la redazione risulta attiva con la data del rinnovo.": "Pendant l'essai, vous voyez les jours restants. Choisissez la formule et payez avec Mollie : vous revenez ici et, dès que le paiement est confirmé (en général en moins d'une minute), la rédaction apparaît active avec sa date de renouvellement.",
+ "Le barre vicine al limite: quando una voce è piena, quel lavoro si ferma finché il mese non riparte o finché non passi a un piano più grande. Compila i dati di fatturazione prima di pagare.": "Les barres proches de leur limite : quand une rubrique est pleine, ce travail s'arrête jusqu'au mois suivant ou jusqu'à ce que vous passiez à une formule supérieure. Remplissez les coordonnées de facturation avant de payer.",
+ "{n} giorno di prova": "{n} jour d'essai restant",
+ "{n} giorni di prova": "{n} jours d'essai restants",
+ "Quanto hai usato": "Votre consommation",
+ "Quando un limite è raggiunto la redazione si ferma su quella voce e te lo dice, senza costi a sorpresa. Il mese riparte il primo giorno del mese.": "Quand une limite est atteinte, la rédaction s'arrête sur cette rubrique et vous le dit, sans coûts surprises. Le mois repart le premier jour du mois.",
+ "Il piano e il pagamento li gestisce il proprietario della redazione.": "La formule et le paiement sont gérés par le propriétaire de la rédaction.",
+ "Piano, consumi e pagamento": "Formule, consommation et paiement",
+ "Il mio piano": "Ma formule"
 }

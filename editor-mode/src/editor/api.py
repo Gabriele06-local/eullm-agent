@@ -565,7 +565,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                                      run_proposals=run_proposals, run_titles=run_titles, run_collect=run_collect,
                                      run_publication=run_publication, run_translation=run_translation,
                                      run_translations=run_translations, run_image=run_image, imager=imager,
-                                     run_delivery=run_delivery))
+                                     run_delivery=run_delivery, gateway=gateway))
     console.register(app, SimpleNamespace(db=db, admin=admin, pages=pages, core=core, mail=mail,
                                           public_url=public_url, gateway=gateway))
 

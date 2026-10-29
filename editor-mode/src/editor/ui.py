@@ -196,6 +196,14 @@ def register(app, ctx) -> None:
         chosen = next((x for x in sites if str(x.id) == wanted), sites[0] if sites else None)
         return sites, chosen
 
+    def plan_name(s) -> str | None:
+        """The name of the newsroom's plan, for the menu (also without a subscription)."""
+        code = s.execute(select(m.tenants.c.plan)).scalar()
+        if not code:
+            return None
+        with accounts._read(admin) as conn:
+            return conn.execute(select(m.plans.c.name).where(m.plans.c.code == code)).scalar() or code
+
     def render(request: Request, name: str, c: auth.Caller, s, active: str, status_code: int = 200, **data):
         sites, site = data.pop("_sites", None) or current_site(s, request)
         tz = zone(s)
@@ -216,6 +224,7 @@ def register(app, ctx) -> None:
             "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
+            "plan_name": plan_name(s),
             "activity": data.pop("activity", None) or act.recent(s, tz, problem),
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": i18n.DAYS[i18n.current()], "months": i18n.MONTHS[i18n.current()], **data,
         }, status_code=status_code)
@@ -1482,21 +1491,44 @@ def register(app, ctx) -> None:
     def settings_page(request, c, s, new_token: str | None = None, new_link: dict | None = None,
                       error: str | None = None, status_code: int = 200):
         usage = quotas.usage(s)
-        meters = []
-        if usage is not None:
-            for what, (limit_col, used_col) in quotas.LIMITS.items():
-                used, limit = usage.used.get(used_col) or 0, usage.plan.get(limit_col)
-                meters.append({"label": QUOTA_LABELS[what], "used": used, "limit": limit, "money": what == "llm_cost",
-                               "pct": min(100, round(100 * used / limit)) if limit else 0})
         recipients = s.execute(select(m.recipients).order_by(m.recipients.c.id)).all()
         t = m.access_tokens
         tokens = s.execute(select(t.c.id, t.c.name, t.c.role, t.c.created_at, t.c.revoked_at)
                            .order_by(t.c.revoked_at.is_not(None), t.c.created_at)).all() if c.can("owner") else []
         owner = c.can("owner")
         return render(request, "settings.html.j2", c, s, "settings", status_code=status_code, usage=usage,
-                      meters=meters, recipients=recipients, tokens=tokens, new_token=new_token, new_link=new_link,
+                      recipients=recipients, tokens=tokens, new_token=new_token, new_link=new_link,
                       error=error, people=accounts.members(admin, c.tenant_id) if owner else [],
                       invited=accounts.pending_invites(admin, c.tenant_id) if owner else [])
+
+    def meters_of(usage, money: bool) -> list[dict]:
+        out = []
+        if usage is not None:
+            for what, (limit_col, used_col) in quotas.LIMITS.items():
+                if what == "llm_cost" and not money:
+                    continue
+                used, limit = usage.used.get(used_col) or 0, usage.plan.get(limit_col)
+                out.append({"label": QUOTA_LABELS[what], "used": used, "limit": limit, "money": what == "llm_cost",
+                            "pct": min(100, round(100 * used / limit)) if limit else 0})
+        return out
+
+    @app.get("/plan", response_class=HTMLResponse)
+    def plan_view(request: Request, c: auth.Caller = Depends(viewer)):
+        """The newsroom's plan in its own menu: what it is, how much of it is
+        used, and (for the owner) choosing it, paying it, the billing data."""
+        with db.tenant(c.tenant_id) as s:
+            usage = quotas.usage(s)
+            room, email = None, ""
+            if c.can("owner"):
+                with accounts._read(admin) as conn:
+                    email = conn.execute(select(m.users.c.email).where(m.users.c.id == c.user_id)).scalar() if c.user_id else None
+                room = {"tenant_id": c.tenant_id, "subscription": billing.subscription(admin, c.tenant_id),
+                        "customer": billing.customer_of(admin, c.tenant_id),
+                        "reseller": billing.reseller_of_tenant(admin, c.tenant_id) is not None}
+            return render(request, "plan.html.j2", c, s, "plan", usage=usage,
+                          meters=meters_of(usage, money=c.operator), room=room, me_email=email,
+                          plans=billing.plans(admin, public_only=True), money=billing.money,
+                          online=ctx.gateway is not None)
 
     @app.get("/settings", response_class=HTMLResponse)
     def settings_view(request: Request, c: auth.Caller = Depends(viewer)):

@@ -4,6 +4,12 @@
 
 ### Added
 
+- Editor Mode, "Il mio piano" at the bottom of the newsroom menu, with the
+  plan's name and the days of trial left under it. Its page shows the plan,
+  how much of it was used this month (the model's cost only to the
+  operator), and for the owner the choice of the plan, the payment, the
+  billing data and the cancellation; the forms and the payment come back
+  there. /account stays, for the owners of several newsrooms.
 - Editor Mode, Sito e profilo › "Fonti negli articoli pubblicati": a
   site can show its sources discreetly, with no numbers in the text and
   one line at the end naming each source once. The draft keeps its notes,

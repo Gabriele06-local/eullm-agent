@@ -40,6 +40,7 @@
   <a href="/drafts" {% if active == 'drafts' %}class="on" aria-current="page"{% endif %}>{{ _('Bozze') }}</a>
   <a href="/publications" {% if active == 'publications' %}class="on" aria-current="page"{% endif %}>{{ _('Pubblicazioni') }}</a>
   <span class="grow"></span>
+  <a href="/plan" {% if active == 'plan' %}class="on" aria-current="page"{% endif %}>{{ _('Il mio piano') }}{% if plan_state %}<br><small class="hint">{{ plan_state.plan_name }} · {{ _('{n} giorno di prova', n=plan_state.days_left) if plan_state.status == 'trialing' and plan_state.days_left == 1 else _('{n} giorni di prova', n=plan_state.days_left) if plan_state.status == 'trialing' else plan_state.label|lower }}</small>{% elif plan_name %}<br><small class="hint">{{ plan_name }}</small>{% endif %}</a>
   <a href="/guide" {% if active == 'guide' %}class="on" aria-current="page"{% endif %}>{{ _('Guida') }}</a>
   <a href="/settings" {% if active == 'settings' %}class="on" aria-current="page"{% endif %}>{{ _('Impostazioni') }}</a>
   {% if caller.operator %}<a href="/admin">{{ _('Amministrazione') }}</a>{% endif %}
@@ -59,7 +60,7 @@
     <span>{% if plan_state.status == 'trialing' %}{{ _('Prova gratuita: {n} giorno rimasto.', n=plan_state.days_left) if plan_state.days_left == 1 else _('Prova gratuita: {n} giorni rimasti.', n=plan_state.days_left) }}
     {% elif plan_state.status == 'past_due' %}{{ _("L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.") }}
     {% else %}{% if plan_state.current_period_end %}{{ _('Abbonamento disdetto: la redazione si ferma il {date}.', date=plan_state.current_period_end.strftime('%d/%m')) }}{% else %}{{ _('Abbonamento disdetto: la redazione si ferma a fine periodo.') }}{% endif %}{% endif %}</span>
-    <a href="/account">{{ _('Scegli il piano') if plan_state.status != 'past_due' else _("Vedi l'abbonamento") }}</a>
+    <a href="/plan">{{ _('Scegli il piano') if plan_state.status != 'past_due' else _("Vedi l'abbonamento") }}</a>
   </p>
   {% endif %}
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

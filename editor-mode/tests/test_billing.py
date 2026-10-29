@@ -219,6 +219,31 @@ def test_online_payment_and_renewals_through_the_gateway(db, admin):
     assert fake.cancelled == [msub] and billing.subscription(admin, tid)["status"] == "canceled"
 
 
+def test_the_plan_is_in_the_newsroom_menu(db, admin):
+    """The owner finds the plan, its usage and the payment inside the
+    newsroom (Piano), and comes back there from the forms and the gateway."""
+    fake = FakeGateway()
+    c, sent = client(db, gateway=fake)
+    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    invite = sent[0][2].split("\n")[-2]
+    c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
+    assert 'href="/plan"' in c.get("/").text
+    page = c.get("/plan")
+    assert page.status_code == 200 and "Starter" in page.text and "7 giorni di prova" in page.text and "Il mio piano" in page.text
+    assert "Quanto hai usato" in page.text and "Vai al pagamento" in page.text
+    assert 'name="back" value="plan"' in page.text
+    assert "Costo modello" not in page.text  # the customer sees units of the plan, not the model's cost
+    r = c.post(f"/account/{tid}/customer", data={"name": "Rossi", "email": "r@example.com", "kind": "person",
+                                                "tax_code": "VRDMRA80A01H501U", "back": "plan"},
+               follow_redirects=False)
+    assert r.headers["location"] == "/plan"
+    r = c.post(f"/account/{tid}/checkout", data={"plan": "starter", "interval": "month", "back": "plan"},
+               follow_redirects=False)
+    assert r.headers["location"].startswith("https://pay.example/")
+    assert fake.last["redirect"] == f"https://editor.example.com/account/{tid}/paid?back=plan"
+    assert c.get(f"/account/{tid}/paid?back=plan", follow_redirects=False).headers["location"] == "/plan"
+
+
 def test_a_manual_payment_stops_the_automatic_renewals(db, admin):
     """A bank transfer paid by the operator ends the renewals of the gateway:
     otherwise the gateway would charge again and the period would grow twice."""
