@@ -1,0 +1,79 @@
+{# The subscription of one newsroom: where it stands, the choice of a plan
+   and its payment, the billing data, the cancellation. Shared by /account
+   and the newsroom's own Piano page; `back` tells the forms where to return. #}
+{% set sub = r.subscription %}
+{% set c = r.customer or {} %}
+      {% if not sub %}
+        <p class="lead">{{ _('Nessun abbonamento registrato per questa redazione.') }}</p>
+      {% elif sub.status == 'trialing' %}
+        <p class="lead">{{ _('Sei in prova fino al <strong>{date}</strong> ({n} giorno). Scegli un piano prima di allora per continuare senza interruzioni.', date=sub.trial_ends_at.strftime('%d/%m/%Y'), n=sub.days_left) if sub.days_left == 1 else _('Sei in prova fino al <strong>{date}</strong> ({n} giorni). Scegli un piano prima di allora per continuare senza interruzioni.', date=sub.trial_ends_at.strftime('%d/%m/%Y'), n=sub.days_left) }}</p>
+      {% elif sub.status == 'active' %}
+        <p class="lead">{{ _('Piano {plan}, annuale.', plan=sub.plan_name) if sub.billing_interval == 'year' else _('Piano {plan}, mensile.', plan=sub.plan_name) }}{% if sub.current_period_end %} {{ _('Rinnovo il {date}.', date=sub.current_period_end.strftime('%d/%m/%Y')) }}{% endif %}</p>
+      {% elif sub.status == 'past_due' %}
+        <p class="error">{{ _("L'ultimo pagamento non è riuscito. Il circuito riprova nei prossimi giorni; se vuoi, paga di nuovo qui sotto.") }}</p>
+      {% elif sub.status == 'canceled' %}
+        <p class="lead">{% if sub.current_period_end %}{{ _('Abbonamento disdetto: la redazione resta attiva fino al {date}, poi si ferma. Puoi riattivarla scegliendo un piano.', date=sub.current_period_end.strftime('%d/%m/%Y')) }}{% else %}{{ _('Abbonamento disdetto: la redazione resta attiva, poi si ferma. Puoi riattivarla scegliendo un piano.') }}{% endif %}</p>
+      {% else %}
+        <p class="lead">{{ _('<strong>La redazione è ferma</strong>: la prova o il periodo pagato è finito. I tuoi siti, profili, fonti e bozze sono conservati: scegli un piano e riparte da dove era.') }}</p>
+      {% endif %}
+
+      {% if r.reseller %}
+        <p class="hint">{{ _('Questa redazione è fatturata dal tuo rivenditore: per cambiare piano scrivi a lui.') }}</p>
+      {% elif sub and sub.status != 'active' or not sub %}
+        <h3>{{ _('Scegli il piano') }}</h3>
+        {% set wished = plans|selectattr('code', 'equalto', sub.desired_plan)|first if sub and sub.desired_plan else none %}
+        {% if wished %}<p class="hint">{{ _('Sul sito hai scelto il piano {plan}: lo trovi già selezionato.', plan=wished.name) }}</p>{% endif %}
+        {% if not r.customer %}<p class="hint">{{ _('Prima compila i dati di fatturazione qui sotto.') }}</p>{% endif %}
+        <form method="post" action="/account/{{ r.tenant_id }}/checkout">
+          {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+          <div class="cols" style="gap: 12px;">
+          {% for p in plans %}
+            <label class="card pad" style="flex: 1 1 200px; cursor: pointer; display: block;">
+              <span class="row"><input type="radio" name="plan" value="{{ p.code }}" {% if (sub and sub.desired_plan == p.code) or (not (sub and sub.desired_plan in plans|map(attribute='code')) and loop.first) %}checked{% endif %}> <strong>{{ p.name }}</strong></span>
+              <div style="font-size: 22px; font-weight: 600; margin-top: 8px;">{{ money(p.price_month_cents, p.currency) }} <span class="hint">{{ _('al mese') }}</span></div>
+              <div class="hint">{{ _("oppure {price} all'anno", price=money(p.price_year_cents, p.currency)) }}</div>
+              <p class="hint">{{ p.description }}<br>
+                {{ _('{n} sito', n=p.max_sites) if p.max_sites == 1 else _('{n} siti', n=p.max_sites) }}{% if p.max_drafts_month %} · {{ _('{n} articoli al mese', n=p.max_drafts_month) }}{% endif %}{% if p.max_active_sources %} · {{ _('{n} fonti attive', n=p.max_active_sources) }}{% endif %}</p>
+            </label>
+          {% endfor %}
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <label class="field">{{ _('Rinnovo') }}<select name="interval"><option value="month">{{ _('Mensile') }}</option><option value="year" {% if sub and sub.desired_interval == 'year' %}selected{% endif %}>{{ _('Annuale') }}</option></select></label>
+            {% if online %}<button class="btn pri" type="submit" {% if not r.customer %}disabled{% endif %}>{{ _('Vai al pagamento') }}</button>
+            {% else %}<span class="hint">{{ _("Il pagamento online non è ancora attivo: per attivare il piano contatta l'assistenza, lo registriamo noi.") }}</span>{% endif %}
+          </div>
+          <p class="hint">{{ _('Prezzi IVA esclusa. Il primo pagamento autorizza i rinnovi automatici, che puoi disdire quando vuoi da questa pagina.') }}</p>
+        </form>
+      {% endif %}
+
+      <details {% if not r.customer %}open{% endif %}>
+        <summary><strong>{{ _('Dati di fatturazione') }}</strong></summary>
+        <form method="post" action="/account/{{ r.tenant_id }}/customer" class="form-grid" style="margin-top: 8px;">
+          {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+          <label class="field">{{ _('Tipo') }}<select name="kind"><option value="company">{{ _('Azienda o professionista') }}</option><option value="person" {% if c.kind == 'person' %}selected{% endif %}>{{ _('Privato') }}</option></select></label>
+          <label class="field">{{ _('Ragione sociale o nome') }}<input name="name" value="{{ c.name or '' }}" required maxlength="200"></label>
+          <label class="field">{{ _('Email per le fatture') }}<input name="email" type="email" value="{{ c.email or me_email }}" required></label>
+          <label class="field">{{ _('Telefono') }}<input name="phone" value="{{ c.phone or '' }}" maxlength="40"></label>
+          <label class="field">{{ _('Partita IVA') }}<input name="vat_number" value="{{ c.vat_number or '' }}" maxlength="40"></label>
+          <label class="field">{{ _('Codice fiscale') }}<input name="tax_code" value="{{ c.tax_code or '' }}" maxlength="40"></label>
+          <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ c.address or '' }}" maxlength="200"></label>
+          <label class="field">{{ _('CAP') }}<input name="postal_code" value="{{ c.postal_code or '' }}" maxlength="20"></label>
+          <label class="field">{{ _('Città') }}<input name="city" value="{{ c.city or '' }}" maxlength="100"></label>
+          <label class="field">{{ _('Provincia') }}<input name="province" value="{{ c.province or '' }}" maxlength="10"></label>
+          <label class="field">{{ _('Paese') }}<input name="country" value="{{ c.country or 'IT' }}" maxlength="2"></label>
+          <label class="field">{{ _('Codice destinatario SDI') }}<input name="sdi_code" value="{{ c.sdi_code or '' }}" maxlength="7"></label>
+          <label class="field">{{ _('PEC') }}<input name="pec" type="email" value="{{ c.pec or '' }}"></label>
+          <div><button class="btn" type="submit">{{ _('Salva i dati') }}</button></div>
+        </form>
+      </details>
+
+      {% if sub and sub.status in ('active', 'past_due', 'trialing') and not r.reseller %}
+      <details>
+        <summary class="hint">{{ _("Disdici l'abbonamento") }}</summary>
+        <form method="post" action="/account/{{ r.tenant_id }}/cancel" style="margin-top: 8px;">
+          {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+          <p class="hint">{{ _('Niente più rinnovi. La redazione resta attiva fino alla fine del periodo già pagato (o della prova), poi si ferma; i dati restano.') }}</p>
+          <button class="btn" type="submit">{{ _('Disdici') }}</button>
+        </form>
+      </details>
+      {% endif %}

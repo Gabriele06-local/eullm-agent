@@ -212,6 +212,30 @@ def render(article: Article, sources: dict[int, Source], language: str | None, l
     return "\n".join(lines) + "\n"
 
 
+SOURCES_HEADING = re.compile(r"\n## (Fonti|Sources)\n")
+NOTE = re.compile(r"^\[\^(\d+)\]: \[(?P<title>[^\]]*)\]\((?P<url>[^)\s]+)\)(?:, (?P<name>[^,\n]+))?", re.M)
+
+
+def discreet_sources(md: str) -> str:
+    """The article for a site that shows its sources discreetly: no note
+    numbers in the text, and at the end one line naming each source once,
+    linked to the first of its articles. The sentences stay tied to their
+    sources in the draft; only the published text changes."""
+    found = list(SOURCES_HEADING.finditer(md))
+    if not found:
+        return md
+    head, notes = md[:found[-1].start()], md[found[-1].end():]
+    links: dict[str, str] = {}
+    for n in NOTE.finditer(notes):
+        name = (n.group("name") or n.group("title")).strip()
+        links.setdefault(name, n.group("url"))
+    if not links:
+        return md
+    text = re.sub(r"\[\^\d+\]", "", head).rstrip()
+    label = found[-1].group(1)
+    return f"{text}\n\n**{label}:** " + " · ".join(f"[{k}]({v})" for k, v in links.items()) + "\n"
+
+
 SYSTEM = (
     "You write original articles for a website. You receive the editorial profile, the accepted proposal and "
     "the source items, each with an id and its text. Write the article as claims: every claim is one to three "

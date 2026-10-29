@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.20.1
+
+### Added
+
+- Editor Mode, "Il mio piano" at the bottom of the newsroom menu, with the
+  plan's name and the days of trial left under it. Its page shows the plan,
+  how much of it was used this month (the model's cost only to the
+  operator), and for the owner the choice of the plan, the payment, the
+  billing data and the cancellation; the forms and the payment come back
+  there. /account stays, for the owners of several newsrooms.
+- Editor Mode, Sito e profilo › "Fonti negli articoli pubblicati": a
+  site can show its sources discreetly, with no numbers in the text and
+  one line at the end naming each source once. The draft keeps its notes,
+  only the published text changes. The default stays the notes.
+- Guide "Preparare il proprio sito per Redazia" (editor-mode/docs):
+  WordPress, static sites on GitHub, webhook, and a new site on a
+  subdomain or under /news. The webhook now sends the article's section.
+- An email that cannot be sent (invite, password reset) writes the reason
+  in the log (`editor.mail`): before, only "not sent" was shown.
+- The free trial is given once. At every signup from the site the
+  customer's email (Gmail dots and +tags ignored), VAT number, tax code and
+  phone, and the owner's email, are compared with every earlier customer;
+  a site added to a newsroom on trial is compared with the sites of every
+  other newsroom. Who comes back gets the newsroom on hold until a plan is
+  paid, the site added is refused. Only hashes are kept (`trial_marks`),
+  so a deleted newsroom still counts. /admin › Clienti lists the second
+  trials refused and why; the operator can give the trial again in
+  Abbonamento. The signup API answers `trial_used`.
+- A signup for someone who already has an account: no password to choose,
+  so the email says the newsroom is ready and where to sign in (before,
+  no email at all). The API answers `owner.invite.existing`.
+
+### Changed
+
+- Editor Mode, Pubblicazioni: the form of a destination shows only the
+  fields of the type chosen (WordPress, GitHub), in a grid with short
+  labels on one line; the same layout when a destination is changed. The
+  address of a GitHub destination shows the repository again, not the
+  articles' address.
+- The logo goes back to the Desk (to the console in Amministrazione); the
+  account at the bottom of the menu is on two lines, the name and then
+  role and "Esci".
+- Articles carry their section: in the automatic newsroom the AI
+  editor-in-chief files each article under one of the site's sections, a
+  translation keeps its original's; the payload has `section` and a
+  GitHub post gets it in its front matter (`section`, or the blog's own
+  `category` key).
+- The small settings on Sito e profilo (proposals a day, covers) and the
+  text boxes of the automatic newsroom have the same look as the other
+  fields.
+
 ## 0.20.0
 
 ### Added

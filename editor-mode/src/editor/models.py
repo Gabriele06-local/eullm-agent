@@ -681,3 +681,26 @@ payments = Table(
     Column("created_at", _ts()),
     Column("paid_at", _ts()),
 )
+
+# The free trial, once (trials.py): hashes of the data a trial was given
+# to, and the second trials that were not.
+trial_marks = Table(
+    "trial_marks",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("kind", Text, nullable=False),
+    Column("value_hash", Text, nullable=False),
+    Column("newsroom", Text, nullable=False),
+    Column("customer_id", BigInteger),
+    Column("created_at", _ts()),
+)
+
+trial_refusals = Table(
+    "trial_refusals",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("newsroom", Text, nullable=False),
+    Column("customer_id", BigInteger),
+    Column("reasons", JSONB, nullable=False),
+    Column("created_at", _ts()),
+)

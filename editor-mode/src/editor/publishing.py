@@ -36,7 +36,7 @@ import httpx
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from . import models as m
+from . import drafts, models as m
 from . import seo
 from .markdown import to_html
 
@@ -259,8 +259,11 @@ def search_fields(s, d) -> dict:
                                         .join(dc, dc.c.id == dcs.c.claim_id).where(dc.c.draft_id == d.id)).scalars()))
     faq = [(q, " ".join(c.text for c in claims if c.section == q)) for q in sd.get("faq", [])]
     description = sd.get("description") or d.subtitle or ""
+    section = sd.get("section")
+    if not section and d.translation_of:  # a translation is in its original's section
+        section = (s.execute(select(m.drafts.c.seo).where(m.drafts.c.id == d.translation_of)).scalar() or {}).get("section")
     return {
-        "site_domain": site.domain if site else None,
+        "site_domain": site.domain if site else None, "section": section,
         "slug": sd.get("slug") or seo.slugify(d.title), "seo_title": sd.get("title") or d.title,
         "meta_description": description, "keyphrase": sd.get("keyphrase") or "",
         "jsonld": seo.jsonld(title=d.title, description=description, language=d.language, url=None,
@@ -281,7 +284,13 @@ def request(db, tenant_id: str, draft_id: int, target_id: int, mode: str, by: st
             raise PublishError("only approved drafts can be published")
         if t.site_id != d.site_id or not t.enabled:
             raise PublishError("target not available for this site")
-        payload = {"title": d.title, "subtitle": d.subtitle, "markdown": d.body_md, "html": to_html(d.body_md),
+        body = d.body_md
+        settings = (s.execute(select(m.editorial_profiles.c.body).where(
+            m.editorial_profiles.c.site_id == d.site_id, m.editorial_profiles.c.status == "approved")).scalar()
+            or {}).get("settings") or {}
+        if settings.get("sources_style") == "list":
+            body = drafts.discreet_sources(body)
+        payload = {"title": d.title, "subtitle": d.subtitle, "markdown": body, "html": to_html(body),
                    "language": d.language, **search_fields(s, d)}
         return s.execute(insert(m.publications).values(
             tenant_id=tenant_id, draft_id=draft_id, target_id=target_id, mode=mode, payload=payload, requested_by=by,
@@ -430,7 +439,7 @@ class Publisher:
             cover = {"url": f"{self.public_url}/media/{image.token}", "alt": image.alt, "type": image.mime}
         data = json.dumps({"event": "publication", "mode": pub.mode, "publication_id": pub.id,
                            "url": cms_url, **{k: pub.payload[k] for k in ("title", "subtitle", "markdown", "html", "language")},
-                           **{k: pub.payload.get(k) for k in ("slug", "seo_title", "meta_description", "keyphrase", "jsonld")},
+                           **{k: pub.payload.get(k) for k in ("slug", "section", "seo_title", "meta_description", "keyphrase", "jsonld")},
                            "image": cover},
                           ensure_ascii=False).encode()
         sig = hmac.new(_need(secret, target).encode(), data, hashlib.sha256).hexdigest()

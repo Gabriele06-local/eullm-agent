@@ -90,7 +90,8 @@ def create(admin, spec: dict, by: str, core=None) -> dict:
         if ref is not None:
             old = conn.execute(select(m.tenants.c.tenant_id).where(m.tenants.c.external_ref == ref)).scalar()
             if old is not None:
-                return {"tenant_id": old, "created": False, "owner_email": owner, "invite": None, "warning": None}
+                return {"tenant_id": old, "created": False, "owner_email": owner, "invite": None, "warning": None,
+                        "existing_user": False}
         wanted = spec.get("tenant_id")
         if wanted:
             if not TENANT_ID.match(wanted) or len(wanted) > 40:
@@ -110,7 +111,7 @@ def create(admin, spec: dict, by: str, core=None) -> dict:
         accounts.set_member(conn, uid, tid, "owner")
         has_password = bool(conn.execute(select(m.users.c.password_hash).where(m.users.c.id == uid)).scalar())
     token = None if has_password else accounts.create_invite(admin, owner, by, tenant_id=tid, role="owner")
-    return {"tenant_id": tid, "created": True, "owner_email": owner, "invite": token,
+    return {"tenant_id": tid, "created": True, "owner_email": owner, "invite": token, "existing_user": has_password,
             "warning": _core_limits(core, tid, fields)}
 
 

@@ -292,5 +292,65 @@
   "de": "Das Modell leitet das Profil aus dem Kontext ab",
   "fr": "Le modèle tire le profil du contexte",
   "es": "El modelo saca el perfil del contexto"
+ },
+ "Utente WordPress": {
+  "en": "WordPress user",
+  "de": "WordPress-Benutzer",
+  "fr": "Utilisateur WordPress",
+  "es": "Usuario de WordPress"
+ },
+ "Ramo": {
+  "en": "Branch",
+  "de": "Branch",
+  "fr": "Branche",
+  "es": "Rama"
+ },
+ "Cartella degli articoli": {
+  "en": "Articles folder",
+  "de": "Ordner der Artikel",
+  "fr": "Dossier des articles",
+  "es": "Carpeta de los artículos"
+ },
+ "Cartella delle immagini": {
+  "en": "Images folder",
+  "de": "Ordner der Bilder",
+  "fr": "Dossier des images",
+  "es": "Carpeta de las imágenes"
+ },
+ "Indirizzo degli articoli": {
+  "en": "Articles' address",
+  "de": "Adresse der Artikel",
+  "fr": "Adresse des articles",
+  "es": "Dirección de los artículos"
+ },
+ "Aggiungi la destinazione": {
+  "en": "Add the destination",
+  "de": "Ziel hinzufügen",
+  "fr": "Ajouter la destination",
+  "es": "Añadir el destino"
+ },
+ "Fonti negli articoli pubblicati": {
+  "en": "Sources in published articles",
+  "de": "Quellen in veröffentlichten Artikeln",
+  "fr": "Sources dans les articles publiés",
+  "es": "Fuentes en los artículos publicados"
+ },
+ "Discrete: una riga in fondo, testo pulito": {
+  "en": "Discreet: one line at the end, clean text",
+  "de": "Dezent: eine Zeile am Ende, sauberer Text",
+  "fr": "Discrètes : une ligne à la fin, texte épuré",
+  "es": "Discretas: una línea al final, texto limpio"
+ },
+ "Note: un numero dopo ogni frase": {
+  "en": "Notes: a number after each sentence",
+  "de": "Fußnoten: eine Zahl nach jedem Satz",
+  "fr": "Notes : un numéro après chaque phrase",
+  "es": "Notas: un número tras cada frase"
+ },
+ "Fonti negli articoli salvate: valgono dalla prossima pubblicazione.": {
+  "en": "Sources setting saved: it applies from the next publication.",
+  "de": "Quellen-Einstellung gespeichert: Sie gilt ab der nächsten Veröffentlichung.",
+  "fr": "Réglage des sources enregistré : il s'applique dès la prochaine publication.",
+  "es": "Ajuste de fuentes guardado: vale desde la próxima publicación."
  }
 }

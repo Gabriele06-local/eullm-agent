@@ -137,9 +137,13 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         return f"{base(request)}/api/billing/{gateway.name}/webhook" if gateway else ""
 
     def invite_out(request, res, newsroom_name):
-        if not res["invite"]:
-            return None
-        return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
+        if res["invite"]:
+            return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
+        if res["created"] and res.get("existing_user"):
+            # The owner signs in as always: an email says the newsroom is there.
+            out = send(request, "", "ready", res["owner_email"], newsroom_name, "EuLLM Editor")
+            return {**out, "existing": True}
+        return None
 
     def reseller_id(request: Request) -> int | None:
         return getattr(request.state, "reseller_id", None)
@@ -172,7 +176,7 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             out = {"customer": billing.customer(admin, res["customer_id"]), "tenant": room,
                    "subscription": billing.subscription(admin, res["tenant_id"]), "created": res["created"],
                    "owner": {"email": res["owner_email"], "invite": invite_out(request, res, room["name"])},
-                   "warning": res["warning"]}
+                   "trial_used": res.get("trial_used", []), "warning": res["warning"]}
             return out if res["created"] else JSONResponse(_json(out), status_code=200)
         finally:
             if token is not None:
@@ -299,8 +303,10 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             raise HTTPException(404, "newsroom not found")
         return room
 
-    def to_account(notice: str | None = None, tenant_id: str | None = None) -> RedirectResponse:
-        resp = RedirectResponse(f"/account#t-{tenant_id}" if tenant_id else "/account", status_code=303)
+    def to_account(notice: str | None = None, tenant_id: str | None = None, back: str = "") -> RedirectResponse:
+        """Back to /account, or to the newsroom's Piano page when the form came from there."""
+        to = "/plan" if back == "plan" else f"/account#t-{tenant_id}" if tenant_id else "/account"
+        resp = RedirectResponse(to, status_code=303)
         if notice:
             resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
         return resp
@@ -332,7 +338,7 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                          email: str = Form(""), phone: str = Form(""), vat_number: str = Form(""),
                          tax_code: str = Form(""), address: str = Form(""), postal_code: str = Form(""),
                          city: str = Form(""), province: str = Form(""), country: str = Form("IT"),
-                         sdi_code: str = Form(""), pec: str = Form(""), s=Depends(person)):
+                         sdi_code: str = Form(""), pec: str = Form(""), back: str = Form(""), s=Depends(person)):
         owned(s, tenant_id)
         spec = {"kind": kind, "name": name, "email": email, "phone": phone, "vat_number": vat_number,
                 "tax_code": tax_code, "address": address, "postal_code": postal_code, "city": city,
@@ -340,41 +346,41 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         try:
             billing.set_tenant_customer(admin, tenant_id, spec)
         except (billing.BillingError, accounts.AccountError) as e:
-            return to_account(t("Dati non salvati: {error}.", error=e), tenant_id)
+            return to_account(t("Dati non salvati: {error}.", error=e), tenant_id, back)
         except LookupError:
-            return to_account(t("Redazione non trovata."), tenant_id)
-        return to_account(t("Dati di fatturazione salvati."), tenant_id)
+            return to_account(t("Redazione non trovata."), tenant_id, back)
+        return to_account(t("Dati di fatturazione salvati."), tenant_id, back)
 
     @app.post("/account/{tenant_id}/checkout")
     def account_checkout(tenant_id: str, request: Request, plan: str = Form(...), interval: str = Form("month"),
-                         s=Depends(person)):
+                         back: str = Form(""), s=Depends(person)):
         owned(s, tenant_id)
+        paid = f"{base(request)}/account/{tenant_id}/paid" + ("?back=plan" if back == "plan" else "")
         try:
-            url = billing.checkout(admin, gateway, tenant_id, plan, interval,
-                                   f"{base(request)}/account/{tenant_id}/paid", webhook_url(request))
+            url = billing.checkout(admin, gateway, tenant_id, plan, interval, paid, webhook_url(request))
         except (billing.BillingError, GatewayError) as e:
-            return to_account(t("Pagamento non avviato: {error}.", error=e), tenant_id)
+            return to_account(t("Pagamento non avviato: {error}.", error=e), tenant_id, back)
         except Exception:
             log.exception("checkout of %s failed", tenant_id)
-            return to_account(t("Pagamento non avviato: errore interno, riprova tra poco."), tenant_id)
+            return to_account(t("Pagamento non avviato: errore interno, riprova tra poco."), tenant_id, back)
         return RedirectResponse(url, status_code=303)
 
     @app.get("/account/{tenant_id}/paid")
-    def account_paid(tenant_id: str, request: Request):
+    def account_paid(tenant_id: str, request: Request, back: str = ""):
         return to_account(t("Grazie. Il pagamento è in verifica: la redazione si attiva appena il circuito lo conferma, "
-                            "di solito entro un minuto."), tenant_id)
+                            "di solito entro un minuto."), tenant_id, back)
 
     @app.post("/account/{tenant_id}/cancel")
-    def account_cancel(tenant_id: str, request: Request, s=Depends(person)):
+    def account_cancel(tenant_id: str, request: Request, back: str = Form(""), s=Depends(person)):
         owned(s, tenant_id)
         try:
             sub = billing.cancel(admin, tenant_id, gateway)
         except LookupError:
-            return to_account(t("Nessun abbonamento da disdire."), tenant_id)
+            return to_account(t("Nessun abbonamento da disdire."), tenant_id, back)
         end = sub["current_period_end"]
         return to_account(t("Abbonamento disdetto: niente più rinnovi.") +
                           (" " + t("La redazione resta attiva fino al {date}.", date=f"{end:%d/%m/%Y}") if end else ""),
-                          tenant_id)
+                          tenant_id, back)
 
     # --- the operator's console ----------------------------------------------------------
 

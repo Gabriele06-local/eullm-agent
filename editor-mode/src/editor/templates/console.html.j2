@@ -11,7 +11,7 @@
 {% set labels = {'sites': _('Siti'), 'sources': _('Fonti attive'), 'items': _('Notizie oggi'), 'drafts': _('Bozze nel mese'), 'llm_cost': _('Costo modello nel mese')} %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></div>
+  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></a>
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>
@@ -24,8 +24,11 @@
   {% for x in mine %}<a href="/admin/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
   <span class="grow"></span>
   <div class="who">
-    <span>{{ me.email }} · {{ _('operatore') }}</span>
-    <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
+    <span class="name" title="{{ me.email }}">{{ me.email }}</span>
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <span>{{ _('operatore') }}</span>
+      <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
+    </div>
   </div>
 </nav>
 <main class="main">
@@ -184,6 +187,27 @@
     {% else %}
     <p class="empty">{{ _('Nessun cliente: arrivano dal sito con <code>POST /api/operator/signup</code>, o dai rivenditori.') }}</p>
     {% endif %}
+    <div class="pad" id="prove-negate">
+      <h3>{{ _('Seconde prove negate') }}</h3>
+      <p class="hint">{{ _('La prova gratuita si dà una volta sola: chi torna con la stessa email, P.IVA, codice fiscale o telefono, o con un sito già provato in un\'altra redazione, ha la redazione ferma finché non sceglie un piano. Se è un errore, ridai la prova dalla redazione, in Abbonamento.') }}</p>
+      {% if refusals %}
+      <table class="tbl">
+        <thead><tr><th>{{ _('Quando') }}</th><th>{{ _('Redazione') }}</th><th>{{ _('Cliente') }}</th><th>{{ _('Già usato') }}</th></tr></thead>
+        <tbody>
+        {% for r in refusals %}
+        <tr>
+          <td class="hint num">{{ r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at.strftime is defined else r.created_at }}</td>
+          <td>{{ r.newsroom }}</td>
+          <td>{% if r.name %}{{ r.name }}<br><span class="hint">{{ r.email }}</span>{% else %}<span class="hint">–</span>{% endif %}</td>
+          <td class="hint">{% for x in r.reasons %}<div>{{ _(trial_kinds[x.kind]) }} {{ x.value }}{% if x.newsroom %} ({{ x.newsroom }}){% endif %}</div>{% endfor %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">{{ _('Nessuna: finora ogni prova è andata a chi non l\'aveva mai avuta.') }}</p>
+      {% endif %}
+    </div>
   </section>
 
   <div class="cols">

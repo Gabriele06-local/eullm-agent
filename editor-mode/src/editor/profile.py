@@ -39,7 +39,7 @@ from .text import tokens
 log = logging.getLogger(__name__)
 
 DEFAULT_SETTINGS = {"proposals_per_day": 6, "min_relevance": 0.15, "exclude": [],
-                    "cover_style": "impact", "cover_text": False}
+                    "cover_style": "impact", "cover_text": False, "sources_style": "notes"}
 # Raised when the analysis itself improves: a profile approved under an
 # older method is offered again, rebuilt, even if the site did not change.
 METHOD = "profile-v2"
@@ -82,6 +82,7 @@ class _Settings(_Part):
     exclude: list[_Text] = Field(default_factory=list, max_length=200)
     cover_style: Literal["impact", "editorial"] = DEFAULT_SETTINGS["cover_style"]
     cover_text: bool = DEFAULT_SETTINGS["cover_text"]
+    sources_style: Literal["notes", "list"] = DEFAULT_SETTINGS["sources_style"]
 
 
 class _ProfileEdit(_Part):
@@ -430,6 +431,14 @@ def set_cover(s, site_id: int, style: str, text: bool) -> bool:
     if style not in ("impact", "editorial"):
         raise ValueError(style)
     return _set_settings(s, site_id, cover_style=style, cover_text=bool(text) and style == "impact")
+
+
+def set_sources_style(s, site_id: int, style: str) -> bool:
+    """How a published article shows its sources: "notes" (a number after
+    each sentence, the notes at the end) or "list" (one line at the end)."""
+    if style not in ("notes", "list"):
+        raise ValueError(style)
+    return _set_settings(s, site_id, sources_style=style)
 
 
 def approved_profile(s, site_id: int):

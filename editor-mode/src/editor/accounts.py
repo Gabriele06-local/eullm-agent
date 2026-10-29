@@ -13,6 +13,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import logging
 import re
 import secrets
 import smtplib
@@ -26,6 +27,8 @@ from sqlalchemy import delete, func, insert, select, update
 from . import models as m
 from .auth import ROLES, digest
 from .i18n import t
+
+log = logging.getLogger("editor.mail")
 
 SESSION_DAYS = 30
 INVITE_DAYS = 7
@@ -517,11 +520,17 @@ def smtp_mailer(settings, smtp_factory=smtplib.SMTP):
         msg = EmailMessage()
         msg["Subject"], msg["From"], msg["To"] = subject, settings.mail_from or settings.smtp_user, to
         msg.set_content(body)
-        with smtp_factory(settings.smtp_host, settings.smtp_port, timeout=30) as smtp:
-            smtp.starttls(context=ssl.create_default_context())
-            if settings.smtp_user:
-                smtp.login(settings.smtp_user, settings.smtp_password)
-            smtp.send_message(msg)
+        try:
+            with smtp_factory(settings.smtp_host, settings.smtp_port, timeout=30) as smtp:
+                smtp.starttls(context=ssl.create_default_context())
+                if settings.smtp_user:
+                    smtp.login(settings.smtp_user, settings.smtp_password)
+                smtp.send_message(msg)
+        except Exception as e:
+            # The callers show "not sent" and the link: the reason is here.
+            log.warning("email to %s not sent via %s:%s: %s: %s", to, settings.smtp_host, settings.smtp_port,
+                        type(e).__name__, e)
+            raise
 
     return send
 
@@ -529,6 +538,11 @@ def smtp_mailer(settings, smtp_factory=smtplib.SMTP):
 def link_text(kind: str, url: str, newsroom: str | None, by: str, lang: str | None = None) -> tuple[str, str]:
     """Subject and body of the email that carries a link (in `lang`, else
     the language of the request)."""
+    if kind == "ready":
+        # The owner has an account already: no password to choose, only where to sign in.
+        return (t("La redazione {newsroom} è pronta", lang, newsroom=newsroom),
+                t("La redazione {newsroom} è pronta. Entra con il tuo account di sempre: la trovi tra le tue redazioni.",
+                  lang, newsroom=newsroom) + f"\n\n{url}\n")
     if kind == "reset":
         return (t("Reimposta la password di EuLLM Editor", lang),
                 t("Per scegliere una nuova password apri questo link entro {hours} ore:", lang, hours=RESET_HOURS)

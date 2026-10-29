@@ -354,6 +354,8 @@ def test_sitegit_formats():
     assert sg.format_date(datetime(2026, 7, 8), ("date", "")) == "2026-07-08"
     keys = sg.parse_front_matter("title: A\ntags:\n  - x\n  - y\nimage:\n  url: /a.jpg\n")
     assert [k for k, _ in keys] == ["title", "tags", "image"] and sg.nested(keys[2][1]) == {"url": "/a.jpg"}
+    fm = sg.front_matter(sg.Format(), {"title": "T", "section": "Mondo", "language": "it"}, "t", datetime(2026, 7, 8), None, None)
+    assert "section: Mondo" in fm or "section: \"Mondo\"" in fm
     assert sg.add_to_llms("# S\n", "T", "https://s/b/t", None, None).endswith("## Blog\n\n- [T](https://s/b/t)\n")
     assert sg.add_to_llms("- [T](https://s/b/t)\n", "T", "https://s/b/t", None, None) is None
     assert sg.add_to_sitemap("<sitemapindex></sitemapindex>", "https://s/x", datetime(2026, 1, 1)) is None

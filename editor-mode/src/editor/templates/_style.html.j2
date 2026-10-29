@@ -18,16 +18,17 @@ h3 { margin: 0; font-size: 16px; font-weight: 600; }
 p { margin: 0; }
 .shell { display: flex; flex-wrap: wrap; min-height: 100vh; }
 .nav { flex: 1 1 232px; max-width: 100%; padding: 24px 16px; background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
-.nav > a { display: flex; align-items: center; padding: 9px 12px; min-height: 40px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-size: 14px; }
-.nav > a:hover { background: var(--track); color: var(--ink); }
+.nav > a:not(.brand) { display: flex; align-items: center; padding: 9px 12px; min-height: 40px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-size: 14px; }
+.nav > a:not(.brand):hover { background: var(--track); color: var(--ink); }
 .nav > a.on { background: var(--ink); color: #FFFFFF; }
-.brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0 12px 20px; }
+.brand { text-decoration: none; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0 12px 20px; }
 .brand .logo { display: block; height: 36px; width: auto; }
 .brand small { font-size: 12px; color: var(--muted); padding-left: 2px; }
 .switch { display: flex; flex-direction: column; gap: 4px; padding: 0 0 16px; }
 .switch label { font-size: 12px; color: var(--muted); padding: 0 12px; }
 .grow { flex-grow: 1; min-height: 24px; }
-.who { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px; margin-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.who .name { overflow-wrap: anywhere; color: var(--ink); }
+.who { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 12px; margin-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 .main { flex: 999 1 560px; min-width: 0; padding: 32px clamp(16px, 3vw, 40px) 56px; display: flex; flex-direction: column; gap: 24px; }
 .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .head > div:first-child { display: flex; flex-direction: column; gap: 6px; }
@@ -180,6 +181,18 @@ tr.off { background: #FCF6F5; }
 .field input, .field select, .switch select, .field textarea { min-height: 40px; padding: 0 10px; border: 1px solid #C9CDC7; border-radius: 8px; font: 400 14px var(--sans); color: var(--ink); background: var(--surface); }
 td select { min-height: 32px; padding: 0 8px; border: 1px solid #C9CDC7; border-radius: 8px; font: 400 13px var(--sans); color: var(--ink); background: var(--surface); }
 .field textarea { padding: 10px; font: 13px/1.5 var(--mono); min-height: 360px; }
+form.row input[type=number], form.row select { min-height: 36px; padding: 0 10px; border: 1px solid #C9CDC7; border-radius: 8px; font: 400 14px var(--sans); color: var(--ink); background: var(--surface); }
+.target-form { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.target-form .cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 16px; align-items: start; }
+.target-form .field, .target-form .check { white-space: nowrap; }
+.target-form .field input, .target-form .field select { width: 100%; min-width: 0; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); }
+.target-form .only-wordpress, .target-form .only-github { display: none; }
+.target-form:has(select[name=kind] option[value=wordpress]:checked) .only-wordpress,
+.target-form:has(select[name=kind] option[value=github]:checked) .only-github { display: grid; }
+.target-form:has(select[name=kind] option[value=wordpress]:checked) label.only-wordpress,
+.target-form:has(select[name=kind] option[value=github]:checked) label.only-github { display: flex; }
+.field textarea[rows] { min-height: 0; font: 400 14px/1.5 var(--sans); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
 .label-up { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

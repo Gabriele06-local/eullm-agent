@@ -20,20 +20,9 @@
 
 <div class="cols">
   <section class="card pad col-wide" aria-labelledby="h-plan">
-    <h2 id="h-plan">{{ _('Uso del piano') }}</h2>
-    {% if plan_state %}<p class="hint">{{ _('Piano {plan} · {state}.', plan=plan_state.plan_name, state=_(plan_state.label)|lower) }} <a href="/account">{{ _('Abbonamento e fatturazione') }}</a></p>{% endif %}
-    {% for mt in meters %}
-    <div class="meter">
-      <span>{{ _(mt.label) }}</span>
-      {% if mt.limit %}
-      <div class="bar" role="img" aria-label="{{ mt.pct }}%"><i {% if mt.pct >= 90 %}class="hype"{% endif %} style="width: {{ mt.pct }}%"></i></div>
-      {% else %}<span class="hint">{{ _('senza limite') }}</span>{% endif %}
-      <span class="num" style="text-align: right;">{% if mt.money %}€ {{ mt.used|num }}{% if mt.limit %} / {{ mt.limit|num(0) }}{% endif %}{% else %}{{ mt.used|int }}{% if mt.limit %} / {{ mt.limit|int }}{% endif %}{% endif %}</span>
-    </div>
-    {% else %}
-    <p class="hint">{{ _("Nessun dato d'uso disponibile.") }}</p>
-    {% endfor %}
-    <p class="hint">{{ _("Il piano lo imposta chi gestisce il servizio. Quando un limite è raggiunto l'agente si ferma su quella voce e te lo dice, senza costi a sorpresa.") }}</p>
+    <h2 id="h-plan">{{ _('Piano') }}</h2>
+    <p class="lead">{% if plan_state %}{{ _('Piano {plan} · {state}.', plan=plan_state.plan_name, state=_(plan_state.label)|lower) }}{% elif usage and usage.plan.get('plan') %}{{ _('Piano {plan}', plan=usage.plan.get('plan')) }}{% endif %}</p>
+    <p><a class="btn" href="/plan">{{ _('Piano, consumi e pagamento') }}</a></p>
   </section>
 
   <section class="card pad col-side" aria-labelledby="h-prefs">

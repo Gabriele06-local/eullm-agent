@@ -46,6 +46,7 @@ ROLES = {
     "tags": ("tags", "keywords"),
     "slug": ("slug",),
     "lang": ("lang", "language", "locale"),
+    "section": ("section", "category", "rubrica"),
 }
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
@@ -222,10 +223,12 @@ def front_matter(fmt: Format, payload: dict, slug: str, when: datetime, image_re
     tags = [payload["keyphrase"]] if payload.get("keyphrase") else []
     if not fmt.learned:
         fm = {"title": payload["title"], "description": description, "slug": slug, "date": when.isoformat(),
-              "lang": payload.get("language"), "keywords": tags, "image": image_ref, "image_alt": image_alt}
+              "lang": payload.get("language"), "section": payload.get("section"), "keywords": tags,
+              "image": image_ref, "image_alt": image_alt}
         return "---\n" + "\n".join(f"{k}: {_q(v)}" for k, v in fm.items() if v not in (None, "")) + "\n---\n"
     values = {"title": payload["title"], "description": description, "slug": slug,
-              "lang": payload.get("language"), "tags": tags, "image_alt": image_alt}
+              "lang": payload.get("language"), "section": payload.get("section"), "tags": tags,
+              "image_alt": image_alt}
     lines = []
     for key in fmt.keys:
         role = _role(key) if fmt.roles.get(_role(key) or "") == key else None
@@ -249,6 +252,8 @@ def front_matter(fmt: Format, payload: dict, slug: str, when: datetime, image_re
         elif role:
             if values.get(role) not in (None, ""):
                 lines.append(f"{key}: {_q(values[role])}")
+            elif key in fmt.constants:  # a category every post shares, when the article has none
+                lines.append(f"{key}: {fmt.constants[key]}")
         elif key.lower() == "draft":
             lines.append(f"{key}: false")
         elif key.lower() in ("published", "publish"):

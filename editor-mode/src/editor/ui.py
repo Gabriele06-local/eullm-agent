@@ -21,7 +21,7 @@ from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
 from . import queue
-from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, usage, vault
+from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, trials, usage, vault
 from .i18n import N_, t
 from .markdown import to_html
 
@@ -196,6 +196,14 @@ def register(app, ctx) -> None:
         chosen = next((x for x in sites if str(x.id) == wanted), sites[0] if sites else None)
         return sites, chosen
 
+    def plan_name(s) -> str | None:
+        """The name of the newsroom's plan, for the menu (also without a subscription)."""
+        code = s.execute(select(m.tenants.c.plan)).scalar()
+        if not code:
+            return None
+        with accounts._read(admin) as conn:
+            return conn.execute(select(m.plans.c.name).where(m.plans.c.code == code)).scalar() or code
+
     def render(request: Request, name: str, c: auth.Caller, s, active: str, status_code: int = 200, **data):
         sites, site = data.pop("_sites", None) or current_site(s, request)
         tz = zone(s)
@@ -216,6 +224,7 @@ def register(app, ctx) -> None:
             "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
+            "plan_name": plan_name(s),
             "activity": data.pop("activity", None) or act.recent(s, tz, problem),
             "notice": unquote(notice) if notice else None, "now": datetime.now(tz), "when": when, "days": i18n.DAYS[i18n.current()], "months": i18n.MONTHS[i18n.current()], **data,
         }, status_code=status_code)
@@ -727,6 +736,7 @@ def register(app, ctx) -> None:
             "per_day": ((body or {}).get("settings") or {}).get("proposals_per_day", props.PER_DAY) if body else None,
             "cover_style": ((body or {}).get("settings") or {}).get("cover_style") or "impact",
             "cover_text": bool(((body or {}).get("settings") or {}).get("cover_text")),
+            "sources_style": ((body or {}).get("settings") or {}).get("sources_style") or "notes",
             "auto": autopilot.settings_of(body or s.execute(select(m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "draft")
                 .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar()),
@@ -802,6 +812,8 @@ def register(app, ctx) -> None:
         d = normalise_domain(domain)
         try:
             ctx.run_analysis(c.tenant_id, d)
+        except trials.TrialUsed:
+            return done("/settings#h-sites", t("{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.", domain=d))
         except quotas.QuotaExceeded:
             return done("/settings#h-sites", t("Il piano non ha posto per un altro sito: scegline uno più grande in Abbonamento."))
         with db.tenant(c.tenant_id) as s:
@@ -890,6 +902,15 @@ def register(app, ctx) -> None:
                 autopilot.save(s, site_id, {**autopilot.settings_of(body), "enabled": False})
         return done("/site#h-auto", t("Redazione automatica fermata: non parte nessun articolo nuovo. Quelli già in "
                                       "scrittura restano bozze da rileggere."))
+
+    @app.post("/ui/sites/{site_id}/sources-style")
+    def ui_sources_style(site_id: int, style: str = Form(...), c: auth.Caller = Depends(ctx.need("owner"))):
+        if style not in ("notes", "list"):
+            raise HTTPException(400, "unknown style")
+        with db.tenant(c.tenant_id) as s:
+            if not prof.set_sources_style(s, site_id, style):
+                return done("/site", t("Approva prima il profilo: le proposte partono dalla linea approvata."))
+        return done("/site", t("Fonti negli articoli salvate: valgono dalla prossima pubblicazione."))
 
     @app.post("/ui/sites/{site_id}/discard/{version}")
     def ui_discard(site_id: int, version: int, c: auth.Caller = Depends(ctx.need("owner"))):
@@ -1470,21 +1491,44 @@ def register(app, ctx) -> None:
     def settings_page(request, c, s, new_token: str | None = None, new_link: dict | None = None,
                       error: str | None = None, status_code: int = 200):
         usage = quotas.usage(s)
-        meters = []
-        if usage is not None:
-            for what, (limit_col, used_col) in quotas.LIMITS.items():
-                used, limit = usage.used.get(used_col) or 0, usage.plan.get(limit_col)
-                meters.append({"label": QUOTA_LABELS[what], "used": used, "limit": limit, "money": what == "llm_cost",
-                               "pct": min(100, round(100 * used / limit)) if limit else 0})
         recipients = s.execute(select(m.recipients).order_by(m.recipients.c.id)).all()
         t = m.access_tokens
         tokens = s.execute(select(t.c.id, t.c.name, t.c.role, t.c.created_at, t.c.revoked_at)
                            .order_by(t.c.revoked_at.is_not(None), t.c.created_at)).all() if c.can("owner") else []
         owner = c.can("owner")
         return render(request, "settings.html.j2", c, s, "settings", status_code=status_code, usage=usage,
-                      meters=meters, recipients=recipients, tokens=tokens, new_token=new_token, new_link=new_link,
+                      recipients=recipients, tokens=tokens, new_token=new_token, new_link=new_link,
                       error=error, people=accounts.members(admin, c.tenant_id) if owner else [],
                       invited=accounts.pending_invites(admin, c.tenant_id) if owner else [])
+
+    def meters_of(usage, money: bool) -> list[dict]:
+        out = []
+        if usage is not None:
+            for what, (limit_col, used_col) in quotas.LIMITS.items():
+                if what == "llm_cost" and not money:
+                    continue
+                used, limit = usage.used.get(used_col) or 0, usage.plan.get(limit_col)
+                out.append({"label": QUOTA_LABELS[what], "used": used, "limit": limit, "money": what == "llm_cost",
+                            "pct": min(100, round(100 * used / limit)) if limit else 0})
+        return out
+
+    @app.get("/plan", response_class=HTMLResponse)
+    def plan_view(request: Request, c: auth.Caller = Depends(viewer)):
+        """The newsroom's plan in its own menu: what it is, how much of it is
+        used, and (for the owner) choosing it, paying it, the billing data."""
+        with db.tenant(c.tenant_id) as s:
+            usage = quotas.usage(s)
+            room, email = None, ""
+            if c.can("owner"):
+                with accounts._read(admin) as conn:
+                    email = conn.execute(select(m.users.c.email).where(m.users.c.id == c.user_id)).scalar() if c.user_id else None
+                room = {"tenant_id": c.tenant_id, "subscription": billing.subscription(admin, c.tenant_id),
+                        "customer": billing.customer_of(admin, c.tenant_id),
+                        "reseller": billing.reseller_of_tenant(admin, c.tenant_id) is not None}
+            return render(request, "plan.html.j2", c, s, "plan", usage=usage,
+                          meters=meters_of(usage, money=c.operator), room=room, me_email=email,
+                          plans=billing.plans(admin, public_only=True), money=billing.money,
+                          online=ctx.gateway is not None)
 
     @app.get("/settings", response_class=HTMLResponse)
     def settings_view(request: Request, c: auth.Caller = Depends(viewer)):
@@ -1601,6 +1645,12 @@ def register(app, ctx) -> None:
             with db.tenant(c.tenant_id) as s:
                 if s.execute(select(m.sites.c.id).where(m.sites.c.domain == new)).scalar() is not None:
                     return done("/site", t("{domain} c'è già tra i siti della redazione.", domain=new))
+            if ctx.admin is not None:
+                try:
+                    trials.check_domain(ctx.admin, c.tenant_id, new)
+                except trials.TrialUsed:
+                    d = new
+                    return done("/site", t("{domain} ha già avuto la prova gratuita in un'altra redazione: per lavorarci scegli un piano in Abbonamento.", domain=d))
             try:
                 manage.delete_site(db, c.tenant_id, site_id)
             except manage.ManageError as e:

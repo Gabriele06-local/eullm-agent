@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
-from . import accounts, billing, commerce, newsrooms, repo, usage
+from . import accounts, billing, commerce, newsrooms, repo, trials, usage
 from . import models as m
 from .auth import ROLES
 from .i18n import t
@@ -100,6 +100,10 @@ def register(app, ctx) -> None:
     db, admin, pages = ctx.db, ctx.admin, ctx.pages
     pages.env.filters.setdefault("tok", usage.tokens)
 
+    def refusals() -> list[dict]:
+        with accounts._read(admin) as conn:
+            return trials.refusals(conn)
+
     def link(request: Request, token: str) -> str:
         base = (ctx.public_url or str(request.base_url)).rstrip("/")
         return f"{base}/invite/{token}"
@@ -129,7 +133,7 @@ def register(app, ctx) -> None:
     def send(request: Request, token: str, kind: str, email: str, newsroom: str | None, by: str) -> dict:
         """Email the link when SMTP is configured; the link is returned
         either way, for the caller to deliver it itself."""
-        url = link(request, token)
+        url = link(request, token) if kind != "ready" else f"{(ctx.public_url or str(request.base_url)).rstrip('/')}/login"
         sent = False
         if ctx.mail is not None:
             subject, body = accounts.link_text(kind, url, newsroom, by)
@@ -241,7 +245,7 @@ def register(app, ctx) -> None:
             "customers": billing.customers(admin), "resellers": billing.resellers(admin), "plans": billing.plans(admin),
             "subs": billing.subscriptions(admin), "reseller_names": {r["id"]: r["name"] for r in billing.resellers(admin)},
             "statuses": billing.STATUS_LABELS, "money": billing.money, "online": ctx.gateway is not None,
-            "new": None, **data}, status_code=status_code)
+            "refusals": refusals(), "trial_kinds": trials.LABELS, "new": None, **data}, status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
         return resp

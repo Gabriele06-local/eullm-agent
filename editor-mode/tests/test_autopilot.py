@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
 from editor import auth, autopilot as ap, drafts, models as m, proposals as props, publishing as pub, repo
-from editor import opportunity as opp, translate as tr
+from editor import opportunity as opp, profile as prof, translate as tr
 from editor.api import create_app
 from editor.core_client import CoreClient
 
@@ -94,14 +94,14 @@ def _written(db, tenant, again=None):
 def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
     did, site_id, prop = _written(db, tenant)
-    settings(db, tenant, site_id, min_sources=1)
+    settings(db, tenant, site_id, min_sources=1, sections=["Rete", "Mondo"])
     main = pub.add_target(db, tenant, site_id, "webhook", "sito", {"url": "https://hooks.example/it"}, None)
     english = pub.add_target(db, tenant, site_id, "webhook", "site en", {"url": "https://hooks.example/en",
                                                                          "language": "en"}, None)
     tr.set_languages(db, tenant, site_id, ["en"])
     sent, translations = [], []
     with respx.mock() as router:
-        check = router.post(CORE).mock(return_value=chat(json.dumps({"publish": True, "problems": []})))
+        check = router.post(CORE).mock(return_value=chat(json.dumps({"publish": True, "problems": [], "section": "rete"})))
         out = ap.finish(db, tenant, did, core(), sent.append, translations.append)
         assert "editor-in-chief" in json.loads(check.calls[0].request.content)["messages"][0]["content"]
     assert out["target"] == "sito" and translations == ["en"] and sent == [out["publication_id"]]
@@ -110,7 +110,7 @@ def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch
         p = s.execute(select(m.publications).where(m.publications.c.id == sent[0])).one()
     assert d.status == "approved" and d.decided_by == ap.AUTO and "senza revisione umana" in d.body_md
     assert p.status == "approved" and p.target_id == main and p.mode == "publish" and p.requested_by == ap.AUTO
-    assert "senza revisione umana" in p.payload["markdown"]
+    assert "senza revisione umana" in p.payload["markdown"] and p.payload["section"] == "Rete"
     # The translation goes to the English destination, with the English label.
     with respx.mock() as router:
         router.post(CORE).mock(return_value=chat(json.dumps(ENGLISH)))
@@ -119,6 +119,7 @@ def test_the_editor_in_chief_lets_it_through_or_stops_it(db, tenant, monkeypatch
     with db.tenant(tenant) as s:
         p = s.execute(select(m.publications).where(m.publications.c.id == sent[-1])).one()
     assert out["target"] == "site en" and p.target_id == english and "without human review" in p.payload["markdown"]
+    assert p.payload["section"] == "Rete"  # the translation is in its original's section
 
     # The next one breaks a rule: it stays a draft, with the reason.
     did2, _, _ = _written(db, tenant, prop)
@@ -187,3 +188,39 @@ def test_the_switch_on_the_site_page(db, tenant):
 def prof_body(s, site_id):
     return s.execute(select(m.editorial_profiles.c.body).where(
         m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+
+
+def test_sources_shown_discreetly():
+    body = ("# T\n\nPrima frase.[^1] Seconda.[^2][^3]\n\n## Fonti\n\n"
+            "[^1]: [Rete completa](https://a.example/1), Open Fiber\n"
+            "[^2]: [Altro](https://a.example/2), Open Fiber\n"
+            "[^3]: [Notizia](https://b.example/x)\n")
+    out = drafts.discreet_sources(body)
+    assert "[^" not in out and "Prima frase. Seconda." in out
+    assert out.endswith("**Fonti:** [Open Fiber](https://a.example/1) · [Notizia](https://b.example/x)\n")
+    assert drafts.discreet_sources("# T\n\nTesto.\n") == "# T\n\nTesto.\n"
+
+
+def test_a_site_with_discreet_sources_publishes_them_in_one_line(db, tenant, monkeypatch):
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    did, site_id, _ = _written(db, tenant)
+    settings(db, tenant, site_id, min_sources=1)
+    pub.add_target(db, tenant, site_id, "webhook", "sito", {"url": "https://hooks.example/it"}, None)
+    with db.tenant(tenant) as s:
+        assert prof.set_sources_style(s, site_id, "list")
+    sent = []
+    with respx.mock() as router:
+        router.post(CORE).mock(return_value=chat(json.dumps({"publish": True, "problems": []})))
+        ap.finish(db, tenant, did, core(), sent.append)
+    with db.tenant(tenant) as s:
+        p = s.execute(select(m.publications).where(m.publications.c.id == sent[0])).one()
+        d = s.execute(select(m.drafts.c.body_md).where(m.drafts.c.id == did)).scalar()
+    assert "[^1]" in d  # the draft keeps its notes
+    assert "[^" not in p.payload["markdown"] and "**Fonti:** [" in p.payload["markdown"]
+    assert "senza revisione umana" in p.payload["markdown"]
+    token = auth.create_token(db, tenant, "owner-user", "owner")
+    c = TestClient(create_app(db, core=core()))
+    c.post("/login", data={"token": token}, follow_redirects=False)
+    assert "Fonti negli articoli salvate" in c.post(f"/ui/sites/{site_id}/sources-style", data={"style": "notes"}).text
+    with db.tenant(tenant) as s:
+        assert prof_body(s, site_id)["settings"]["sources_style"] == "notes"

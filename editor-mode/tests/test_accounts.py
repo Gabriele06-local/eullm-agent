@@ -80,7 +80,7 @@ def test_the_billing_system_creates_a_newsroom_and_its_owner_joins(db, admin):
                                                             "name": "Capo"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/"
     home = c.get("/")
-    assert home.status_code == 200 and "capo@example.com · owner" in home.text
+    assert home.status_code == 200 and ">capo@example.com</span>" in home.text
     # A link works once.
     assert c.get(f"/invite/{token_of(invite['url'])}").text.count("Link non valido") == 1
     # Later, with email and password.
@@ -141,7 +141,8 @@ def test_owners_invite_people_with_a_role(db, tenant, admin):
     r = g.post(f"/invite/{token_of(url)}", data={"password": "password di giulia", "again": "password di giulia"},
                follow_redirects=False)
     assert r.status_code == 303
-    assert "giulia@example.com · editor" in g.get("/").text
+    page = g.get("/").text
+    assert ">giulia@example.com</span>" in page and "<span>editor</span>" in page
     assert "Persone della redazione" not in g.get("/settings").text
     assert g.post("/ui/people/invite", data={"email": "x@example.com", "role": "owner"}).status_code in (303, 403)
     giulia = next(p for p in accounts.members(admin, tenant) if p.email == "giulia@example.com")
@@ -168,7 +169,7 @@ def test_operator_console_and_entering_a_newsroom(db, tenant, admin):
     r = c.get(f"/admin/enter/{tenant}", follow_redirects=False)
     assert r.headers["location"] == "/"
     home = c.get("/")
-    assert "op@example.com · owner" in home.text and "Amministrazione" in home.text
+    assert ">op@example.com</span>" in home.text and "Amministrazione" in home.text
     reset = c.post("/admin/reset", data={"email": "anna@example.com"})
     url = reset.text.split('<div class="token">')[1].split("<")[0]
     TestClient(c.app).post(f"/invite/{token_of(url)}", data={"password": "nuova password", "again": "nuova password"})
@@ -352,3 +353,16 @@ def test_going_back_stays_on_this_site():
     assert safe_path("/trends#p-3") == "/trends#p-3"
     for bad in ("//evil.com", "/\t/evil.com", "/\\evil.com", "https://evil.com", "/\n/x"):
         assert safe_path(bad) == "/"
+
+
+def test_a_failed_email_says_why_in_the_log(caplog):
+    from types import SimpleNamespace
+
+    def refused(*a, **k):
+        raise ConnectionRefusedError("connection refused")
+
+    st = SimpleNamespace(smtp_host="mail.example", smtp_port=587, smtp_user="", smtp_password="", mail_from="a@example.com")
+    send = accounts.smtp_mailer(st, smtp_factory=refused)
+    with pytest.raises(ConnectionRefusedError):
+        send("b@example.com", "s", "b")
+    assert "email to b@example.com not sent via mail.example:587: ConnectionRefusedError" in caplog.text

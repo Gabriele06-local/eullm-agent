@@ -1,0 +1,41 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ _('Il mio piano') }}{% endblock %}
+{% block main %}
+{% set sub = plan_state or (room.subscription if room else none) %}
+<header class="head">
+  <div>
+    <span class="kicker">{{ _('Il mio piano') }}</span>
+    <h1>{{ sub.plan_name if sub else plan_name or _('Il mio piano') }}</h1>
+  </div>
+  {% if sub %}<span class="chip {{ 'teal' if sub.status == 'trialing' else 'green' if sub.status == 'active' else 'amber' }}">{{ sub.label }}</span>{% endif %}
+</header>
+{% with page="plan" %}{% include "_help.html.j2" %}{% endwith %}
+
+<section class="card pad" aria-labelledby="h-use">
+  <h2 id="h-use">{{ _('Quanto hai usato') }}</h2>
+  {% for mt in meters %}
+  <div class="meter">
+    <span>{{ _(mt.label) }}</span>
+    {% if mt.limit %}
+    <div class="bar" role="img" aria-label="{{ mt.pct }}%"><i {% if mt.pct >= 90 %}class="hype"{% endif %} style="width: {{ mt.pct }}%"></i></div>
+    {% else %}<span class="hint">{{ _('senza limite') }}</span>{% endif %}
+    <span class="num" style="text-align: right;">{% if mt.money %}€ {{ mt.used|num }}{% if mt.limit %} / {{ mt.limit|num(0) }}{% endif %}{% else %}{{ mt.used|int }}{% if mt.limit %} / {{ mt.limit|int }}{% endif %}{% endif %}</span>
+  </div>
+  {% else %}
+  <p class="hint">{{ _("Nessun dato d'uso disponibile.") }}</p>
+  {% endfor %}
+  {% if usage and usage.plan.get('max_languages') %}<div class="list-row"><span>{{ _('Lingue per sito') }}</span><span class="num">{{ usage.plan.get('max_languages') }}</span></div>{% endif %}
+  <p class="hint">{{ _("Quando un limite è raggiunto la redazione si ferma su quella voce e te lo dice, senza costi a sorpresa. Il mese riparte il primo giorno del mese.") }}</p>
+</section>
+
+{% if room %}
+<section class="card" aria-labelledby="h-sub">
+  <div class="card-head"><h2 id="h-sub">{{ _('Abbonamento') }}</h2></div>
+  <div class="pad">
+    {% set r = room %}{% set back = 'plan' %}{% include "_subscription.html.j2" %}
+  </div>
+</section>
+{% else %}
+<p class="card pad hint">{{ _('Il piano e il pagamento li gestisce il proprietario della redazione.') }}</p>
+{% endif %}
+{% endblock %}

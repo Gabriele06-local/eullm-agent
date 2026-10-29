@@ -1,0 +1,62 @@
+{
+ "Il piano della redazione: cosa comprende, quanto ne hai usato questo mese e, per il proprietario, la scelta del piano, il pagamento e i dati di fatturazione.": {
+  "en": "The newsroom's plan: what it includes, how much of it you have used this month and, for the owner, choosing the plan, paying and the billing details.",
+  "de": "Der Tarif der Redaktion: was er umfasst, wie viel Sie diesen Monat davon genutzt haben und, für den Inhaber, die Wahl des Tarifs, die Zahlung und die Rechnungsdaten.",
+  "fr": "La formule de la rédaction : ce qu'elle comprend, ce que vous en avez utilisé ce mois-ci et, pour le propriétaire, le choix de la formule, le paiement et les coordonnées de facturation.",
+  "es": "El plan de la redacción: qué incluye, cuánto has usado este mes y, para el propietario, la elección del plan, el pago y los datos de facturación."
+ },
+ "In prova vedi i giorni che restano. Scegli il piano e paghi con Mollie: torni qui e, appena il pagamento è confermato (di solito entro un minuto), la redazione risulta attiva con la data del rinnovo.": {
+  "en": "During the trial you see the days left. Choose the plan and pay with Mollie: you come back here and, as soon as the payment is confirmed (usually within a minute), the newsroom shows as active with its renewal date.",
+  "de": "Während des Tests sehen Sie die verbleibenden Tage. Wählen Sie den Tarif und bezahlen Sie mit Mollie: Sie kehren hierher zurück, und sobald die Zahlung bestätigt ist (meist innerhalb einer Minute), ist die Redaktion mit dem Verlängerungsdatum aktiv.",
+  "fr": "Pendant l'essai, vous voyez les jours restants. Choisissez la formule et payez avec Mollie : vous revenez ici et, dès que le paiement est confirmé (en général en moins d'une minute), la rédaction apparaît active avec sa date de renouvellement.",
+  "es": "Durante la prueba ves los días que quedan. Elige el plan y paga con Mollie: vuelves aquí y, en cuanto se confirma el pago (normalmente en un minuto), la redacción aparece activa con la fecha de renovación."
+ },
+ "Le barre vicine al limite: quando una voce è piena, quel lavoro si ferma finché il mese non riparte o finché non passi a un piano più grande. Compila i dati di fatturazione prima di pagare.": {
+  "en": "The bars close to their limit: when one is full, that work stops until the month starts again or you move to a bigger plan. Fill in the billing details before paying.",
+  "de": "Die Balken nahe am Limit: Ist eine Position voll, stoppt diese Arbeit, bis der Monat neu beginnt oder Sie in einen größeren Tarif wechseln. Füllen Sie die Rechnungsdaten vor der Zahlung aus.",
+  "fr": "Les barres proches de leur limite : quand une rubrique est pleine, ce travail s'arrête jusqu'au mois suivant ou jusqu'à ce que vous passiez à une formule supérieure. Remplissez les coordonnées de facturation avant de payer.",
+  "es": "Las barras cerca del límite: cuando una está llena, ese trabajo se detiene hasta que empiece el mes siguiente o pases a un plan mayor. Rellena los datos de facturación antes de pagar."
+ },
+ "{n} giorno di prova": {
+  "en": "{n} trial day left",
+  "de": "noch {n} Testtag",
+  "fr": "{n} jour d'essai restant",
+  "es": "{n} día de prueba"
+ },
+ "{n} giorni di prova": {
+  "en": "{n} trial days left",
+  "de": "noch {n} Testtage",
+  "fr": "{n} jours d'essai restants",
+  "es": "{n} días de prueba"
+ },
+ "Quanto hai usato": {
+  "en": "How much you have used",
+  "de": "Ihre Nutzung",
+  "fr": "Votre consommation",
+  "es": "Cuánto has usado"
+ },
+ "Quando un limite è raggiunto la redazione si ferma su quella voce e te lo dice, senza costi a sorpresa. Il mese riparte il primo giorno del mese.": {
+  "en": "When a limit is reached the newsroom stops on that item and tells you, with no surprise costs. The month starts again on the first day of the month.",
+  "de": "Ist ein Limit erreicht, stoppt die Redaktion bei dieser Position und sagt es Ihnen, ohne überraschende Kosten. Der Monat beginnt am ersten Tag des Monats neu.",
+  "fr": "Quand une limite est atteinte, la rédaction s'arrête sur cette rubrique et vous le dit, sans coûts surprises. Le mois repart le premier jour du mois.",
+  "es": "Cuando se alcanza un límite, la redacción se detiene en ese punto y te lo dice, sin costes sorpresa. El mes vuelve a empezar el primer día del mes."
+ },
+ "Il piano e il pagamento li gestisce il proprietario della redazione.": {
+  "en": "The plan and the payment are managed by the owner of the newsroom.",
+  "de": "Tarif und Zahlung verwaltet der Inhaber der Redaktion.",
+  "fr": "La formule et le paiement sont gérés par le propriétaire de la rédaction.",
+  "es": "El plan y el pago los gestiona el propietario de la redacción."
+ },
+ "Piano, consumi e pagamento": {
+  "en": "Plan, usage and payment",
+  "de": "Tarif, Nutzung und Zahlung",
+  "fr": "Formule, consommation et paiement",
+  "es": "Plan, consumo y pago"
+ },
+ "Il mio piano": {
+  "en": "My plan",
+  "de": "Mein Tarif",
+  "fr": "Ma formule",
+  "es": "Mi plan"
+ }
+}

@@ -94,6 +94,14 @@
   <label class="row" style="gap: 4px; align-items: center;"><input type="checkbox" name="text" value="1" {% if n.cover_text %}checked{% endif %}> {{ _("con un titolo di 2-4 parole nell'immagine") }}</label>
   <button class="btn" type="submit">{{ _('Salva') }}</button>
 </form>
+<form class="row" method="post" action="/ui/sites/{{ site.id }}/sources-style" style="align-items: center; gap: 8px; margin-top: 6px;">
+  <span class="hint">{{ _('Fonti negli articoli pubblicati') }}</span>
+  <select name="style" aria-label="{{ _('Fonti negli articoli pubblicati') }}">
+    <option value="list" {% if n.sources_style == 'list' %}selected{% endif %}>{{ _('Discrete: una riga in fondo, testo pulito') }}</option>
+    <option value="notes" {% if n.sources_style != 'list' %}selected{% endif %}>{{ _('Note: un numero dopo ogni frase') }}</option>
+  </select>
+  <button class="btn" type="submit">{{ _('Salva') }}</button>
+</form>
 {% endif %}
 {% endif %}
 
