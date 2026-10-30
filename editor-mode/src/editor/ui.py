@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import queue
+from . import opportunity as oppo, queue
 from . import activity as act, accounts, auth, autopilot, billing, delivery, drafts, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, trials, usage, vault
 from .i18n import N_, t
 from .markdown import to_html
@@ -474,8 +474,20 @@ def register(app, ctx) -> None:
                 why.append(t("Rientra in «{topic}», uno degli argomenti del tuo profilo editoriale.", topic=matched))
             elif single and basis.get("picked_by") == "model":
                 why.append(t("Il modello l'ha scelta tra le notizie delle ultime 72 ore come utile ai lettori del sito."))
+            # Why today: how fresh the news is and how many sources tell it.
+            today = []
+            newest = max((n.published_at for n in cited if n.published_at), default=None)
+            if newest is not None:
+                hours = max(0, int((datetime.now(UTC) - newest).total_seconds() // 3600))
+                ago = (t("meno di un'ora fa") if hours < 1 else t("{n} ore fa", n=hours) if hours < 48
+                       else t("{n} giorni fa", n=hours // 24))
+                today.append(t("Ne parlano {k} fonti diverse; la notizia più recente è uscita {ago}.", k=sources, ago=ago)
+                             if sources > 1 else t("La notizia è uscita {ago}.", ago=ago))
             if model and r.why_now:
-                why.append(r.why_now)
+                today.append(r.why_now)
+            # The site's own articles it could complete, or one it should rather update.
+            posts = oppo.related_posts(s, r.site_id, [r.title] + [n.title for n in cited])
+            update = posts[0] if posts and posts[0]["score"] >= oppo.UPDATE_SIMILARITY else None
             opp = round(r.opportunity or 0)
             hype = None if r.hype is None else round(r.hype)
             if hype is None:
@@ -497,6 +509,9 @@ def register(app, ctx) -> None:
                 "format": t(FORMATS[r.format]) if r.format in FORMATS else r.format,
                 "news": cited,
                 "why": " ".join(why),
+                "today": " ".join(today),
+                "update": update,
+                "related": [x for x in posts if x is not update],
                 "opportunity": t("Punteggio {n}/100 tra le notizie delle ultime 72 ore: vicinanza ai tuoi argomenti, "
                                  "fonte seguita dal sito e sua affidabilità, freschezza, quante fonti la riportano, "
                                  "novità rispetto a ciò che hai già scritto.", n=opp) if single else
@@ -750,6 +765,7 @@ def register(app, ctx) -> None:
             "drafts": drafts, "publications": pubs,
             "targets": count(m.publish_targets, pt.site_id == site.id, pt.enabled.is_not(False)),
             "cost": cost[0], "calls": cost[1],
+            "discards": props.discards(s, site.id, month_ago),
         }
 
     def site_page(request, c, s, sites, site, editing: bool = False, status_code: int = 200, error: str | None = None):
@@ -1157,13 +1173,20 @@ def register(app, ctx) -> None:
         return done("/", t("Raccolta partita: la segui passo per passo nel riquadro Attività."))
 
     @app.post("/ui/proposals/{proposal_id}")
-    def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"),
+    def ui_decide(proposal_id: int, accept: str = Form(...), back: str = Form("/trends"), reason: str = Form(""),
                   c: auth.Caller = Depends(ctx.need("editor"))):
-        if not props.decide(db, c.tenant_id, proposal_id, accept == "1", c.name):
+        if not props.decide(db, c.tenant_id, proposal_id, accept == "1", c.name, reason=reason or None):
             return done(safe_path(back, "/trends"), t("Questa proposta era già stata decisa."))
         if accept == "1" and ctx.core is not None:
             ctx.run_draft(c.tenant_id, proposal_id)
             return done(safe_path(back, "/trends"), t("Proposta accettata: la bozza è in scrittura, la segui nel riquadro Attività."))
+        if accept != "1" and reason in props.REASONS:
+            return done(safe_path(back, "/trends"), {
+                "already_covered": t("Proposta scartata: i temi già trattati sul sito scendono nelle prossime proposte."),
+                "off_topic": t("Proposta scartata: i temi come questo scendono nelle prossime proposte."),
+                "too_generic": t("Proposta scartata: le prossime proposte saranno più specifiche."),
+                "unreliable_source": t("Proposta scartata: le fonti che citava valgono meno per questo sito."),
+            }[reason])
         return done(safe_path(back, "/trends"), t("Proposta accettata.") if accept == "1" else t("Proposta scartata."))
 
     @app.post("/ui/proposals/{proposal_id}/draft")

@@ -1,0 +1,13 @@
+{# "Scarta" with its reason: each one teaches the newsroom something different. Needs `p` and `back`. #}
+<details class="discard" style="position: relative;">
+  <summary class="btn sm" style="list-style: none;">{{ _('Scarta') }}</summary>
+  <form method="post" action="/ui/proposals/{{ p.id }}" class="card pad" style="position: absolute; right: 0; z-index: 5; min-width: 220px; display: grid; gap: 6px; margin-top: 4px;">
+    <input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="{{ back }}">
+    <span class="hint">{{ _('Perché la scarti? La redazione ne tiene conto.') }}</span>
+    <button class="btn sm" type="submit" name="reason" value="already_covered">{{ _('Già trattato') }}</button>
+    <button class="btn sm" type="submit" name="reason" value="off_topic">{{ _('Fuori tema') }}</button>
+    <button class="btn sm" type="submit" name="reason" value="too_generic">{{ _('Troppo generico') }}</button>
+    <button class="btn sm" type="submit" name="reason" value="unreliable_source">{{ _('Fonte poco affidabile') }}</button>
+    <button class="btn sm" type="submit" name="reason" value="">{{ _('Scarta e basta') }}</button>
+  </form>
+</details>

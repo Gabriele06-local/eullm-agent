@@ -175,7 +175,7 @@ def _score(c: Candidate, new: float) -> float:
     return round(100 * sum(WEIGHTS[k] * v for k, v in parts.items()), 2)
 
 
-def _prompt(profile: dict, cands: list[Candidate]) -> str:
+def _prompt(profile: dict, cands: list[Candidate], learned: list[str] | None = None) -> str:
     style = profile.get("style", {})
     lines = [
         f"Site: {profile.get('name')} ({profile.get('domain')}), language: {profile.get('language')}",
@@ -183,6 +183,7 @@ def _prompt(profile: dict, cands: list[Candidate]) -> str:
         f"Audience: {(profile.get('audience') or {}).get('value') or 'not determined'}",
         f"Tone: {style.get('tone') or 'not determined'}",
         f"Subtopics: {', '.join(s['name'] for s in profile.get('subtopics', []))}",
+        *(learned or []),
         "News:",
     ]
     for c in cands:
@@ -204,6 +205,8 @@ def fill(db, tenant_id: str, site_id: int, n: int, core: CoreClient | None = Non
         if prof is None:
             return []
         cands = candidates(s, site_id, prof.body, now)
+        from .proposals import lessons
+        learned = lessons(s, site_id)
     if not cands:
         return []
     shown = cands[:SHOWN]
@@ -212,7 +215,7 @@ def fill(db, tenant_id: str, site_id: int, n: int, core: CoreClient | None = Non
     if core is not None:
         try:
             with usage.tagged(db, tenant_id, "proposal", site_id=site_id, ref=f"pick:{site_id}"):
-                options, _ = core.chat_json(SYSTEM.format(n=n), _prompt(prof.body, shown),
+                options, _ = core.chat_json(SYSTEM.format(n=n), _prompt(prof.body, shown, learned),
                                             _options_validator(set(by_id), n))
             for o in options:
                 c = by_id[o["citations"][0]]

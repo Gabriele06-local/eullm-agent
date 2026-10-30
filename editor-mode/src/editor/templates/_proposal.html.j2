@@ -15,6 +15,20 @@
   <dt>{{ _('Perché per il tuo sito') }}</dt>
   <dd>{{ d.why }}</dd>
   {% endif %}
+  {% if d.today %}
+  <dt>{{ _('Perché oggi') }}</dt>
+  <dd>{{ d.today }}</dd>
+  {% endif %}
+  {% if d.update %}
+  <dt>{{ _('Meglio aggiornare un tuo articolo') }}</dt>
+  <dd><a href="{{ d.update.url }}" target="_blank" rel="noopener">{{ d.update.title }}</a>{% if d.update.published_at %} <span class="hint">{{ when(d.update.published_at, 'date') }}</span>{% endif %}<br><span class="hint">{{ _('Il tuo sito ha già un articolo molto simile: la bozza lo aggiorna con le novità invece di ripeterlo.') }}</span></dd>
+  {% endif %}
+  {% if d.related %}
+  <dt>{{ _('Completa questi tuoi articoli') }}</dt>
+  <dd><ul>
+    {% for a in d.related %}<li><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a></li>{% endfor %}
+  </ul><span class="hint">{{ _('La bozza li cita con un link, così i lettori trovano anche quelli.') }}</span></dd>
+  {% endif %}
   <dt>{{ _('Cosa dicono i punteggi') }}</dt>
   <dd>{{ d.opportunity }}<br>{{ d.hype }}</dd>
 </dl>
