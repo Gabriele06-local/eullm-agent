@@ -1471,5 +1471,14 @@
  "Versione non disponibile.": "Version not available.",
  "Un aggiornamento è già in corso.": "An update is already running.",
  "{n} giorno rimasto": "{n} day left",
- "{n} giorni rimasti": "{n} days left"
+ "{n} giorni rimasti": "{n} days left",
+ "La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.": "The trial or the paid period is over: you only get proposals, two a day per site. Choose a plan to write drafts and publish.",
+ "Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.": "Your plan does not include the automatic newsroom: the rules stay saved and start when you move to a plan that includes it.",
+ "Vedi i piani": "See the plans",
+ "La prova di {name} è finita": "The trial of {name} is over",
+ "Il periodo pagato di {name} è finito": "The paid period of {name} is over",
+ "Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno per sito: niente bozze e niente pubblicazioni.": "From today the newsroom {name} only sends you article proposals, two a day per site: no drafts and no publishing.",
+ "Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:": "Choose a plan and everything starts again, with your sites, profiles and sources:",
+ "Senza un piano la redazione si ferma il {date}; i tuoi dati restano.": "Without a plan the newsroom stops on {date}; your data stay.",
+ "La prova è finita: per scrivere le bozze scegli un piano.": "The trial is over: choose a plan to write drafts."
 }

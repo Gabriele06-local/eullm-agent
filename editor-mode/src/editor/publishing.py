@@ -37,7 +37,7 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import drafts, models as m
-from . import seo
+from . import quotas, seo
 from .markdown import to_html
 
 log = logging.getLogger(__name__)
@@ -282,6 +282,8 @@ def request(db, tenant_id: str, draft_id: int, target_id: int, mode: str, by: st
             raise PublishError("draft or target not found")
         if d.status != "approved":
             raise PublishError("only approved drafts can be published")
+        if quotas.proposals_only(s):
+            raise PublishError("the trial is over: choose a plan to publish")
         if t.site_id != d.site_id or not t.enabled:
             raise PublishError("target not available for this site")
         body = d.body_md

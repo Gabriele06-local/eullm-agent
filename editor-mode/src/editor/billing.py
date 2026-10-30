@@ -2,7 +2,9 @@
 
 The public site sends a new customer through the operator API (signup):
 the customer's billing data, a newsroom on the trial plan, its owner
-invited by email. When the trial ends without a payment the newsroom is
+invited by email. When the trial ends without a payment the newsroom goes to proposals only
+for PROPOSALS_ONLY_DAYS (a couple of proposals a day, no drafts, no
+publishing: the owner still sees what the newsroom finds), then it is
 put on hold: its scheduled work stops, its data stay, and its owner can
 still sign in to choose a plan and pay (/account). A payment (Mollie, a
 bank transfer recorded by the operator, or a reseller's word) starts or
@@ -34,6 +36,7 @@ log = logging.getLogger(__name__)
 TRIAL_PLAN = "trial"
 GRACE_DAYS = 3  # after a paid period ends, before the hold
 REMIND_DAYS = 2  # before the trial ends
+PROPOSALS_ONLY_DAYS = 30  # after the trial or a paid period, before the hold
 INTERVALS = ("month", "year")
 PROVIDERS = ("manual", "mollie", "reseller")
 STATUS_LABELS = {
@@ -101,10 +104,10 @@ def save_plan(admin, code: str, fields: dict) -> None:
     limits until their plan is applied again (the next payment)."""
     allowed = {"name", "description", "price_month_cents", "price_year_cents", "trial_days", "max_sites",
                "max_languages", "max_active_sources", "max_items_per_day", "max_drafts_month", "max_llm_cost_month",
-               "public", "sort"}
+               "public", "sort", "autopilot"}
     values = {k: v for k, v in fields.items() if k in allowed}
     for k, v in values.items():
-        if k not in ("name", "description", "public") and v is not None and (isinstance(v, bool) or v < 0):
+        if k not in ("name", "description", "public", "autopilot") and v is not None and (isinstance(v, bool) or v < 0):
             raise BillingError(t("{field}: un numero di zero o più", field=k))
     if "name" in values and not str(values["name"]).strip():
         raise BillingError(t("il piano ha bisogno di un nome"))
@@ -127,7 +130,7 @@ def create_plan(admin, code: str, name: str) -> str:
             raise BillingError(t("il piano {code} esiste già", code=code))
         last = conn.execute(select(func.max(m.plans.c.sort))).scalar() or 0
         conn.execute(insert(m.plans).values(code=code, name=name, description="", currency="EUR", trial_days=0,
-                                            public=False, sort=last + 10))
+                                            public=False, sort=last + 10, autopilot=True))
     return code
 
 
@@ -151,8 +154,12 @@ def delete_plan(admin, code: str) -> str:
 
 def apply_plan(admin, tenant_id: str, plan, core=None) -> str | None:
     """The plan's limits on the newsroom (and its model budget in the Core)."""
-    return newsrooms.update_newsroom(admin, tenant_id, {
+    warning = newsrooms.update_newsroom(admin, tenant_id, {
         "plan": plan.code, "limits": {k: getattr(plan, k) for k in PLAN_LIMITS}}, core)["warning"]
+    with admin.engine.begin() as conn:
+        conn.execute(update(m.tenants).where(m.tenants.c.tenant_id == tenant_id)
+                     .values(autopilot=plan.autopilot is not False))
+    return warning
 
 
 # --- customers -----------------------------------------------------------------------
@@ -414,6 +421,19 @@ def describe(row, now: datetime | None = None) -> dict:
     return out
 
 
+def bought_unpaid(admin, user_id: int) -> str | None:
+    """A newsroom this person owns, bought on the site ("Acquista") and not
+    paid yet: still on trial with the plan they picked waiting. Their first
+    sign-in goes straight to its payment."""
+    for x in accounts.memberships(admin, user_id):
+        if x.role != "owner":
+            continue
+        sub = subscription(admin, x.tenant_id)
+        if sub and sub["status"] == "trialing" and sub.get("desired_plan"):
+            return x.tenant_id
+    return None
+
+
 def on_hold(admin, tenant_id: str) -> bool:
     with accounts._read(admin) as conn:
         return conn.execute(select(m.tenants.c.hold).where(m.tenants.c.tenant_id == tenant_id)).scalar() == "billing"
@@ -426,6 +446,11 @@ def _hold(conn, tenant_id: str) -> None:
 def _release(conn, tenant_id: str) -> None:
     conn.execute(update(m.tenants).where(m.tenants.c.tenant_id == tenant_id, m.tenants.c.hold == "billing")
                  .values(active=True, hold=None))
+    conn.execute(update(m.tenants).where(m.tenants.c.tenant_id == tenant_id).values(proposals_only=None))
+
+
+def _proposals_only(conn, tenant_id: str, now: datetime) -> None:
+    conn.execute(update(m.tenants).where(m.tenants.c.tenant_id == tenant_id).values(proposals_only=now))
 
 
 def _leave_the_gateway(admin, tenant_id: str, sub: dict, values: dict, gateway) -> None:
@@ -541,11 +566,12 @@ def owners(admin, tenant_id: str) -> list[str]:
 
 
 def lifecycle(admin, now: datetime | None = None, mail=None, public_url: str = "") -> dict:
-    """Run every hour by the worker: reminders before a trial ends, the hold
-    when a trial or a paid period ends. Returns what it did."""
+    """Run every hour by the worker: reminders before a trial ends,
+    proposals only when a trial or a paid period ends, the hold
+    PROPOSALS_ONLY_DAYS later. Returns what it did."""
     now = _now(now)
     s, tn = m.subscriptions, m.tenants
-    report = {"reminded": [], "held": []}
+    report = {"reminded": [], "proposals_only": [], "held": []}
     with accounts._read(admin) as conn:
         rows = conn.execute(select(s.c.tenant_id, s.c.status, s.c.trial_ends_at, s.c.current_period_end,
                                    s.c.reminded_at, tn.c.name, tn.c.hold, tn.c.language)
@@ -577,9 +603,36 @@ def lifecycle(admin, now: datetime | None = None, mail=None, public_url: str = "
         if ends + grace <= now:
             with admin.engine.begin() as conn:
                 conn.execute(update(s).where(s.c.tenant_id == r.tenant_id).values(status="expired", updated_at=now))
-                _hold(conn, r.tenant_id)
-            report["held"].append(r.tenant_id)
-            log.info("newsroom %s on hold: %s ended", r.tenant_id, "trial" if r.status == "trialing" else "paid period")
+                _proposals_only(conn, r.tenant_id, now)
+            report["proposals_only"].append(r.tenant_id)
+            log.info("newsroom %s on proposals only: %s ended", r.tenant_id,
+                     "trial" if r.status == "trialing" else "paid period")
+            if mail is not None:
+                lang = r.language if r.language in i18n.LANGS else i18n.DEFAULT
+                stop = now + timedelta(days=PROPOSALS_ONLY_DAYS)
+                for to in owners(admin, r.tenant_id):
+                    try:
+                        mail(to, t("La prova di {name} è finita", lang, name=r.name)
+                             if r.status == "trialing" else t("Il periodo pagato di {name} è finito", lang, name=r.name),
+                             t("Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno "
+                               "per sito: niente bozze e niente pubblicazioni.", lang, name=r.name) + "\n\n"
+                             + t("Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:", lang)
+                             + f"\n\n{link}\n\n"
+                             + t("Senza un piano la redazione si ferma il {date}; i tuoi dati restano.", lang,
+                                 date=f"{stop:%d/%m/%Y}") + "\n")
+                    except Exception:
+                        log.exception("end of trial email to %s failed", to)
+    # Proposals only for long enough without a plan: the newsroom stops.
+    with accounts._read(admin) as conn:
+        stale = conn.execute(select(tn.c.tenant_id).where(
+            tn.c.proposals_only.is_not(None),
+            tn.c.proposals_only <= now - timedelta(days=PROPOSALS_ONLY_DAYS))).scalars().all()
+    for tenant_id in stale:
+        with admin.engine.begin() as conn:
+            conn.execute(update(tn).where(tn.c.tenant_id == tenant_id).values(proposals_only=None))
+            _hold(conn, tenant_id)
+        report["held"].append(tenant_id)
+        log.info("newsroom %s on hold: %d days of proposals only", tenant_id, PROPOSALS_ONLY_DAYS)
     return report
 
 

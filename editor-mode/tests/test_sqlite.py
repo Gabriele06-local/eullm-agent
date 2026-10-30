@@ -15,7 +15,8 @@ def local(tmp_path):
                                            "0005_billing", "0006_desired_plan", "0007_shared_archive",
                                            "0008_trend_snapshots", "0009_draft_seo", "0010_job_progress",
                                            "0011_usage_detail", "0012_proposal_basis", "0013_translations", "0014_draft_images", "0015_feeds", "0016_github_target",
-                                           "0017_more_proposals", "0018_trial_once"]
+                                           "0017_more_proposals", "0018_trial_once",
+                                           "0019_proposals_only"]
     database = Database.from_url(url)
     yield url, database
     database.engine.dispose()

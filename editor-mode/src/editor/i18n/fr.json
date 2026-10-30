@@ -1471,5 +1471,14 @@
  "Versione non disponibile.": "Version non disponible.",
  "Un aggiornamento è già in corso.": "Une mise à jour est déjà en cours.",
  "{n} giorno rimasto": "{n} jour restant",
- "{n} giorni rimasti": "{n} jours restants"
+ "{n} giorni rimasti": "{n} jours restants",
+ "La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.": "L’essai ou la période payée est terminé : vous ne recevez plus que des propositions, deux par jour et par site. Choisissez une formule pour rédiger des brouillons et publier.",
+ "Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.": "Votre formule ne comprend pas la rédaction automatique : les règles restent enregistrées et démarrent dès que vous passez à une formule qui la comprend.",
+ "Vedi i piani": "Voir les formules",
+ "La prova di {name} è finita": "L’essai de {name} est terminé",
+ "Il periodo pagato di {name} è finito": "La période payée de {name} est terminée",
+ "Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno per sito: niente bozze e niente pubblicazioni.": "À partir d’aujourd’hui, la rédaction {name} ne vous envoie que des propositions d’articles, deux par jour et par site : ni brouillons ni publications.",
+ "Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:": "Choisissez une formule et tout repart, avec vos sites, profils et sources :",
+ "Senza un piano la redazione si ferma il {date}; i tuoi dati restano.": "Sans formule, la rédaction s’arrête le {date} ; vos données sont conservées.",
+ "La prova è finita: per scrivere le bozze scegli un piano.": "L’essai est terminé : choisissez une formule pour rédiger des brouillons."
 }

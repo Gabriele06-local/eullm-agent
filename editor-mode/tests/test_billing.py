@@ -8,7 +8,7 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from editor import accounts, billing, gateway as gw
+from editor import accounts, billing, gateway as gw, quotas
 from editor.api import create_app
 from editor.db import Database
 
@@ -116,7 +116,7 @@ def test_public_plans_and_signup_with_a_trial(db, admin):
     c, sent = client(db)
     plans = c.get("/api/public/plans")
     assert plans.status_code == 200 and plans.headers["access-control-allow-origin"] == "*"
-    assert [p["code"] for p in plans.json()["plans"]] == ["starter", "pro", "business"] and plans.json()["trial_days"] == 7
+    assert [p["code"] for p in plans.json()["plans"]] == ["solo", "starter", "pro", "business", "agency"] and plans.json()["trial_days"] == 7
     assert c.post("/api/operator/signup", json={"customer": CUSTOMER}).status_code == 401
     headers = key(db)
     ref, email, ids = unique("web"), f"{unique('amm')}@rossi.it", fresh_ids()
@@ -156,9 +156,21 @@ def test_the_trial_ends_the_owner_pays_by_bank_transfer(db, admin):
     assert tid in report["reminded"] and tid not in report["held"]
     assert sent[-1][0] == email and "https://editor.example.com/account" in sent[-1][2]
     assert tid not in billing.lifecycle(admin, now + timedelta(days=5, hours=2))["reminded"]
-    # The trial ends: the newsroom stops, its owner can still reach the account page.
-    assert tid in billing.lifecycle(admin, now + timedelta(days=7, minutes=1))["held"]
-    assert billing.subscription(admin, tid)["status"] == "expired" and billing.on_hold(admin, tid)
+    # The trial ends: proposals only, the newsroom still open, no drafts and no publishing.
+    report = billing.lifecycle(admin, now + timedelta(days=7, minutes=1), mail=lambda *a: sent.append(a),
+                               public_url="https://editor.example.com")
+    assert tid in report["proposals_only"] and tid not in report["held"]
+    assert billing.subscription(admin, tid)["status"] == "expired" and not billing.on_hold(admin, tid)
+    assert sent[-1][0] == email and "solo le proposte" in sent[-1][2]
+    assert "ricevi solo le proposte" in c.get("/").text
+    with db.tenant(tid) as s:
+        assert quotas.proposals_only(s) and not quotas.autopilot_allowed(s)
+        with pytest.raises(quotas.QuotaExceeded):
+            quotas.check(s, "drafts")
+    assert tid not in billing.lifecycle(admin, now + timedelta(days=20))["held"]
+    # A month of proposals only without a plan: the newsroom stops, its owner can still reach the account page.
+    assert tid in billing.lifecycle(admin, now + timedelta(days=7 + billing.PROPOSALS_ONLY_DAYS, minutes=2))["held"]
+    assert billing.on_hold(admin, tid)
     assert c.get("/", follow_redirects=False).headers["location"] == "/login"
     r = c.post("/login", data={"email": email, "password": "password del capo"},
                follow_redirects=False)
@@ -173,9 +185,11 @@ def test_the_trial_ends_the_owner_pays_by_bank_transfer(db, admin):
     sub = r.json()
     assert sub["status"] == "active" and sub["plan_code"] == "starter" and 27 <= sub["days_left"] <= 32
     assert not billing.on_hold(admin, tid)
+    with db.tenant(tid) as s:
+        assert not quotas.proposals_only(s) and quotas.autopilot_allowed(s)
     assert c.get(f"/api/operator/tenants/{tid}", headers=headers).json()["max_drafts_month"] == 30
-    # A month and the grace days later without a payment: on hold again.
-    assert tid in billing.lifecycle(admin, now + timedelta(days=32 + billing.GRACE_DAYS))["held"]
+    # A month and the grace days later without a payment: proposals only again.
+    assert tid in billing.lifecycle(admin, now + timedelta(days=32 + billing.GRACE_DAYS))["proposals_only"]
 
 
 def test_online_payment_and_renewals_through_the_gateway(db, admin):
@@ -483,3 +497,22 @@ def test_a_second_trial_waits_for_a_plan(db, admin):
     c.post("/login", data={"email": op, "password": "password operatore"})
     page = c.get("/admin").text
     assert "Seconde prove negate" in page and f"…{ids['vat_number'][-4:]}" in page
+
+
+def test_solo_has_no_automatic_newsroom_and_a_buyer_goes_to_payment(db, admin):
+    c, sent = client(db)
+    email = f"{unique('amm')}@rossi.it"
+    out = signup(c, key(db), unique("web"), email, plan="solo").json()
+    tid = out["tenant"]["tenant_id"]
+    # Bought on the site: setting the password leads straight to the payment.
+    invite = sent[0][2].split("\n")[-2]
+    r = c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"},
+               follow_redirects=False)
+    assert r.headers["location"] == "/account"
+    assert "Sul sito hai scelto il piano Solo" in c.get("/account").text
+    # Paid: Solo's limits, and no automatic newsroom.
+    r = c.put(f"/api/operator/tenants/{tid}/subscription", json={"plan": "solo", "amount_cents": 1990}, headers=key(db))
+    assert r.status_code == 200, r.text
+    with db.tenant(tid) as s:
+        assert not quotas.autopilot_allowed(s) and not quotas.proposals_only(s)
+        assert quotas.usage(s).plan["max_drafts_month"] == 10

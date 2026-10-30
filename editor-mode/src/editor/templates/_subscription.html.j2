@@ -13,6 +13,8 @@
         <p class="error">{{ _("L'ultimo pagamento non è riuscito. Il circuito riprova nei prossimi giorni; se vuoi, paga di nuovo qui sotto.") }}</p>
       {% elif sub.status == 'canceled' %}
         <p class="lead">{% if sub.current_period_end %}{{ _('Abbonamento disdetto: la redazione resta attiva fino al {date}, poi si ferma. Puoi riattivarla scegliendo un piano.', date=sub.current_period_end.strftime('%d/%m/%Y')) }}{% else %}{{ _('Abbonamento disdetto: la redazione resta attiva, poi si ferma. Puoi riattivarla scegliendo un piano.') }}{% endif %}</p>
+      {% elif sub.status == 'expired' and r.active %}
+        <p class="lead">{{ _('La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.') }}</p>
       {% else %}
         <p class="lead">{{ _('<strong>La redazione è ferma</strong>: la prova o il periodo pagato è finito. I tuoi siti, profili, fonti e bozze sono conservati: scegli un piano e riparte da dove era.') }}</p>
       {% endif %}
