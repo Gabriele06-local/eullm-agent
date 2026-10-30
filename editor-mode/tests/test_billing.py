@@ -426,6 +426,23 @@ def test_a_second_newsroom_for_someone_with_an_account_is_announced(db, admin):
     assert sent[-1][0] == email and "Rossi Sport" in sent[-1][1] and "https://editor.example.com/login" in sent[-1][2]
 
 
+def test_a_refused_site_is_recorded_for_the_operator(db, admin, tenant):
+    from editor import trials
+
+    billing.start(admin, tenant, billing.TRIAL_PLAN)
+    domain = f"{unique('sito')}.it"
+    # The same site was already on trial in another newsroom.
+    with admin.engine.begin() as conn:
+        trials.mark(conn, [("domain", domain)], "un-altra-redazione")
+    with pytest.raises(trials.TrialUsed):
+        trials.check_domain(admin, tenant, domain)
+    # The refusal is committed, not rolled back with the exception that stopped the site.
+    with admin.engine.connect() as conn:
+        rows = trials.refusals(conn)
+    mine = [r for r in rows if r["newsroom"] == tenant]
+    assert mine and mine[0]["reasons"] == [{"kind": "domain", "value": domain, "newsroom": "un-altra-redazione"}]
+
+
 def test_the_free_trial_is_given_once():
     from editor import trials
     assert trials.norm_email(" Mario.Rossi+redazia@GoogleMail.com") == "mariorossi@gmail.com"
