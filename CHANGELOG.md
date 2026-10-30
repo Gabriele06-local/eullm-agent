@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.21.1
+
+### Changed
+
+- Console: "Controlla adesso", "Aggiorna alla X.Y.Z" and the plan forms
+  bring you back to their own section (/admin#aggiornamenti, #piani), with
+  the outcome shown there, instead of the top of the page.
+
 ## 0.21.0
 
 ### Added
@@ -24,9 +32,6 @@
 
 ### Changed
 
-- Console: "Controlla adesso", "Aggiorna alla X.Y.Z" and the plan forms
-  bring you back to their own section (/admin#aggiornamenti, #piani), with
-  the outcome shown there, instead of the top of the page.
 - The worker stops in seconds: on SIGTERM it gives the running jobs 20
   seconds, then puts them back in the queue (attempt not spent) and exits.
   Before, a restart or an update could wait up to two minutes for a long
