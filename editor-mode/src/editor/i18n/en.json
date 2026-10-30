@@ -1531,5 +1531,11 @@
  "Modello per passo": "Model per step",
  "Il nome di un modello della sezione models di core.yaml (per esempio haiku, sonnet, opus); vuoto: il modello predefinito del Core. Un nome che core.yaml non conosce non ferma nulla: risponde il predefinito e il log lo segnala. Le redazioni non vedono quale modello usano.": "The name of a model in the models section of core.yaml (for example haiku, sonnet, opus); empty: the Core’s default model. A name core.yaml does not know stops nothing: the default answers and the log says so. Newsrooms do not see which model they use.",
  "Modelli dei passi salvati: valgono dalla prossima chiamata, entro un minuto.": "Step models saved: they apply from the next call, within a minute.",
- "Caporedattore AI": "AI managing editor"
+ "Caporedattore AI": "AI managing editor",
+ "Installazioni di Redazia": "Redazia installations",
+ "Ogni installazione chiede a questo server l'ultima versione ogni 6 ore, con un identificativo casuale e la versione installata. Chi ha EDITOR_TELEMETRY=off non viene contato.": "Every installation asks this server for the latest version every 6 hours, with a random identifier and the installed version. Installations with EDITOR_TELEMETRY=off are not counted.",
+ "Attive negli ultimi 7 giorni": "Active in the last 7 days",
+ "versione {version}": "version {version}",
+ "Nuove negli ultimi 30 giorni": "New in the last 30 days",
+ "Viste in tutto": "Seen in total"
 }

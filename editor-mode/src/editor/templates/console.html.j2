@@ -320,6 +320,14 @@
     {% else %}
     <p class="hint">{{ _('Per aggiornare da qui serve lo script update.sh sul server: vedi deploy/server/README.md, "Updating from the console". Senza, si aggiorna dal terminale.') }}</p>
     {% endif %}
+    {% if installs.seen %}
+    <h3 id="installazioni" style="margin-top: 18px;">{{ _('Installazioni di Redazia') }}</h3>
+    <p class="hint">{{ _("Ogni installazione chiede a questo server l'ultima versione ogni 6 ore, con un identificativo casuale e la versione installata. Chi ha EDITOR_TELEMETRY=off non viene contato.") }}</p>
+    <div class="list-row"><span>{{ _('Attive negli ultimi 7 giorni') }}</span><span class="num">{{ installs.active }}</span></div>
+    {% for v, n in installs.versions %}<div class="list-row"><span class="hint">{{ _('versione {version}', version=v) }}</span><span class="num">{{ n }}</span></div>{% endfor %}
+    <div class="list-row"><span>{{ _('Nuove negli ultimi 30 giorni') }}</span><span class="num">{{ installs.new_30 }}</span></div>
+    <div class="list-row"><span>{{ _('Viste in tutto') }}</span><span class="num">{{ installs.seen }}</span></div>
+    {% endif %}
   </section>
 
   <div class="cols">

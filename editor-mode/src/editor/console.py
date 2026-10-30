@@ -21,7 +21,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
-from . import accounts, billing, commerce, newsrooms, repo, trials, updates, usage
+from . import accounts, billing, commerce, installs, newsrooms, repo, trials, updates, usage
 from . import models as m
 from .auth import ROLES
 from .i18n import t
@@ -250,7 +250,8 @@ def register(app, ctx) -> None:
             "subs": billing.subscriptions(admin), "reseller_names": {r["id"]: r["name"] for r in billing.resellers(admin)},
             "statuses": billing.STATUS_LABELS, "money": billing.money, "online": ctx.gateway is not None,
             "refusals": refusals(), "trial_kinds": trials.LABELS,
-            "updates": updates.state(updates.folder(ctx.updates_dir), INSTALLED), "new": None, **data},
+            "updates": updates.state(updates.folder(ctx.updates_dir), INSTALLED), "installs": installs.summary(admin),
+            "new": None, **data},
             status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
@@ -347,12 +348,23 @@ def register(app, ctx) -> None:
             return RedirectResponse("/login", status_code=303)
         return page(request, s)
 
+    @app.get("/api/public/latest")
+    def public_latest(v: str = "", id: str = ""):
+        """The latest release for an installation that checks for updates;
+        the check is counted (installs.py)."""
+        rel = installs.latest()
+        if rel is None:
+            raise HTTPException(503, "latest release not known")
+        if v or id:
+            installs.record(admin, id, v)
+        return JSONResponse(rel, headers={"Cache-Control": "no-store"})
+
     @app.post("/admin/updates/check")
     def ui_updates_check(s=Depends(need_console)):
         where = updates.folder(ctx.updates_dir)
         if where is None:
             return back(t("Aggiornamenti dal pannello non attivi su questo server."), "aggiornamenti")
-        found = updates.check(where, force=True)
+        found = updates.check(where, force=True, installed=INSTALLED, iid=updates.this_install())
         if found.get("error"):
             return back(t("GitHub non ha risposto: {error}", error=found["error"]), "aggiornamenti")
         v = found.get("version") or ""
