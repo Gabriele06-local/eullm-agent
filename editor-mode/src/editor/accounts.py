@@ -548,11 +548,12 @@ def link_text(kind: str, url: str, newsroom: str | None, by: str, lang: str | No
                 t("La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al "
                   "pagamento del piano che hai scelto.", lang, newsroom=newsroom) + f"\n\n{url}\n")
     if kind == "reset":
-        return (t("Reimposta la password di EuLLM Editor", lang),
+        return (t("Reimposta la password di Redazia", lang),
                 t("Per scegliere una nuova password apri questo link entro {hours} ore:", lang, hours=RESET_HOURS)
                 + f"\n\n{url}\n\n"
                 + t("Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima.", lang) + "\n")
-    where = t("la redazione {newsroom}", lang, newsroom=newsroom) if newsroom else t("la console di EuLLM Editor", lang)
+    where = t("la redazione {newsroom}", lang, newsroom=newsroom) if newsroom else t("la console di Redazia", lang)
     return (t("Invito a {where}", lang, where=where),
-            t("{by} ti ha invitato in {where} su EuLLM Editor.", lang, by=by, where=where) + "\n\n"
+            (t("Ti diamo il benvenuto in {where} su Redazia.", lang, where=where) if by == "Redazia"
+             else t("{by} ti ha invitato in {where} su Redazia.", lang, by=by, where=where)) + "\n\n"
             + t("Apri questo link entro {days} giorni per entrare:", lang, days=INVITE_DAYS) + f"\n\n{url}\n")

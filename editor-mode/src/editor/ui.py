@@ -246,7 +246,7 @@ def register(app, ctx) -> None:
     def signed_in(request: Request, token: str, to: str = "/") -> RedirectResponse:
         accounts.end_session(admin, request.cookies.get(COOKIE))
         resp = RedirectResponse(to, status_code=303)
-        resp.set_cookie(COOKIE, token, httponly=True, samesite="strict", secure=request.url.scheme == "https",
+        resp.set_cookie(COOKIE, token, httponly=True, samesite="lax", secure=request.url.scheme == "https",
                         max_age=30 * 86400)
         resp.delete_cookie(SITE_COOKIE)
         return resp

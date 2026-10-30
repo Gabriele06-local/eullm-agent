@@ -61,10 +61,14 @@ class FakeGateway:
 
 
 def client(db, **kw):
-    sent = []
-    app = create_app(db, mail=lambda to, subject, body: sent.append((to, subject, body)),
-                     public_url="https://editor.example.com", **kw)
-    return TestClient(app), sent
+    sent, told = [], []  # to the customers; to the console's people
+
+    def mail(to, subject, body):
+        (told if subject.startswith("[Redazia]") else sent).append((to, subject, body))
+    app = create_app(db, mail=mail, public_url="https://editor.example.com", **kw)
+    c = TestClient(app)
+    c.told = told
+    return c, sent
 
 
 def key(db, reseller_id=None, name="sito"):
@@ -195,7 +199,12 @@ def test_the_trial_ends_the_owner_pays_by_bank_transfer(db, admin):
 def test_online_payment_and_renewals_through_the_gateway(db, admin):
     fake = FakeGateway()
     c, sent = client(db, gateway=fake)
-    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    op = f"{unique('op')}@example.com"
+    accounts.create_user(Database.from_url(db.admin_url), op, "Operatore", "password lunga", operator=True)
+    owner = f"{unique('amm')}@rossi.it"
+    tid = signup(c, key(db), unique("web"), owner).json()["tenant"]["tenant_id"]
+    # The console's people hear of every new newsroom.
+    assert any(to == op and "Nuova redazione" in subject for to, subject, _ in c.told)
     invite = sent[0][2].split("\n")[-2]
     c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
     page = c.get("/account")
@@ -214,6 +223,9 @@ def test_online_payment_and_renewals_through_the_gateway(db, admin):
     assert c.post("/api/billing/mollie/webhook", data={"id": first}).status_code == 200
     sub = billing.subscription(admin, tid)
     assert sub["status"] == "active" and sub["plan_code"] == "pro" and sub["provider"] == "mollie"
+    # The payment is told to the customer and to the console.
+    assert any("Pagamento ricevuto" in subject and "1.490" in body and "/account" in body for _, subject, body in sent)
+    assert any(to == op and "Pagamento ricevuto" in subject for to, subject, _ in c.told)
     msub = f"sub_{fake.run}1"
     assert sub["billing_interval"] == "year" and sub["provider_subscription_id"] == msub
     assert fake.subscriptions[msub]["interval"] == "year" and fake.subscriptions[msub]["mandate"] == "mdt_1"
@@ -227,6 +239,7 @@ def test_online_payment_and_renewals_through_the_gateway(db, admin):
     assert billing.subscription(admin, tid)["current_period_end"] == billing.add_interval(end, "year")
     c.post("/api/billing/mollie/webhook", data={"id": fake.renewal(msub, "failed")})
     assert billing.subscription(admin, tid)["status"] == "past_due"
+    assert any(to == op and "Rinnovo non riuscito" in subject for to, subject, _ in c.told)
     assert "L&#39;ultimo pagamento non è riuscito" in c.get("/").text or "ultimo pagamento non è riuscito" in c.get("/").text
     # Cancelling stops the renewals at the gateway.
     c.post(f"/account/{tid}/cancel")
@@ -238,7 +251,12 @@ def test_the_plan_is_in_the_newsroom_menu(db, admin):
     newsroom (Piano), and comes back there from the forms and the gateway."""
     fake = FakeGateway()
     c, sent = client(db, gateway=fake)
-    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    op = f"{unique('op')}@example.com"
+    accounts.create_user(Database.from_url(db.admin_url), op, "Operatore", "password lunga", operator=True)
+    owner = f"{unique('amm')}@rossi.it"
+    tid = signup(c, key(db), unique("web"), owner).json()["tenant"]["tenant_id"]
+    # The console's people hear of every new newsroom.
+    assert any(to == op and "Nuova redazione" in subject for to, subject, _ in c.told)
     invite = sent[0][2].split("\n")[-2]
     c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
     assert 'href="/plan"' in c.get("/").text
@@ -264,7 +282,12 @@ def test_a_manual_payment_stops_the_automatic_renewals(db, admin):
     otherwise the gateway would charge again and the period would grow twice."""
     fake = FakeGateway()
     c, sent = client(db, gateway=fake)
-    tid = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it").json()["tenant"]["tenant_id"]
+    op = f"{unique('op')}@example.com"
+    accounts.create_user(Database.from_url(db.admin_url), op, "Operatore", "password lunga", operator=True)
+    owner = f"{unique('amm')}@rossi.it"
+    tid = signup(c, key(db), unique("web"), owner).json()["tenant"]["tenant_id"]
+    # The console's people hear of every new newsroom.
+    assert any(to == op and "Nuova redazione" in subject for to, subject, _ in c.told)
     invite = sent[0][2].split("\n")[-2]
     c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
     c.post(f"/account/{tid}/customer", data={"name": "Rossi", "email": "r@example.com", "kind": "person",

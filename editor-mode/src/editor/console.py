@@ -184,7 +184,7 @@ def register(app, ctx) -> None:
         out = {"tenant": newsrooms.listing(admin, db, res["tenant_id"])[0], "created": res["created"],
                "owner": {"email": res["owner_email"], "invite": None}, "warning": res["warning"]}
         if res["invite"]:
-            out["owner"]["invite"] = send(request, res["invite"], "invite", res["owner_email"], body.name, "EuLLM Editor")
+            out["owner"]["invite"] = send(request, res["invite"], "invite", res["owner_email"], body.name, "Redazia")
         # Already known (the same external_ref): 200 instead of 201.
         return out if res["created"] else JSONResponse(jsonable(out), status_code=200)
 
@@ -217,7 +217,7 @@ def register(app, ctx) -> None:
             token = accounts.create_invite(admin, body.email, by, tenant_id=tenant_id, role=body.role)
         except accounts.AccountError as e:
             failed(e)
-        return send(request, token, "invite", accounts.normalise_email(body.email), rows[0]["name"], "EuLLM Editor")
+        return send(request, token, "invite", accounts.normalise_email(body.email), rows[0]["name"], "Redazia")
 
     @app.delete("/api/operator/tenants/{tenant_id}")
     def api_delete(request: Request, tenant_id: str, confirm: str = "", by: str = Depends(operator)):
@@ -515,7 +515,7 @@ def register(app, ctx) -> None:
 
 
 def set_session(request: Request, resp, token: str) -> None:
-    resp.set_cookie(COOKIE, token, httponly=True, samesite="strict", secure=request.url.scheme == "https",
+    resp.set_cookie(COOKIE, token, httponly=True, samesite="lax", secure=request.url.scheme == "https",
                     max_age=accounts.SESSION_DAYS * 86400)
 
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.22.2
+
+### Changed
+
+- The product is called Redazia everywhere a customer sees it: the Mollie
+  payment description ("Redazia Solo (anno)"), the subscription, the
+  emails (invite, password reset, "redazione pronta"), page titles and the
+  version under the menu. A newsroom bought on the site is welcomed with
+  "Ti diamo il benvenuto in ... su Redazia".
+- Back from Mollie the customer is still signed in (session cookie
+  SameSite=Lax; forms keep refusing other sites by their Origin).
+
+### Added
+
+- Emails to the console's people ("[Redazia] ..." in the subject) for every
+  new newsroom from the site or a reseller, and for each payment received,
+  renewal paid, renewal failed or first payment failed; the customer gets a
+  payment confirmation with the date the plan runs to.
+
 ## 0.22.1
 
 ### Changed

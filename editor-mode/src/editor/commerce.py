@@ -29,6 +29,9 @@ from .i18n import t
 
 log = logging.getLogger(__name__)
 
+# The subject of what the console's people are told, easy to filter.
+OPERATOR_TAG = "[Redazia]"
+
 COOKIE = "editor_token"
 NOTICE_COOKIE = "editor_notice"
 
@@ -138,14 +141,31 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
 
     def invite_out(request, res, newsroom_name):
         if res["invite"]:
-            return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
+            return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "Redazia")
         if res["created"] and res.get("existing_user"):
             # The owner signs in as always: an email says the newsroom is there.
             # Bought on the site ("Acquista"): signing in leads to the payment.
             kind = "ready_pay" if res.get("desired_plan") and res.get("status") in ("trialing", "expired") else "ready"
-            out = send(request, "", kind, res["owner_email"], newsroom_name, "EuLLM Editor")
+            out = send(request, "", kind, res["owner_email"], newsroom_name, "Redazia")
             return {**out, "existing": True}
         return None
+
+    def mail_to(to: str, subject: str, body: str) -> bool:
+        if ctx.mail is None or not to:
+            return False
+        try:
+            ctx.mail(to, subject, body)
+            return True
+        except Exception:
+            log.warning("email to %s not sent: %s", to, subject)
+            return False
+
+    def tell_operators(request: Request, subject: str, lines: list[str]) -> None:
+        """What happens to the business (signups, payments) reaches the
+        people of the console by email."""
+        body = "\n".join(lines) + f"\n\n{base(request)}/admin#clienti\n"
+        for op in accounts.operators(admin):
+            mail_to(op.email, f"{OPERATOR_TAG} {subject}", body)
 
     def reseller_id(request: Request) -> int | None:
         return getattr(request.state, "reseller_id", None)
@@ -179,6 +199,17 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
                    "subscription": billing.subscription(admin, res["tenant_id"]), "created": res["created"],
                    "owner": {"email": res["owner_email"], "invite": invite_out(request, res, room["name"])},
                    "trial_used": res.get("trial_used", []), "warning": res["warning"]}
+            if res["created"]:
+                cust = body.customer
+                plan = res.get("desired_plan") or res.get("plan") or ""
+                tell_operators(request, t("Nuova redazione: {name} ({plan})", name=room["name"], plan=plan), [
+                    t("Cliente: {name} <{email}>", name=cust.name, email=cust.email),
+                    t("Redazione: {name} ({id})", name=room["name"], id=res["tenant_id"]),
+                    t("Piano acquistato, in attesa di pagamento: {plan}", plan=res["desired_plan"]) if res.get("desired_plan")
+                    else t("Piano: {plan} ({status})", plan=res.get("plan") or "", status=res.get("status") or ""),
+                    *([t("Prova negata: dati già usati in una prova precedente.")] if res.get("trial_used") else []),
+                    *([t("Da un rivenditore.")] if reseller_id(request) is not None else []),
+                ])
             return out if res["created"] else JSONResponse(_json(out), status_code=200)
         finally:
             if token is not None:
@@ -281,12 +312,46 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         form = await request.form()
         pay_id = str(form.get("id") or "")
         try:
-            billing.gateway_event(admin, gateway, pay_id, webhook_url(request), ctx.core)
+            done = billing.gateway_event(admin, gateway, pay_id, webhook_url(request), ctx.core)
         except Exception:
             # Mollie retries a non-200 answer: the payment is read again then.
             log.exception("payment notice %s not handled", pay_id)
             return Response(status_code=500)
+        try:
+            payment_news(request, pay_id, done)
+        except Exception:
+            log.exception("emails about payment %s not sent", pay_id)
         return Response(status_code=200)
+
+    def payment_news(request: Request, pay_id: str, done: str) -> None:
+        """A payment that changed things is told to the console and, when
+        it starts or renews a plan, to the customer."""
+        if done not in ("activated", "renewed", "past_due", "failed", "expired", "canceled"):
+            return
+        pay = billing.payment_by_provider_id(admin, pay_id)
+        if pay is None:
+            return
+        tid = pay["tenant_id"]
+        room = (newsrooms.listing(admin, db, tid) or [{"name": tid}])[0]
+        sub = billing.subscription(admin, tid) or {}
+        cust = billing.customer_of(admin, tid) or {}
+        amount = billing.money(pay["amount_cents"], pay["currency"])
+        what = {"activated": t("Pagamento ricevuto"), "renewed": t("Rinnovo pagato"),
+                "past_due": t("Rinnovo non riuscito")}.get(done, t("Pagamento non riuscito"))
+        tell_operators(request, f"{what}: {room['name']} · {amount}", [
+            t("Cliente: {name} <{email}>", name=cust.get("name") or "", email=cust.get("email") or ""),
+            t("Redazione: {name} ({id})", name=room["name"], id=tid),
+            t("Piano: {plan} ({status})", plan=sub.get("plan_name") or sub.get("plan_code") or "", status=sub.get("label") or ""),
+            t("Pagamento Mollie: {id}", id=pay_id),
+        ])
+        if done in ("activated", "renewed") and cust.get("email"):
+            until = sub.get("current_period_end")
+            mail_to(cust["email"], t("Pagamento ricevuto: {name} è attiva", name=room["name"]),
+                    t("Abbiamo ricevuto il pagamento di {amount} per il piano {plan} della redazione {name}.",
+                      amount=amount, plan=sub.get("plan_name") or "", name=room["name"])
+                    + ("\n" + t("Il piano è attivo fino al {date}; il rinnovo è automatico e lo puoi disdire dalla pagina "
+                                 "dell'abbonamento.", date=until.strftime("%d/%m/%Y")) if until else "")
+                    + f"\n\n{base(request)}/account\n")
 
     # --- the owner's account page ------------------------------------------------------
 

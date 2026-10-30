@@ -689,11 +689,11 @@
   "fr": "Rédactions",
   "es": "Redacciones"
  },
- "Reimposta la password di EuLLM Editor": {
-  "en": "Reset your EuLLM Editor password",
-  "de": "Passwort für EuLLM Editor zurücksetzen",
-  "fr": "Réinitialisez votre mot de passe EuLLM Editor",
-  "es": "Restablece tu contraseña de EuLLM Editor"
+ "Reimposta la password di Redazia": {
+  "en": "Reset your Redazia password",
+  "de": "Passwort für Redazia zurücksetzen",
+  "fr": "Réinitialisez votre mot de passe Redazia",
+  "es": "Restablece tu contraseña de Redazia"
  },
  "Revoca": {
   "en": "Revoke",
@@ -953,11 +953,11 @@
   "fr": "l'intervalle vaut month ou year",
   "es": "el intervalo es month o year"
  },
- "la console di EuLLM Editor": {
-  "en": "the EuLLM Editor console",
-  "de": "die Konsole von EuLLM Editor",
-  "fr": "la console d'EuLLM Editor",
-  "es": "la consola de EuLLM Editor"
+ "la console di Redazia": {
+  "en": "the Redazia console",
+  "de": "die Konsole von Redazia",
+  "fr": "la console d'Redazia",
+  "es": "la consola de Redazia"
  },
  "la partita IVA italiana ha 11 cifre": {
   "en": "an Italian VAT number has 11 digits",
@@ -1187,11 +1187,11 @@
   "fr": "une invitation est pour une rédaction ou pour un opérateur",
   "es": "una invitación es para una redacción o para un operador"
  },
- "{by} ti ha invitato in {where} su EuLLM Editor.": {
-  "en": "{by} invited you to {where} on EuLLM Editor.",
-  "de": "{by} hat Sie in {where} auf EuLLM Editor eingeladen.",
-  "fr": "{by} vous a invité à rejoindre {where} sur EuLLM Editor.",
-  "es": "{by} te ha invitado a {where} en EuLLM Editor."
+ "{by} ti ha invitato in {where} su Redazia.": {
+  "en": "{by} invited you to {where} on Redazia.",
+  "de": "{by} hat Sie in {where} auf Redazia eingeladen.",
+  "fr": "{by} vous a invité à rejoindre {where} sur Redazia.",
+  "es": "{by} te ha invitado a {where} en Redazia."
  },
  "{email} ha già un account: la trova fra le sue redazioni.": {
   "en": "{email} already has an account: they'll find it among their newsrooms.",
