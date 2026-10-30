@@ -401,8 +401,9 @@ def test_a_paid_plan_chosen_on_the_site_waits_for_its_payment(db, admin):
     assert r.status_code == 201, r.text
     out = r.json()
     sub = out["subscription"]
-    # A trial, not the paid plan: that starts with its payment.
-    assert sub["status"] == "trialing" and sub["plan_code"] == "trial"
+    # The plan bought, stopped until it is paid: no trial.
+    assert sub["status"] == "expired" and sub["plan_code"] == "pro"
+    assert billing.on_hold(admin, out["tenant"]["tenant_id"])
     assert sub["desired_plan"] == "pro" and sub["desired_interval"] == "year"
     assert out["tenant"]["language"] == "de"
     # Paid by bank transfer: the wish is now the plan.
@@ -491,10 +492,21 @@ def test_solo_has_no_automatic_newsroom_and_a_buyer_goes_to_payment(db, admin):
     r = c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"},
                follow_redirects=False)
     assert r.headers["location"] == "/account"
-    assert "Sul sito hai scelto il piano Solo" in c.get("/account").text
+    page = c.get("/account").text
+    assert "Hai scelto il piano Solo</strong>" in page and "Da pagare" in page
     # Paid: Solo's limits, and no automatic newsroom.
     r = c.put(f"/api/operator/tenants/{tid}/subscription", json={"plan": "solo", "amount_cents": 1990}, headers=key(db))
     assert r.status_code == 200, r.text
     with db.tenant(tid) as s:
         assert not quotas.autopilot_allowed(s) and not quotas.proposals_only(s)
         assert quotas.usage(s).plan["max_drafts_month"] == 10
+    if db.sqlite:
+        return  # one newsroom only
+    # The same person buys a second newsroom: no new password, the email
+    # says to complete the payment and signing in leads to it.
+    c2, sent2 = client(db)
+    r2 = signup(c2, key(db), unique("web"), email, plan="solo")
+    assert sent2, r2.text
+    assert "completa il pagamento" in sent2[-1][1] and sent2[-1][2].rstrip().endswith("/login")
+    r = c2.post("/login", data={"email": email, "password": "password del capo"}, follow_redirects=False)
+    assert r.headers["location"] == "/account"

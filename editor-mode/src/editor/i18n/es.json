@@ -1507,5 +1507,10 @@
  "senza motivo": "sin motivo",
  "troppo generico": "demasiado genérico",
  "{n} giorni fa": "hace {n} días",
- "{n} ore fa": "hace {n} horas"
+ "{n} ore fa": "hace {n} horas",
+ "La redazione {newsroom} è pronta: completa il pagamento": "La redacción {newsroom} está lista: completa el pago",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al pagamento del piano che hai scelto.": "La redacción {newsroom} está lista. Entra con tu cuenta de siempre: te llevamos directamente al pago del plan que elegiste.",
+ "Pagamento non avviato: il pagamento online non è ancora pronto. Riprova più tardi o scrivi all'assistenza.": "Pago no iniciado: el pago en línea aún no está listo. Inténtalo más tarde o escribe al soporte.",
+ "<strong>Hai scelto il piano {plan}</strong>: la redazione parte appena il pagamento è confermato. Controlla i dati di fatturazione e vai al pagamento.": "<strong>Has elegido el plan {plan}</strong>: la redacción arranca en cuanto se confirma el pago. Revisa tus datos de facturación y ve al pago.",
+ "Da pagare": "Pendiente de pago"
 }

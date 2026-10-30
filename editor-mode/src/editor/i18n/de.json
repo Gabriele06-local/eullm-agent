@@ -1507,5 +1507,10 @@
  "senza motivo": "ohne Grund",
  "troppo generico": "zu allgemein",
  "{n} giorni fa": "vor {n} Tagen",
- "{n} ore fa": "vor {n} Stunden"
+ "{n} ore fa": "vor {n} Stunden",
+ "La redazione {newsroom} è pronta: completa il pagamento": "Die Redaktion {newsroom} ist bereit: Schließen Sie die Zahlung ab",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al pagamento del piano che hai scelto.": "Die Redaktion {newsroom} ist bereit. Melden Sie sich mit Ihrem gewohnten Konto an: Wir bringen Sie direkt zur Zahlung des gewählten Tarifs.",
+ "Pagamento non avviato: il pagamento online non è ancora pronto. Riprova più tardi o scrivi all'assistenza.": "Zahlung nicht gestartet: Die Online-Zahlung ist noch nicht bereit. Versuchen Sie es später erneut oder schreiben Sie dem Support.",
+ "<strong>Hai scelto il piano {plan}</strong>: la redazione parte appena il pagamento è confermato. Controlla i dati di fatturazione e vai al pagamento.": "<strong>Sie haben den Tarif {plan} gewählt</strong>: Die Redaktion startet, sobald die Zahlung bestätigt ist. Prüfen Sie Ihre Rechnungsdaten und gehen Sie zur Zahlung.",
+ "Da pagare": "Zu bezahlen"
 }

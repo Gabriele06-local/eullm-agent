@@ -256,6 +256,9 @@ def register(app, ctx) -> None:
         person belongs to; an operator goes to the administration (/admin),
         from where /editor or "Entra" opens a newsroom."""
         tenant = s.tenant_id
+        if tenant is None and not s.operator and (bought := billing.bought_unpaid(admin, s.user_id)):
+            # Bought on the site and not paid yet: the payment comes first.
+            return signed_in(request, accounts.start_session(admin, s.user_id, None if billing.on_hold(admin, bought) else bought), "/account")
         if tenant is None and not s.operator:
             rooms = accounts.memberships(admin, s.user_id)
             tenant = next((x.tenant_id for x in rooms if x.active), None)
@@ -360,7 +363,7 @@ def register(app, ctx) -> None:
             return invite_form(request, token, info, f"{str(e)[:1].upper()}{str(e)[1:]}.", 400)
         if not s.operator and (bought := billing.bought_unpaid(admin, s.user_id)):
             # Bought on the site: the payment comes first, the newsroom is already there.
-            return signed_in(request, accounts.start_session(admin, s.user_id, bought), "/account")
+            return signed_in(request, accounts.start_session(admin, s.user_id, None if billing.on_hold(admin, bought) else bought), "/account")
         return session_for(request, s)
 
     @app.get("/forgot", response_class=HTMLResponse)

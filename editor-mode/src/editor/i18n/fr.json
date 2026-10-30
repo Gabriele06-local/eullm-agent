@@ -1507,5 +1507,10 @@
  "senza motivo": "sans motif",
  "troppo generico": "trop général",
  "{n} giorni fa": "il y a {n} jours",
- "{n} ore fa": "il y a {n} heures"
+ "{n} ore fa": "il y a {n} heures",
+ "La redazione {newsroom} è pronta: completa il pagamento": "La rédaction {newsroom} est prête : finalisez le paiement",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al pagamento del piano che hai scelto.": "La rédaction {newsroom} est prête. Connectez-vous avec votre compte habituel : nous vous amenons directement au paiement de la formule choisie.",
+ "Pagamento non avviato: il pagamento online non è ancora pronto. Riprova più tardi o scrivi all'assistenza.": "Paiement non lancé : le paiement en ligne n’est pas encore prêt. Réessayez plus tard ou écrivez au support.",
+ "<strong>Hai scelto il piano {plan}</strong>: la redazione parte appena il pagamento è confermato. Controlla i dati di fatturazione e vai al pagamento.": "<strong>Vous avez choisi la formule {plan}</strong> : la rédaction démarre dès que le paiement est confirmé. Vérifiez vos coordonnées de facturation et passez au paiement.",
+ "Da pagare": "À payer"
 }

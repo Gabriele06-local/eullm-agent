@@ -136,7 +136,7 @@ def register(app, ctx) -> None:
     def send(request: Request, token: str, kind: str, email: str, newsroom: str | None, by: str) -> dict:
         """Email the link when SMTP is configured; the link is returned
         either way, for the caller to deliver it itself."""
-        url = link(request, token) if kind != "ready" else f"{(ctx.public_url or str(request.base_url)).rstrip('/')}/login"
+        url = link(request, token) if kind not in ("ready", "ready_pay") else f"{(ctx.public_url or str(request.base_url)).rstrip('/')}/login"
         sent = False
         if ctx.mail is not None:
             subject, body = accounts.link_text(kind, url, newsroom, by)

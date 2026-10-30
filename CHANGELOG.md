@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.22.1
+
+### Changed
+
+- Buying a paid plan on the public site ("Acquista") no longer starts a
+  trial: the newsroom is made on the plan bought, stopped ("Da pagare")
+  until its payment is confirmed, and its owner lands on the payment when
+  signing in. A buyer who already has an account gets "la redazione è
+  pronta: completa il pagamento" instead of the plain "ready" email.
+- The plan choice in /account no longer offers the free trial; the payment
+  button sits level with the renewal choice; the billing data are laid out
+  in three columns in a sensible order.
+- Mollie's "No suitable payment methods found" (no recurring method such as
+  credit cards enabled in the Mollie profile) shows the customer a plain
+  message and tells the operator in the log what to enable.
+- Console: the installed version at the foot of the side menu, as in the
+  newsroom.
+
 ## 0.22.0
 
 ### Added

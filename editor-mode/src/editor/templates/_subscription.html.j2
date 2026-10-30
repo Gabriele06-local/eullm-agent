@@ -13,6 +13,8 @@
         <p class="error">{{ _("L'ultimo pagamento non è riuscito. Il circuito riprova nei prossimi giorni; se vuoi, paga di nuovo qui sotto.") }}</p>
       {% elif sub.status == 'canceled' %}
         <p class="lead">{% if sub.current_period_end %}{{ _('Abbonamento disdetto: la redazione resta attiva fino al {date}, poi si ferma. Puoi riattivarla scegliendo un piano.', date=sub.current_period_end.strftime('%d/%m/%Y')) }}{% else %}{{ _('Abbonamento disdetto: la redazione resta attiva, poi si ferma. Puoi riattivarla scegliendo un piano.') }}{% endif %}</p>
+      {% elif sub.status == 'expired' and sub.desired_plan and sub.desired_plan == sub.plan_code %}
+        <p class="lead">{{ _('<strong>Hai scelto il piano {plan}</strong>: la redazione parte appena il pagamento è confermato. Controlla i dati di fatturazione e vai al pagamento.', plan=sub.plan_name) }}</p>
       {% elif sub.status == 'expired' and r.active %}
         <p class="lead">{{ _('La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.') }}</p>
       {% else %}
@@ -24,14 +26,14 @@
       {% elif sub and sub.status != 'active' or not sub %}
         <h3>{{ _('Scegli il piano') }}</h3>
         {% set wished = plans|selectattr('code', 'equalto', sub.desired_plan)|first if sub and sub.desired_plan else none %}
-        {% if wished %}<p class="hint">{{ _('Sul sito hai scelto il piano {plan}: lo trovi già selezionato.', plan=wished.name) }}</p>{% endif %}
+        {% if wished and wished.code != sub.plan_code %}<p class="hint">{{ _('Sul sito hai scelto il piano {plan}: lo trovi già selezionato.', plan=wished.name) }}</p>{% endif %}
         {% if not r.customer %}<p class="hint">{{ _('Prima compila i dati di fatturazione qui sotto.') }}</p>{% endif %}
         <form method="post" action="/account/{{ r.tenant_id }}/checkout">
           {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
-          <div class="cols" style="gap: 12px;">
-          {% for p in plans %}
-            <label class="card pad" style="flex: 1 1 200px; cursor: pointer; display: block;">
-              <span class="row"><input type="radio" name="plan" value="{{ p.code }}" {% if (sub and sub.desired_plan == p.code) or (not (sub and sub.desired_plan in plans|map(attribute='code')) and loop.first) %}checked{% endif %}> <strong>{{ p.name }}</strong></span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+          {% for p in plans|selectattr('price_month_cents')|list %}
+            <label class="card pad" style="cursor: pointer; display: block;">
+              <span class="row"><input type="radio" name="plan" value="{{ p.code }}" {% if (sub and sub.desired_plan == p.code) or (not (sub and sub.desired_plan in plans|selectattr('price_month_cents')|map(attribute='code')) and loop.first) %}checked{% endif %}> <strong>{{ p.name }}</strong></span>
               <div style="font-size: 22px; font-weight: 600; margin-top: 8px;">{{ money(p.price_month_cents, p.currency) }} <span class="hint">{{ _('al mese') }}</span></div>
               <div class="hint">{{ _("oppure {price} all'anno", price=money(p.price_year_cents, p.currency)) }}</div>
               <p class="hint">{{ p.description }}<br>
@@ -39,7 +41,7 @@
             </label>
           {% endfor %}
           </div>
-          <div class="row" style="margin-top: 12px;">
+          <div class="row" style="margin-top: 12px; align-items: flex-end;">
             <label class="field">{{ _('Rinnovo') }}<select name="interval"><option value="month">{{ _('Mensile') }}</option><option value="year" {% if sub and sub.desired_interval == 'year' %}selected{% endif %}>{{ _('Annuale') }}</option></select></label>
             {% if online %}<button class="btn pri" type="submit" {% if not r.customer %}disabled{% endif %}>{{ _('Vai al pagamento') }}</button>
             {% else %}<span class="hint">{{ _("Il pagamento online non è ancora attivo: per attivare il piano contatta l'assistenza, lo registriamo noi.") }}</span>{% endif %}
@@ -53,18 +55,18 @@
         <form method="post" action="/account/{{ r.tenant_id }}/customer" class="form-grid billing" style="margin-top: 8px;">
           {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
           <label class="field">{{ _('Tipo') }}<select name="kind"><option value="company">{{ _('Azienda o professionista') }}</option><option value="person" {% if c.kind == 'person' %}selected{% endif %}>{{ _('Privato') }}</option></select></label>
-          <label class="field wide">{{ _('Ragione sociale o nome') }}<input name="name" value="{{ c.name or '' }}" required maxlength="200"></label>
-          <label class="field">{{ _('Email per le fatture') }}<input name="email" type="email" value="{{ c.email or me_email }}" required></label>
-          <label class="field">{{ _('Telefono') }}<input name="phone" value="{{ c.phone or '' }}" maxlength="40"></label>
+          <label class="field" style="grid-column: span 2;">{{ _('Ragione sociale o nome') }}<input name="name" value="{{ c.name or '' }}" required maxlength="200"></label>
           <label class="field">{{ _('Partita IVA') }}<input name="vat_number" value="{{ c.vat_number or '' }}" maxlength="40"></label>
           <label class="field">{{ _('Codice fiscale') }}<input name="tax_code" value="{{ c.tax_code or '' }}" maxlength="40"></label>
-          <label class="field wide">{{ _('Indirizzo') }}<input name="address" value="{{ c.address or '' }}" maxlength="200"></label>
+          <label class="field">{{ _('Codice destinatario SDI') }}<input name="sdi_code" value="{{ c.sdi_code or '' }}" maxlength="7"></label>
+          <label class="field">{{ _('Email per le fatture') }}<input name="email" type="email" value="{{ c.email or me_email }}" required></label>
+          <label class="field">{{ _('Telefono') }}<input name="phone" value="{{ c.phone or '' }}" maxlength="40"></label>
+          <label class="field">{{ _('PEC') }}<input name="pec" type="email" value="{{ c.pec or '' }}"></label>
+          <label class="field" style="grid-column: span 2;">{{ _('Indirizzo') }}<input name="address" value="{{ c.address or '' }}" maxlength="200"></label>
           <label class="field">{{ _('CAP') }}<input name="postal_code" value="{{ c.postal_code or '' }}" maxlength="20"></label>
           <label class="field">{{ _('Città') }}<input name="city" value="{{ c.city or '' }}" maxlength="100"></label>
           <label class="field">{{ _('Provincia') }}<input name="province" value="{{ c.province or '' }}" maxlength="10"></label>
           <label class="field">{{ _('Paese') }}<input name="country" value="{{ c.country or 'IT' }}" maxlength="2"></label>
-          <label class="field">{{ _('Codice destinatario SDI') }}<input name="sdi_code" value="{{ c.sdi_code or '' }}" maxlength="7"></label>
-          <label class="field">{{ _('PEC') }}<input name="pec" type="email" value="{{ c.pec or '' }}"></label>
           <div class="wide"><button class="btn" type="submit">{{ _('Salva i dati') }}</button></div>
         </form>
       </details>

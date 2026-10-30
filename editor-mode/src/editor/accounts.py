@@ -543,6 +543,10 @@ def link_text(kind: str, url: str, newsroom: str | None, by: str, lang: str | No
         return (t("La redazione {newsroom} è pronta", lang, newsroom=newsroom),
                 t("La redazione {newsroom} è pronta. Entra con il tuo account di sempre: la trovi tra le tue redazioni.",
                   lang, newsroom=newsroom) + f"\n\n{url}\n")
+    if kind == "ready_pay":
+        return (t("La redazione {newsroom} è pronta: completa il pagamento", lang, newsroom=newsroom),
+                t("La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al "
+                  "pagamento del piano che hai scelto.", lang, newsroom=newsroom) + f"\n\n{url}\n")
     if kind == "reset":
         return (t("Reimposta la password di EuLLM Editor", lang),
                 t("Per scegliere una nuova password apri questo link entro {hours} ore:", lang, hours=RESET_HOURS)
