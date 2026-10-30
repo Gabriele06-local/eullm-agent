@@ -154,3 +154,24 @@ def test_editorial_style_and_the_provider_from_the_key():
     assert images.from_settings(Settings(images_api_key="k", images_provider="openrouter",
                                          images_model="google/gemini-3.1-flash-image")).model == "google/gemini-3.1-flash-image"
     assert images.size_of(b"\xff\xd8\xff\xc0\x00\x11\x08\x02\x00\x03\x00" + b"\x00" * 10) == (768, 512)
+
+
+def test_redoing_the_image_keeps_the_translations_own_alt(db, tenant):
+    """The image job copies the new image to the translations: it must not
+    overwrite the alternative text each translation was written with."""
+    from editor import work
+
+    did, site_id = approved_draft(db, tenant)
+    with respx.mock() as router:
+        fake_bfl(router)
+        images.make(db, tenant, did, imager(), None)
+        router.post("http://core.test/v1/llm/chat").mock(
+            return_value=chat(json.dumps(dict(ENGLISH, image_alt="A fibre cabinet in Bari"))))
+        tid = tr.translate(db, tenant, did, "en", CoreClient("http://core.test", "tok"))
+        with db.tenant(tenant) as s:
+            assert images.of(s, tid).alt == "A fibre cabinet in Bari"
+        fake_bfl(router)  # the operator redoes the cover image
+        work.handlers(db, imager=imager())["image"](tenant, f"draft {did}", {"draft_id": did, "site_id": site_id})
+    with db.tenant(tenant) as s:
+        assert images.of(s, did).alt  # the new image of the original
+        assert images.of(s, tid).alt == "A fibre cabinet in Bari"

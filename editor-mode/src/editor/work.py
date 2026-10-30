@@ -114,9 +114,11 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
                     core_for(tenant))
         with db.tenant(tenant) as s:
             d = s.execute(select(m.drafts.c.title, m.drafts.c.site_id).where(m.drafts.c.id == args["draft_id"])).first()
-            # Translations written before the image take it too.
+            # Translations written before the image take it too, keeping the
+            # alternative text each of them has (translated when it was written).
             for tid in s.execute(select(m.drafts.c.id).where(m.drafts.c.translation_of == args["draft_id"])).scalars():
-                images.copy(s, tenant, args["draft_id"], tid)
+                existing = images.of(s, tid)
+                images.copy(s, tenant, args["draft_id"], tid, existing.alt if existing else None)
         return {"draft_id": args["draft_id"], "title": d.title if d else "", "site_id": d.site_id if d else None}
 
     def translation(tenant: str, subject: str, args: dict) -> dict:
