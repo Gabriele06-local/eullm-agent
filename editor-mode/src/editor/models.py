@@ -237,6 +237,16 @@ model_prices = Table(
     Column("updated_at", _ts()),
 )
 
+# Which model of core.yaml each step uses (no row: the Core's default); set
+# in the console, read by every newsroom.
+model_routes = Table(
+    "model_routes",
+    metadata,
+    Column("purpose", Text, primary_key=True),
+    Column("model", Text, nullable=False),
+    Column("updated_at", _ts()),
+)
+
 editorial_profiles = Table(
     "editorial_profiles",
     metadata,

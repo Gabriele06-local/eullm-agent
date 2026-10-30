@@ -221,7 +221,6 @@ def register(app, ctx) -> None:
         notice = request.cookies.get(NOTICE_COOKIE)
         rooms = [x for x in accounts.memberships(admin, c.user_id) if x.active] if c.user_id else []
         resp = pages.TemplateResponse(request, name, {
-            "model": s.execute(select(m.llm_usage.c.model).order_by(m.llm_usage.c.id.desc()).limit(1)).scalar(),
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
             "plan_name": plan_name(s),
