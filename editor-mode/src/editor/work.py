@@ -119,8 +119,7 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
             # again, each one takes its own title, in its own language.
             for tid, title in s.execute(select(m.drafts.c.id, m.drafts.c.title)
                                         .where(m.drafts.c.translation_of == args["draft_id"])).all():
-                existing = images.of(s, tid)
-                images.copy(s, tenant, args["draft_id"], tid, existing.alt if existing else None)
+                images.copy(s, tenant, args["draft_id"], tid, title)
         return {"draft_id": args["draft_id"], "title": d.title if d else "", "site_id": d.site_id if d else None}
 
     def translation(tenant: str, subject: str, args: dict) -> dict:
