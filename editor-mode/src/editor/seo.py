@@ -92,6 +92,17 @@ def site_links(s, site_id: int, title: str, keyphrase: str, limit: int = INTERNA
     return [{"title": t, "url": u} for _, t, u in scored[:limit]]
 
 
+def merge_links(*lists: list[dict], limit: int = INTERNAL_LINKS) -> list[dict]:
+    """The internal links of an article, first lists first, each page once."""
+    seen, out = set(), []
+    for links in lists:
+        for x in links:
+            if x.get("url") and x["url"] not in seen:
+                seen.add(x["url"])
+                out.append({"title": x["title"], "url": x["url"]})
+    return out[:limit]
+
+
 def _has(phrase: str, text: str) -> bool:
     words = tokens(phrase)
     have = set(tokens(text))

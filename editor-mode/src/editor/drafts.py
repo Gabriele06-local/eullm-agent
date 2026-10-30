@@ -299,7 +299,8 @@ def _sources(s, ids: list[int]) -> dict[int, Source]:
                          r.published_at.date().isoformat() if r.published_at else None) for r in rows}
 
 
-def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] | None = None) -> str:
+def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] | None = None,
+            posts: list[dict] | None = None) -> str:
     from .autopilot import brief_lines
 
     style = profile.get("style", {})
@@ -312,6 +313,7 @@ def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] 
         f"Angle: {proposal.angle}",
         f"Format: {proposal.format}",
         *brief_lines(profile),
+        *_post_lines(posts or []),
         "Items (those marked MAIN are the news the article is about; the others give context):",
     ]
     for src in sources.values():
@@ -319,6 +321,21 @@ def _prompt(profile: dict, proposal, sources: dict[int, Source], main: set[int] 
         lines.append(f"[{src.id}]{mark} {src.title} ({src.name}, {src.published or 'undated'})\n"
                      f"{(src.summary + ' ' + src.content)[:6000 if mark else 2500]}")
     return "\n".join(lines)
+
+
+def _post_lines(posts: list[dict]) -> list[str]:
+    """What the site already published on the subject: an article this close
+    is updated, not retold; the others are only completed."""
+    from .opportunity import UPDATE_SIMILARITY
+
+    if not posts:
+        return []
+    top = posts[0]
+    if top["score"] >= UPDATE_SIMILARITY:
+        return [f"The site already published «{top['title']}» ({top['url']}) on this subject: write the updated "
+                "version, leading with what is new since then; do not retell it as a fresh story."]
+    return ["The site already published these related articles; complete them, do not repeat them: "
+            + "; ".join(f"«{p['title']}»" for p in posts)]
 
 
 def related_items(s, ids: list[int], limit: int = RELATED, now: datetime | None = None) -> list[int]:
@@ -390,13 +407,17 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
         ids = list(dict.fromkeys(cited + more))
         ids += related_items(s, ids)
         profile = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.id == prop.profile_id)).scalar()
+        from .opportunity import related_posts
+
+        news = list(s.execute(select(m.source_items.c.title).where(m.source_items.c.id.in_(cited))).scalars())
+        posts = related_posts(s, prop.site_id, [prop.title, *news])
     step(N_("Lettura degli articoli di {n} notizie collegate"), n=len(ids))
     fetch_contents(db, tenant_id, ids, client)
     with db.tenant(tenant_id) as s:
         sources = _sources(s, ids)
 
     allowed = set(sources)
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": _prompt(profile, prop, sources, set(cited))}]
+    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": _prompt(profile, prop, sources, set(cited), posts)}]
     article, calls = None, []
     from .core_client import extract_json
 
@@ -423,7 +444,7 @@ def write_draft(db, tenant_id: str, proposal_id: int, core: CoreClient, client: 
     sd = seo.parse(article.seo, article.title)
     sd.faq = article.faq
     with db.tenant(tenant_id) as s:
-        sd.links = seo.site_links(s, prop.site_id, article.title, sd.keyphrase)
+        sd.links = seo.merge_links(posts, seo.site_links(s, prop.site_id, article.title, sd.keyphrase))
     body = render(article, sources, profile.get("language"), sd.links)
     first = next((c.section for c in article.claims), None)
     lead = " ".join(c.text for c in article.claims if c.section == first)

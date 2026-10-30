@@ -82,6 +82,34 @@ def novelty(titles: list[str], history: list[tuple[str, list[int]]]) -> float:
     return round(1 - min(worst, 1.0), 3)
 
 
+# A proposal this close to an article the site already has is better as an
+# update of that article than as a new one.
+UPDATE_SIMILARITY = 0.6
+RELATED_SIMILARITY = 0.2
+
+
+def _alike(title: str, h_title: str, h_sig: list[int]) -> float:
+    terms, h_terms = _terms(title), _terms(h_title)
+    common = len(terms & h_terms)
+    overlap = common / min(len(terms), len(h_terms)) if terms and h_terms and common >= 3 else 0
+    return max(similarity(minhash(title), h_sig), overlap)
+
+
+def related_posts(s, site_id: int, titles: list[str], limit: int = 3) -> list[dict]:
+    """The site's own articles closest to a proposal (its title and the
+    news it cites), most alike first: what it could complete, or update."""
+    titles = [x for x in titles if x][:4]
+    if not titles:
+        return []
+    sp = m.site_posts.c
+    out = []
+    for r in s.execute(select(sp.title, sp.url, sp.minhash, sp.published_at).where(sp.site_id == site_id)).all():
+        score = max(_alike(t, r.title, list(r.minhash)) for t in titles)
+        if score >= RELATED_SIMILARITY:
+            out.append({"title": r.title, "url": r.url, "published_at": r.published_at, "score": round(score, 3)})
+    return sorted(out, key=lambda x: -x["score"])[:limit]
+
+
 def opportunity(
     topic_id: int,
     topic_terms: set[str],
@@ -105,7 +133,8 @@ def opportunity(
     comp["novelty"] = novelty(titles, history)
     comp["not_repeated"] = 0.0 if proposed_recently else 1.0
     if feedback:
-        delta = sum({"up": 0.15, "down": -0.15, "off_topic": -0.25, "already_covered": -0.2}.get(f, 0) for f in feedback)
+        delta = sum({"up": 0.15, "down": -0.15, "off_topic": -0.25, "already_covered": -0.2, "too_generic": -0.15,
+                     "unreliable_source": -0.1}.get(f, 0) for f in feedback)
         comp["feedback"] = round(max(0.0, min(1.0, 0.5 + delta)), 3)
     if source_scores:
         comp["source_quality"] = round(sum(source_scores) / len(source_scores), 3)

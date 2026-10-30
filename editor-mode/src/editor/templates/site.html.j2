@@ -39,6 +39,7 @@
 
 {{ job_panel() }}
 
+{% macro reason_label(r) %}{% if r == 'already_covered' %}{{ _('già trattato') }}{% elif r == 'off_topic' %}{{ _('fuori tema') }}{% elif r == 'too_generic' %}{{ _('troppo generico') }}{% elif r == 'unreliable_source' %}{{ _('fonte poco affidabile') }}{% else %}{{ _('senza motivo') }}{% endif %}{% endmacro %}
 {% if numbers %}
 {% set n = numbers %}
 <section class="kpis" aria-label="{{ _('Il sito in numeri') }}">
@@ -78,6 +79,11 @@
     <span class="note" title="{{ _('ai prezzi di core.yaml') }}">{{ _('{n} chiamate', n=n.calls|tok) }}</span>
   </div>
 </section>
+{% if n.discards %}
+<p class="hint">{{ _('Perché hai scartato le proposte negli ultimi 30 giorni:') }}
+  {% for reason, k in n.discards %}{{ reason_label(reason) }} {{ k }}{% if not loop.last %} · {% endif %}{% endfor %}.
+  {{ _('Le prossime proposte ne tengono conto: niente temi già trattati o fuori tema, angoli più precisi, meno peso alle fonti poco affidabili.') }}</p>
+{% endif %}
 {% if n.per_day is not none and caller.can('owner') %}
 <form class="row" method="post" action="/ui/sites/{{ site.id }}/per-day" style="align-items: center; gap: 8px;">
   <span class="hint">{{ _('Proposte al giorno per questo sito') }}</span>

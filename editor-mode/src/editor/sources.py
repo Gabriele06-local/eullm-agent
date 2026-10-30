@@ -94,6 +94,7 @@ def rate(
     known: list[list[int]] = (),
     cited_by_site: int = 0,
     error_streak: int = 0,
+    distrusted: int = 0,
     valid_feed: bool = True,
     https: bool = True,
     now: datetime | None = None,
@@ -126,7 +127,9 @@ def rate(
         comp["quality"] = round(q, 3)
     else:
         comp["quality"] = 0.0
-    comp["reliability"] = round(max(0.0, min(1.0, 0.5 + 0.1 * cited_by_site) - 0.1 * error_streak), 3)
+    # An editor discarding a proposal for its source ("fonte poco affidabile") weighs more than an error.
+    comp["reliability"] = round(max(0.0, min(1.0, 0.5 + 0.1 * cited_by_site) - 0.1 * error_streak
+                                    - 0.15 * distrusted), 3)
     score = sum(WEIGHTS[k] * v for k, v in comp.items())
     if comp["relevance"] < MIN_RELEVANCE:
         status = "rejected"
@@ -447,7 +450,8 @@ def maintain(db, tenant_id: str, client: httpx.Client | None = None, now: dateti
                 with db.tenant(tenant_id) as s:
                     s.execute(update(m.sources).where(m.sources.c.id == r.id).values(evaluated_at=now))
                 continue
-        ev = rate(items, profiles.get(r.site_id, set()), cited_by_site=(r.evidence or {}).get("cited_by_site", 0), now=now)
+        ev = rate(items, profiles.get(r.site_id, set()), cited_by_site=(r.evidence or {}).get("cited_by_site", 0),
+                  distrusted=(r.evidence or {}).get("distrusted", 0), now=now)
         rep.reevaluated += 1
         with db.tenant(tenant_id) as s:
             s.execute(update(m.sources).where(m.sources.c.id == r.id).values(

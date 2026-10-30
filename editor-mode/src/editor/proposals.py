@@ -10,7 +10,7 @@ that is not stored.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -23,6 +23,12 @@ from .opportunity import Opportunity
 PER_DAY = 6  # profile.DEFAULT_SETTINGS, for a profile saved without it
 
 log = logging.getLogger(__name__)
+
+# Why a proposal was discarded: each reason teaches the newsroom something
+# different (opportunity.opportunity weighs them; "unreliable_source" also
+# lowers the site's rating of the sources it cited).
+REASONS = ("already_covered", "off_topic", "too_generic", "unreliable_source")
+SOURCE_PENALTY = 0.15
 
 FORMATS = ["news", "analysis", "guide", "tutorial", "review", "comparison", "opinion", "interview", "data"]
 MIN_OPPORTUNITY = 35.0
@@ -90,7 +96,37 @@ def _items_for(s, topic_id: int, site_id: int | None = None, limit: int = 12):
     return list({r.id: r for r in rows}.values())[:limit]
 
 
-def _prompt(profile: dict, label: str, items) -> str:
+def discards(s, site_id: int, since: datetime) -> list[tuple[str, int]]:
+    """Why this site's proposals were discarded since a date, most frequent
+    first: a plain discard counts as "down"."""
+    p, f = m.proposals, m.feedback
+    rows = s.execute(select(f.c.verdict, func.count()).join(p, (f.c.target == "proposal") & (f.c.target_id == p.c.id))
+                     .where(p.c.site_id == site_id, f.c.given_at >= since, f.c.verdict.in_((*REASONS, "down")))
+                     .group_by(f.c.verdict)).all()
+    return sorted(((r[0], r[1]) for r in rows), key=lambda x: -x[1])
+
+
+def lessons(s, site_id: int, days: int = 60) -> list[str]:
+    """What the editors said about earlier proposals of this site, for the
+    model that writes the next ones."""
+    p, f = m.proposals, m.feedback
+    since = datetime.now(UTC) - timedelta(days=days)
+    rows = s.execute(select(f.c.verdict, p.c.title).join(p, (f.c.target == "proposal") & (f.c.target_id == p.c.id))
+                     .where(p.c.site_id == site_id, f.c.given_at >= since,
+                            f.c.verdict.in_(("too_generic", "already_covered", "off_topic")))
+                     .order_by(f.c.given_at.desc()).limit(30)).all()
+    said = {"too_generic": "Rejected as too generic: propose a narrower, more specific angle than these",
+            "already_covered": "Rejected because the site already covered them: do not propose the same again",
+            "off_topic": "Rejected as off topic for this site: stay away from these subjects"}
+    out = []
+    for verdict, intro in said.items():
+        titles = [r.title for r in rows if r.verdict == verdict][:5]
+        if titles:
+            out.append(f"{intro}: " + "; ".join(f"«{x}»" for x in titles))
+    return out
+
+
+def _prompt(profile: dict, label: str, items, learned: list[str] | None = None) -> str:
     from .autopilot import brief_lines
 
     style = profile.get("style", {})
@@ -101,6 +137,7 @@ def _prompt(profile: dict, label: str, items) -> str:
         f"Tone: {style.get('tone') or 'not determined'}; usual formats: {', '.join(style.get('formats', [])) or 'unknown'}",
         f"Subtopics: {', '.join(s['name'] for s in profile.get('subtopics', []))}",
         *brief_lines(profile),
+        *(learned or []),
         f"Topic: {label}",
         "Items:",
     ]
@@ -144,13 +181,14 @@ def propose(db, tenant_id: str, site_id: int, opportunities: list[Opportunity], 
             # repository found by two searches).
             if is_story(o.score, items):
                 work.append((o, label, items))
+        learned = lessons(s, site_id)
     for o, label, items in work:
         allowed = {it.id for it in items}
         value, calls, by = None, [], "heuristic"
         if core is not None:
             try:
                 with usage.tagged(db, tenant_id, "proposal", site_id=site_id, ref=f"topic:{o.topic_id}"):
-                    value, calls = core.chat_json(SYSTEM, _prompt(prof.body, label, items), _validator(allowed))
+                    value, calls = core.chat_json(SYSTEM, _prompt(prof.body, label, items, learned), _validator(allowed))
                 by = "model"
             except CoreError as e:
                 log.warning("proposal for topic %s failed: %s", o.topic_id, e)
@@ -268,16 +306,35 @@ def propose_titles(db, tenant_id: str, site_id: int, topic_id: int, core: CoreCl
     return created
 
 
-def decide(db, tenant_id: str, proposal_id: int, accept: bool, by: str, note: str | None = None) -> bool:
-    """Accept or reject a proposal; the decision is also feedback."""
+def decide(db, tenant_id: str, proposal_id: int, accept: bool, by: str, note: str | None = None,
+           reason: str | None = None) -> bool:
+    """Accept or reject a proposal; the decision is also feedback, and a
+    rejection may say why (REASONS)."""
+    verdict = "up" if accept else reason if reason in REASONS else "down"
     with db.tenant(tenant_id) as s:
         row = s.execute(select(m.proposals.c.site_id, m.proposals.c.status).where(m.proposals.c.id == proposal_id)).first()
         if row is None or row.status != "proposed":
             return False
         s.execute(update(m.proposals).where(m.proposals.c.id == proposal_id).values(
             status="accepted" if accept else "rejected", decided_by=by))
-        record_feedback(s, tenant_id, "proposal", proposal_id, "up" if accept else "down", by, note, row.site_id)
+        record_feedback(s, tenant_id, "proposal", proposal_id, verdict, by, note, row.site_id)
+        if verdict == "unreliable_source":
+            _distrust_sources(s, proposal_id, row.site_id)
     return True
+
+
+def _distrust_sources(s, proposal_id: int, site_id: int) -> None:
+    """The site's own rating of the sources the proposal cited goes down."""
+    src = m.sources.c
+    cited = select(m.source_items.c.source_id).join(
+        m.proposal_citations, m.proposal_citations.c.item_id == m.source_items.c.id).where(
+        m.proposal_citations.c.proposal_id == proposal_id)
+    for sid, score, evidence in s.execute(select(src.id, src.score, src.evidence).where(
+            src.site_id == site_id, src.shared.is_not(True), or_(src.id.in_(cited), src.archive_id.in_(cited)))).all():
+        # Counted in its evidence, so the next evaluation (sources.rate) keeps it.
+        evidence = {**(evidence or {}), "distrusted": (evidence or {}).get("distrusted", 0) + 1}
+        s.execute(update(m.sources).where(src.id == sid).values(
+            evidence=evidence, score=round(max(0.0, (0.5 if score is None else score) - SOURCE_PENALTY), 3)))
 
 
 def record_feedback(s, tenant_id: str, target: str, target_id: int, verdict: str, by: str,

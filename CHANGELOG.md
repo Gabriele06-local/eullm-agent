@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.22.0
+
+### Added
+
+- Every proposal explains itself: "Perché oggi" (how many sources cover the
+  news and how recent it is, plus the model's reason), the site's own
+  articles it completes, and, when the site already has a very similar
+  article, "Meglio aggiornare un tuo articolo" with its link.
+- Drafts know the site's articles: when the proposal is close to an article
+  already published, the model writes the updated version leading with what
+  is new instead of retelling it; related articles are linked in "Leggi
+  anche" before the other internal links.
+- Discard reasons: "Scarta" asks why (già trattato, fuori tema, troppo
+  generico, fonte poco affidabile, or just discard). Each reason weighs on
+  the next scores, the titles discarded as already covered, off topic or too
+  generic go to the model that writes the next proposals, and an unreliable
+  source loses reliability for that site (kept when the source is rated
+  again). Sito e profilo sums up why proposals were discarded in the last 30
+  days. Migrations 0031 (Postgres) and 0020 (SQLite).
+
 ## 0.21.1
 
 ### Changed

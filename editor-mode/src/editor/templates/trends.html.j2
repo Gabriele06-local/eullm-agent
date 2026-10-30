@@ -122,7 +122,7 @@
     </details>
     <div class="row" style="flex: none;">
       {% if p.status == 'proposed' and caller.can('editor') %}
-      <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/trends#{{ ('p-%d' % loop.nextitem.id) if loop.nextitem else 'h-plan' }}"><button class="btn sm" type="submit">{{ _('Scarta') }}</button></form>
+      {% with back='/trends#' ~ (('p-%d' % loop.nextitem.id) if loop.nextitem else 'h-plan') %}{% include "_discard.html.j2" %}{% endwith %}
       <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/trends#p-{{ p.id }}"><button class="btn sm pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
       {% elif p.draft_id %}
       <a class="btn sm" href="/drafts/{{ p.draft_id }}">{{ _('Apri la bozza') }}</a>

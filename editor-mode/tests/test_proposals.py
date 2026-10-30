@@ -244,3 +244,50 @@ def test_no_news_for_three_days_is_a_stopped_collection(db, tenant):
     later = NOW + timedelta(days=4)
     assert props.top_up(db, tenant, site_id, later - timedelta(hours=12), now=later) == []
     assert picks.why_none(db, tenant, site_id, now=later) == "no_news"
+
+
+def _one_proposal(db, tenant, site_id):
+    def answer(request):
+        prompt = json.loads(request.content)["messages"][1]["content"]
+        ids = [int(line[1:line.index("]")]) for line in prompt.splitlines() if line.startswith("[")]
+        return httpx.Response(200, json={"content": json.dumps({
+            "title": "Bari cablata in fibra: cosa cambia", "angle": "Guida", "why_now": "Lavori chiusi",
+            "format": "guide", "citations": ids[:2]}), "tool_calls": [], "usage": {"input_tokens": 1, "output_tokens": 1}, "cost": 0.0})
+
+    with respx.mock() as router:
+        router.post("http://core.test/v1/llm/chat").mock(side_effect=answer)
+        return props.propose(db, tenant, site_id, opp.score_site(db, tenant, site_id), CoreClient("http://core.test", "tok"))
+
+
+def test_a_discard_reason_teaches_the_next_proposals(db, tenant):
+    site_id = setup_site(db, tenant)
+    [pid] = _one_proposal(db, tenant, site_id)
+    with db.tenant(tenant) as s:
+        before = dict(s.execute(select(m.sources.c.id, m.sources.c.score)).all())
+    assert props.decide(db, tenant, pid, False, "francesco", reason="unreliable_source")
+    with db.tenant(tenant) as s:
+        verdict = s.execute(select(m.feedback.c.verdict).where(m.feedback.c.target_id == pid)).scalar()
+        rows = s.execute(select(m.sources.c.id, m.sources.c.score, m.sources.c.evidence)).all()
+        assert verdict == "unreliable_source"
+        lowered = [r for r in rows if (r.evidence or {}).get("distrusted")]
+        assert lowered and all(r.evidence["distrusted"] == 1 and r.score < before[r.id] for r in lowered)
+        assert props.discards(s, site_id, NOW - timedelta(days=30)) == [("unreliable_source", 1)]
+        # An unknown reason is a plain discard; the lessons name what to avoid.
+        s.execute(m.feedback.insert().values(tenant_id=tenant, site_id=site_id, target="proposal", target_id=pid,
+                                             verdict="too_generic", given_by="francesco", given_at=datetime.now(UTC)))
+        learned = props.lessons(s, site_id)
+    assert learned and "too generic" in learned[0] and "Bari cablata in fibra" in learned[0]
+    # A proposal the site already covered is better as an update; others are completed.
+    from editor.drafts import _post_lines
+    from editor.seo import merge_links
+    with db.tenant(tenant) as s:
+        for url, title in (("https://blog.example/bari", "Bari cablata in fibra: cosa cambia per chi abita"),
+                           ("https://blog.example/sat", "Starlink in Italia: prezzi e copertura")):
+            s.execute(m.site_posts.insert().values(tenant_id=tenant, site_id=site_id, url=url, url_hash=url_hash(url),
+                                                   title=title, minhash=minhash(title), published_at=NOW))
+        posts = opp.related_posts(s, site_id, ["Bari cablata in fibra: cosa cambia"])
+    assert posts[0]["url"] == "https://blog.example/bari" and posts[0]["score"] >= opp.UPDATE_SIMILARITY
+    assert "updated version" in _post_lines(posts)[0]
+    assert "complete them" in _post_lines([{**posts[0], "score": 0.3}])[0]
+    links = merge_links(posts, [{"title": "x", "url": "https://blog.example/bari"}, {"title": "y", "url": "https://blog.example/y"}])
+    assert [x["url"] for x in links].count("https://blog.example/bari") == 1

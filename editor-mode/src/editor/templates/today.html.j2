@@ -99,7 +99,7 @@
       <div class="detail">{% include "_proposal.html.j2" %}
         {% if caller.can('editor') %}
         <div class="row" style="margin-top: 10px;">
-          <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="0"><input type="hidden" name="back" value="/#h-decide"><button class="btn sm" type="submit">{{ _('Scarta') }}</button></form>
+          {% with back='/#h-decide' %}{% include "_discard.html.j2" %}{% endwith %}
           <form class="inline" method="post" action="/ui/proposals/{{ p.id }}"><input type="hidden" name="accept" value="1"><input type="hidden" name="back" value="/#h-decide"><button class="btn sm pri" type="submit">{{ _('Accetta e scrivi la bozza') }}</button></form>
         </div>
         {% endif %}
