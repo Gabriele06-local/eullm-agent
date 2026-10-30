@@ -59,7 +59,8 @@ def test_an_operator_asks_for_the_update_from_the_console(db, tmp_path):
     c.post("/admin/updates/apply", data={"version": "99.0.0; rm -rf /"})
     assert not (tmp_path / "request.json").exists()
     r = c.post("/admin/updates/apply", data={"version": "99.0.0"}, follow_redirects=False)
-    assert r.status_code == 303
+    # Back to the updates section, not to the top of the console.
+    assert r.status_code == 303 and r.headers["location"] == "/admin#aggiornamenti"
     asked = json.loads((tmp_path / "request.json").read_text())
     assert asked["version"] == "99.0.0" and asked["by"] == op
     assert "chiesto: il server lo prende entro un minuto" in c.get("/admin").text

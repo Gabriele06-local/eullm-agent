@@ -34,7 +34,7 @@
 </nav>
 <main class="main">
   <div class="topbar">{% include "_lang.html.j2" %}</div>
-  {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+  {% if notice and not notice_at %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   {% if updates.newer and not updates.pending %}<p class="notice" role="status" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;"><span>{{ _('È disponibile la versione {version} (installata: {installed}).', version=updates.available.version, installed=updates.installed) }}</span><a href="#aggiornamenti">{{ _('Aggiorna') }}</a></p>{% endif %}
   {% if new %}
@@ -254,7 +254,8 @@
   </div>
 
   <section class="card" id="piani" aria-labelledby="h-plans">
-    <div class="card-head"><h2 id="h-plans">{{ _('Piani') }}</h2><span class="hint">{{ _('prezzi IVA esclusa') }}</span></div>
+    <div class="card-head"><h2 id="h-plans">{{ _('Piani') }}</h2>
+    {% if notice and notice_at == 'piani' %}<p class="notice" role="status" style="margin: 0 16px;">{{ notice }}</p>{% endif %}<span class="hint">{{ _('prezzi IVA esclusa') }}</span></div>
     <div class="pad">
     {% for p in plans %}
     <form method="post" action="/admin/plans/{{ p.code }}" class="form-grid" style="margin-bottom: 16px;">
@@ -287,6 +288,7 @@
 
   <section class="card pad" id="aggiornamenti" aria-labelledby="h-updates">
     <h2 id="h-updates">{{ _('Aggiornamenti') }}</h2>
+    {% if notice and notice_at == 'aggiornamenti' %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
     {% set st = updates.status or {} %}
     {% set av = updates.available or {} %}
     <div class="list-row"><span>{{ _('Versione installata') }}</span><span class="num">{{ updates.installed }}</span></div>

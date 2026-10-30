@@ -30,6 +30,7 @@ COOKIE = "editor_token"
 INSTALLED = metadata.version("eullm-editor-mode")
 SITE_COOKIE = "editor_site"
 NOTICE_COOKIE = "editor_notice"
+NOTICE_AT_COOKIE = "editor_notice_at"  # the console section the notice belongs to
 
 
 class LimitsIn(BaseModel):
@@ -239,11 +240,12 @@ def register(app, ctx) -> None:
 
     def page(request: Request, s, status_code: int = 200, **data):
         notice = request.cookies.get(NOTICE_COOKIE)
+        notice_at = request.cookies.get(NOTICE_AT_COOKIE) if notice else None
         from urllib.parse import unquote
         resp = pages.TemplateResponse(request, "console.html.j2", {
             "me": s, "rooms": newsrooms.listing(admin, db), "operators": accounts.operators(admin),
             "keys": accounts.operator_tokens(admin), "pending": accounts.pending_invites(admin, None),
-            "roles": ROLES, "notice": unquote(notice) if notice else None, "mine": accounts.memberships(admin, s.user_id),
+            "roles": ROLES, "notice": unquote(notice) if notice else None, "notice_at": notice_at, "mine": accounts.memberships(admin, s.user_id),
             "customers": billing.customers(admin), "resellers": billing.resellers(admin), "plans": billing.plans(admin),
             "subs": billing.subscriptions(admin), "reseller_names": {r["id"]: r["name"] for r in billing.resellers(admin)},
             "statuses": billing.STATUS_LABELS, "money": billing.money, "online": ctx.gateway is not None,
@@ -252,12 +254,16 @@ def register(app, ctx) -> None:
             status_code=status_code)
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
+            resp.delete_cookie(NOTICE_AT_COOKIE)
         return resp
 
-    def back(notice: str) -> RedirectResponse:
+    def back(notice: str, at: str = "") -> RedirectResponse:
+        """Back to the console; with `at`, to that section, the notice shown in it."""
         from urllib.parse import quote
-        resp = RedirectResponse("/admin", status_code=303)
+        resp = RedirectResponse(f"/admin#{at}" if at else "/admin", status_code=303)
         resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
+        if at:
+            resp.set_cookie(NOTICE_AT_COOKIE, at, max_age=60, httponly=True, samesite="strict")
         return resp
 
     def need_console(request: Request):
@@ -336,29 +342,30 @@ def register(app, ctx) -> None:
     def ui_updates_check(s=Depends(need_console)):
         where = updates.folder(ctx.updates_dir)
         if where is None:
-            return back(t("Aggiornamenti dal pannello non attivi su questo server."))
+            return back(t("Aggiornamenti dal pannello non attivi su questo server."), "aggiornamenti")
         found = updates.check(where, force=True)
         if found.get("error"):
-            return back(t("GitHub non ha risposto: {error}", error=found["error"]))
+            return back(t("GitHub non ha risposto: {error}", error=found["error"]), "aggiornamenti")
         v = found.get("version") or ""
         if updates.newer(v, INSTALLED):
-            return back(t("È disponibile la versione {version}.", version=v))
-        return back(t("Nessun aggiornamento: la {version} è l'ultima.", version=INSTALLED))
+            return back(t("È disponibile la versione {version}.", version=v), "aggiornamenti")
+        return back(t("Nessun aggiornamento: la {version} è l'ultima.", version=INSTALLED), "aggiornamenti")
 
     @app.post("/admin/updates/apply")
     def ui_updates_apply(version: str = Form(...), s=Depends(need_console)):
         where = updates.folder(ctx.updates_dir)
         if where is None:
-            return back(t("Aggiornamenti dal pannello non attivi su questo server."))
+            return back(t("Aggiornamenti dal pannello non attivi su questo server."), "aggiornamenti")
         known = updates.state(where, INSTALLED)
         # Only the release GitHub announced, and only forward.
         if version != (known["available"] or {}).get("version") or not known["newer"]:
-            return back(t("Versione non disponibile."))
+            return back(t("Versione non disponibile."), "aggiornamenti")
         if known["pending"] or (known["status"] or {}).get("state") == "running":
-            return back(t("Un aggiornamento è già in corso."))
+            return back(t("Un aggiornamento è già in corso."), "aggiornamenti")
         updates.request(where, version, s.email)
         return back(t("Aggiornamento alla {version} chiesto: entro un minuto il server fa il backup, scarica la "
-                      "versione e riavvia. Il pannello resta irraggiungibile per qualche secondo.", version=version))
+                      "versione e riavvia. Il pannello resta irraggiungibile per qualche secondo.", version=version),
+                    "aggiornamenti")
 
     @app.post("/admin/newsrooms", response_class=HTMLResponse)
     def ui_create(request: Request, name: str = Form(...), owner_email: str = Form(...), plan: str = Form(""),

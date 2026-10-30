@@ -400,28 +400,28 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             billing.save_plan(admin, code, fields)
         except ValueError as e:
             return back(t("Piano non salvato: {error}.",
-                          error=e if isinstance(e, billing.BillingError) else t("numeri di zero o più")))
+                          error=e if isinstance(e, billing.BillingError) else t("numeri di zero o più")), "piani")
         return back(t("Piano {name} salvato. Le redazioni già su questo piano prendono i nuovi limiti al prossimo pagamento.",
-                      name=name.strip()))
+                      name=name.strip()), "piani")
 
     @app.post("/admin/plans")
     def ui_new_plan(code: str = Form(...), name: str = Form(...), s=Depends(need_console)):
         try:
             code = billing.create_plan(admin, code, name)
         except billing.BillingError as e:
-            return back(t("Piano non creato: {error}.", error=e))
+            return back(t("Piano non creato: {error}.", error=e), "piani")
         return back(t("Piano {name} creato, non ancora sul sito: imposta prezzi e limiti e scegli \"Sul sito: Sì\".",
-                      name=name.strip()))
+                      name=name.strip()), "piani")
 
     @app.post("/admin/plans/{code}/delete")
     def ui_delete_plan(code: str, s=Depends(need_console)):
         try:
             name = billing.delete_plan(admin, code)
         except LookupError:
-            return back(t("Piano non trovato."))
+            return back(t("Piano non trovato."), "piani")
         except billing.BillingError as e:
-            return back(t("Piano non eliminato: {error}.", error=e))
-        return back(t("Piano {name} eliminato.", name=name))
+            return back(t("Piano non eliminato: {error}.", error=e), "piani")
+        return back(t("Piano {name} eliminato.", name=name), "piani")
 
     @app.post("/admin/customers/{cid}")
     def ui_customer(cid: int, kind: str = Form("company"), name: str = Form(""), email: str = Form(""),
