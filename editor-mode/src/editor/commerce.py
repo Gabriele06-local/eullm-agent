@@ -141,7 +141,9 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
             return send(request, res["invite"], "invite", res["owner_email"], newsroom_name, "EuLLM Editor")
         if res["created"] and res.get("existing_user"):
             # The owner signs in as always: an email says the newsroom is there.
-            out = send(request, "", "ready", res["owner_email"], newsroom_name, "EuLLM Editor")
+            # Bought on the site ("Acquista"): signing in leads to the payment.
+            kind = "ready_pay" if res.get("desired_plan") and res.get("status") in ("trialing", "expired") else "ready"
+            out = send(request, "", kind, res["owner_email"], newsroom_name, "EuLLM Editor")
             return {**out, "existing": True}
         return None
 
@@ -358,7 +360,15 @@ def register(app, ctx, operator, own, no_reseller, send, need_console, page, bac
         paid = f"{base(request)}/account/{tenant_id}/paid" + ("?back=plan" if back == "plan" else "")
         try:
             url = billing.checkout(admin, gateway, tenant_id, plan, interval, paid, webhook_url(request))
-        except (billing.BillingError, GatewayError) as e:
+        except GatewayError as e:
+            if "No suitable payment methods" in str(e):
+                # The gateway account has no method for recurring payments on:
+                # the operator's setting, not the customer's doing.
+                log.warning("checkout of %s: %s (enable credit cards in the Mollie website profile)", tenant_id, e)
+                return to_account(t("Pagamento non avviato: il pagamento online non è ancora pronto. Riprova più tardi o "
+                                    "scrivi all'assistenza."), tenant_id, back)
+            return to_account(t("Pagamento non avviato: {error}.", error=e), tenant_id, back)
+        except billing.BillingError as e:
             return to_account(t("Pagamento non avviato: {error}.", error=e), tenant_id, back)
         except Exception:
             log.exception("checkout of %s failed", tenant_id)

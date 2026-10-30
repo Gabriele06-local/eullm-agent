@@ -414,6 +414,8 @@ def describe(row, now: datetime | None = None) -> dict:
     out = dict(row._mapping)
     now = _now(now)
     out["label"] = t(STATUS_LABELS[out["status"]]) if out["status"] in STATUS_LABELS else out["status"]
+    if out["status"] == "expired" and out.get("desired_plan") and out["desired_plan"] == out["plan_code"]:
+        out["label"] = t("Da pagare")  # bought on the site, waiting for its payment
     out["days_left"] = None
     end = out["trial_ends_at"] if out["status"] == "trialing" else out["current_period_end"]
     if end is not None:
@@ -423,13 +425,13 @@ def describe(row, now: datetime | None = None) -> dict:
 
 def bought_unpaid(admin, user_id: int) -> str | None:
     """A newsroom this person owns, bought on the site ("Acquista") and not
-    paid yet: still on trial with the plan they picked waiting. Their first
-    sign-in goes straight to its payment."""
+    paid yet: on trial (or with the trial refused) and the plan they picked
+    waiting. Signing in goes straight to its payment until it is paid."""
     for x in accounts.memberships(admin, user_id):
         if x.role != "owner":
             continue
         sub = subscription(admin, x.tenant_id)
-        if sub and sub["status"] == "trialing" and sub.get("desired_plan"):
+        if sub and sub["status"] in ("trialing", "expired") and sub.get("desired_plan"):
             return x.tenant_id
     return None
 
@@ -669,8 +671,9 @@ def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None
     plan_code = spec.get("plan") or TRIAL_PLAN
     interval = spec.get("interval") or "month"
     # From the public site a paid plan starts only with its payment: the
-    # newsroom starts on trial and the choice waits in /account. A reseller
-    # bills its customers itself, so its plan starts at once.
+    # newsroom is made on that plan, stopped, with no trial, and waits for
+    # the payment in /account. A reseller bills its customers itself, so its
+    # plan starts at once.
     desired = None
     if reseller_id is None and plan_code != TRIAL_PLAN:
         desired, plan_code = plan_code, TRIAL_PLAN
@@ -690,12 +693,15 @@ def signup(admin, spec: dict, by: str, reseller_id: int | None = None, core=None
     if res["created"] or subscription(admin, tid) is None:
         provider = "reseller" if reseller_id is not None else "manual"
         sub = start(admin, tid, plan_code, cid, provider, interval, core=core, now=now)
-        if res["created"] and sub["status"] == "trialing":
+        if res["created"] and sub["status"] == "trialing" and not desired:
             trial_used = _trial_once(admin, tid, cid, clean_customer(cust), res["owner_email"], now)
     if desired:
         with admin.engine.begin() as conn:
-            conn.execute(update(m.subscriptions).where(m.subscriptions.c.tenant_id == tid, m.subscriptions.c.status == "trialing")
-                         .values(desired_plan=desired, desired_interval=interval))
+            s = m.subscriptions
+            if conn.execute(update(s).where(s.c.tenant_id == tid, s.c.status.in_(("trialing", "expired"))).values(
+                    plan_code=desired, billing_interval=interval, status="expired", trial_ends_at=_now(now),
+                    desired_plan=desired, desired_interval=interval, updated_at=_now(now))).rowcount:
+                _hold(conn, tid)
     sub = subscription(admin, tid)
     return {"customer_id": cid, "customer_created": created, "tenant_id": tid, "created": res["created"],
             "owner_email": res["owner_email"], "invite": res["invite"], "warning": res["warning"],

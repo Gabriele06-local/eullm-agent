@@ -1507,5 +1507,10 @@
  "senza motivo": "no reason",
  "troppo generico": "too generic",
  "{n} giorni fa": "{n} days ago",
- "{n} ore fa": "{n} hours ago"
+ "{n} ore fa": "{n} hours ago",
+ "La redazione {newsroom} è pronta: completa il pagamento": "The {newsroom} newsroom is ready: complete the payment",
+ "La redazione {newsroom} è pronta. Entra con il tuo account di sempre: ti portiamo subito al pagamento del piano che hai scelto.": "The {newsroom} newsroom is ready. Sign in with your usual account: we take you straight to the payment for the plan you chose.",
+ "Pagamento non avviato: il pagamento online non è ancora pronto. Riprova più tardi o scrivi all'assistenza.": "Payment not started: online payment is not ready yet. Try again later or write to support.",
+ "<strong>Hai scelto il piano {plan}</strong>: la redazione parte appena il pagamento è confermato. Controlla i dati di fatturazione e vai al pagamento.": "<strong>You chose the {plan} plan</strong>: the newsroom starts as soon as the payment is confirmed. Check your billing details and go to payment.",
+ "Da pagare": "To be paid"
 }
