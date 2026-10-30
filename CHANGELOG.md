@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.21.1
+
+### Changed
+
+- Console: "Controlla adesso", "Aggiorna alla X.Y.Z" and the plan forms
+  bring you back to their own section (/admin#aggiornamenti, #piani), with
+  the outcome shown there, instead of the top of the page.
+
 ## 0.21.0
 
 ### Added
