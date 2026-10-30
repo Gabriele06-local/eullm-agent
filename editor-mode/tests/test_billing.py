@@ -447,6 +447,7 @@ def test_the_free_trial_is_given_once():
     from editor import trials
     assert trials.norm_email(" Mario.Rossi+redazia@GoogleMail.com") == "mariorossi@gmail.com"
     assert trials.norm_email("m.rossi+x@rossi.it") == "m.rossi@rossi.it"
+    assert trials.norm_email("a@") == "" and trials.norm_email("@a.it") == ""  # a half address is not a mark
     assert trials.norm_phone("+39 333 123 4567") == trials.norm_phone("3331234567") == "331234567"
     assert trials.norm_domain("https://WWW.Rossi.it/blog") == "rossi.it"
     assert trials.masked("email", "mariorossi@gmail.com") == "ma…@gmail.com"

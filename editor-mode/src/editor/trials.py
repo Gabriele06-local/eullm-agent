@@ -42,7 +42,7 @@ def norm_email(v: str) -> str:
     local = local.split("+", 1)[0]
     if host in GMAIL:  # Gmail ignores dots: a.b@gmail.com is ab@gmail.com
         local, host = local.replace(".", ""), "gmail.com"
-    return f"{local}@{host}" if local else ""
+    return f"{local}@{host}" if local and host else ""
 
 
 def norm_phone(v: str) -> str:
