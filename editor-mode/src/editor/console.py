@@ -291,6 +291,7 @@ def register(app, ctx) -> None:
         from urllib.parse import unquote
         resp = pages.TemplateResponse(request, "usage.html.j2", {
             "me": s, "r": usage.report(admin, db, tenants, days), "names": names, "purposes": usage.PURPOSES,
+            "routable": usage.ROUTABLE, "routes": usage.route_list(admin),
             "notice": unquote(notice) if notice else None})
         if notice:
             resp.delete_cookie(NOTICE_COOKIE)
@@ -306,9 +307,9 @@ def register(app, ctx) -> None:
         return Response(usage.csv_rows(db, tenants, days), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="model-usage-{days}d-{day}.csv"'})
 
-    def back_usage(notice: str) -> RedirectResponse:
+    def back_usage(notice: str, at: str = "prezzi") -> RedirectResponse:
         from urllib.parse import quote
-        resp = RedirectResponse("/admin/usage#prezzi", status_code=303)
+        resp = RedirectResponse(f"/admin/usage#{at}", status_code=303)
         resp.set_cookie(NOTICE_COOKIE, quote(notice), max_age=60, httponly=True, samesite="strict")
         return resp
 
@@ -321,6 +322,14 @@ def register(app, ctx) -> None:
         except ValueError:
             return back_usage(t("Prezzo non salvato: servono due numeri, zero o più (per esempio 0,40)."))
         return back_usage(t("Prezzo di riferimento di {model} salvato.", model=model.strip()))
+
+    @app.post("/admin/usage/models")
+    async def usage_models(request: Request, s=Depends(need_console)):
+        form = await request.form()
+        for purpose in usage.ROUTABLE:
+            if purpose in form:
+                usage.set_route(admin, purpose, str(form[purpose]))
+        return back_usage(t("Modelli dei passi salvati: valgono dalla prossima chiamata, entro un minuto."), "modelli")
 
     @app.post("/admin/usage/prices/delete")
     def usage_price_delete(model: str = Form(...), s=Depends(need_console)):

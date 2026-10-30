@@ -123,6 +123,14 @@ class CoreClient:
         limit, timeout) is asked again after RETRY_WAITS before giving up."""
         from . import usage
 
+        if model is None and (routed := usage.routed_model()):
+            try:
+                return self.chat(messages, routed)
+            except CoreError as e:
+                if "unknown model" not in str(e) and "not allowed" not in str(e):
+                    raise
+                # A step routed to a model core.yaml does not have: the default answers.
+                log.warning("model %r for this step is not in core.yaml, using the default: %s", routed, e)
         for wait in (*RETRY_WAITS, None):
             started = time.monotonic()
             try:

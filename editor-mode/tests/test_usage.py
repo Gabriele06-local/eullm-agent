@@ -91,3 +91,42 @@ def test_the_console_shows_tokens_per_step_model_site_and_article(db, tenant):
     csv = c.get("/admin/usage.csv?days=7")
     assert csv.status_code == 200 and "draft" in csv.text and f"proposal:{pid}" in csv.text
     assert "tolto" in c.post("/admin/usage/prices/delete", data={"model": model}).text
+
+
+def test_each_step_can_use_its_own_model(db, tenant):
+    """A step routed in the console calls its model; a name core.yaml does
+    not know falls back to the default; the others keep the default."""
+    import json as _json
+
+    import httpx
+    import respx
+
+    from editor import usage as u
+    from editor.core_client import CoreClient
+
+    from editor.db import Database
+
+    admin = Database.from_url(db.admin_url)
+    u.set_route(admin, "proposal", "haiku")
+    u.set_route(admin, "draft", "nessuno")
+    asked = []
+
+    def answer(request):
+        model = _json.loads(request.content)["model"]
+        asked.append(model)
+        if model == "nessuno":
+            return httpx.Response(400, json={"error": "unknown model 'nessuno'"})
+        return httpx.Response(200, json={"content": "ok", "usage": {"input_tokens": 1, "output_tokens": 1}, "cost": 0.0,
+                                         "served_model": model})
+
+    core = CoreClient("http://core.test", "tok")
+    with respx.mock() as router:
+        router.post("http://core.test/v1/llm/chat").mock(side_effect=answer)
+        for purpose in ("proposal", "draft", "translate"):
+            with u.tagged(db, tenant, purpose):
+                core.chat([{"role": "user", "content": "x"}])
+    assert asked == ["haiku", "nessuno", "default", "default"]
+    assert u.route_list(admin) == {"proposal": "haiku", "draft": "nessuno"}
+    u.set_route(admin, "proposal", "")
+    u.set_route(admin, "draft", "default")
+    assert u.route_list(admin) == {}

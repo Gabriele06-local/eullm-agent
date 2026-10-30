@@ -41,7 +41,59 @@ PURPOSES = {
     "draft": N_("Scrittura delle bozze"),
     "translate": N_("Traduzioni"),
     "image": N_("Immagini di copertina"),
+    "profile": N_("Profilo dal contesto"),
+    "editor_check": N_("Caporedattore AI"),
 }
+
+# Steps whose model the console can choose (images use their own service).
+ROUTABLE = ("site_profile", "profile", "source_discovery", "topic_label", "proposal", "draft", "translate",
+            "editor_check")
+ROUTES_TTL = 60.0
+_routes_cache: dict = {"at": 0.0, "routes": {}}
+
+
+def routes(db) -> dict[str, str]:
+    """The model each step uses (only the steps that have one)."""
+    import time
+
+    now = time.monotonic()
+    if now - _routes_cache["at"] < ROUTES_TTL:
+        return _routes_cache["routes"]
+    try:
+        with db.engine.connect() as conn:
+            found = dict(conn.execute(select(m.model_routes.c.purpose, m.model_routes.c.model)).all())
+    except Exception:
+        log.exception("model routes not read: every step uses the default model")
+        found = {}
+    _routes_cache.update(at=now, routes=found)
+    return found
+
+
+def route_list(admin) -> dict[str, str]:
+    """The routes as stored, for the console (no cache)."""
+    with admin.engine.connect() as conn:
+        return dict(conn.execute(select(m.model_routes.c.purpose, m.model_routes.c.model)).all())
+
+
+def routed_model() -> str | None:
+    """The model chosen in the console for the step being tagged."""
+    tag = _tag.get()
+    if tag is None:
+        return None
+    db, _, purpose, _, _ = tag
+    return routes(db).get(purpose) or None
+
+
+def set_route(admin, purpose: str, model: str) -> None:
+    """Choose the model of a step; empty: back to the Core's default."""
+    if purpose not in ROUTABLE:
+        raise ValueError(purpose)
+    model = (model or "").strip()[:100]
+    with admin.engine.begin() as conn:
+        conn.execute(delete(m.model_routes).where(m.model_routes.c.purpose == purpose))
+        if model and model != "default":
+            conn.execute(insert(m.model_routes).values(purpose=purpose, model=model, updated_at=datetime.now(UTC)))
+    _routes_cache["at"] = 0.0
 
 
 @contextmanager

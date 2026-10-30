@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.23.0
+
+### Added
+
+- A model per step: /admin › Consumi › "Modello per passo" chooses, for
+  each step (site analysis, profile from context, source search, topic
+  names, proposals, drafts, translations, AI managing editor), a model of
+  core.yaml's `models` section, for example a fast one for proposals and a
+  stronger one for drafts; empty is the Core's default. A name core.yaml
+  does not know stops nothing: the default answers and the log says so.
+  Migrations 0032 (Postgres) and 0021 (SQLite).
+
+### Changed
+
+- The newsroom no longer shows which model it uses (it was under the menu).
+
 ## 0.22.2
 
 ### Changed

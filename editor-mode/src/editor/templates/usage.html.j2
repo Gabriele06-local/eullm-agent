@@ -26,6 +26,7 @@
   <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></div>
   <a href="/admin">{{ _('Redazioni') }}</a>
   <a href="/admin/usage" class="on">{{ _('Consumi') }}</a>
+  <a href="#modelli">{{ _('Modello per passo') }}</a>
   <a href="#prezzi">{{ _('Prezzi di riferimento') }}</a>
   <a href="#articoli">{{ _('Costo per articolo') }}</a>
   <span class="grow"></span>
@@ -105,6 +106,18 @@
       {% else %}<tr><td colspan="6" class="hint">{{ _('Nessuna bozza scritta nel periodo.') }}</td></tr>{% endfor %}
       </tbody>
     </table></div>
+  </section>
+
+  <section class="card" id="modelli" aria-labelledby="h-routes">
+    <div class="card-head"><div><h2 id="h-routes">{{ _('Modello per passo') }}</h2>
+      <span class="hint">{{ _('Il nome di un modello della sezione models di core.yaml (per esempio haiku, sonnet, opus); vuoto: il modello predefinito del Core. Un nome che core.yaml non conosce non ferma nulla: risponde il predefinito e il log lo segnala. Le redazioni non vedono quale modello usano.') }}</span></div></div>
+    <form class="pad form-grid" method="post" action="/admin/usage/models" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      {% for p in routable %}
+      <label class="field">{{ _(purposes[p]) }}<input name="{{ p }}" value="{{ routes.get(p, '') }}" placeholder="default" list="model-names" maxlength="100"></label>
+      {% endfor %}
+      <datalist id="model-names"><option value="default"><option value="haiku"><option value="sonnet"><option value="opus"></datalist>
+      <div style="grid-column: 1 / -1;"><button class="btn" type="submit">{{ _('Salva') }}</button></div>
+    </form>
   </section>
 
   <section class="card" id="prezzi" aria-labelledby="h-prices">
