@@ -229,7 +229,8 @@ def test_the_plan_is_in_the_newsroom_menu(db, admin):
     c.post(f"/invite/{invite.rsplit('/', 1)[1]}", data={"password": "password del capo", "again": "password del capo"})
     assert 'href="/plan"' in c.get("/").text
     page = c.get("/plan")
-    assert page.status_code == 200 and "Starter" in page.text and "7 giorni di prova" in page.text and "Il mio piano" in page.text
+    assert page.status_code == 200 and "Starter" in page.text and "7 giorni rimasti" in page.text and "Il mio piano" in page.text
+    assert "0 / 5" in page.text  # the trial limits articles (and sources, sites)
     assert "Quanto hai usato" in page.text and "Vai al pagamento" in page.text
     assert 'name="back" value="plan"' in page.text
     assert "Costo modello" not in page.text  # the customer sees units of the plan, not the model's cost

@@ -1433,8 +1433,6 @@
  "Il piano della redazione: cosa comprende, quanto ne hai usato questo mese e, per il proprietario, la scelta del piano, il pagamento e i dati di fatturazione.": "El plan de la redacción: qué incluye, cuánto has usado este mes y, para el propietario, la elección del plan, el pago y los datos de facturación.",
  "In prova vedi i giorni che restano. Scegli il piano e paghi con Mollie: torni qui e, appena il pagamento è confermato (di solito entro un minuto), la redazione risulta attiva con la data del rinnovo.": "Durante la prueba ves los días que quedan. Elige el plan y paga con Mollie: vuelves aquí y, en cuanto se confirma el pago (normalmente en un minuto), la redacción aparece activa con la fecha de renovación.",
  "Le barre vicine al limite: quando una voce è piena, quel lavoro si ferma finché il mese non riparte o finché non passi a un piano più grande. Compila i dati di fatturazione prima di pagare.": "Las barras cerca del límite: cuando una está llena, ese trabajo se detiene hasta que empiece el mes siguiente o pases a un plan mayor. Rellena los datos de facturación antes de pagar.",
- "{n} giorno di prova": "{n} día de prueba",
- "{n} giorni di prova": "{n} días de prueba",
  "Quanto hai usato": "Cuánto has usado",
  "Quando un limite è raggiunto la redazione si ferma su quella voce e te lo dice, senza costi a sorpresa. Il mese riparte il primo giorno del mese.": "Cuando se alcanza un límite, la redacción se detiene en ese punto y te lo dice, sin costes sorpresa. El mes vuelve a empezar el primer día del mes.",
  "Il piano e il pagamento li gestisce il proprietario della redazione.": "El plan y el pago los gestiona el propietario de la redacción.",
@@ -1471,5 +1469,7 @@
  "GitHub non ha risposto: {error}": "GitHub no ha respondido: {error}",
  "È disponibile la versione {version}.": "La versión {version} está disponible.",
  "Versione non disponibile.": "Versión no disponible.",
- "Un aggiornamento è già in corso.": "Ya hay una actualización en curso."
+ "Un aggiornamento è già in corso.": "Ya hay una actualización en curso.",
+ "{n} giorno rimasto": "queda {n} día",
+ "{n} giorni rimasti": "quedan {n} días"
 }

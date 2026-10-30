@@ -17,18 +17,6 @@
   "fr": "Les barres proches de leur limite : quand une rubrique est pleine, ce travail s'arrête jusqu'au mois suivant ou jusqu'à ce que vous passiez à une formule supérieure. Remplissez les coordonnées de facturation avant de payer.",
   "es": "Las barras cerca del límite: cuando una está llena, ese trabajo se detiene hasta que empiece el mes siguiente o pases a un plan mayor. Rellena los datos de facturación antes de pagar."
  },
- "{n} giorno di prova": {
-  "en": "{n} trial day left",
-  "de": "noch {n} Testtag",
-  "fr": "{n} jour d'essai restant",
-  "es": "{n} día de prueba"
- },
- "{n} giorni di prova": {
-  "en": "{n} trial days left",
-  "de": "noch {n} Testtage",
-  "fr": "{n} jours d'essai restants",
-  "es": "{n} días de prueba"
- },
  "Quanto hai usato": {
   "en": "How much you have used",
   "de": "Ihre Nutzung",
@@ -58,5 +46,17 @@
   "de": "Mein Tarif",
   "fr": "Ma formule",
   "es": "Mi plan"
+ },
+ "{n} giorno rimasto": {
+  "en": "{n} day left",
+  "de": "noch {n} Tag",
+  "fr": "{n} jour restant",
+  "es": "queda {n} día"
+ },
+ "{n} giorni rimasti": {
+  "en": "{n} days left",
+  "de": "noch {n} Tage",
+  "fr": "{n} jours restants",
+  "es": "quedan {n} días"
  }
 }

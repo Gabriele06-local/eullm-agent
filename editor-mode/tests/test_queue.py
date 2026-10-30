@@ -260,3 +260,15 @@ def test_the_queue_works_with_an_owner_that_is_not_a_superuser(db, pg_urls, tena
             conn.execute(f"REVOKE ALL ON ALL TABLES IN SCHEMA editor FROM {role}")
             conn.execute(f"REVOKE USAGE ON SCHEMA editor FROM {role}")
             conn.execute(f"DROP ROLE {role}")
+
+
+def test_a_job_cut_by_a_restart_goes_back_in_the_queue_at_once(db, tenant):
+    """A worker that stops does not wait minutes for a long job: after its
+    grace it puts the job back, ready for the next worker, attempt not spent."""
+    jid = queue.enqueue(db, tenant, "analysis", "example.com", {})
+    job = queue.claim(db, "w1", tenant)
+    assert job.id == jid and status(db, tenant, jid).status == "running"
+    queue.release(db, job)
+    row = status(db, tenant, jid)
+    assert row.status == "queued" and row.attempts == job.attempts - 1
+    assert queue.claim(db, "w2", tenant).id == jid

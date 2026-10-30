@@ -48,22 +48,22 @@
 
       <details {% if not r.customer %}open{% endif %}>
         <summary><strong>{{ _('Dati di fatturazione') }}</strong></summary>
-        <form method="post" action="/account/{{ r.tenant_id }}/customer" class="form-grid" style="margin-top: 8px;">
+        <form method="post" action="/account/{{ r.tenant_id }}/customer" class="form-grid billing" style="margin-top: 8px;">
           {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
           <label class="field">{{ _('Tipo') }}<select name="kind"><option value="company">{{ _('Azienda o professionista') }}</option><option value="person" {% if c.kind == 'person' %}selected{% endif %}>{{ _('Privato') }}</option></select></label>
-          <label class="field">{{ _('Ragione sociale o nome') }}<input name="name" value="{{ c.name or '' }}" required maxlength="200"></label>
+          <label class="field wide">{{ _('Ragione sociale o nome') }}<input name="name" value="{{ c.name or '' }}" required maxlength="200"></label>
           <label class="field">{{ _('Email per le fatture') }}<input name="email" type="email" value="{{ c.email or me_email }}" required></label>
           <label class="field">{{ _('Telefono') }}<input name="phone" value="{{ c.phone or '' }}" maxlength="40"></label>
           <label class="field">{{ _('Partita IVA') }}<input name="vat_number" value="{{ c.vat_number or '' }}" maxlength="40"></label>
           <label class="field">{{ _('Codice fiscale') }}<input name="tax_code" value="{{ c.tax_code or '' }}" maxlength="40"></label>
-          <label class="field">{{ _('Indirizzo') }}<input name="address" value="{{ c.address or '' }}" maxlength="200"></label>
+          <label class="field wide">{{ _('Indirizzo') }}<input name="address" value="{{ c.address or '' }}" maxlength="200"></label>
           <label class="field">{{ _('CAP') }}<input name="postal_code" value="{{ c.postal_code or '' }}" maxlength="20"></label>
           <label class="field">{{ _('Città') }}<input name="city" value="{{ c.city or '' }}" maxlength="100"></label>
           <label class="field">{{ _('Provincia') }}<input name="province" value="{{ c.province or '' }}" maxlength="10"></label>
           <label class="field">{{ _('Paese') }}<input name="country" value="{{ c.country or 'IT' }}" maxlength="2"></label>
           <label class="field">{{ _('Codice destinatario SDI') }}<input name="sdi_code" value="{{ c.sdi_code or '' }}" maxlength="7"></label>
           <label class="field">{{ _('PEC') }}<input name="pec" type="email" value="{{ c.pec or '' }}"></label>
-          <div><button class="btn" type="submit">{{ _('Salva i dati') }}</button></div>
+          <div class="wide"><button class="btn" type="submit">{{ _('Salva i dati') }}</button></div>
         </form>
       </details>
 
