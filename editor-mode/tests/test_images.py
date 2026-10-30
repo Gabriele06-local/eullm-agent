@@ -174,4 +174,5 @@ def test_redoing_the_image_keeps_the_translations_own_alt(db, tenant):
         work.handlers(db, imager=imager())["image"](tenant, f"draft {did}", {"draft_id": did, "site_id": site_id})
     with db.tenant(tenant) as s:
         assert images.of(s, did).alt  # the new image of the original
-        assert images.of(s, tid).alt == "A fibre cabinet in Bari"
+        # Not the old text, which described the old image: the translation's own title.
+        assert images.of(s, tid).alt == ENGLISH["title"]
