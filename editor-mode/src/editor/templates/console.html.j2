@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ _('Amministrazione') }} · EuLLM Editor</title>
+<title>{{ _('Amministrazione') }} · Redazia</title>
 <link rel="icon" type="image/png" href="/static/favicon.png">
 {% include "_style.html.j2" %}
 </head>
@@ -24,7 +24,7 @@
   {% if mine %}<span class="hint" style="padding: 12px 12px 4px;">{{ _('Le tue redazioni') }}</span>
   {% for x in mine %}<a href="/admin/enter/{{ x.tenant_id }}">{{ x.name }}</a>{% endfor %}{% endif %}
   <span class="grow"></span>
-  {% if updates.installed %}<small class="hint" style="font-size: 11px; padding: 0 10px;"><a href="#aggiornamenti">EuLLM Editor {{ updates.installed }}</a></small>{% endif %}
+  {% if updates.installed %}<small class="hint" style="font-size: 11px; padding: 0 10px;"><a href="#aggiornamenti">Redazia {{ updates.installed }}</a></small>{% endif %}
   <div class="who">
     <span class="name" title="{{ me.email }}">{{ me.email }}</span>
     <div class="row" style="justify-content: space-between; align-items: center;">

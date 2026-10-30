@@ -738,7 +738,7 @@ def checkout(admin, gateway, tenant_id: str, plan_code: str, interval: str, redi
             conn.execute(update(m.customers).where(m.customers.c.id == c["id"]).values(provider_customer_id=cust_id))
     meta = {"tenant_id": tenant_id, "plan": plan.code, "interval": interval}
     period = t("anno") if interval == "year" else t("mese")
-    pay_id, url = gateway.first_payment(cust_id, amount, plan.currency, f"EuLLM Editor {plan.name} ({period}) · {tenant_id}",
+    pay_id, url = gateway.first_payment(cust_id, amount, plan.currency, f"Redazia {plan.name} ({period})",
                                         redirect_url, webhook_url, meta)
     with admin.engine.begin() as conn:
         conn.execute(insert(m.payments).values(tenant_id=tenant_id, subscription_id=sub["id"] if sub else None,
@@ -790,7 +790,7 @@ def gateway_event(admin, gateway, payment_id: str, webhook_url: str, core=None, 
         with accounts._read(admin) as conn:
             plan = get_plan(conn, plan_code)
         sub_id = gateway.create_subscription(c["provider_customer_id"], price(plan, interval), plan.currency, interval,
-                                             until.date(), f"EuLLM Editor {plan.name} · {tenant_id}", webhook_url,
+                                             until.date(), f"Redazia {plan.name}", webhook_url,
                                              pay.get("mandate_id"), {"tenant_id": tenant_id})
         with admin.engine.begin() as conn:
             conn.execute(update(s).where(s.c.tenant_id == tenant_id).values(
@@ -812,6 +812,12 @@ def gateway_event(admin, gateway, payment_id: str, webhook_url: str, core=None, 
                          .values(status="past_due", updated_at=now))
         return "past_due"
     return status
+
+
+def payment_by_provider_id(admin, payment_id: str) -> dict | None:
+    with accounts._read(admin) as conn:
+        row = conn.execute(select(m.payments).where(m.payments.c.provider_payment_id == payment_id)).first()
+    return dict(row._mapping) if row else None
 
 
 def paid_until_date(value: str | None) -> datetime | None:

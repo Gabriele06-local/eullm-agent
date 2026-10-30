@@ -19,7 +19,7 @@ def unique(prefix: str) -> str:
 
 def _client(db):
     sent = []
-    app = create_app(db, mail=lambda to, subject, body: sent.append((to, subject, body)),
+    app = create_app(db, mail=lambda to, subject, body: None if subject.startswith("[Redazia]") else sent.append((to, subject, body)),
                      public_url="https://editor.example.com")
     return TestClient(app), sent
 
@@ -46,7 +46,7 @@ def test_signup_speaks_the_visitors_language(db):
     assert r.status_code == 201, r.text
     to, subject, text = sent[-1]
     assert to == email and subject == "Einladung in die Redaktion Rossi News"
-    assert "hat Sie in die Redaktion Rossi News auf EuLLM Editor eingeladen" in text
+    assert "Sie sind herzlich in die Redaktion Rossi News auf Redazia eingeladen" in text
     # The language was the request's only: the next one is Italian again (the tests' default).
     r = c.post("/api/operator/signup", json=body | {"language": None}, headers=headers)
     assert r.json()["error"] == "la partita IVA italiana ha 11 cifre"
