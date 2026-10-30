@@ -83,6 +83,8 @@ tenants = Table(
     Column("external_ref", Text),
     Column("customer_id", BigInteger),
     Column("hold", Text),
+    Column("autopilot", Boolean),  # the plan includes the automatic newsroom
+    Column("proposals_only", _ts()),  # since: trial or period over, proposals only
 )
 
 sites = Table(
@@ -643,6 +645,7 @@ plans = Table(
     Column("max_llm_cost_month", Float),
     Column("public", Boolean, nullable=False),
     Column("sort", Integer, nullable=False),
+    Column("autopilot", Boolean, nullable=False),
 )
 
 subscriptions = Table(

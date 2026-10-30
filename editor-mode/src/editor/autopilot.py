@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import and_, func, select, update
 
-from . import drafts, models as m, proposals, publishing, translate as tr, usage
+from . import drafts, models as m, proposals, publishing, quotas, translate as tr, usage
 from .core_client import CoreClient, CoreError
 from .i18n import N_
 from .progress import step
@@ -203,9 +203,12 @@ def run(db, tenant_id: str, site_id: int, core: CoreClient | None, now: datetime
     with db.tenant(tenant_id) as s:
         body = s.execute(select(m.editorial_profiles.c.body).where(
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+        allowed = quotas.autopilot_allowed(s)
     cfg = settings_of(body)
     if body is None or not cfg["enabled"]:
         return {}
+    if not allowed:
+        return {"waiting": "plan"}
     local = now.astimezone(ZoneInfo(tz))
     if not in_hours(cfg, local):
         return {"waiting": "hours"}

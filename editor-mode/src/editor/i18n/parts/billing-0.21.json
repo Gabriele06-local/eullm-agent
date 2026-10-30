@@ -1,0 +1,62 @@
+{
+ "La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.": {
+  "en": "The trial or the paid period is over: you only get proposals, two a day per site. Choose a plan to write drafts and publish.",
+  "de": "Der Test oder der bezahlte Zeitraum ist vorbei: Sie erhalten nur noch Vorschläge, zwei pro Tag und Website. Wählen Sie einen Tarif, um Entwürfe zu schreiben und zu veröffentlichen.",
+  "fr": "L’essai ou la période payée est terminé : vous ne recevez plus que des propositions, deux par jour et par site. Choisissez une formule pour rédiger des brouillons et publier.",
+  "es": "La prueba o el periodo pagado ha terminado: solo recibes propuestas, dos al día por web. Elige un plan para escribir borradores y publicar."
+ },
+ "Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.": {
+  "en": "Your plan does not include the automatic newsroom: the rules stay saved and start when you move to a plan that includes it.",
+  "de": "Ihr Tarif enthält die automatische Redaktion nicht: Die Regeln bleiben gespeichert und starten, sobald Sie zu einem Tarif wechseln, der sie enthält.",
+  "fr": "Votre formule ne comprend pas la rédaction automatique : les règles restent enregistrées et démarrent dès que vous passez à une formule qui la comprend.",
+  "es": "Tu plan no incluye la redacción automática: las reglas quedan guardadas y se activan cuando pases a un plan que la incluya."
+ },
+ "Vedi i piani": {
+  "en": "See the plans",
+  "de": "Tarife ansehen",
+  "fr": "Voir les formules",
+  "es": "Ver los planes"
+ },
+ "La prova di {name} è finita": {
+  "en": "The trial of {name} is over",
+  "de": "Der Test von {name} ist beendet",
+  "fr": "L’essai de {name} est terminé",
+  "es": "La prueba de {name} ha terminado"
+ },
+ "Il periodo pagato di {name} è finito": {
+  "en": "The paid period of {name} is over",
+  "de": "Der bezahlte Zeitraum von {name} ist beendet",
+  "fr": "La période payée de {name} est terminée",
+  "es": "El periodo pagado de {name} ha terminado"
+ },
+ "Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno per sito: niente bozze e niente pubblicazioni.": {
+  "en": "From today the newsroom {name} only sends you article proposals, two a day per site: no drafts and no publishing.",
+  "de": "Ab heute schickt Ihnen die Redaktion {name} nur noch Artikelvorschläge, zwei pro Tag und Website: keine Entwürfe und keine Veröffentlichungen.",
+  "fr": "À partir d’aujourd’hui, la rédaction {name} ne vous envoie que des propositions d’articles, deux par jour et par site : ni brouillons ni publications.",
+  "es": "Desde hoy la redacción {name} solo te envía propuestas de artículos, dos al día por web: ni borradores ni publicaciones."
+ },
+ "Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:": {
+  "en": "Choose a plan and everything starts again, with your sites, profiles and sources:",
+  "de": "Wählen Sie einen Tarif, und alles läuft wieder, mit Ihren Websites, Profilen und Quellen:",
+  "fr": "Choisissez une formule et tout repart, avec vos sites, profils et sources :",
+  "es": "Elige un plan y todo vuelve a empezar, con tus webs, perfiles y fuentes:"
+ },
+ "Senza un piano la redazione si ferma il {date}; i tuoi dati restano.": {
+  "en": "Without a plan the newsroom stops on {date}; your data stay.",
+  "de": "Ohne Tarif hält die Redaktion am {date} an; Ihre Daten bleiben erhalten.",
+  "fr": "Sans formule, la rédaction s’arrête le {date} ; vos données sont conservées.",
+  "es": "Sin un plan la redacción se detiene el {date}; tus datos se conservan."
+ },
+ "La prova è finita: per scrivere le bozze scegli un piano.": {
+  "en": "The trial is over: choose a plan to write drafts.",
+  "de": "Der Test ist beendet: Wählen Sie einen Tarif, um Entwürfe zu schreiben.",
+  "fr": "L’essai est terminé : choisissez une formule pour rédiger des brouillons.",
+  "es": "La prueba ha terminado: elige un plan para escribir borradores."
+ },
+ "Redazione automatica": {
+  "en": "Automatic newsroom",
+  "de": "Automatische Redaktion",
+  "fr": "Rédaction automatique",
+  "es": "Redacción automática"
+ }
+}

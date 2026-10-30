@@ -138,6 +138,7 @@
     </div>
     <label class="row" style="gap: 6px; align-items: center;"><input type="checkbox" name="credit" value="1" {% if a.credit %}checked{% endif %}> {{ _('Sotto ogni articolo il link a Redazia') }}</label>
     <label class="row" style="gap: 6px; align-items: center;"><input type="checkbox" name="enabled" value="1" {% if a.enabled %}checked{% endif %}> {{ _('Accendi la redazione automatica') }}</label>
+    {% if not numbers.auto_allowed %}<p class="hint">{{ _('Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.') }} <a href="/plan">{{ _('Vedi i piani') }}</a></p>{% endif %}
     <p class="hint">{{ _("Il caporedattore AI ferma sempre: accuse non confermate contro persone o aziende, privati e minori, consigli medici, legali o finanziari, odio, violenza descritta nei dettagli, voci date per certe, titoli che promettono ciò che l'articolo non dice.") }}</p>
     <div class="row">
       <button class="btn pri" type="submit" name="action" value="save">{{ _('Salva') }}</button>

@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.20.3
+## 0.21.0
+
+### Added
+
+- After the trial, proposals only: a newsroom whose trial (or paid period,
+  after the grace days) ends is no longer stopped at once. For 30 days it
+  keeps receiving two article proposals a day per site, with no drafts, no
+  translations, no publishing and no automatic newsroom; the owner gets an
+  email and every page says so, with the way to choose a plan. After 30
+  days without a plan the newsroom stops as before (data kept). Migration
+  0030 (`tenants.proposals_only`).
+- Plans with or without the automatic newsroom (`plans.autopilot`, field
+  "Redazione automatica" in /admin › Piani; `/api/public/plans` says it).
+  Without it, the rules stay saved and the site page says the plan does not
+  include it.
+- Two plans join the catalogue: Solo (19,90 € a month, 1 site, 1 language,
+  10 articles, 15 sources, no automatic newsroom) and Agency (999 €, 30
+  sites, 5 languages, 1500 articles, 1000 sources). Prices and limits can
+  be changed in /admin › Piani as always.
+- Bought on the site: who chose a paid plan ("Acquista" on redazia.com)
+  goes straight to its payment in /account after setting the password.
 
 ### Changed
 

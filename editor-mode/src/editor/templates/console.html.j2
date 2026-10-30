@@ -268,6 +268,7 @@
       <label class="field">{{ _('Notizie al giorno') }}<input name="max_items_per_day" inputmode="numeric" value="{{ p.max_items_per_day if p.max_items_per_day is not none else '' }}"></label>
       <label class="field">{{ _('Articoli al mese') }}<input name="max_drafts_month" inputmode="numeric" value="{{ p.max_drafts_month if p.max_drafts_month is not none else '' }}"></label>
       <label class="field">{{ _('Descrizione') }}<input name="description" value="{{ p.description }}"></label>
+      <label class="field">{{ _('Redazione automatica') }}<select name="autopilot"><option value="1" {% if p.autopilot is not false %}selected{% endif %}>{{ _('Sì') }}</option><option value="0" {% if p.autopilot is false %}selected{% endif %}>{{ _('No') }}</option></select></label>
       <label class="field">{{ _('Sul sito') }}<select name="public"><option value="1" {% if p.public %}selected{% endif %}>{{ _('Sì') }}</option><option value="0" {% if not p.public %}selected{% endif %}>{{ _('No') }}</option></select></label>
       <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
     </form>

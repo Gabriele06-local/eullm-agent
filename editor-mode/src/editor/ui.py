@@ -358,6 +358,9 @@ def register(app, ctx) -> None:
             s = accounts.accept(admin, token, password, name)
         except accounts.AccountError as e:
             return invite_form(request, token, info, f"{str(e)[:1].upper()}{str(e)[1:]}.", 400)
+        if not s.operator and (bought := billing.bought_unpaid(admin, s.user_id)):
+            # Bought on the site: the payment comes first, the newsroom is already there.
+            return signed_in(request, accounts.start_session(admin, s.user_id, bought), "/account")
         return session_for(request, s)
 
     @app.get("/forgot", response_class=HTMLResponse)
@@ -741,6 +744,7 @@ def register(app, ctx) -> None:
                 m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "draft")
                 .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar()),
             "auto_today": autopilot.today(s, site.id, start_of_day(s)),
+            "auto_allowed": quotas.autopilot_allowed(s),
             "auto_targets": s.execute(select(pt.id, pt.name, pt.kind).where(
                 pt.site_id == site.id, pt.enabled.is_not(False)).order_by(pt.id)).all(),
             "drafts": drafts, "publications": pubs,
@@ -1168,6 +1172,9 @@ def register(app, ctx) -> None:
             return done("/trends", t("Nessun Core configurato: per scrivere le bozze serve un modello."))
         with db.tenant(c.tenant_id) as s:
             st = s.execute(select(m.proposals.c.status).where(m.proposals.c.id == proposal_id)).scalar()
+            only = quotas.proposals_only(s)
+        if only:
+            return done("/plan", t("La prova è finita: per scrivere le bozze scegli un piano."))
         if st not in ("accepted", "drafted"):
             return done("/trends", t("Accetta prima la proposta."))
         ctx.run_draft(c.tenant_id, proposal_id)
@@ -1522,7 +1529,8 @@ def register(app, ctx) -> None:
             if c.can("owner"):
                 with accounts._read(admin) as conn:
                     email = conn.execute(select(m.users.c.email).where(m.users.c.id == c.user_id)).scalar() if c.user_id else None
-                room = {"tenant_id": c.tenant_id, "subscription": billing.subscription(admin, c.tenant_id),
+                room = {"tenant_id": c.tenant_id, "active": True,
+                        "subscription": billing.subscription(admin, c.tenant_id),
                         "customer": billing.customer_of(admin, c.tenant_id),
                         "reseller": billing.reseller_of_tenant(admin, c.tenant_id) is not None}
             return render(request, "plan.html.j2", c, s, "plan", usage=usage,

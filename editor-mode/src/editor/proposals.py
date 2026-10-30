@@ -16,7 +16,7 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
-from . import repo, usage
+from . import quotas, repo, usage
 from .core_client import CoreClient, CoreError
 from .opportunity import Opportunity
 
@@ -186,9 +186,12 @@ def plan(db, tenant_id: str, site_id: int, core: CoreClient | None = None, limit
     with db.tenant(tenant_id) as s:
         body = s.execute(select(m.editorial_profiles.c.body).where(
             m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar()
+        only = quotas.proposals_only(s)
     if body is None:
         return []
     limit = limit or body.get("settings", {}).get("proposals_per_day", PER_DAY)
+    if only:
+        limit = min(limit, quotas.PROPOSALS_ONLY_PER_DAY)
     ids = propose(db, tenant_id, site_id, opportunity.score_site(db, tenant_id, site_id, now=now), core, limit=limit)
     return ids + picks.fill(db, tenant_id, site_id, limit - len(ids), core, now=now)
 
@@ -294,6 +297,8 @@ def top_up(db, tenant_id: str, site_id: int, since: datetime, core: CoreClient |
         if body is None:
             return []
         per_day = body.get("settings", {}).get("proposals_per_day", PER_DAY)
+        if quotas.proposals_only(s):  # after the trial: a couple a day, asked for or not
+            per_day, manual = min(per_day, quotas.PROPOSALS_ONLY_PER_DAY), False
         left = per_day if manual else per_day - made_today(s, site_id, since)
     if left <= 0:
         return []

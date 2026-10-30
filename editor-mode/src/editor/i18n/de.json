@@ -1471,5 +1471,14 @@
  "Versione non disponibile.": "Version nicht verfügbar.",
  "Un aggiornamento è già in corso.": "Eine Aktualisierung läuft bereits.",
  "{n} giorno rimasto": "noch {n} Tag",
- "{n} giorni rimasti": "noch {n} Tage"
+ "{n} giorni rimasti": "noch {n} Tage",
+ "La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.": "Der Test oder der bezahlte Zeitraum ist vorbei: Sie erhalten nur noch Vorschläge, zwei pro Tag und Website. Wählen Sie einen Tarif, um Entwürfe zu schreiben und zu veröffentlichen.",
+ "Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.": "Ihr Tarif enthält die automatische Redaktion nicht: Die Regeln bleiben gespeichert und starten, sobald Sie zu einem Tarif wechseln, der sie enthält.",
+ "Vedi i piani": "Tarife ansehen",
+ "La prova di {name} è finita": "Der Test von {name} ist beendet",
+ "Il periodo pagato di {name} è finito": "Der bezahlte Zeitraum von {name} ist beendet",
+ "Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno per sito: niente bozze e niente pubblicazioni.": "Ab heute schickt Ihnen die Redaktion {name} nur noch Artikelvorschläge, zwei pro Tag und Website: keine Entwürfe und keine Veröffentlichungen.",
+ "Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:": "Wählen Sie einen Tarif, und alles läuft wieder, mit Ihren Websites, Profilen und Quellen:",
+ "Senza un piano la redazione si ferma il {date}; i tuoi dati restano.": "Ohne Tarif hält die Redaktion am {date} an; Ihre Daten bleiben erhalten.",
+ "La prova è finita: per scrivere le bozze scegli un piano.": "Der Test ist beendet: Wählen Sie einen Tarif, um Entwürfe zu schreiben."
 }

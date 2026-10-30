@@ -55,9 +55,10 @@
 </nav>
 <main class="main">
   <div class="topbar">{% include "_lang.html.j2" %}</div>
-  {% if plan_state and plan_state.status in ('trialing', 'past_due', 'canceled') %}
+  {% if plan_state and plan_state.status in ('trialing', 'past_due', 'canceled', 'expired') %}
   <p class="notice" role="status" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
     <span>{% if plan_state.status == 'trialing' %}{{ _('Prova gratuita: {n} giorno rimasto.', n=plan_state.days_left) if plan_state.days_left == 1 else _('Prova gratuita: {n} giorni rimasti.', n=plan_state.days_left) }}
+    {% elif plan_state.status == 'expired' %}{{ _('La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.') }}
     {% elif plan_state.status == 'past_due' %}{{ _("L'ultimo pagamento non è riuscito: il circuito riprova nei prossimi giorni.") }}
     {% else %}{% if plan_state.current_period_end %}{{ _('Abbonamento disdetto: la redazione si ferma il {date}.', date=plan_state.current_period_end.strftime('%d/%m')) }}{% else %}{{ _('Abbonamento disdetto: la redazione si ferma a fine periodo.') }}{% endif %}{% endif %}</span>
     <a href="/plan">{{ _('Scegli il piano') if plan_state.status != 'past_due' else _("Vedi l'abbonamento") }}</a>

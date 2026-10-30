@@ -1471,5 +1471,14 @@
  "Versione non disponibile.": "Versión no disponible.",
  "Un aggiornamento è già in corso.": "Ya hay una actualización en curso.",
  "{n} giorno rimasto": "queda {n} día",
- "{n} giorni rimasti": "quedan {n} días"
+ "{n} giorni rimasti": "quedan {n} días",
+ "La prova o il periodo pagato è finito: ricevi solo le proposte, due al giorno per sito. Scegli un piano per scrivere bozze e pubblicare.": "La prueba o el periodo pagado ha terminado: solo recibes propuestas, dos al día por web. Elige un plan para escribir borradores y publicar.",
+ "Il tuo piano non comprende la redazione automatica: le regole restano salvate e partono quando passi a un piano che la comprende.": "Tu plan no incluye la redacción automática: las reglas quedan guardadas y se activan cuando pases a un plan que la incluya.",
+ "Vedi i piani": "Ver los planes",
+ "La prova di {name} è finita": "La prueba de {name} ha terminado",
+ "Il periodo pagato di {name} è finito": "El periodo pagado de {name} ha terminado",
+ "Da oggi la redazione {name} ti manda solo le proposte di articolo, due al giorno per sito: niente bozze e niente pubblicazioni.": "Desde hoy la redacción {name} solo te envía propuestas de artículos, dos al día por web: ni borradores ni publicaciones.",
+ "Scegli un piano e riparte tutto, con i tuoi siti, profili e fonti:": "Elige un plan y todo vuelve a empezar, con tus webs, perfiles y fuentes:",
+ "Senza un piano la redazione si ferma il {date}; i tuoi dati restano.": "Sin un plan la redacción se detiene el {date}; tus datos se conservan.",
+ "La prova è finita: per scrivere le bozze scegli un piano.": "La prueba ha terminado: elige un plan para escribir borradores."
 }

@@ -19,6 +19,22 @@ class QuotaExceeded(RuntimeError):
     pass
 
 
+# After the trial (or a paid period) a newsroom keeps getting this many
+# proposals a day per site, and nothing more, until it pays or stops.
+PROPOSALS_ONLY_PER_DAY = 2
+
+
+def proposals_only(s) -> bool:
+    """The trial or the paid period is over: proposals only, no drafts."""
+    return bool(s.execute(select(m.tenants.c.proposals_only)).scalar())
+
+
+def autopilot_allowed(s) -> bool:
+    """The plan includes the automatic newsroom and the newsroom is paid for."""
+    row = s.execute(select(m.tenants.c.autopilot, m.tenants.c.proposals_only)).first()
+    return row is None or (row.autopilot is not False and row.proposals_only is None)
+
+
 LIMITS = {
     "sites": ("max_sites", "sites"),
     "sources": ("max_active_sources", "active_sources"),
@@ -102,6 +118,8 @@ def check(s, what: str, adding: float = 1) -> None:
     u = usage(s, hold=True)
     if u is None:
         return
+    if what == "drafts" and u.plan.get("proposals_only"):
+        raise QuotaExceeded("the trial is over: proposals only until a plan is chosen")
     left = u.remaining(what)
     if left is not None and (left < adding or left <= 0):
         limit_col, used_col = LIMITS[what]
