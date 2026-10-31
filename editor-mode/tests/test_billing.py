@@ -551,3 +551,16 @@ def test_solo_has_no_automatic_newsroom_and_a_buyer_goes_to_payment(db, admin):
     assert "completa il pagamento" in sent2[-1][1] and sent2[-1][2].rstrip().endswith("/login")
     r = c2.post("/login", data={"email": email, "password": "password del capo"}, follow_redirects=False)
     assert r.headers["location"] == "/account"
+
+
+def test_a_plan_change_without_a_date_keeps_the_paid_period(db, admin, tenant):
+    """The console's Abbonamento form leaves the date empty: saving it must
+    not turn a paying newsroom into an open-ended free one."""
+    from datetime import datetime, timedelta
+
+    billing.start(admin, tenant, billing.TRIAL_PLAN)
+    paid = datetime.now(UTC) + timedelta(days=300)
+    billing.start(admin, tenant, "pro", paid_until=paid, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] == paid
+    billing.start(admin, tenant, "pro", paid_until=None, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] == paid
