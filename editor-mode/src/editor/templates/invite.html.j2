@@ -9,7 +9,7 @@
 </head>
 <body>
 <main class="solo">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></div>
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"></div>
   <section class="card pad">
   {% if not info %}
     <h1 style="font-size: 22px;">{{ _('Link non valido') }}</h1>
@@ -21,7 +21,7 @@
     <p class="lead">{{ _('Scegli la nuova password di {email}.', email=info.email) }}</p>
     {% else %}
     <h1 style="font-size: 22px;">{% if info.newsroom %}{{ _('Entra in {newsroom}', newsroom=info.newsroom) }}{% else %}{{ _('Console del servizio') }}{% endif %}</h1>
-    <p class="lead">{% if info.role and info.operator %}{{ _('{who} ha invitato {email} come {role} come operatore del servizio.', who=info.created_by, email=info.email, role={'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}[info.role]) }}{% elif info.role %}{{ _('{who} ha invitato {email} come {role}.', who=info.created_by, email=info.email, role={'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}[info.role]) }}{% elif info.operator %}{{ _('{who} ha invitato {email} come operatore del servizio.', who=info.created_by, email=info.email) }}{% else %}{{ _('{who} ha invitato {email}.', who=info.created_by, email=info.email) }}{% endif %}</p>
+    <p class="lead">{% if info.role and info.operator %}{{ _('{who} ha invitato {email} come {role} come amministratore del servizio.', who=info.created_by, email=info.email, role={'owner': _('direttore'), 'editor': _('redattore'), 'viewer': _('lettura')}[info.role]) }}{% elif info.role %}{{ _('{who} ha invitato {email} come {role}.', who=info.created_by, email=info.email, role={'owner': _('direttore'), 'editor': _('redattore'), 'viewer': _('lettura')}[info.role]) }}{% elif info.operator %}{{ _('{who} ha invitato {email} come amministratore del servizio.', who=info.created_by, email=info.email) }}{% else %}{{ _('{who} ha invitato {email}.', who=info.created_by, email=info.email) }}{% endif %}</p>
     {% endif %}
     {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
     <form method="post" action="/invite/{{ token }}" style="display: flex; flex-direction: column; gap: 12px;">

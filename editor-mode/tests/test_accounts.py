@@ -142,12 +142,12 @@ def test_owners_invite_people_with_a_role(db, tenant, admin):
                follow_redirects=False)
     assert r.status_code == 303
     page = g.get("/").text
-    assert ">giulia@example.com</span>" in page and "<span>editor</span>" in page
+    assert ">giulia@example.com</span>" in page and "<span>redattore</span>" in page
     assert "Persone della redazione" not in g.get("/settings").text
     assert g.post("/ui/people/invite", data={"email": "x@example.com", "role": "owner"}).status_code in (303, 403)
     giulia = next(p for p in accounts.members(admin, tenant) if p.email == "giulia@example.com")
     # The last owner stays; a removed person is out at once.
-    assert "almeno un owner" in c.post(f"/ui/people/{owner}/role", data={"role": "editor"}, follow_redirects=True).text
+    assert "almeno un direttore" in c.post(f"/ui/people/{owner}/role", data={"role": "editor"}, follow_redirects=True).text
     c.post(f"/ui/people/{giulia.id}/remove")
     assert g.get("/", follow_redirects=False).headers["location"] == "/login"
 

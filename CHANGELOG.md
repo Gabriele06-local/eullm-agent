@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.25.0
+
+### Changed
+
+- The Desk follows the site menu: "Tutti i siti", the first entry and the
+  default, shows the whole newsroom as before; choosing a site shows only
+  its decisions, work and numbers. The pages of one site keep the last
+  site chosen; choosing "Tutti i siti" from any page opens the Desk.
+- Plain names for the roles: the console's operators are now
+  administrators ("amministratore"), and in a newsroom owner becomes
+  "direttore" (editor-in-chief) and editor "redattore", in every
+  language. The roles stored and the API do not change.
+- The Redazia logo and favicon in the dashboard, the console and the
+  sign-in pages, in place of EuLLM's.
+
 ## 0.24.0
 
 ### Added

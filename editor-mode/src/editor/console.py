@@ -488,7 +488,7 @@ def register(app, ctx) -> None:
             token = accounts.create_invite(admin, email, s.email, operator=True)
         except accounts.AccountError as e:
             return page(request, s, 400, error=t("Invito non creato: {error}.", error=e))
-        return page(request, s, new={"what": t("Invito come operatore per {email}", email=email.strip().lower()),
+        return page(request, s, new={"what": t("Invito come amministratore per {email}", email=email.strip().lower()),
                                      "link": send(request, token, "invite", email.strip().lower(), None, s.email)})
 
     @app.post("/admin/operators/{uid}/remove")
@@ -496,10 +496,10 @@ def register(app, ctx) -> None:
         try:
             email = accounts.remove_operator(admin, uid, s.user_id)
         except LookupError:
-            return back(t("Operatore non trovato."))
+            return back(t("Amministratore non trovato."))
         except accounts.AccountError as e:
-            return back(t("Operatore non tolto: {e}.", e=e))
-        return back(t("{email} non è più operatore: le sue redazioni restano.", email=email))
+            return back(t("Amministratore non tolto: {e}.", e=e))
+        return back(t("{email} non è più amministratore: le sue redazioni restano.", email=email))
 
     @app.post("/admin/invites/{sha}/revoke")
     def ui_revoke_operator_invite(sha: str, s=Depends(need_console)):

@@ -23,7 +23,7 @@
 {% macro head(first) %}<thead><tr><th>{{ first }}</th><th>{{ _('Chiamate') }}</th><th>{{ _('Token in entrata') }}</th><th>{{ _('Token in uscita') }}</th><th>{{ _('Durata media') }}</th><th>{{ _('Costo registrato') }}</th><th>{{ _('Costo stimato') }}</th></tr></thead>{% endmacro %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></div>
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></div>
   <a href="/admin">{{ _('Redazioni') }}</a>
   <a href="/admin/usage" class="on">{{ _('Consumi') }}</a>
   <a href="#modelli">{{ _('Modello per passo') }}</a>
@@ -31,7 +31,7 @@
   <a href="#articoli">{{ _('Costo per articolo') }}</a>
   <span class="grow"></span>
   <div class="who">
-    <span>{{ me.email }} · {{ _('operatore') }}</span>
+    <span>{{ me.email }} · {{ _('amministratore') }}</span>
     <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
   </div>
 </nav>

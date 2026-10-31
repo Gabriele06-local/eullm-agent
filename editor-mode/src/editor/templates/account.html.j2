@@ -10,7 +10,7 @@
 <body>
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Abbonamento') }}</small></div>
+  <div class="brand"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Abbonamento') }}</small></div>
   {% for r in rooms %}<a href="#t-{{ r.tenant_id }}">{{ r.name }}</a>{% endfor %}
   {% if back %}<a href="/">{{ _('Torna alla redazione') }}</a>{% endif %}
   {% if me.operator %}<a href="/admin">{{ _('Amministrazione') }}</a>{% endif %}
@@ -44,7 +44,7 @@
     </div>
   </section>
   {% else %}
-  <p class="empty card">{{ _("Non sei proprietario di nessuna redazione: l'abbonamento lo gestisce chi ti ha invitato.") }}</p>
+  <p class="empty card">{{ _("Non sei direttore di nessuna redazione: l'abbonamento lo gestisce chi ti ha invitato.") }}</p>
   {% endfor %}
 </main>
 </div>

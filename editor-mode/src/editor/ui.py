@@ -27,6 +27,9 @@ from .markdown import to_html
 
 COOKIE = "editor_token"
 SITE_COOKIE = "editor_site"
+# "site": the Desk shows only the site chosen in the menu; anything else
+# (the default): every site.
+SCOPE_COOKIE = "editor_scope"
 NOTICE_COOKIE = "editor_notice"
 
 ORIGINS = {
@@ -196,6 +199,18 @@ def register(app, ctx) -> None:
         chosen = next((x for x in sites if str(x.id) == wanted), sites[0] if sites else None)
         return sites, chosen
 
+    def whole(request: Request) -> bool:
+        """Is the Desk showing every site ("Tutti i siti" in the menu)?"""
+        return request.cookies.get(SCOPE_COOKIE) != "site"
+
+    def choose_site(resp, site_id: int) -> None:
+        resp.set_cookie(SITE_COOKIE, str(site_id), httponly=True, samesite="strict", max_age=365 * 86400)
+        resp.set_cookie(SCOPE_COOKIE, "site", httponly=True, samesite="strict", max_age=365 * 86400)
+
+    def forget_site(resp) -> None:
+        resp.delete_cookie(SITE_COOKIE)
+        resp.delete_cookie(SCOPE_COOKIE)
+
     def plan_name(s) -> str | None:
         """The name of the newsroom's plan, for the menu (also without a subscription)."""
         code = s.execute(select(m.tenants.c.plan)).scalar()
@@ -222,6 +237,7 @@ def register(app, ctx) -> None:
         rooms = [x for x in accounts.memberships(admin, c.user_id) if x.active] if c.user_id else []
         resp = pages.TemplateResponse(request, name, {
             "caller": c, "sites": sites, "site": site, "active": active, "newsrooms": rooms,
+            "all_sites": whole(request),
             "plan_state": billing.subscription(admin, c.tenant_id) if c.can("owner") else None,
             "plan_name": plan_name(s),
             "activity": data.pop("activity", None) or act.recent(s, tz, problem),
@@ -247,7 +263,7 @@ def register(app, ctx) -> None:
         resp = RedirectResponse(to, status_code=303)
         resp.set_cookie(COOKIE, token, httponly=True, samesite="lax", secure=request.url.scheme == "https",
                         max_age=30 * 86400)
-        resp.delete_cookie(SITE_COOKIE)
+        forget_site(resp)
         return resp
 
     def session_for(request: Request, s: accounts.Session) -> RedirectResponse:
@@ -326,7 +342,7 @@ def register(app, ctx) -> None:
         accounts.end_session(admin, request.cookies.get(COOKIE))
         resp = RedirectResponse("/login", status_code=303)
         resp.delete_cookie(COOKIE)
-        resp.delete_cookie(SITE_COOKIE)
+        forget_site(resp)
         return resp
 
     @app.get("/newsroom")
@@ -388,12 +404,19 @@ def register(app, ctx) -> None:
         return pages.TemplateResponse(request, "forgot.html.j2", {"sent": True, "can_reset": mail is not None})
 
     @app.get("/switch")
-    def switch(request: Request, site: int, back: str | None = None, c: auth.Caller = Depends(viewer)):
+    def switch(request: Request, site: str, back: str | None = None, c: auth.Caller = Depends(viewer)):
+        """The site menu: one site (every page shows it, the Desk too) or
+        "all" (the Desk shows every site; the pages of one site keep the
+        last one chosen)."""
+        if site == "all":
+            resp = RedirectResponse("/", status_code=303)
+            resp.set_cookie(SCOPE_COOKIE, "all", httponly=True, samesite="strict", max_age=365 * 86400)
+            return resp
         with db.tenant(c.tenant_id) as s:
-            if s.execute(select(m.sites.c.id).where(m.sites.c.id == site)).scalar() is None:
+            if not site.isdigit() or s.execute(select(m.sites.c.id).where(m.sites.c.id == int(site))).scalar() is None:
                 raise HTTPException(404, "site not found")
         resp = RedirectResponse(safe_path(back), status_code=303)
-        resp.set_cookie(SITE_COOKIE, str(site), httponly=True, samesite="strict", max_age=365 * 86400)
+        choose_site(resp, int(site))
         return resp
 
     # --- queries shared by pages -------------------------------------------------
@@ -553,11 +576,17 @@ def register(app, ctx) -> None:
     def today(request: Request, c: auth.Caller = Depends(viewer)):
         with db.tenant(c.tenant_id) as s:
             sites, site = current_site(s, request)
-            sid = site.id if site else None
+            # "Tutti i siti" in the menu (the default): the whole newsroom;
+            # one site chosen: only its decisions, work and numbers.
+            one = None if whole(request) or len(sites) < 2 else site
+            sid = one.id if one else None
+
+            def of(col):
+                return [col == sid] if one else []
             p = m.editorial_profiles
             profile_drafts = s.execute(
                 select(p.c.site_id, p.c.version, p.c.origin, p.c.changes, m.sites.c.domain)
-                .join(m.sites, m.sites.c.id == p.c.site_id).where(p.c.status == "draft")
+                .join(m.sites, m.sites.c.id == p.c.site_id).where(p.c.status == "draft", *of(p.c.site_id))
                 .order_by(p.c.created_at.desc())).all()
             lines = dict(s.execute(select(p.c.site_id, p.c.version).where(p.c.status == "approved")).all())
             pending = {}
@@ -565,8 +594,8 @@ def register(app, ctx) -> None:
                 pending.setdefault(r.site_id, r.version)
             site_lines = [{"id": x.id, "domain": x.domain, "approved": lines.get(x.id), "pending": pending.get(x.id)}
                           for x in sites]
-            # The Desk is every site at once: decisions, work and numbers of all.
-            proposed = proposal_rows(s, None, ("proposed",), limit=12)
+            # The Desk: decisions, work and numbers of every site, or of the one chosen.
+            proposed = proposal_rows(s, sid, ("proposed",), limit=12)
             explained = proposal_details(s, proposed)
             pending_pubs = s.execute(
                 select(m.publications.c.id, m.publications.c.mode, m.publications.c.requested_by,
@@ -574,7 +603,8 @@ def register(app, ctx) -> None:
                        m.publish_targets.c.kind)
                 .join(m.drafts, m.drafts.c.id == m.publications.c.draft_id)
                 .join(m.publish_targets, m.publish_targets.c.id == m.publications.c.target_id)
-                .where(m.publications.c.status == "pending_approval").order_by(m.publications.c.id)).all()
+                .where(m.publications.c.status == "pending_approval", *of(m.drafts.c.site_id))
+                .order_by(m.publications.c.id)).all()
             # Suspended in the last week: by the maintenance for this newsroom,
             # or in the archive for everyone (a feed that stopped answering).
             a = m.sources.alias("a")
@@ -584,14 +614,16 @@ def register(app, ctx) -> None:
                        m.sources.c.name, m.sources.c.site_id, m.sites.c.domain)
                 .join(m.sites, m.sites.c.id == m.sources.c.site_id)
                 .outerjoin(a, a.c.id == m.sources.c.archive_id)
-                .where(or_(and_(m.sources.c.status == "suspended", m.sources.c.status_changed_at > week_ago),
+                .where(*of(m.sources.c.site_id), or_(and_(m.sources.c.status == "suspended", m.sources.c.status_changed_at > week_ago),
                            and_(m.sources.c.status == "active", a.c.status == "suspended",
                                 a.c.status_changed_at > week_ago)))).all()
             draft_counts = dict(s.execute(
-                select(m.drafts.c.status, func.count()).where(m.drafts.c.status.in_(("draft", "needs_review")))
+                select(m.drafts.c.status, func.count()).where(m.drafts.c.status.in_(("draft", "needs_review")),
+                                                              *of(m.drafts.c.site_id))
                 .group_by(m.drafts.c.status)).all())
             new_today = s.execute(select(func.count()).select_from(m.proposals).where(
-                m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s))).scalar()
+                m.proposals.c.status == "proposed", m.proposals.c.created_at >= start_of_day(s),
+                *of(m.proposals.c.site_id))).scalar()
             usage = quotas.usage(s)
             # The archive sources this newsroom follows: when they were last read,
             # and fetches the Core could not make (down, or out of daily fetches).
@@ -606,23 +638,23 @@ def register(app, ctx) -> None:
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
             # A source the maintenance suspended is news, not a decision.
             decisions = len(profile_drafts) + len(proposed) + len(pending_pubs)
-            desk = desk_rows(s, sites, lines, pending)
+            desk = desk_rows(s, [one] if one else sites, lines, pending)
             # The cockpit: the busiest and the most expensive sites, the latest news.
             busiest = sorted((x for x in desk if x["news"] or x["proposals_week"] or x["drafts_week"]),
                              key=lambda x: (-(x["news"] + 5 * x["proposals_week"] + 10 * x["drafts_week"]), x["domain"]))[:5]
             costly = sorted((x for x in desk if x["calls"]), key=lambda x: (-x["cost"], -x["tokens"]))[:5]
             u = m.llm_usage.c
             month = s.execute(select(func.coalesce(func.sum(u.cost), 0.0), func.count()).where(
-                u.at >= datetime.now(UTC) - timedelta(days=30), u.error.is_(None))).one()
+                u.at >= datetime.now(UTC) - timedelta(days=30), u.error.is_(None), *of(u.site_id))).one()
             si = m.source_items
             news_day = s.execute(select(func.count()).select_from(si).where(
-                repo.followed_by(), si.c.fetched_at >= datetime.now(UTC) - timedelta(hours=24))).scalar() or 0
+                repo.followed_by(sid), si.c.fetched_at >= datetime.now(UTC) - timedelta(hours=24))).scalar() or 0
             latest = s.execute(
                 select(si.c.title, si.c.url, si.c.published_at, si.c.fetched_at, m.sources.c.name.label("source"))
                 .join(m.sources, m.sources.c.id == si.c.source_id)
-                .where(repo.followed_by(), si.c.duplicate_of.is_(None))
+                .where(repo.followed_by(sid), si.c.duplicate_of.is_(None))
                 .order_by(si.c.fetched_at.desc(), si.c.id.desc()).limit(6)).all()
-            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk,
+            return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk, one=one,
                           busiest=busiest, costly=costly, cost_month=month[0], calls_month=month[1],
                           news_day=news_day, latest=latest,
                           activity=act.recent(s, zone(s), problem, full=True),
@@ -841,7 +873,8 @@ def register(app, ctx) -> None:
         with db.tenant(c.tenant_id) as s:
             sid = s.execute(select(m.sites.c.id).where(m.sites.c.domain == d)).scalar()
         resp = done("/", t("Analisi di {domain} partita: la segui passo per passo nel riquadro Attività.", domain=d))
-        resp.set_cookie(SITE_COOKIE, str(sid), httponly=True, samesite="strict", max_age=365 * 86400)
+        if sid is not None:
+            choose_site(resp, sid)
         return resp
 
     @app.post("/ui/sites/{site_id}/review")
@@ -1414,7 +1447,7 @@ def register(app, ctx) -> None:
             return done(f"/drafts/{draft_id}", t("Richiesta non inviata: {e}.", e=e))
         except IntegrityError:
             return done(f"/drafts/{draft_id}", t("Questa pubblicazione è già stata chiesta."))
-        return done("/publications", t("Pubblicazione chiesta: aspetta l'approvazione di un owner."))
+        return done("/publications", t("Pubblicazione chiesta: aspetta l'approvazione di un direttore."))
 
     # --- Pubblicazioni --------------------------------------------------------------
 
@@ -1717,7 +1750,7 @@ def register(app, ctx) -> None:
             return done("/site#h-danger", str(e))
         resp = done("/", t("{domain} eliminato con profilo, fonti seguite, proposte, bozze e destinazioni.",
                            domain=domain))
-        resp.delete_cookie(SITE_COOKIE)
+        forget_site(resp)
         return resp
 
     @app.post("/ui/targets/{target_id}")
