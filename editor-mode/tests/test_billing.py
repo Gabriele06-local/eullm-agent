@@ -571,3 +571,19 @@ def test_amounts_typed_in_the_console_read_thousands_with_a_dot():
             pass
         else:
             raise AssertionError(f"{bad} accepted")
+
+def test_a_plan_change_without_a_date_keeps_the_paid_period(db, admin, tenant):
+    """The console's Abbonamento form leaves the date empty: saving it must
+    not turn a paying newsroom into an open-ended free one."""
+    from datetime import datetime, timedelta
+
+    billing.start(admin, tenant, billing.TRIAL_PLAN)
+    paid = datetime.now(UTC) + timedelta(days=300)
+    billing.start(admin, tenant, "pro", paid_until=paid, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] == paid
+    billing.start(admin, tenant, "pro", paid_until=None, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] == paid
+    # A period already over is not kept: the newsroom would be stopped again within the hour.
+    billing.start(admin, tenant, "pro", paid_until=datetime.now(UTC) - timedelta(days=1), provider="manual")
+    billing.start(admin, tenant, "pro", paid_until=None, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] is None

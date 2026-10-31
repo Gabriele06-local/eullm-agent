@@ -494,7 +494,10 @@ def start(admin, tenant_id: str, plan_code: str, customer_id: int | None = None,
         values = {"plan_code": plan.code, "billing_interval": interval, "provider": provider,
                   "status": "trialing" if trial else "active",
                   "trial_ends_at": now + timedelta(days=plan.trial_days) if trial else None,
-                  "current_period_end": None if trial else paid_until, "reminded_at": None, "updated_at": now}
+                  # Without a date, a period already paid and not over yet is kept.
+                  "current_period_end": None if trial else (paid_until or (
+                      end if (end := (old or {}).get("current_period_end")) and end > now else None)),
+                  "reminded_at": None, "updated_at": now}
         if not trial:  # the plan wished for during the trial is now the plan
             values |= {"desired_plan": None, "desired_interval": None}
         if customer_id is not None:

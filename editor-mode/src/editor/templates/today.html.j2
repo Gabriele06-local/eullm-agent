@@ -40,11 +40,11 @@
   <a class="card kpi{% if decisions %} warn{% endif %}" href="#h-decide">
     <span class="label">{{ _('Da decidere') }}</span>
     <span class="value">{{ decisions }}</span>
-    <span class="note">{{ profile_drafts|length|plural(_('profilo'), _('profili')) }} · {{ proposed|length|plural(_('proposta'), _('proposte')) }} · {{ pending_pubs|length|plural(_('pubblicazione'), _('pubblicazioni')) }}</span>
+    <span class="note">{{ profile_drafts|length|plural(_('profilo'), _('profili')) }} · {{ proposed_total|plural(_('proposta'), _('proposte')) }} · {{ pending_pubs|length|plural(_('pubblicazione'), _('pubblicazioni')) }}</span>
   </a>
   <a class="card kpi" href="/trends#h-plan">
     <span class="label">{{ _('Proposte nel piano') }}</span>
-    <span class="value">{{ proposed|length }}</span>
+    <span class="value">{{ proposed_total }}</span>
     <span class="note">{{ _('{n} da stamattina', n=new_today|plural(_('nuova'), _('nuove'))) }}</span>
   </a>
   <a class="card kpi" href="/drafts">
@@ -59,7 +59,7 @@
   </a>
   <a class="card kpi" href="/sources">
     <span class="label">{{ _('Fonti attive') }}</span>
-    <span class="value">{{ usage.used.get('active_sources', 0) if usage else 0 }}</span>
+    <span class="value">{{ collected.sources }}</span>
     <span class="note">{{ _('in tutti i siti') if sites|length > 1 and not one else _('del sito') }}</span>
   </a>
   <div class="card kpi">
@@ -71,7 +71,7 @@
 
 <div class="board">
   <section class="card" aria-labelledby="h-decide">
-    <div class="card-head"><h2 id="h-decide">{{ _('Da decidere') }}</h2><span class="hint">{{ _('Nulla esce senza il tuo sì') }}{% if proposed|length > 6 %} · <a href="/trends#h-plan">{{ _('Tutte ({n})', n=proposed|length) }}</a>{% endif %}</span></div>
+    <div class="card-head"><h2 id="h-decide">{{ _('Da decidere') }}</h2><span class="hint">{{ _('Nulla esce senza il tuo sì') }}{% if proposed_total > 6 %} · <a href="/trends#h-plan">{{ _('Tutte ({n})', n=proposed_total) }}</a>{% endif %}</span></div>
     {% for p in profile_drafts %}
     <div class="item line">
       <span class="chip amber">{{ _('Profilo') }}</span>
@@ -116,8 +116,8 @@
       <div class="card-head"><h2 id="h-raccolta">{{ _('Raccolta') }}</h2><span class="hint">{{ _('ogni ora') }} · <a href="/sources">{{ _('Fonti') }}</a></span></div>
       <div class="pad" style="gap: 8px;">
         <div class="trio">
-          <div><span class="num">{{ usage.used.get('active_sources', 0) if usage else 0 }}</span><small>{{ _('fonti attive') }}</small></div>
-          <div><span class="num">{{ usage.used.get('items_today', 0) if usage else 0 }}</span><small>{{ _('notizie oggi') }}</small></div>
+          <div><span class="num">{{ collected.sources }}</span><small>{{ _('fonti attive') }}</small></div>
+          <div><span class="num">{{ collected.today }}</span><small>{{ _('notizie oggi') }}</small></div>
           <div><span class="num">{{ when(last_fetch, 'time') }}</span><small>{{ _('ultimo giro') }}</small></div>
         </div>
         {% if core_trouble %}
