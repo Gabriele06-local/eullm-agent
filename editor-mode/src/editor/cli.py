@@ -301,9 +301,9 @@ def cmd_worker(a):
 
     def hourly():  # trial reminders, the hold when a trial or a paid period ends, new releases
         billing.lifecycle(admin_database(), mail=mail, public_url=st.public_url)
-        where = updates.folder(st.updates_dir)
-        if where is not None:
-            updates.check(where)
+        from importlib import metadata
+        updates.check(updates.folder(st.updates_dir), installed=metadata.version("eullm-editor-mode"),
+                      iid=updates.this_install())
     queue.Worker(db, handlers(), concurrency=slots, hourly=hourly).run()
 
 

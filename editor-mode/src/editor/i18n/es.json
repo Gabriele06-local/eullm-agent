@@ -1531,5 +1531,11 @@
  "Modello per passo": "Modelo por paso",
  "Il nome di un modello della sezione models di core.yaml (per esempio haiku, sonnet, opus); vuoto: il modello predefinito del Core. Un nome che core.yaml non conosce non ferma nulla: risponde il predefinito e il log lo segnala. Le redazioni non vedono quale modello usano.": "El nombre de un modelo de la sección models de core.yaml (por ejemplo haiku, sonnet, opus); vacío: el modelo predeterminado del Core. Un nombre que core.yaml no conoce no detiene nada: responde el predeterminado y el registro lo indica. Las redacciones no ven qué modelo usan.",
  "Modelli dei passi salvati: valgono dalla prossima chiamata, entro un minuto.": "Modelos de los pasos guardados: se aplican desde la próxima llamada, en un minuto.",
- "Caporedattore AI": "Redactor jefe IA"
+ "Caporedattore AI": "Redactor jefe IA",
+ "Installazioni di Redazia": "Instalaciones de Redazia",
+ "Ogni installazione chiede a questo server l'ultima versione ogni 6 ore, con un identificativo casuale e la versione installata. Chi ha EDITOR_TELEMETRY=off non viene contato.": "Cada instalación pide a este servidor la última versión cada 6 horas, con un identificador aleatorio y la versión instalada. Las instalaciones con EDITOR_TELEMETRY=off no se cuentan.",
+ "Attive negli ultimi 7 giorni": "Activas en los últimos 7 días",
+ "versione {version}": "versión {version}",
+ "Nuove negli ultimi 30 giorni": "Nuevas en los últimos 30 días",
+ "Viste in tutto": "Vistas en total"
 }

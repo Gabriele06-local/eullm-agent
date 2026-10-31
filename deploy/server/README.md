@@ -259,7 +259,7 @@ In a checkout of the sources (`deploy/server`) it is the same, with
 ## Updating from the console
 
 /admin › Aggiornamenti shows the installed version and the latest release
-(read from GitHub every six hours, or with "Controlla adesso"), and with
+(read every six hours, or with "Controlla adesso"; see below), and with
 "Aggiorna alla X.Y.Z" updates the server without a terminal. The dashboard
 has no Docker socket and no root: it only writes the version asked in
 `updates/request.json`. `update.sh`, run every minute by root's cron,
@@ -281,6 +281,22 @@ adds `/etc/cron.d/eullm-update`, and, when `compose.yaml` comes from a
 release before this one, writes `compose.override.yaml` with the shared
 folder; then it restarts. The backups of `update.sh` use the `BACKUP_*`
 settings of `backup.sh`: to keep them elsewhere, put them in the cron line.
+
+### Counting installations
+
+The latest release is asked to `https://app.redazia.com/api/public/latest`,
+which answers with GitHub's latest release. Only two things are sent: a
+random identifier derived from this installation's `EDITOR_SECRET_KEY`
+(it cannot be turned back into the key) and the installed version. This is
+how we know how many installations run and on which version; nothing about
+newsrooms, sites, users or addresses is sent or kept. If that address does
+not answer, GitHub is asked directly. To send nothing, put
+`EDITOR_TELEMETRY=off` in `.env` (a `compose.yaml` written before 0.24.0
+also needs the line `EDITOR_TELEMETRY: ${EDITOR_TELEMETRY:-on}` under
+`x-editor-env`) and `docker compose up -d`.
+
+On the server that receives the checks, /admin › Aggiornamenti shows the
+installations active in the last 7 days, by version.
 
 ## A spare model
 

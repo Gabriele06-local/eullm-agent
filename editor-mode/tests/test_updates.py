@@ -93,3 +93,69 @@ def test_without_the_folder_the_console_says_how(db):
     accounts.create_user(admin, op, password="password operatore", operator=True)
     c.post("/login", data={"email": op, "password": "password operatore"})
     assert "update.sh" in c.get("/admin").text
+
+
+def test_the_check_goes_through_redazia_and_counts_the_installation(tmp_path, monkeypatch):
+    calls = []
+
+    def handler(request):
+        calls.append(request.url)
+        if request.url.host == "app.redazia.com":
+            return httpx.Response(200, json={"version": "99.1.0", "url": "https://github.com/r/v99.1.0"})
+        return httpx.Response(200, json={"tag_name": "v99.0.0", "html_url": "https://github.com/r/v99.0.0"})
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+    iid = updates.install_id("a secret key")
+    assert updates.INSTALL_ID.match(iid) and iid == updates.install_id("a secret key") != updates.install_id("other")
+    now = datetime(2026, 10, 30, 12, tzinfo=UTC)
+    assert updates.check(tmp_path, http, now, installed="0.24.0", iid=iid)["version"] == "99.1.0"
+    sent = calls[-1]
+    assert sent.host == "app.redazia.com" and sent.params["id"] == iid and sent.params["v"] == "0.24.0"
+    assert set(sent.params) == {"id", "v"}  # nothing else leaves the installation
+    # Telemetry off: GitHub directly, nothing sent to us.
+    monkeypatch.setenv("EDITOR_TELEMETRY", "off")
+    calls.clear()
+    assert updates.check(tmp_path, http, now, force=True, installed="0.24.0", iid=iid)["version"] == "99.0.0"
+    assert [c.host for c in calls] == ["api.github.com"]
+    monkeypatch.delenv("EDITOR_TELEMETRY")
+    # Our address down: GitHub answers instead.
+    def down(request):
+        if request.url.host == "app.redazia.com":
+            return httpx.Response(502)
+        return handler(request)
+    http = httpx.Client(transport=httpx.MockTransport(down))
+    assert updates.check(tmp_path, http, now, force=True, installed="0.24.0", iid=iid)["version"] == "99.0.0"
+    # Without the shared folder the check still runs (and is kept in memory).
+    assert updates.check(None, http, now, force=True, installed="0.24.0", iid=iid)["version"] == "99.0.0"
+
+
+def test_the_console_counts_the_installations(db, monkeypatch):
+    import time
+
+    from editor import accounts, installs
+    from editor.api import create_app
+    from editor.db import Database
+    from fastapi.testclient import TestClient
+    from test_billing import unique
+
+    admin = Database.from_url(db.admin_url)
+    monkeypatch.setitem(installs._release, "at", time.monotonic())
+    monkeypatch.setitem(installs._release, "release", {"version": "99.0.0", "url": "https://github.com/r/v99.0.0",
+                                                         "published_at": None})
+    c = TestClient(create_app(db))
+    a, b = updates.install_id(unique("a")), updates.install_id(unique("b"))
+    before = installs.summary(admin)
+    r = c.get("/api/public/latest", params={"v": "0.24.0", "id": a})
+    assert r.status_code == 200 and r.json()["version"] == "99.0.0"
+    c.get("/api/public/latest", params={"v": "0.24.0", "id": a})
+    c.get("/api/public/latest", params={"v": "0.23.0", "id": b})
+    # Nonsense is answered but not counted.
+    assert c.get("/api/public/latest", params={"v": "x; drop", "id": "nope"}).status_code == 200
+    now = installs.summary(admin)
+    assert now["seen"] == before["seen"] + 2 and now["active"] == before["active"] + 2
+    assert installs.record(admin, a, "0.24.1") and installs.summary(admin)["seen"] == now["seen"]
+
+    op = f"{unique('op')}@example.com"
+    accounts.create_user(admin, op, password="password operatore", operator=True)
+    c.post("/login", data={"email": op, "password": "password operatore"})
+    page = c.get("/admin").text
+    assert "Installazioni di Redazia" in page and "Attive negli ultimi 7 giorni" in page and "versione 0.24.1" in page

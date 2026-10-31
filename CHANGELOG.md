@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.24.0
+
+### Added
+
+- Installations counted: the check for updates (every six hours, also on
+  installations without the console update folder) asks
+  app.redazia.com/api/public/latest, which answers with GitHub's latest
+  release and records a random identifier (derived from
+  `EDITOR_SECRET_KEY`, not reversible) and the installed version. Nothing
+  else is sent. /admin › Aggiornamenti › "Installazioni di Redazia" shows
+  the installations active in 7 days by version, new ones in 30 days and
+  all those seen. `EDITOR_TELEMETRY=off` sends nothing and asks GitHub
+  directly; if app.redazia.com does not answer, GitHub is asked.
+  Migrations 0033 (Postgres) and 0022 (SQLite).
+
 ## 0.23.0
 
 ### Added

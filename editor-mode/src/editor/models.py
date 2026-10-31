@@ -247,6 +247,18 @@ model_routes = Table(
     Column("updated_at", _ts()),
 )
 
+# Installations that asked app.redazia.com for the latest release
+# (updates.py, installs.py): a random identifier and the installed version.
+installations = Table(
+    "installations",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("version", Text, nullable=False),
+    Column("first_seen", _ts()),
+    Column("last_seen", _ts()),
+    Column("checks", Integer, nullable=False, default=1),
+)
+
 editorial_profiles = Table(
     "editorial_profiles",
     metadata,
