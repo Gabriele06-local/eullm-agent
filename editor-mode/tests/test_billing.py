@@ -564,3 +564,7 @@ def test_a_plan_change_without_a_date_keeps_the_paid_period(db, admin, tenant):
     assert billing.subscription(admin, tenant)["current_period_end"] == paid
     billing.start(admin, tenant, "pro", paid_until=None, provider="manual")
     assert billing.subscription(admin, tenant)["current_period_end"] == paid
+    # A period already over is not kept: the newsroom would be stopped again within the hour.
+    billing.start(admin, tenant, "pro", paid_until=datetime.now(UTC) - timedelta(days=1), provider="manual")
+    billing.start(admin, tenant, "pro", paid_until=None, provider="manual")
+    assert billing.subscription(admin, tenant)["current_period_end"] is None
