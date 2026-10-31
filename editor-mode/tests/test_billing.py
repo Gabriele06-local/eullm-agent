@@ -553,6 +553,17 @@ def test_solo_has_no_automatic_newsroom_and_a_buyer_goes_to_payment(db, admin):
     assert r.headers["location"] == "/account"
 
 
+def test_a_plan_typed_in_any_case_is_stored_as_the_catalogue_has_it(db, admin, tenant):
+    """The console field is free text: a "PRO" saved as it is would not match
+    the catalogue (delete_plan, the selects), so it is stored lower case."""
+    from editor import newsrooms
+    from sqlalchemy import text
+
+    newsrooms.update_newsroom(admin, tenant, {"plan": "PRO"})
+    with admin.engine.connect() as conn:
+        assert conn.execute(text("SELECT plan FROM editor.tenants WHERE tenant_id = :t"),
+                           {"t": tenant}).scalar() == "pro"
+
 def test_a_plan_change_without_a_date_keeps_the_paid_period(db, admin, tenant):
     """The console's Abbonamento form leaves the date empty: saving it must
     not turn a paying newsroom into an open-ended free one."""
