@@ -11,14 +11,10 @@
 {% set labels = {'sites': _('Siti'), 'sources': _('Fonti attive'), 'items': _('Notizie oggi'), 'drafts': _('Bozze nel mese'), 'llm_cost': _('Costo modello nel mese')} %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-
-  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
+  <a class="brand" href="/admin">``&lt;img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"&gt;``<small>{{ _('Amministrazione') }}</small></a>
 <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="{{ _('Sezioni') }}">
 <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span></span><span></span><span></span></label>
 <div class="nav-body">
-
-  <a class="brand" href="/admin"><img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
-
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>
