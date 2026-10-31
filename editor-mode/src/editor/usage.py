@@ -239,7 +239,7 @@ def report(admin, db, tenants: list[str], days: int = 30) -> dict:
     if n:
         tot = _sum([r for a in written for r in by_ref.get((a["tenant"], f"proposal:{a['proposal_id']}"), [])
                     + by_ref.get((a["tenant"], f"topic:{a['topic_id']}"), [])], prices_)
-        average = {"in": tot["in"] // n, "out": tot["out"] // n, "calls": round(tot["calls"] / n, 1),
+        average = {"in": round(tot["in"] / n), "out": round(tot["out"] / n), "calls": round(tot["calls"] / n, 1),
                    "estimate": tot["estimate"] / n if tot["estimate"] is not None else None, "articles": n}
     return {"days": days, "since": since, "total": _sum(rows, prices_),
             "by_tenant": _group(rows, lambda r: r["tenant"], prices_),

@@ -42,7 +42,7 @@ def norm_email(v: str) -> str:
     local = local.split("+", 1)[0]
     if host in GMAIL:  # Gmail ignores dots: a.b@gmail.com is ab@gmail.com
         local, host = local.replace(".", ""), "gmail.com"
-    return f"{local}@{host}" if local else ""
+    return f"{local}@{host}" if local and host else ""
 
 
 def norm_phone(v: str) -> str:
@@ -145,6 +145,7 @@ def check_domain(admin, newsroom: str, domain: str) -> None:
     if not d:
         return
     sub = billing.subscription(admin, newsroom)
+    other = None
     with admin.engine.begin() as conn:
         if sub is not None and sub["status"] == "trialing":
             t = m.trial_marks
@@ -152,5 +153,9 @@ def check_domain(admin, newsroom: str, domain: str) -> None:
                                                             t.c.newsroom != newsroom)).scalar()
             if other is not None:
                 refused(conn, newsroom, sub.get("customer_id"), [{"kind": "domain", "value": d, "newsroom": other}])
-                raise TrialUsed(d)
-        mark(conn, [("domain", d)], newsroom, sub.get("customer_id") if sub else None)
+        if other is None:
+            mark(conn, [("domain", d)], newsroom, sub.get("customer_id") if sub else None)
+    # After the transaction: raising inside it would roll the recorded refusal
+    # back, and the operator would never see why the trial was refused.
+    if other is not None:
+        raise TrialUsed(d)
