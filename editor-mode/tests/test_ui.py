@@ -235,5 +235,3 @@ def test_the_navigation_folds_into_a_hamburger_on_a_narrow_screen(db, tenant):
     assert '<div class="nav-body">' in page
     css = page.split("</style>")[0]
     assert ".nav-toggle:checked ~ .nav-body" in css and "max-width: 820px" in css
-    admin = logged_in(db, tenant, "operator") if False else None
-    del admin
