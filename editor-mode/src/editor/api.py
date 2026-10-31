@@ -27,7 +27,7 @@ from .briefing import TEMPLATES as _BRIEF_TEMPLATES
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _STATIC = {name: (kind, (_STATIC_DIR / name).read_bytes())
-           for name, kind in (("logo.webp", "image/webp"), ("favicon.png", "image/png"))}
+           for name, kind in (("redazia-logo.webp", "image/webp"), ("redazia-icon.png", "image/png"))}
 
 DOMAIN = re.compile(r"^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 COOKIE = "editor_token"

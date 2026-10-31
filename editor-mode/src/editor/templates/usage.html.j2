@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ _('Consumi del modello') }} · Redazia</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="icon" type="image/png" href="/static/redazia-icon.png">
 {% include "_style.html.j2" %}
 </head>
 <body>
@@ -23,7 +23,7 @@
 {% macro head(first) %}<thead><tr><th>{{ first }}</th><th>{{ _('Chiamate') }}</th><th>{{ _('Token in entrata') }}</th><th>{{ _('Token in uscita') }}</th><th>{{ _('Durata media') }}</th><th>{{ _('Costo registrato') }}</th><th>{{ _('Costo stimato') }}</th></tr></thead>{% endmacro %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></div>
+  <div class="brand"><img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></div>
   <a href="/admin">{{ _('Redazioni') }}</a>
   <a href="/admin/usage" class="on">{{ _('Consumi') }}</a>
   <a href="#modelli">{{ _('Modello per passo') }}</a>

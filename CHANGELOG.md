@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.25.1
+
+### Fixed
+
+- The Desk with one site chosen: "Da decidere", "Proposte nel piano",
+  "Fonti attive", the collection box (active sources, news today, last
+  run) and Attività now count that site only. "Da decidere" and
+  "Proposte nel piano" also count every proposal waiting, not the first
+  12 listed.
+- The Redazia logo shows at once: the logo and icon files have new names,
+  so browsers do not keep EuLLM's from their cache.
+
 ## 0.25.0
 
 ### Changed
