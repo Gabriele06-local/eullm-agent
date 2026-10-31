@@ -88,10 +88,23 @@ class InviteIn(BaseModel):
 
 
 def _num(value: str, money: bool = False):
-    """A limit typed in the console: empty means no limit."""
-    value = (value or "").strip().replace(",", ".")
+    """A limit or an amount typed in the console: empty means no limit.
+
+    The decimal separator is the comma, as the fields' hints say ("19,90"),
+    so dots group thousands: "1.000" is a thousand, not one. A dot is kept as
+    the decimal point when it cannot be a group (the last part is not three
+    digits), which is how the forms themselves pre-fill prices ("19.90").
+    """
+    value = (value or "").strip().replace(" ", "")
     if not value:
         return None
+    if "," in value:
+        value = value.replace(".", "").replace(",", ".")
+    else:
+        parts = value.split(".")
+        if (len(parts) > 1 and parts[0] not in ("", "0")
+                and all(len(x) == 3 for x in parts[1:])):
+            value = "".join(parts)
     n = float(value) if money else int(value)
     if n < 0:
         raise ValueError

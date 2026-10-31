@@ -553,6 +553,25 @@ def test_solo_has_no_automatic_newsroom_and_a_buyer_goes_to_payment(db, admin):
     assert r.headers["location"] == "/account"
 
 
+def test_amounts_typed_in_the_console_read_thousands_with_a_dot():
+    from editor import console
+
+    assert console._num("1.000", money=True) == 1000
+    assert console._num("1.500", money=True) == 1500
+    assert console._num("1.234,56", money=True) == 1234.56
+    assert console._num("0,40", money=True) == 0.4
+    assert console._num("19.90", money=True) == 19.9  # the value the plan form pre-fills
+    assert console._num("0.00", money=True) == 0.0
+    assert console._num("1.000") == 1000
+    assert console._num("") is None
+    for bad in ("-5", "abc"):
+        try:
+            console._num(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"{bad} accepted")
+
 def test_a_plan_typed_in_any_case_is_stored_as_the_catalogue_has_it(db, admin, tenant):
     """The console field is free text: a "PRO" saved as it is would not match
     the catalogue (delete_plan, the selects), so it is stored lower case."""

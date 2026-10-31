@@ -107,7 +107,7 @@
           <label class="field">{{ _('Notizie al giorno') }}<input name="max_items_per_day" inputmode="numeric" value="{{ r.max_items_per_day if r.max_items_per_day is not none else '' }}"></label>
           <label class="field">{{ _('Bozze al mese') }}<input name="max_drafts_month" inputmode="numeric" value="{{ r.max_drafts_month if r.max_drafts_month is not none else '' }}"></label>
           <label class="field">{{ _('Lingue per sito') }}<input name="max_languages" inputmode="numeric" value="{{ r.max_languages if r.max_languages is not none else '' }}"></label>
-          <label class="field">{{ _('Costo modello al mese (€)') }}<input name="max_llm_cost_month" inputmode="decimal" value="{{ r.max_llm_cost_month if r.max_llm_cost_month is not none else '' }}"></label>
+          <label class="field">{{ _('Costo modello al mese (€)') }}<input name="max_llm_cost_month" inputmode="decimal" value="{{ (r.max_llm_cost_month|string)|replace('.', ',') if r.max_llm_cost_month is not none else '' }}"></label>
           <div><button class="btn" type="submit">{{ _('Salva') }}</button></div>
         </form>
         <p class="hint">{{ _('Vuoto vuol dire senza limite. Il costo del modello diventa anche il limite della redazione nel Core.') }}</p>
