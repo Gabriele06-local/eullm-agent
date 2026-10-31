@@ -10,7 +10,7 @@
 <body>
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <a class="brand" href="/" title="{{ _('Desk') }}"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>Editor Mode</small></a>
+  <a class="brand" href="/" title="{{ _('Desk') }}"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"></a>
   {% if newsrooms|length > 1 %}
   <form method="get" action="/newsroom" class="switch">
     <label for="room-pick">{{ _('Redazione') }}</label>
@@ -26,7 +26,9 @@
   <form method="get" action="/switch" class="switch">
     <label for="site-pick">{{ _('Sito') }}</label>
     <select id="site-pick" name="site" onchange="this.form.submit()">
-      {% for x in sites %}<option value="{{ x.id }}" {% if site and x.id == site.id %}selected{% endif %}>{{ x.domain }}</option>{% endfor %}
+      {% set desk_all = all_sites and sites|length > 1 and active == 'today' %}
+      {% if sites|length > 1 %}<option value="all" {% if desk_all %}selected{% endif %}>{{ _('Tutti i siti') }}</option>{% endif %}
+      {% for x in sites %}<option value="{{ x.id }}" {% if site and x.id == site.id and not desk_all %}selected{% endif %}>{{ x.domain }}</option>{% endfor %}
     </select>
     <input type="hidden" name="back" value="{{ request.url.path }}">
     <noscript><button class="btn sm" type="submit">{{ _('Vai') }}</button></noscript>
@@ -47,7 +49,7 @@
   <div class="who">
     <span class="name" title="{{ caller.name }}">{{ caller.name }}</span>
     <div class="row" style="justify-content: space-between; align-items: center;">
-      <span>{{ {'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}[caller.role] }}</span>
+      <span>{{ {'owner': _('direttore'), 'editor': _('redattore'), 'viewer': _('lettura')}[caller.role] }}</span>
       <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
     </div>
   </div>

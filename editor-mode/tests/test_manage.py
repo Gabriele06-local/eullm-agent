@@ -192,6 +192,6 @@ def test_the_console_changes_and_deletes_what_it_created(db):
     assert billing.reseller(admin, rid) is None
 
     assert "non puoi togliere te stesso" in c.post(f"/admin/operators/{me}/remove").text
-    assert "non è più operatore" in c.post(f"/admin/operators/{them}/remove").text
+    assert "non è più amministratore" in c.post(f"/admin/operators/{them}/remove").text
     assert not any(o.id == them for o in accounts.operators(admin))
     admin.engine.dispose()

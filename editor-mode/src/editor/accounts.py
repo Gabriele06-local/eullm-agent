@@ -172,14 +172,14 @@ def remove_operator(admin, user_id: int, by_user_id: int) -> str:
     """Take the console away from a person (their newsroom memberships
     stay). Nobody removes themselves, and one operator always stays."""
     if user_id == by_user_id:
-        raise AccountError(t("non puoi togliere te stesso: chiedilo a un altro operatore"))
+        raise AccountError(t("non puoi togliere te stesso: chiedilo a un altro amministratore"))
     u = m.users
     with admin.engine.begin() as conn:
         row = conn.execute(select(u.c.email).where(u.c.id == user_id, u.c.operator)).first()
         if row is None:
             raise LookupError(user_id)
         if conn.execute(select(func.count()).select_from(u).where(u.c.operator)).scalar() <= 1:
-            raise AccountError(t("serve almeno un operatore"))
+            raise AccountError(t("serve almeno un amministratore"))
         conn.execute(update(u).where(u.c.id == user_id).values(operator=False))
         conn.execute(delete(m.sessions).where(m.sessions.c.user_id == user_id, m.sessions.c.tenant_id.is_(None)))
     return row.email
@@ -223,7 +223,7 @@ def _keep_an_owner(conn, tenant_id: str, leaving: int) -> None:
     others = conn.execute(select(func.count()).select_from(ms).where(
         ms.c.tenant_id == tenant_id, ms.c.role == "owner", ms.c.user_id != leaving)).scalar()
     if not others:
-        raise AccountError(t("la redazione deve avere almeno un owner"))
+        raise AccountError(t("la redazione deve avere almeno un direttore"))
 
 
 def change_role(admin, tenant_id: str, user_id: int, role: str) -> None:
@@ -310,7 +310,7 @@ def create_invite(admin, email: str, created_by: str, tenant_id: str | None = No
     RESET_HOURS) and once."""
     email = normalise_email(email)
     if kind == "invite" and tenant_id is None and not operator:
-        raise AccountError(t("un invito è per una redazione o per un operatore"))
+        raise AccountError(t("un invito è per una redazione o per un amministratore"))
     if role is not None and role not in ROLES:
         raise AccountError(t("ruolo non valido"))
     now = _now(now)

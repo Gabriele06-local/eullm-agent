@@ -44,7 +44,7 @@
       <p class="hint">{{ _('La lingua è quella dei briefing e delle email della redazione.') }}</p>
     </details>
     {% else %}
-    <p class="hint">{{ _('Le cambia il proprietario della redazione.') }}</p>
+    <p class="hint">{{ _('Le cambia il direttore della redazione.') }}</p>
     {% endif %}
   </section>
 </div>
@@ -104,7 +104,7 @@
 {% endif %}
 <section class="card pad" aria-labelledby="h-people">
   <h2 id="h-people">{{ _('Persone della redazione') }}</h2>
-  <p class="hint">{{ _('Ognuno entra con la sua email e la sua password. Lettura vede, editor decide le proposte e le bozze, owner approva profili, fonti e pubblicazioni e gestisce le persone.') }}</p>
+  <p class="hint">{{ _('Ognuno entra con la sua email e la sua password. Lettura vede, redattore decide le proposte e le bozze, direttore approva profili, fonti e pubblicazioni e gestisce le persone.') }}</p>
   <div class="scroll">
     <table style="min-width: 560px;">
       <thead><tr><th>{{ _('Persona') }}</th><th>{{ _('Ruolo') }}</th><th>{{ _('Da') }}</th><th><span class="sr">{{ _('Azioni') }}</span></th></tr></thead>
@@ -115,7 +115,7 @@
         <td>
           <form class="inline" method="post" action="/ui/people/{{ p.id }}/role">
             <select name="role" onchange="this.form.submit()" aria-label="{{ _('Ruolo di {email}', email=p.email) }}">
-              {% for r, label in [('viewer', _('Lettura')), ('editor', _('Editor')), ('owner', _('Owner'))] %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              {% for r, label in [('viewer', _('Lettura')), ('editor', _('Redattore')), ('owner', _('Direttore'))] %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}
             </select>
             <noscript><button class="btn sm" type="submit">{{ _('Cambia') }}</button></noscript>
           </form>
@@ -129,7 +129,7 @@
       {% for i in invited %}
       <tr>
         <td>{{ i.email }} <span class="chip">{{ _('Invitato') }}</span></td>
-        <td>{{ {'owner': _('Owner'), 'editor': _('Editor'), 'viewer': _('Lettura')}.get(i.role, i.role) }}</td>
+        <td>{{ {'owner': _('Direttore'), 'editor': _('Redattore'), 'viewer': _('Lettura')}.get(i.role, i.role) }}</td>
         <td>{{ _('scade {date}', date=when(i.expires_at, 'day')) }}</td>
         <td style="text-align: right;"><form class="inline" method="post" action="/ui/invites/{{ i.token_sha256 }}/revoke"><button class="btn sm" type="submit">{{ _('Annulla') }}</button></form></td>
       </tr>
@@ -139,7 +139,7 @@
   </div>
   <form method="post" action="/ui/people/invite" class="form-grid" style="margin-top: 8px;">
     <label class="field">{{ _('Email') }}<input name="email" type="email" required placeholder="{{ _('giulia@esempio.it') }}"></label>
-    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Editor') }}</option><option value="owner">{{ _('Owner') }}</option></select></label>
+    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Redattore') }}</option><option value="owner">{{ _('Direttore') }}</option></select></label>
     <div><button class="btn" type="submit">{{ _('Invita') }}</button></div>
   </form>
 </section>
@@ -153,7 +153,7 @@
       {% for t in tokens %}
       <tr {% if t.revoked_at %}class="off"{% endif %}>
         <td>{{ t.name }}</td>
-        <td>{{ {'owner': _('owner'), 'editor': _('editor'), 'viewer': _('lettura')}.get(t.role, t.role) }}</td>
+        <td>{{ {'owner': _('direttore'), 'editor': _('redattore'), 'viewer': _('lettura')}.get(t.role, t.role) }}</td>
         <td>{{ when(t.created_at, 'day') }}</td>
         <td>{% if t.revoked_at %}<span class="chip">{{ _('Revocato {date}', date=when(t.revoked_at, 'day')) }}</span>{% else %}<span class="chip green">{{ _('Attivo') }}</span>{% endif %}</td>
         <td style="text-align: right;">{% if not t.revoked_at %}<form class="inline" method="post" action="/ui/tokens/{{ t.id }}/revoke"><button class="btn sm" type="submit">{{ _('Revoca') }}</button></form>{% endif %}</td>
@@ -164,7 +164,7 @@
   </div>
   <form method="post" action="/ui/tokens" class="form-grid" style="margin-top: 8px;">
     <label class="field">{{ _('Nome') }}<input name="name" required placeholder="{{ _('WordPress, automazioni') }}"></label>
-    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Editor') }}</option><option value="owner">{{ _('Owner') }}</option></select></label>
+    <label class="field">{{ _('Ruolo') }}<select name="role"><option value="viewer">{{ _('Lettura') }}</option><option value="editor" selected>{{ _('Redattore') }}</option><option value="owner">{{ _('Direttore') }}</option></select></label>
     <div><button class="btn" type="submit">{{ _('Crea token') }}</button></div>
   </form>
 </section>

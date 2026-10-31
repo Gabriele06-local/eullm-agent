@@ -161,7 +161,7 @@
       {% for p in pubs %}
       <div class="list-row">
         <span>{{ p.name }} · {{ _('bozza') if p.mode == 'draft' else _('subito') }}</span>
-        {% set ps = {'pending_approval': ('amber', _('In attesa di owner')), 'approved': ('blue', _('In invio')), 'published': ('green', _('Pubblicata')), 'rejected': ('', _('Rifiutata')), 'failed': ('red', _('Non riuscita'))}.get(p.status, ('', p.status)) %}
+        {% set ps = {'pending_approval': ('amber', _('In attesa del direttore')), 'approved': ('blue', _('In invio')), 'published': ('green', _('Pubblicata')), 'rejected': ('', _('Rifiutata')), 'failed': ('red', _('Non riuscita'))}.get(p.status, ('', p.status)) %}
         {% if p.external_url %}<a class="chip {{ ps[0] }}" href="{{ p.external_url }}" rel="noopener noreferrer" target="_blank">{{ ps[1] }}</a>{% else %}<span class="chip {{ ps[0] }}">{{ ps[1] }}</span>{% endif %}
       </div>
       {% endfor %}
@@ -172,7 +172,7 @@
           <label class="field">{{ _('Modo') }}<select name="mode"><option value="draft">{{ _('Come bozza nel CMS') }}</option><option value="publish">{{ _('Pubblica subito') }}</option></select></label>
           <div><button class="btn pri" type="submit">{{ _('Chiedi la pubblicazione') }}</button></div>
         </form>
-        <p class="hint">{{ _('Parte solo dopo il sì di un owner.') }}</p>
+        <p class="hint">{{ _('Parte solo dopo il sì di un direttore.') }}</p>
         {% else %}
         <p class="hint">{{ _('Nessuna destinazione per questo sito: aggiungila da <a href="/publications">Pubblicazioni</a>.') }}</p>
         {% endif %}

@@ -4,7 +4,7 @@
 {# The Desk is the whole newsroom at a glance: every box is short and opens the page with the rest. #}
 <header class="head">
   <div>
-    <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }} · {{ _('tutti i siti') }}</span>
+    <span class="kicker">{{ days[now.weekday()] }} {{ now.day }} {{ months[now.month - 1] }} · {{ one.domain if one else _('tutti i siti') }}</span>
     <h1>{{ _('Desk') }}</h1>
   </div>
   <div class="row">
@@ -26,7 +26,7 @@
 {% if not sites %}
 <section class="card pad">
   <h2>{{ _('Inizia da un dominio') }}</h2>
-  <p class="lead">{{ _('Editor Mode analizza il sito, propone un profilo editoriale con le prove e cerca le fonti da solo. Nulla parte prima della tua approvazione.') }}</p>
+  <p class="lead">{{ _('Redazia analizza il sito, propone un profilo editoriale con le prove e cerca le fonti da solo. Nulla parte prima della tua approvazione.') }}</p>
   {% if caller.can('owner') %}
   <form method="post" action="/ui/sites" class="form-grid">
     <label class="field">{{ _('Dominio') }}<input name="domain" placeholder="{{ _('esempio.it') }}" required></label>
@@ -60,7 +60,7 @@
   <a class="card kpi" href="/sources">
     <span class="label">{{ _('Fonti attive') }}</span>
     <span class="value">{{ usage.used.get('active_sources', 0) if usage else 0 }}</span>
-    <span class="note">{{ _('in tutti i siti') if sites|length > 1 else _('del sito') }}</span>
+    <span class="note">{{ _('in tutti i siti') if sites|length > 1 and not one else _('del sito') }}</span>
   </a>
   <div class="card kpi">
     <span class="label">{{ _('Costo modello, 30 giorni') }}</span>
@@ -173,6 +173,7 @@
 </section>
 
 <div class="trio-cards">
+  {% if not one %}
   <section class="card" aria-labelledby="h-busy">
     <div class="card-head"><h2 id="h-busy">{{ _('Siti più attivi') }}</h2><span class="hint">{{ _('notizie 24 ore · proposte e bozze 7 giorni') }}</span></div>
     <div class="pad rank">
@@ -199,6 +200,7 @@
       {% else %}<p class="hint">{{ _('Nessuna chiamata al modello negli ultimi 30 giorni.') }}</p>{% endfor %}
     </div>
   </section>
+  {% endif %}
   <section class="card" aria-labelledby="h-latest">
     <div class="card-head"><h2 id="h-latest">{{ _('Ultime notizie') }}</h2><a class="hint" href="/trends">{{ _('Tutti i trend') }}</a></div>
     <div class="pad" style="gap: 8px;">

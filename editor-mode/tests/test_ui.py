@@ -194,3 +194,28 @@ def test_home_says_when_the_reads_of_the_day_ran_out(db, tenant):
     assert "finito le letture del giorno" in c.get("/").text
     page = c.get("/sources").text
     assert "Ultimo errore di lettura" in page and "daily fetches limit reached" in page
+
+
+def test_the_desk_shows_every_site_or_the_one_chosen(db, tenant):
+    from editor import repo
+    approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        other = repo.ensure_site(s, tenant, "altro.example", "Altro")
+    c = logged_in(db, tenant, "owner")
+    # Every site by default, "Tutti i siti" chosen in the menu.
+    page = c.get("/").text
+    assert "· tutti i siti</span>" in page and '<option value="all" selected>' in page
+    assert page.count('href="/switch?site=') >= 2 or page.count("altro.example") >= 2
+    # One site chosen: the Desk is that site only, and the menu says so.
+    r = c.get(f"/switch?site={other}&back=/", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/"
+    page = c.get("/").text
+    assert "· altro.example</span>" in page and f'<option value="{other}" selected>' in page
+    assert "Siti più attivi" not in page and "1 sito" in page
+    # Back to all: to the Desk, whatever page it was chosen on.
+    r = c.get("/switch?site=all&back=/sources", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/"
+    assert "· tutti i siti</span>" in c.get("/").text
+    # The pages of one site keep the last site chosen.
+    assert "Fonti · altro.example" in c.get("/sources").text
+    assert c.get("/switch?site=nope").status_code == 404

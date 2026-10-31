@@ -11,13 +11,13 @@
 {% set labels = {'sites': _('Siti'), 'sources': _('Fonti attive'), 'items': _('Notizie oggi'), 'drafts': _('Bozze nel mese'), 'llm_cost': _('Costo modello nel mese')} %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="EuLLM" width="130" height="36"><small>{{ _('Amministrazione') }}</small></a>
+  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>
   <a href="#rivenditori">{{ _('Rivenditori') }}</a>
   <a href="#piani">{{ _('Piani') }}</a>
-  <a href="#operatori">{{ _('Operatori') }}</a>
+  <a href="#operatori">{{ _('Amministratori') }}</a>
   <a href="#api">{{ _('Chiavi API') }}</a>
   <a href="#aggiornamenti">{{ _('Aggiornamenti') }}{% if updates.newer %} <span class="chip teal">{{ updates.available.version }}</span>{% endif %}</a>
   <a href="/admin/usage">{{ _('Consumi') }}</a>
@@ -28,7 +28,7 @@
   <div class="who">
     <span class="name" title="{{ me.email }}">{{ me.email }}</span>
     <div class="row" style="justify-content: space-between; align-items: center;">
-      <span>{{ _('operatore') }}</span>
+      <span>{{ _('amministratore') }}</span>
       <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
     </div>
   </div>
@@ -116,7 +116,7 @@
         <summary class="hint">{{ _('Invita una persona') }}</summary>
         <form method="post" action="/admin/newsrooms/{{ r.tenant_id }}/invite" class="form-grid" style="margin-top: 8px;">
           <label class="field">{{ _('Email') }}<input name="email" type="email" required></label>
-          <label class="field">{{ _('Ruolo') }}<select name="role"><option value="owner" selected>{{ _('Owner') }}</option><option value="editor">{{ _('Editor') }}</option><option value="viewer">{{ _('Lettura') }}</option></select></label>
+          <label class="field">{{ _('Ruolo') }}<select name="role"><option value="owner" selected>{{ _('Direttore') }}</option><option value="editor">{{ _('Redattore') }}</option><option value="viewer">{{ _('Lettura') }}</option></select></label>
           <div><button class="btn" type="submit">{{ _("Crea l'invito") }}</button></div>
         </form>
       </details>
@@ -136,10 +136,10 @@
 
   <section class="card pad" id="nuova" aria-labelledby="h-create">
     <h2 id="h-create">{{ _('Nuova redazione') }}</h2>
-    <p class="hint">{{ _('Il proprietario riceve un invito per scegliere la sua password (o se ha già un account la trova fra le sue redazioni).') }}</p>
+    <p class="hint">{{ _('Il direttore riceve un invito per scegliere la sua password (o se ha già un account la trova fra le sue redazioni).') }}</p>
     <form method="post" action="/admin/newsrooms" class="form-grid">
       <label class="field">{{ _('Nome') }}<input name="name" required maxlength="100" placeholder="{{ _('Redazione i3k') }}"></label>
-      <label class="field">{{ _('Email del proprietario') }}<input name="owner_email" type="email" required></label>
+      <label class="field">{{ _('Email del direttore') }}<input name="owner_email" type="email" required></label>
       <label class="field">{{ _('Piano') }}<input name="plan" maxlength="60" placeholder="standard"></label>
       <label class="field">{{ _('Siti') }}<input name="max_sites" inputmode="numeric" placeholder="{{ _('senza limite') }}"></label>
       <label class="field">{{ _('Fonti attive') }}<input name="max_active_sources" inputmode="numeric" placeholder="{{ _('senza limite') }}"></label>
@@ -332,7 +332,7 @@
 
   <div class="cols">
     <section class="card pad col-wide" id="operatori" aria-labelledby="h-ops">
-      <h2 id="h-ops">{{ _('Operatori') }}</h2>
+      <h2 id="h-ops">{{ _('Amministratori') }}</h2>
       {% for o in operators %}
       <div class="list-row"><span>{{ o.name or o.email }}{% if o.name %} <span class="hint">{{ o.email }}</span>{% endif %}</span><span class="row">{% if not o.password_hash %}<span class="chip amber">{{ _('Invito non accettato') }}</span>{% endif %}{% if o.id != me.user_id %}<form class="inline" method="post" action="/admin/operators/{{ o.id }}/remove" onsubmit='return confirm({{ _('Togliere la console a {email}? Le sue redazioni restano.', email=o.email)|string|tojson }})'><button class="btn sm" type="submit">{{ _('Togli') }}</button></form>{% endif %}</span></div>
       {% endfor %}
@@ -341,7 +341,7 @@
       {% endfor %}
       <form method="post" action="/admin/operators" class="form-grid">
         <label class="field">{{ _('Email') }}<input name="email" type="email" required></label>
-        <div><button class="btn" type="submit">{{ _('Invita un operatore') }}</button></div>
+        <div><button class="btn" type="submit">{{ _('Invita un amministratore') }}</button></div>
       </form>
       <form method="post" action="/admin/reset" class="form-grid">
         <label class="field">{{ _('Email di un account') }}<input name="email" type="email" required></label>
