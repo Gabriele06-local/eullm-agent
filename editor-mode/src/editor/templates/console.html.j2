@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ _('Amministrazione') }} · Redazia</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="icon" type="image/png" href="/static/redazia-icon.png">
 {% include "_style.html.j2" %}
 </head>
 <body>
 {% set labels = {'sites': _('Siti'), 'sources': _('Fonti attive'), 'items': _('Notizie oggi'), 'drafts': _('Bozze nel mese'), 'llm_cost': _('Costo modello nel mese')} %}
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
+  <a class="brand" href="/admin"><img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>

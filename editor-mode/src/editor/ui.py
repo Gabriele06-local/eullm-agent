@@ -628,6 +628,10 @@ def register(app, ctx) -> None:
             # The archive sources this newsroom follows: when they were last read,
             # and fetches the Core could not make (down, or out of daily fetches).
             followed = list(repo.followed_archive(s))
+            if one:  # the sources this site reads: its own, or the archive ones they follow
+                src = m.sources.c
+                followed = [r.archive_id or r.id for r in s.execute(select(src.id, src.archive_id).where(
+                    src.site_id == sid, src.status == "active")).all()]
             last_fetch = s.execute(select(func.max(m.sources.c.last_fetched_at)).where(
                 m.sources.c.id.in_(followed))).scalar()
             troubles = list(s.execute(select(m.sources.c.last_error).where(
@@ -636,8 +640,20 @@ def register(app, ctx) -> None:
             core_trouble = {"n": len(troubles), "limit": any("limit" in e for e in troubles)} if troubles else None
             briefing = s.execute(select(m.briefings).where(
                 m.briefings.c.briefing_date == datetime.now(zone(s)).date())).first()
+            # Every proposal waiting, not only the ones listed.
+            proposed_total = s.execute(select(func.count()).select_from(m.proposals).where(
+                m.proposals.c.status == "proposed", *of(m.proposals.c.site_id))).scalar() or 0
+            # The numbers of the collection: the plan's for the newsroom, or the site's.
+            collected = {"sources": usage.used.get("active_sources", 0) if usage else 0,
+                         "today": usage.used.get("items_today", 0) if usage else 0}
+            if one:
+                collected = {
+                    "sources": s.execute(select(func.count()).select_from(m.sources).where(
+                        m.sources.c.site_id == sid, m.sources.c.status == "active")).scalar() or 0,
+                    "today": s.execute(select(func.count()).select_from(m.source_items).where(
+                        repo.followed_by(sid), m.source_items.c.fetched_at >= start_of_day(s))).scalar() or 0}
             # A source the maintenance suspended is news, not a decision.
-            decisions = len(profile_drafts) + len(proposed) + len(pending_pubs)
+            decisions = len(profile_drafts) + proposed_total + len(pending_pubs)
             desk = desk_rows(s, [one] if one else sites, lines, pending)
             # The cockpit: the busiest and the most expensive sites, the latest news.
             busiest = sorted((x for x in desk if x["news"] or x["proposals_week"] or x["drafts_week"]),
@@ -657,12 +673,13 @@ def register(app, ctx) -> None:
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk, one=one,
                           busiest=busiest, costly=costly, cost_month=month[0], calls_month=month[1],
                           news_day=news_day, latest=latest,
-                          activity=act.recent(s, zone(s), problem, full=True),
+                          activity=act.recent(s, zone(s), problem, full=True, site=sid),
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
                           proposed=proposed, explained=explained, pending_pubs=pending_pubs,
                           stopped=stopped, drafts_ready=sum(draft_counts.values()),
                           needs_review=draft_counts.get("needs_review", 0), new_today=new_today,
-                          usage=usage, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions)
+                          usage=usage, last_fetch=last_fetch, core_trouble=core_trouble, briefing=briefing, decisions=decisions,
+                          proposed_total=proposed_total, collected=collected)
 
     def draft_jobs(s, proposal_ids: list[int]) -> dict[int, dict]:
         """The latest draft job of each accepted proposal still without a
