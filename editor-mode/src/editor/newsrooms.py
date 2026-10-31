@@ -57,6 +57,10 @@ def _plan_fields(spec: dict) -> dict:
             if v is not None and (not isinstance(v, (int, float)) or isinstance(v, bool) or v < 0):
                 raise NewsroomError(f"{k} must be a number of zero or more, or null for no limit")
             out[k] = v
+    if out.get("plan") is not None:
+        # The catalogue keys are lower case: a plan stored as "PRO" would not
+        # match its plan here, in delete_plan or in the console's selects.
+        out["plan"] = str(out["plan"]).strip().lower()[:60] or None
     if "briefing_hour" in out and not (isinstance(out["briefing_hour"], int) and 0 <= out["briefing_hour"] <= 23):
         raise NewsroomError("briefing_hour is an hour from 0 to 23")
     return out

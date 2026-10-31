@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ _('Abbonamento') }} · Redazia</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="icon" type="image/png" href="/static/redazia-icon.png">
 {% include "_style.html.j2" %}
 </head>
 <body>
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
-  <div class="brand"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Abbonamento') }}</small></div>
+  <div class="brand"><img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Abbonamento') }}</small></div>
   {% for r in rooms %}<a href="#t-{{ r.tenant_id }}">{{ r.name }}</a>{% endfor %}
   {% if back %}<a href="/">{{ _('Torna alla redazione') }}</a>{% endif %}
   {% if me.operator %}<a href="/admin">{{ _('Amministrazione') }}</a>{% endif %}

@@ -4,16 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Editor Mode{% endblock %} · Redazia</title>
-<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="icon" type="image/png" href="/static/redazia-icon.png">
 {% include "_style.html.j2" %}
 </head>
 <body>
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
+
   <a class="brand" href="/" title="{{ _('Desk') }}"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"></a>
 <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="{{ _('Sezioni') }}">
 <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span></span><span></span><span></span></label>
 <div class="nav-body">
+
+  <a class="brand" href="/" title="{{ _('Desk') }}"><img class="logo" src="/static/redazia-logo.webp" alt="Redazia" width="111" height="36"></a>
+
   {% if newsrooms|length > 1 %}
   <form method="get" action="/newsroom" class="switch">
     <label for="room-pick">{{ _('Redazione') }}</label>

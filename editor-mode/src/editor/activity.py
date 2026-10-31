@@ -170,11 +170,12 @@ SHORT = 5  # jobs the compact box shows; the rest are on the Attività page
 
 
 def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datetime | None = None,
-           compact: bool = True) -> dict:
+           compact: bool = True, site: int | None = None) -> dict:
     """The jobs to show: those waiting or running, and those ended in the
     last 15 minutes (the last day on the Desk and on the Attività page).
     `compact`: one line per job, at most five on the Desk; the Attività
-    page shows every job with all it produced."""
+    page shows every job with all it produced. `site`: only that site's
+    jobs, and those of every site (collection)."""
     now = now or datetime.now(UTC)
     j = m.jobs.c
     since = now - (timedelta(hours=24) if full else RECENT)
@@ -195,6 +196,8 @@ def recent(s, tz, humanize: Callable[[str], str], full: bool = False, now: datet
         args, res = r.args or {}, r.result or {}
         site_id = res.get("site_id") or args.get("site_id") or by_domain.get(r.subject) \
             or proposal_site.get(args.get("proposal_id"))
+        if site is not None and site_id != site and r.kind not in ("collect", "tick"):
+            continue
         where = domains.get(site_id) or (r.subject if r.kind == "analysis" else None)
         if r.kind in ("collect", "tick"):
             where = t("tutti i siti")
