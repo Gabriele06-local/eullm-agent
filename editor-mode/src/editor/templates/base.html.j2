@@ -11,6 +11,9 @@
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
   <a class="brand" href="/" title="{{ _('Desk') }}"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"></a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="{{ _('Sezioni') }}">
+<label for="nav-toggle" class="nav-burger" aria-hidden="true"><span></span><span></span><span></span></label>
+<div class="nav-body">
   {% if newsrooms|length > 1 %}
   <form method="get" action="/newsroom" class="switch">
     <label for="room-pick">{{ _('Redazione') }}</label>
@@ -54,6 +57,7 @@
     </div>
   </div>
   <small class="hint" style="font-size: 11px; padding: 0 10px; overflow-wrap: anywhere;">{% if version %}Redazia {{ version }}{% endif %}</small>
+</div>
 </nav>
 <main class="main">
   <div class="topbar">{% include "_lang.html.j2" %}</div>

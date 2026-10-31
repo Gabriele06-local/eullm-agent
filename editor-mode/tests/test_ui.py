@@ -219,3 +219,17 @@ def test_the_desk_shows_every_site_or_the_one_chosen(db, tenant):
     # The pages of one site keep the last site chosen.
     assert "Fonti · altro.example" in c.get("/sources").text
     assert c.get("/switch?site=nope").status_code == 404
+
+
+def test_the_navigation_folds_into_a_hamburger_on_a_narrow_screen(db, tenant):
+    """The sections of a dashboard with a dozen links filled the whole screen
+    on a phone: below 820px they fold into a hamburger, opened by its label
+    (a checkbox, so no script is needed)."""
+    owner = logged_in(db, tenant, "owner")
+    page = owner.get("/").text
+    assert 'id="nav-toggle"' in page and 'class="nav-burger"' in page
+    assert '<div class="nav-body">' in page
+    css = page.split("</style>")[0]
+    assert ".nav-toggle:checked ~ .nav-body" in css and "max-width: 820px" in css
+    admin = logged_in(db, tenant, "operator") if False else None
+    del admin

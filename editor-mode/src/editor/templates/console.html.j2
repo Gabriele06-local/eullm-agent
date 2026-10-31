@@ -12,6 +12,9 @@
 <div class="shell">
 <nav class="nav" aria-label="{{ _('Sezioni') }}">
   <a class="brand" href="/admin"><img class="logo" src="/static/logo.webp" alt="Redazia" width="111" height="36"><small>{{ _('Amministrazione') }}</small></a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="{{ _('Sezioni') }}">
+<label for="nav-toggle" class="nav-burger" aria-hidden="true"><span></span><span></span><span></span></label>
+<div class="nav-body">
   <a href="#redazioni" class="on">{{ _('Redazioni') }}</a>
   <a href="#nuova">{{ _('Nuova redazione') }}</a>
   <a href="#clienti">{{ _('Clienti') }}</a>
@@ -32,6 +35,7 @@
       <form method="post" action="/logout"><button class="link" type="submit">{{ _('Esci') }}</button></form>
     </div>
   </div>
+</div>
 </nav>
 <main class="main">
   <div class="topbar">{% include "_lang.html.j2" %}</div>
