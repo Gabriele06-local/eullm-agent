@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.36.6
+
+### Fixed
+
+- **La redazione automatica non si ferma più al controllo prima di
+  scrivere** (Francesco, 15 novembre: su aitoday.it nessun articolo dalle 11
+  alle 17, ogni proposta chiusa prima di essere scritta). Il controllo ora
+  chiude una proposta solo per uno dei tre motivi previsti, e lo deve dire:
+  stessa notizia già uscita (con il titolo di un articolo del sito che
+  esiste davvero), editoriale senza fatti, raccolta di fatti diversi.
+  Spiegazioni, analisi, interviste, mostre, spettacoli e decisioni di
+  governi, tribunali e aziende si scrivono. Dopo tre proposte chiuse in un
+  giorno per lo stesso sito il controllo si fa da parte fino al giorno
+  dopo: resta il caporedattore, che legge ogni articolo.
+- Nel Desk, per un sito con la redazione automatica, la colonna Proposte
+  dice «N per la redazione automatica»: sono le proposte fra cui sceglie da
+  sola, non aspettano te.
+
 ## 0.36.5
 
 ### Changed

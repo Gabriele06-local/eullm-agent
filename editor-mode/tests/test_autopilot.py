@@ -321,15 +321,29 @@ def _written(db, tenant, again=None):
 def test_a_story_told_yesterday_is_closed_before_it_is_written(db, tenant, monkeypatch):
     # Francesco 2026-11-14: «4 scarti e 4 pubblicazioni, pago sempre il doppio».
     pid, _cited = accepted_proposal(db, tenant)
+    # A repeat of a title the site does not have is no repeat (Francesco 2026-11-15:
+    # from 11 to 17 every proposal was closed).
     with respx.mock() as router:
         ask = router.post(CORE).mock(return_value=chat(json.dumps(
-            {"write": False, "reason": None, "repeats": "Interruzione Microsoft 365"})))
-        out = ap.worth_writing(db, tenant, pid, core())
+            {"write": False, "rule": "a", "reason": None, "repeats": "Interruzione Microsoft 365"})))
+        assert ap.worth_writing(db, tenant, pid, core()) is None
         prompt = json.loads(ask.calls[0].request.content)["messages"][-1]["content"]
-    assert "Proposal:" in prompt and "Interruzione Microsoft 365" in out["skipped"][0]
+    assert "Proposal:" in prompt
+    with respx.mock() as router:
+        router.post(CORE).mock(return_value=chat(json.dumps(
+            {"write": False, "rule": "b", "reason": "È un editoriale senza fatti.", "repeats": None})))
+        out = ap.worth_writing(db, tenant, pid, core())
+    assert out["skipped"] == ["È un editoriale senza fatti."]
     with db.tenant(tenant) as s:
         p = s.execute(select(m.proposals).where(m.proposals.c.id == pid)).one()
-    assert p.status == "rejected" and p.decided_by == ap.AUTO
+    assert p.status == "rejected" and p.decided_by == ap.AUTO and p.basis["precheck"] == "b"
+    # Past the day's closings the check stands aside, without asking the model.
+    monkeypatch.setattr(ap, "PRECHECK_PER_DAY", 1)
+    with respx.mock(assert_all_called=False) as router:
+        ask = router.post(CORE).mock(return_value=chat(json.dumps({"write": False, "rule": "b", "reason": "x"})))
+        assert ap.worth_writing(db, tenant, pid, core()) is None
+        assert not ask.called
+    monkeypatch.setattr(ap, "PRECHECK_PER_DAY", 3)
     # Worth writing, or a model that does not answer: it is written.
     pid2 = pid
     with respx.mock() as router:
