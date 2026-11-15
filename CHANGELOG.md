@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.36.5
+
+### Changed
+
+- **Il trend del momento è solo quello del sito** (Francesco, 15 novembre:
+  su lagrandecucina il trend era la multa a Meta con un aggancio forzato
+  al tiramisù). Un tema entra nel trend del momento solo se tocca davvero
+  uno degli argomenti del sito, cioè almeno due parole di un argomento del
+  profilo; quelli vicini per una parola sola e alti solo per l'Hype
+  restano fuori.
+- **Le proposte del piano si vedono tutte**. Trend e piano mostrava solo le
+  ultime 20, mentre il Desk le contava tutte (46): ora il piano le elenca
+  tutte e dice quante aspettano il tuo sì. Nel Desk il riquadro dice che il
+  numero esclude le pubblicate e le scartate.
+- **«Pubblicate su proposte, 30 giorni» al posto del costo modello** nel
+  Desk: quante proposte degli ultimi 30 giorni sono uscite come articolo,
+  con la percentuale. Il costo resta in Consumi.
+
 ## 0.36.4
 
 ### Changed

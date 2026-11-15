@@ -2816,5 +2816,9 @@
  "{n} articoli autorizzati da pubblicare": "{n} articles autorisés à publier",
  "Pubblica le autorizzate": "Publier les autorisées",
  "Approva e autorizza": "Approuver et autoriser",
- "Autorizzata, da pubblicare": "Autorisée, à publier"
+ "Autorizzata, da pubblicare": "Autorisée, à publier",
+ "Pubblicate su proposte, 30 giorni": "Publiées sur propositions, 30 jours",
+ "{pct}% delle proposte è uscito come articolo": "{pct}% des propositions sont parues en article",
+ "in attesa del tuo sì, senza pubblicate e scartate": "en attente de ton accord, hors publiées et écartées",
+ "{n} in attesa del tuo sì": "{n} en attente de ton accord"
 }

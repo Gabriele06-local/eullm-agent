@@ -2816,5 +2816,9 @@
  "{n} articoli autorizzati da pubblicare": "{n} artículos autorizados por publicar",
  "Pubblica le autorizzate": "Publicar las autorizadas",
  "Approva e autorizza": "Aprobar y autorizar",
- "Autorizzata, da pubblicare": "Autorizada, por publicar"
+ "Autorizzata, da pubblicare": "Autorizada, por publicar",
+ "Pubblicate su proposte, 30 giorni": "Publicadas de propuestas, 30 días",
+ "{pct}% delle proposte è uscito come articolo": "el {pct}% de las propuestas salió como artículo",
+ "in attesa del tuo sì, senza pubblicate e scartate": "esperan tu sí, sin publicadas ni descartadas",
+ "{n} in attesa del tuo sì": "{n} esperan tu sí"
 }

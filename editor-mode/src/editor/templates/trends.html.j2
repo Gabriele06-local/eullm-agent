@@ -109,7 +109,7 @@
 </div>
 
 <section class="card" aria-labelledby="h-plan" style="gap: 0;">
-  <div class="card-head"><h2 id="h-plan">{{ _('Piano editoriale') }}</h2>{% if caller.can('editor') %}<form class="inline" method="post" action="/ui/proposals/now"><button class="btn" type="submit">{{ _('Proponi adesso') }}</button></form>{% endif %}</div>
+  <div class="card-head"><h2 id="h-plan">{{ _('Piano editoriale') }}</h2>{% if waiting %}<span class="hint">{{ _('{n} in attesa del tuo sì', n=waiting|plural(_('proposta'), _('proposte'))) }}</span>{% endif %}{% if caller.can('editor') %}<form class="inline" method="post" action="/ui/proposals/now"><button class="btn" type="submit">{{ _('Proponi adesso') }}</button></form>{% endif %}</div>
   <details class="mini hint" style="margin: 0; padding: 0 20px 12px;"><summary>{{ _('Come funziona il piano') }}</summary>{{ _("Ogni riga è l'idea di un articolo, non l'articolo. Le proposte arrivano ogni mattina all'ora del briefing ({hour}:00): prima i temi raccontati da almeno due fonti diverse, poi le notizie singole delle ultime 72 ore più adatte al sito, scelte dal modello; &quot;Proponi adesso&quot; non aspetta la mattina. <strong>Accetta e scrivi la bozza</strong> fa scrivere l'articolo, che rileggi in Bozze; <strong>Scarta</strong> la toglie e l'agente impara cosa non ti interessa. Opportunità (0-100) dice quanto il tema conviene a questo sito, Hype (0-100) quanto se ne parla nel settore. Nulla si pubblica senza il tuo sì.", hour='%02d'|format(briefing_hour or 8)) }}</details>
   {% for p in plan %}{% set d = explained.get(p.id) %}
   <div class="item line plan-line" id="p-{{ p.id }}">

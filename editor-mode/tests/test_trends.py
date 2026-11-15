@@ -132,3 +132,24 @@ def test_the_home_page_launches_every_step(db, tenant):
     with db.tenant(tenant) as s:
         kinds = set(s.execute(text("SELECT kind FROM editor.jobs")).scalars())
     assert {"collect", "proposals"} <= kinds
+
+
+def test_the_moment_is_only_what_is_about_the_sites_subjects(db, tenant):
+    """A story of the day near the site by one word only (a privacy fine on a
+    cooking site) is not its trend of the moment."""
+    site_id = setup_site(db, tenant)
+    opp.score_site(db, tenant, site_id)
+    archive = repo.archive_of(db, tenant)
+    with db.tenant(archive) as s:
+        trends.snapshot(s, archive)
+    c = logged_in(db, tenant, "editor")
+    assert "oppure chiedi tre titoli" in c.get("/trends").text
+    with db.tenant(tenant) as s:
+        rows = s.execute(text("SELECT id, components FROM editor.opportunity_scores WHERE site_id = :s"),
+                         {"s": site_id}).all()
+        for rid, comp in rows:
+            comp = comp if isinstance(comp, dict) else json.loads(comp)
+            s.execute(text("UPDATE editor.opportunity_scores SET components = :c WHERE id = :i"),
+                      {"c": json.dumps(dict(comp, relevance=0.3)), "i": rid})
+    page = c.get("/trends").text
+    assert "oppure chiedi tre titoli" not in page and "abbastanza vicino a questo sito" in page
