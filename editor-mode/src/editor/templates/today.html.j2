@@ -141,7 +141,7 @@
   <a class="card kpi" href="/trends#h-plan">
     <span class="label">{{ _('Proposte nel piano') }}</span>
     <span class="value">{{ proposed_total }}</span>
-    <span class="note">{{ _('{n} da stamattina', n=new_today|plural(_('nuova'), _('nuove'))) }}</span>
+    <span class="note">{{ _('in attesa del tuo sì, senza pubblicate e scartate') }} · {{ _('{n} da stamattina', n=new_today|plural(_('nuova'), _('nuove'))) }}</span>
   </a>
   {% endif %}
   {% if drafts_ready %}
@@ -158,11 +158,11 @@
     <span class="note">{{ _('nessuna: controlla la raccolta') }}</span>
   </a>
   {% endif %}
-  {% if caller.operator %}
+  {% if made30 %}
   <div class="card kpi">
-    <span class="label">{{ _('Costo modello, 30 giorni') }}</span>
-    <span class="value">{{ cost_month|num(2) }}</span>
-    <span class="note" title="{{ _('ai prezzi di core.yaml') }}">{{ _('1 chiamata') if calls_month == 1 else _('{n} chiamate', n=calls_month|tok) }}</span>
+    <span class="label">{{ _('Pubblicate su proposte, 30 giorni') }}</span>
+    <span class="value">{{ out30 }}/{{ made30 }}</span>
+    <span class="note">{{ _("{pct}% delle proposte è uscito come articolo", pct=(100 * out30 / made30)|round|int) }}</span>
   </div>
   {% endif %}
 </section>

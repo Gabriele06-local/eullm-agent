@@ -36,6 +36,9 @@ SITE_COOKIE = "editor_site"
 # (the default): every site.
 SCOPE_COOKIE = "editor_scope"
 NOTICE_COOKIE = "editor_notice"
+# The trend of the moment shows a topic only when its relevance found at least
+# two words of one of the site's subjects (one word alone is 0.33 at most).
+MOMENT_RELEVANCE = 0.5
 
 ORIGINS = {
     "manual": N_("Aggiunta a mano"),
@@ -557,6 +560,16 @@ def register(app, ctx) -> None:
             bindparam("since", type_=m.topics.c.updated_at.type)),
             {"site": site_id, "lim": limit, "since": datetime.now(UTC) - timedelta(days=7)}).all()
 
+    def on_subject(s, site_id: int, topic_ids: list[int]) -> set[int]:
+        """The topics whose latest Opportunity found them about one of the
+        site's subjects, not just near it."""
+        o = m.opportunity_scores.c
+        latest: dict[int, dict] = {}
+        for r in s.execute(select(o.topic_id, o.components).where(
+                o.site_id == site_id, o.topic_id.in_(topic_ids or [0])).order_by(o.computed_at.desc())).all():
+            latest.setdefault(r.topic_id, r.components or {})
+        return {tid for tid, comp in latest.items() if (comp.get("relevance") or 0) >= MOMENT_RELEVANCE}
+
     def proposal_rows(s, site_id: int | None, statuses: tuple[str, ...], limit: int = 30):
         p = m.proposals
         hype = (select(m.trend_scores.c.score).where(m.trend_scores.c.topic_id == p.c.topic_id)
@@ -897,9 +910,18 @@ def register(app, ctx) -> None:
             busiest = sorted((x for x in desk if x["news"] or x["proposals_week"] or x["drafts_week"]),
                              key=lambda x: (-(x["news"] + 5 * x["proposals_week"] + 10 * x["drafts_week"]), x["domain"]))[:5]
             costly = sorted((x for x in desk if x["calls"]), key=lambda x: (-x["cost"], -x["tokens"]))[:5]
-            u = m.llm_usage.c
-            month = s.execute(select(func.coalesce(func.sum(u.cost), 0.0), func.count()).where(
-                u.at >= datetime.now(UTC) - timedelta(days=30), u.error.is_(None), *of(u.site_id))).one()
+            # Of the proposals of the last 30 days, how many came out as
+            # articles (Francesco 2026-11-15: a useful number, not the model's cost).
+            pr, dr, pb = m.proposals.c, m.drafts.c, m.publications.c
+            since30 = datetime.now(UTC) - timedelta(days=30)
+            made30 = s.execute(select(func.count()).select_from(m.proposals).where(
+                pr.created_at >= since30, *of(pr.site_id))).scalar() or 0
+            out30 = s.execute(select(func.count(func.distinct(dr.proposal_id)))
+                              .select_from(m.drafts.join(m.publications, pb.draft_id == dr.id))
+                              .join(m.proposals, pr.id == dr.proposal_id)
+                              .where(pr.created_at >= since30, dr.translation_of.is_(None),
+                                     pb.status == "published", pb.withdrawn_at.is_(None),
+                                     *of(pr.site_id))).scalar() or 0
             si = m.source_items
             news_day = s.execute(select(func.count()).select_from(si).where(
                 repo.followed_by(sid), si.c.fetched_at >= datetime.now(UTC) - timedelta(hours=24))).scalar() or 0
@@ -912,7 +934,7 @@ def register(app, ctx) -> None:
             approved_bodies = dict(s.execute(select(m.editorial_profiles.c.site_id, m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.status == "approved")).all())
             return render(request, "today.html.j2", c, s, "today", _sites=(sites, site), desk=desk, one=one,
-                          busiest=busiest, costly=costly, cost_month=month[0], calls_month=month[1],
+                          busiest=busiest, costly=costly, made30=made30, out30=out30,
                           news_day=news_day, latest=latest,
                           activity=act.recent(s, zone(s), problem, full=True, site=sid),
                           profile_drafts=profile_drafts, lines=lines, site_lines=site_lines,
@@ -1818,7 +1840,11 @@ def register(app, ctx) -> None:
             sites, site = current_site(s, request)
             topics = topic_scores(s, site.id if site else None, 60) if site else []
             dots = [t for t in topics if t.hype is not None and t.opportunity is not None]
-            plan = proposal_rows(s, site.id, ("proposed", "accepted", "drafted"), 20) if site else []
+            # Every proposal waiting for a yes (the Desk counts them all), and
+            # the latest of those being written or written.
+            plan = (list(proposal_rows(s, site.id, ("proposed",), 500))
+                    + list(proposal_rows(s, site.id, ("accepted", "drafted"), 20))) if site else []
+            waiting = sum(1 for p in plan if p.status == "proposed")
             # Written drafts stay in the plan for a week, then live under Bozze.
             week = datetime.now(UTC) - timedelta(days=7)
             plan = [p for p in plan if p.status != "drafted" or p.created_at > week]
@@ -1830,10 +1856,15 @@ def register(app, ctx) -> None:
             moment = []
             if site and snap:
                 fit = {x.id: x.opportunity for x in topics}
+                # Only what is about the site's subjects: a story of the day that
+                # scores well on Hype alone (a privacy fine on a cooking site,
+                # Francesco 2026-11-15) is not this site's trend.
+                close = on_subject(s, site.id, [x["topic_id"] for x in snap.topics if fit.get(x["topic_id"])])
                 for x in snap.topics:
-                    if (fit.get(x["topic_id"]) or 0) >= props.MIN_OPPORTUNITY and len(moment) < 3:
+                    if (fit.get(x["topic_id"]) or 0) >= props.MIN_OPPORTUNITY and x["topic_id"] in close \
+                            and len(moment) < 3:
                         moment.append(dict(x, opportunity=fit[x["topic_id"]]))
-                offered = proposal_rows(s, site.id, ("proposed",), 60)
+                offered = proposal_rows(s, site.id, ("proposed",), 500)
                 for x in moment:
                     x["titles"] = [p for p in offered if p.topic_id == x["topic_id"]]
                 shown = {p.id for x in moment for p in x["titles"]}
@@ -1848,7 +1879,8 @@ def register(app, ctx) -> None:
                           auto_site=bool(body is not None and autopilot.settings_of(body.body)["enabled"]),
                           dots=dots, plan=plan, explained=explained, briefing_hour=hour, can_draft=ctx.core is not None,
                           writing=draft_jobs(s, [p.id for p in plan if p.status == "accepted" and not p.draft_id]),
-                          snap=snap, day=day, moment=moment, local=lambda at: at.astimezone(zone(s)))
+                          snap=snap, day=day, moment=moment, waiting=waiting if site else 0,
+                          local=lambda at: at.astimezone(zone(s)))
 
     @app.get("/index", response_class=HTMLResponse)
     def news_index(request: Request, at: int | None = None, section: str = "", c: auth.Caller = Depends(viewer)):

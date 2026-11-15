@@ -2816,5 +2816,9 @@
  "{n} articoli autorizzati da pubblicare": "{n} freigegebene Artikel zu veröffentlichen",
  "Pubblica le autorizzate": "Freigegebene veröffentlichen",
  "Approva e autorizza": "Genehmigen und freigeben",
- "Autorizzata, da pubblicare": "Freigegeben, zu veröffentlichen"
+ "Autorizzata, da pubblicare": "Freigegeben, zu veröffentlichen",
+ "Pubblicate su proposte, 30 giorni": "Veröffentlicht von Vorschlägen, 30 Tage",
+ "{pct}% delle proposte è uscito come articolo": "{pct}% der Vorschläge wurden als Artikel veröffentlicht",
+ "in attesa del tuo sì, senza pubblicate e scartate": "warten auf dein Ja, ohne veröffentlichte und verworfene",
+ "{n} in attesa del tuo sì": "{n} warten auf dein Ja"
 }

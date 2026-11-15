@@ -314,3 +314,22 @@ def test_the_logo_is_an_image_on_every_shell(db, tenant):
     page = c.get("/admin").text
     assert '<img class="logo" src="/static/redazia-logo.webp"' in page and "&lt;img" not in page
     assert c.get("/static/redazia-logo.webp").headers["content-type"] == "image/webp"
+
+
+def test_the_desk_counts_the_proposals_that_came_out_as_articles(db, tenant, monkeypatch):
+    """Instead of the model's cost (Francesco 2026-11-15): of the proposals of
+    the last 30 days, how many came out as an article."""
+    from editor import models as m
+    from editor import publishing as pub
+    did, site_id = approved_draft(db, tenant)
+    monkeypatch.setattr(socket, "getaddrinfo", public_resolver)
+    target = pub.add_target(db, tenant, site_id, "webhook", "hook", {"url": "https://hooks.example/x"}, "HOOK")
+    c = logged_in(db, tenant, "owner")
+    assert "Pubblicate su proposte, 30 giorni" in c.get("/").text and "0/1" in c.get("/").text
+    with db.tenant(tenant) as s:
+        s.execute(m.publications.insert().values(tenant_id=tenant, draft_id=did, target_id=target, mode="publish",
+                                                 payload={}, status="published", requested_by="francesco",
+                                                 decided_by="francesco"))
+    page = c.get("/").text
+    assert "1/1" in page and "100% delle proposte è uscito come articolo" in page
+    assert "Costo modello, 30 giorni" not in page
