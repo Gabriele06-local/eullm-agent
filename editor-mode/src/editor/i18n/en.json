@@ -2820,5 +2820,6 @@
  "Pubblicate su proposte, 30 giorni": "Published of proposals, 30 days",
  "{pct}% delle proposte è uscito come articolo": "{pct}% of proposals came out as an article",
  "in attesa del tuo sì, senza pubblicate e scartate": "awaiting your yes, excluding published and discarded",
- "{n} in attesa del tuo sì": "{n} awaiting your yes"
+ "{n} in attesa del tuo sì": "{n} awaiting your yes",
+ "{n} per la redazione automatica": "{n} for the automatic newsroom"
 }

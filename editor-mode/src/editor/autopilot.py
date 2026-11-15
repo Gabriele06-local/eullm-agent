@@ -1338,19 +1338,36 @@ PRECHECK_SYSTEM = (
     "decision, a result, an answer, a number that is news itself; a new comment or a new outlet on the same "
     "event is not new); (b) the news items are an opinion piece, an editorial, a column or someone's thesis, "
     "with no event of their own to report; (c) the proposal bundles several separate events (a list of "
-    "examples, a round-up) instead of telling one. In any other case, and when in doubt, write true. Reply "
-    'with JSON only: {"write": true|false, "reason": "<when false, one plain sentence for the newsroom\'s '
-    'editor in the language named after Reasons in; else null>", "repeats": "<the site\'s title it repeats, '
-    'copied exactly, or null>"}')
+    "examples, a round-up) instead of telling one. An explainer, an analysis of facts, an interview, an "
+    "exhibition, a show, a decision of a government, a court or a company are stories to write, not (b). In "
+    "any other case, and when in doubt, write true. Reply "
+    'with JSON only: {"write": true|false, "rule": "<a, b or c when false; else null>", "reason": "<when '
+    'false, one plain sentence for the newsroom\'s editor in the language named after Reasons in; else '
+    'null>", "repeats": "<for a, the site\'s title it repeats, copied exactly; else null>"}')
 # Proposals of these formats bring several items together by design, or were asked for.
 PRECHECK_SKIP = ("evening", "request", "menu", "recipe")
+
+
+# Francesco 2026-11-15: from 11 to 17 nothing came out, every proposal closed before
+# writing. Past this many closed in a day for a site the check stands aside: the
+# editor-in-chief still reads what is written.
+PRECHECK_PER_DAY = 3
 
 
 def _precheck_validator(v) -> dict:
     if not isinstance(v, dict) or not isinstance(v.get("write"), bool):
         raise ValueError('expected {"write": true|false, "reason": ...}')
-    return {"write": v["write"], "reason": str(v.get("reason") or "").strip()[:400],
+    return {"write": v["write"], "rule": str(v.get("rule") or "").strip().lower()[:1],
+            "reason": str(v.get("reason") or "").strip()[:400],
             "repeats": str(v.get("repeats") or "").strip()[:300]}
+
+
+def _closed_today(s, site_id: int, day: str) -> int:
+    pr = m.proposals.c
+    rows = s.execute(select(pr.basis).where(
+        pr.site_id == site_id, pr.status == "rejected", pr.decided_by == AUTO,
+        pr.created_at >= datetime.now(UTC) - timedelta(days=3))).scalars()
+    return sum(1 for b in rows if (b or {}).get("precheck_on") == day)
 
 
 def worth_writing(db, tenant_id: str, proposal_id: int, core: CoreClient) -> dict | None:
@@ -1371,6 +1388,9 @@ def worth_writing(db, tenant_id: str, proposal_id: int, core: CoreClient) -> dic
             dr.created_at >= datetime.now(UTC) - timedelta(days=OVERLAP_DAYS))
             .order_by(dr.id.desc()).limit(RECENT_TITLES)).scalars())
         lang = _language_in(s, tenant_id, p.site_id)
+        day = datetime.now(UTC).date().isoformat()
+        if _closed_today(s, p.site_id, day) >= PRECHECK_PER_DAY:
+            return None
     prompt = "\n".join([f"Reasons in: {tr.LANGUAGES[lang]}", f"Proposal: {p.title}",
                         f"Angle: {p.angle or ''}", f"Why now: {p.why_now or ''}", "News items:",
                         *(f"- {x}" for x in items), "The site's articles of the last two days:",
@@ -1381,12 +1401,18 @@ def worth_writing(db, tenant_id: str, proposal_id: int, core: CoreClient) -> dic
     except (CoreError, ValueError) as e:
         log.warning("precheck of proposal %s failed: %s", proposal_id, e)
         return None
-    if verdict["write"]:
+    if verdict["write"] or verdict["rule"] not in ("a", "b", "c"):
         return None
-    why = (t("la stessa notizia è già uscita: «{title}»", lang, title=verdict["repeats"]) if verdict["repeats"]
-           else verdict["reason"] or t("non adatta a un articolo", lang))
+    # A repeat must name one of the site's titles: one it made up is no repeat.
+    told = {x.strip().lower(): x for x in recent}
+    if verdict["rule"] == "a" and verdict["repeats"].lower() not in told:
+        return None
+    why = (t("la stessa notizia è già uscita: «{title}»", lang, title=told[verdict["repeats"].lower()])
+           if verdict["rule"] == "a" else verdict["reason"] or t("non adatta a un articolo", lang))
     with db.tenant(tenant_id) as s:
-        s.execute(update(m.proposals).where(pr.id == proposal_id).values(status="rejected", decided_by=AUTO))
+        s.execute(update(m.proposals).where(pr.id == proposal_id).values(
+            status="rejected", decided_by=AUTO, basis={**(p.basis or {}), "precheck_on": day,
+                                                         "precheck": verdict["rule"]}))
         proposals.record_feedback(s, tenant_id, "proposal", proposal_id, "down", AUTO, why, p.site_id)
     return {"title": p.title, "site_id": p.site_id, "proposal_id": proposal_id, "skipped": [why]}
 
