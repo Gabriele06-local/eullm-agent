@@ -31,6 +31,7 @@ from email.utils import format_datetime
 from sqlalchemy import delete, func, insert, select, text
 
 from . import models as m
+from .mailstamp import stamp
 from .i18n import t
 from .markdown import to_html
 from .publishing import search_fields
@@ -180,7 +181,7 @@ def smtp_sender(settings, smtp_factory=smtplib.SMTP):
             smtp.starttls(context=ssl.create_default_context())
             if settings.smtp_user:
                 smtp.login(settings.smtp_user, settings.smtp_password)
-            smtp.send_message(msg)
+            smtp.send_message(stamp(msg, msg["From"]))
 
     return send
 

@@ -32,6 +32,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from . import i18n
 from . import models as m
+from .mailstamp import stamp
 from . import repo, searchconsole
 from .autopilot import settings_of
 from .i18n import t
@@ -198,7 +199,7 @@ def send_mail(settings, to: list[str], subject: str, body: str, page: str, smtp_
         smtp.starttls(context=ssl.create_default_context())
         if settings.smtp_user:
             smtp.login(settings.smtp_user, settings.smtp_password)
-        smtp.send_message(msg)
+        smtp.send_message(stamp(msg, sender))
 
 
 def _zone(name: str | None, default: str) -> ZoneInfo:
