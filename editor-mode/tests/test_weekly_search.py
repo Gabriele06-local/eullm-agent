@@ -200,6 +200,9 @@ def test_a_refused_report_is_tried_again(db, tenant, admin):
     assert "refused" in weekly.run(db, admin, mail_settings(), now=monday, smtp_factory=Down)[tenant]["error"]
     FakeSMTP.sent = []
     assert weekly.run(db, admin, mail_settings(), now=monday + timedelta(hours=1), smtp_factory=FakeSMTP)[tenant]["sent"] == 1
+    # Without Message-ID and Date SpamAssassin called it spam (Francesco 2026-11-16).
+    sent = FakeSMTP.sent[-1]
+    assert sent["Message-ID"].endswith("@redazia.com>") and sent["Date"]
 
 
 # --- pages -------------------------------------------------------------------------

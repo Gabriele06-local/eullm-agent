@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.36.7
+
+### Fixed
+
+- **Le email di Redazia non finiscono più nello spam per le intestazioni
+  mancanti** (Francesco, 16 novembre: il rapporto settimanale di AI Today
+  segnato come spam da SpamAssassin, 5,1 punti). Ogni email (inviti,
+  rapporto settimanale, briefing, consegne) ora ha `Message-ID` con il
+  dominio del mittente e `Date`: erano 5,5 punti su 5,1 (MISSING_MID,
+  MISSING_DATE, DOS_BODY_HIGH_NO_MID).
+
 ## 0.36.6
 
 ### Fixed

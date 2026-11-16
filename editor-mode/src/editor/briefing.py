@@ -18,6 +18,7 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
+from .mailstamp import stamp
 
 TEMPLATES = Environment(
     loader=FileSystemLoader(Path(__file__).parent / "templates"),
@@ -231,7 +232,7 @@ class Sender:
             smtp.starttls(context=ssl.create_default_context())
             if self.settings.smtp_user:
                 smtp.login(self.settings.smtp_user, self.settings.smtp_password)
-            smtp.send_message(msg)
+            smtp.send_message(stamp(msg, msg["From"]))
 
     def _telegram_text(self, db, tenant_id: str, b) -> str:
         with db.tenant(tenant_id) as s:

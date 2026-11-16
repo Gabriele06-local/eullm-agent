@@ -25,6 +25,7 @@ from email.message import EmailMessage
 from sqlalchemy import delete, func, insert, select, update
 
 from . import models as m
+from .mailstamp import stamp
 from .auth import ROLES, digest
 from .i18n import t
 
@@ -625,7 +626,7 @@ def smtp_mailer(settings, smtp_factory=smtplib.SMTP):
                 smtp.starttls(context=ssl.create_default_context())
                 if settings.smtp_user:
                     smtp.login(settings.smtp_user, settings.smtp_password)
-                smtp.send_message(msg)
+                smtp.send_message(stamp(msg, msg["From"]))
         except Exception as e:
             # The callers show "not sent" and the link: the reason is here.
             log.warning("email to %s not sent via %s:%s: %s: %s", to, settings.smtp_host, settings.smtp_port,
