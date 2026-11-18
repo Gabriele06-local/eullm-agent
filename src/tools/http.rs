@@ -280,6 +280,7 @@ impl Tool for FetchUrlTool {
             })
             .transpose()?
             .unwrap_or_default();
+        settable_headers(&headers)?;
         let body = if !arguments["json_body"].is_null() {
             Some(RequestBody::Json(arguments["json_body"].clone()))
         } else {
