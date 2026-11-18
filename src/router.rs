@@ -172,10 +172,13 @@ pub fn estimate_usage(
 impl LlmClient for EstimatedUsage {
     async fn chat(&self, messages: &[Message], tools: &[ToolDefinition]) -> Result<ChatResponse> {
         let mut response = self.inner.chat(messages, tools).await?;
-        if response.usage.is_none() {
+        if response
+            .usage
+            .is_none_or(|u| u.input_tokens == 0 && u.output_tokens == 0)
+        {
             if !self.warned.swap(true, Ordering::Relaxed) {
                 tracing::warn!(
-                    "{} / {} reports no token usage: budgets use an estimate",
+                    "{} / {} reports no usable token usage: budgets use an estimate",
                     self.inner.provider_name(),
                     self.inner.model()
                 );
@@ -285,6 +288,22 @@ mod tests {
         let u = r.usage.expect("usage is filled in");
         assert_eq!(u.output_tokens, 100);
         assert_eq!(u.input_tokens, 211);
+    }
+
+    #[tokio::test]
+    async fn zero_usage_is_estimated_not_free() {
+        let zero = Usage {
+            input_tokens: 0,
+            output_tokens: 0,
+        };
+        let client = EstimatedUsage::wrap(Arc::new(Silent(Some(zero))));
+        let r = client
+            .chat(&[Message::user("x".repeat(800))], &[])
+            .await
+            .unwrap();
+        let u = r.usage.expect("usage is filled in");
+        assert_eq!(u.input_tokens, 200);
+        assert_eq!(u.output_tokens, 100);
     }
 
     #[tokio::test]
