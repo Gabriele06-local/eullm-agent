@@ -44,6 +44,15 @@ def add_recipients(db, tenant):
                        "(:t, 'email', 'francesco@example.com'), (:t, 'telegram', '12345')"), {"t": tenant})
 
 
+def test_long_lines_are_split_without_losing_text():
+    text = "a" * 5000
+    parts = briefing.chunks(text, 100)
+    assert "".join(p.replace("\n", "") for p in parts) == text
+    assert all(len(p) <= 100 for p in parts)
+    assert len(parts) >= 50
+    assert briefing.chunks("x\ny", 10) == ["x\ny\n"]
+
+
 def test_morning_builds_and_sends_once(db, tenant):
     site_id = setup_site(db, tenant)
     with db.tenant(tenant) as s:  # a second site still waiting for approval
