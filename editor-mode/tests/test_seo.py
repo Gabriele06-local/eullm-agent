@@ -25,6 +25,15 @@ def test_slug_title_and_description_are_clamped():
     assert missing.title == "Bari cablata in fibra" and missing.slug == "bari-cablata-in-fibra" and missing.keyphrase == ""
 
 
+def test_a_non_latin_title_still_gets_a_usable_slug():
+    slug = seo.slugify("知识竞赛")
+    assert slug and slug.isascii() and slug.isalnum()
+    assert slug == seo.slugify("知识竞赛")
+    assert slug != seo.slugify("Новости")
+    assert seo.parse({"title": "知识竞赛"}, "知识竞赛").slug == slug
+    assert seo.slugify("") == ""
+
+
 def test_a_title_without_spaces_is_still_cut_to_the_limit():
     # rsplit on a title with no space in the first TITLE_MAX+1 characters
     # returns the whole string: the clamp must not keep 61 characters.
