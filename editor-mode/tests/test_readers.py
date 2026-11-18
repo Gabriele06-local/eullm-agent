@@ -35,6 +35,16 @@ def _post(c, domain, **body):
                   headers={"Origin": f"https://www.{domain}", "Content-Type": "text/plain"})
 
 
+def test_page_url_trusts_only_the_site_and_its_subdomains():
+    from editor.readers import page_url
+
+    assert page_url("https://example.com/x", "example.com") == "https://example.com/x"
+    assert page_url("https://www.example.com/x", "example.com") == "https://www.example.com/x"
+    assert page_url("https://blog.example.com/x", "example.com") == "https://blog.example.com/x"
+    assert page_url("https://example.com/x", "blog.example.com") == ""
+    assert page_url("https://other.example/x", "blog.example.com") == ""
+
+
 def test_a_message_arrives_only_after_the_email_is_confirmed(db, tenant, monkeypatch):
     site_id, domain = _site(db, tenant)
     sent = []
