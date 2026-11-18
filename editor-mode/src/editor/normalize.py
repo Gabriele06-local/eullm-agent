@@ -33,7 +33,10 @@ def canonical_url(url: str) -> str:
     host = (parts.hostname or "").lower().rstrip(".")
     if host.startswith("www."):
         host = host[4:]
-    port = parts.port
+    try:
+        port = parts.port
+    except ValueError:
+        port = None
     netloc = host if port in (None, 80, 443) else f"{host}:{port}"
     path = re.sub(r"/{2,}", "/", parts.path or "/")
     if host in ("arxiv.org", "export.arxiv.org"):
