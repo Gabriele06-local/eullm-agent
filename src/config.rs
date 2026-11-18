@@ -671,6 +671,13 @@ impl Config {
                     }
                 }
             }
+            for (name, limits) in &api.tenants {
+                if let Some(v) = limits.max_cost_per_month {
+                    if !v.is_finite() || v < 0.0 {
+                        bail!("api.tenants.{name}.max_cost_per_month must be a number >= 0");
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -749,6 +756,17 @@ mod tests {
         let c = Config::from_yaml(&yaml).unwrap();
         assert!(c.tools.exec.enabled);
         assert!(c.tools.exec.allowed_programs.is_empty());
+    }
+
+    #[test]
+    fn tenant_cost_limit_is_validated() {
+        let bad = format!("{MINIMAL}api:\n  tenants:\n    acme:\n      max_cost_per_month: -1\n");
+        let err = Config::from_yaml(&bad).unwrap_err().to_string();
+        assert!(err.contains("api.tenants.acme"), "{err}");
+
+        let good =
+            format!("{MINIMAL}api:\n  tenants:\n    acme:\n      max_cost_per_month: 12.5\n");
+        assert!(Config::from_yaml(&good).unwrap().validate().is_ok());
     }
 
     #[test]
