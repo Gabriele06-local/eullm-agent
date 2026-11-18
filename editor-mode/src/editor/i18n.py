@@ -67,9 +67,11 @@ def pick(cookie: str | None, accept: str | None) -> str:
         code = tag.split("-")[0].lower()
         if code in LANGS:
             try:
-                best.append((float(q or 1), -i, code))
+                quality = float(q or 1)
             except ValueError:
                 continue
+            if quality > 0:
+                best.append((quality, -i, code))
     if best:
         return max(best)[2]
     fallback = os.environ.get("EDITOR_LANGUAGE", DEFAULT)

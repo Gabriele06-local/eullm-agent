@@ -51,6 +51,12 @@ def test_language_comes_from_the_cookie_then_the_browser():
     assert i18n.pick(None, None) == "it"  # EDITOR_LANGUAGE in the tests
 
 
+def test_a_language_with_zero_quality_is_not_chosen():
+    assert i18n.pick(None, "fr;q=0") == "it"
+    assert i18n.pick(None, "fr;q=0,es;q=0.5") == "es"
+    assert i18n.pick(None, "fr-FR;q=0.0,fr;q=0") == "it"
+
+
 def test_texts_follow_the_language():
     token = i18n.use("it")
     try:
