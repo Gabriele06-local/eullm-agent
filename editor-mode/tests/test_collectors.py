@@ -151,6 +151,15 @@ def test_github_trending():
     assert second.title == "someone/tool-x" and second.metrics["stars_today"] == 1100
 
 
+def test_github_trending_reads_a_single_star_today():
+    from editor.collectors import github_trending
+
+    page = ('<article class="Box-row"><h2><a href="/a/b">a/b</a></h2>'
+            '<span>1 star today</span></article>')
+    items = github_trending.parse(page)
+    assert len(items) == 1 and items[0].metrics["stars_today"] == 1
+
+
 def test_github_trending_without_repositories_is_an_error():
     with respx.mock:
         respx.get("https://github.com/trending").mock(return_value=httpx.Response(200, text="<html>login</html>"))
