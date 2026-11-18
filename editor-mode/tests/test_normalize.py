@@ -11,6 +11,8 @@ from editor.normalize import canonical_url, clean_text, content_hash, url_hash
         ("https://example.com/?fbclid=abc", "https://example.com/"),
         ("https://example.com//x//y/", "https://example.com/x/y"),
         ("https://example.com:8443/x", "https://example.com:8443/x"),
+        ("https://example.com:abc/x", "https://example.com/x"),
+        ("https://example.com:99999/x", "https://example.com/x"),
         ("http://arxiv.org/pdf/2610.01234v2", "https://arxiv.org/abs/2610.01234"),
         ("https://export.arxiv.org/abs/2610.01234v1", "https://arxiv.org/abs/2610.01234"),
         ("https://news.ycombinator.com/item?id=1", "https://news.ycombinator.com/item?id=1"),
