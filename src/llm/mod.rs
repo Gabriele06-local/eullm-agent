@@ -189,9 +189,24 @@ pub fn strip_think_blocks(s: &str) -> String {
         out.push_str(&rest[..start]);
         match rest.find("</think>") {
             Some(end) => rest = &rest[end + "</think>".len()..],
-            None => break,
+            None => return out.trim().to_string(),
         }
     }
     out.push_str(rest);
     out.trim().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_unclosed_think_block_does_not_duplicate_the_answer() {
+        assert_eq!(strip_think_blocks("Hello <think>unfinished"), "Hello");
+        assert_eq!(
+            strip_think_blocks("A<think>x</think>B<think>y</think>C"),
+            "ABC"
+        );
+        assert_eq!(strip_think_blocks(" plain "), "plain");
+    }
 }
