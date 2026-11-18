@@ -144,12 +144,14 @@ def telegram_text(b: Briefing) -> str:
 
 
 def chunks(text: str, size: int = 4000) -> list[str]:
+    width = max(1, size - 1)
     out, cur = [], ""
     for line in text.split("\n"):
-        if len(cur) + len(line) + 1 > size and cur:
-            out.append(cur)
-            cur = ""
-        cur += line[:size] + "\n"
+        for piece in (line[i:i + width] for i in range(0, len(line), width)) or [""]:
+            if len(cur) + len(piece) + 1 > size and cur:
+                out.append(cur)
+                cur = ""
+            cur += piece + "\n"
     if cur.strip():
         out.append(cur)
     return out
