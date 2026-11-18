@@ -106,7 +106,7 @@ def clean(value: str | None, limit: int) -> str:
 def page_url(url: str | None, host: str) -> str:
     """The article's address, only when it is on the same site."""
     url = clean(url, 500)
-    if url and host_of(url) and (host_of(url) == host or host_of(url).endswith("." + host) or host.endswith("." + host_of(url))):
+    if url and host_of(url) and (host_of(url) == host or host_of(url).endswith("." + host)):
         return url
     return ""
 
