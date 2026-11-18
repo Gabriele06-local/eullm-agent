@@ -53,6 +53,11 @@ def test_markdown_rendering_escapes():
     assert '<sup><a href="#fn1">1</a></sup>' in page and '<li id="fn1"><a href="https://a.example/x"' in page
 
 
+def test_markdown_link_url_is_escaped_once():
+    page = to_html("[fonte](https://e.it/?a=1&b=2)")
+    assert '<a href="https://e.it/?a=1&amp;b=2" rel="noopener">fonte</a>' in page
+
+
 def test_targets_must_be_public_and_secret_free(db, tenant, monkeypatch):
     did, site_id = approved_draft(db, tenant)
     monkeypatch.setattr(socket, "getaddrinfo", private_resolver)
