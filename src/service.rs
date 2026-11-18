@@ -230,8 +230,11 @@ fn resolve_credentials(
     let mut out = HashMap::new();
     for c in list {
         match std::env::var(&c.value_env) {
-            Ok(v) if !v.is_empty() => {
-                out.insert(c.host.to_ascii_lowercase(), (c.header.clone(), v));
+            Ok(v) if !v.trim().is_empty() => {
+                out.insert(
+                    c.host.to_ascii_lowercase(),
+                    (c.header.clone(), v.trim().to_string()),
+                );
             }
             _ => tracing::warn!(
                 "api.fetch.credentials: {} is not set, requests to {} go without it",
@@ -684,5 +687,29 @@ mod tests {
         assert_eq!(at("https://github.com/"), None);
         assert_eq!(at("https://api.github.com.evil.example/"), None);
         assert_eq!(at("https://missing.example/"), None);
+    }
+
+    #[test]
+    fn credentials_from_env_are_trimmed() {
+        std::env::set_var("EULLM_TEST_GH_AUTH_WS", " Bearer t0k\n");
+        std::env::set_var("EULLM_TEST_GH_AUTH_BLANK", " \n ");
+        let creds = resolve_credentials(&[
+            HostCredential {
+                host: "api.github.com".into(),
+                header: "Authorization".into(),
+                value_env: "EULLM_TEST_GH_AUTH_WS".into(),
+            },
+            HostCredential {
+                host: "blank.example".into(),
+                header: "Authorization".into(),
+                value_env: "EULLM_TEST_GH_AUTH_BLANK".into(),
+            },
+        ]);
+        let at = |u: &str| credential_for(&creds, &Url::parse(u).unwrap()).cloned();
+        assert_eq!(
+            at("https://api.github.com/"),
+            Some(("Authorization".into(), "Bearer t0k".into()))
+        );
+        assert_eq!(at("https://blank.example/"), None);
     }
 }
