@@ -25,6 +25,12 @@ def test_same_site_ignores_trailing_dot_and_empties():
     assert not same_site("https://other.com/x", "example.com")
 
 
+def test_mixed_case_script_and_data_links_are_not_collected():
+    body = '<a href="JaVaScRiPt:alert(1)">x</a><a href="DATA:text/html,x">y</a><a href="/ok">ok</a>'
+    page = parse_html(body, "https://e.it/")
+    assert [l.url for l in page.links] == ["https://e.it/ok"]
+
+
 def test_menu_div_does_not_swallow_following_text():
     body = '<div class="menu"><a href="/x">m</a></div><p>' + "parola " * 30 + "</p>"
     page = parse_html(body, "https://e.it/")

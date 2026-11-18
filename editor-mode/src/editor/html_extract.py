@@ -89,7 +89,7 @@ class _Parser(HTMLParser):
                 self.page.canonical = urljoin(self.base, href)
         elif tag == "a" and a.get("href"):
             href = a["href"].strip()
-            if not href.startswith(("javascript:", "mailto:", "tel:", "#", "data:")):
+            if not href.lower().startswith(("javascript:", "mailto:", "tel:", "#", "data:")):
                 self.link = (urljoin(self.base, href), [])
         if tag in BLOCK:
             self.block = []
