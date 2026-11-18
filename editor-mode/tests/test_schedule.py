@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
@@ -43,6 +43,14 @@ def test_late_worker_still_sends_within_the_window_but_not_later():
     evening = datetime(2026, 10, 9, 18, tzinfo=UTC)
     assert briefing_due(evening, ROME, 8, sent) is None
     assert briefing_due(nine, ROME, 8, {nine.astimezone(ZoneInfo(ROME)).date()}) is None
+
+
+def test_a_late_briefing_window_wraps_past_midnight():
+    tick = datetime(2026, 10, 10, 0, 30, tzinfo=UTC)
+    assert briefing_due(tick, "UTC", 23, set()) == date(2026, 10, 9)
+    assert briefing_due(tick, "UTC", 23, {date(2026, 10, 9)}) is None
+    assert briefing_due(datetime(2026, 10, 10, 2, 30, tzinfo=UTC), "UTC", 23, set()) is None
+    assert briefing_due(tick, "UTC", 8, set()) is None
 
 
 def test_invalid_tenant_timezone_falls_back_to_default(db, pg_urls, tenant):
