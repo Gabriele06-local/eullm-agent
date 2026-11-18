@@ -49,6 +49,10 @@ def briefing_due(now_utc: datetime, tz: str, hour: int, already_sent: set[date])
     local = now_utc.astimezone(ZoneInfo(tz))
     if hour <= local.hour < hour + BRIEFING_WINDOW_HOURS and local.date() not in already_sent:
         return local.date()
+    if hour + BRIEFING_WINDOW_HOURS > 24 and local.hour < hour + BRIEFING_WINDOW_HOURS - 24:
+        previous = local.date() - timedelta(days=1)
+        if previous not in already_sent:
+            return previous
     return None
 
 
