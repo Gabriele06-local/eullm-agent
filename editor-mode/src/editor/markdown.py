@@ -13,10 +13,19 @@ _EM = re.compile(r"(?<![\w*])_([^_]+)_(?![\w*])")
 
 
 def _inline(text: str) -> str:
-    out = html.escape(text, quote=False)
-    out = _LINK.sub(lambda m: f'<a href="{html.escape(m.group(2), quote=True)}" rel="noopener">{m.group(1)}</a>', out)
-    out = _FOOTREF.sub(lambda m: f'<sup><a href="#fn{m.group(1)}">{m.group(1)}</a></sup>', out)
-    return _EM.sub(r"<em>\1</em>", out)
+    out = []
+    pos = 0
+    for m in _LINK.finditer(text):
+        out.append(html.escape(text[pos:m.start()], quote=False))
+        out.append(
+            f'<a href="{html.escape(m.group(2), quote=True)}" rel="noopener">'
+            f"{html.escape(m.group(1), quote=False)}</a>"
+        )
+        pos = m.end()
+    out.append(html.escape(text[pos:], quote=False))
+    result = "".join(out)
+    result = _FOOTREF.sub(lambda m: f'<sup><a href="#fn{m.group(1)}">{m.group(1)}</a></sup>', result)
+    return _EM.sub(r"<em>\1</em>", result)
 
 
 def to_html(md: str) -> str:
