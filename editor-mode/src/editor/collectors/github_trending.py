@@ -15,7 +15,7 @@ _REPO = re.compile(r"<h2\b.*?<a\b[^>]*href=\"/([\w.-]+/[\w.-]+)\"", re.S)
 _DESC = re.compile(r"<p\b[^>]*>(.*?)</p>", re.S)
 _LANG = re.compile(r"itemprop=\"programmingLanguage\"[^>]*>(.*?)<", re.S)
 _STARS = re.compile(r"href=\"/[\w.-]+/[\w.-]+/stargazers\"[^>]*>(.*?)</a>", re.S)
-_TODAY = re.compile(r"([\d,.]+)\s+stars\s+(today|this week|this month)")
+_TODAY = re.compile(r"([\d,.]+)\s+stars?\s+(today|this week|this month)")
 _TAG = re.compile(r"<[^>]+>")
 
 
