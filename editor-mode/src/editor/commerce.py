@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from datetime import datetime
 from typing import Literal
 from urllib.parse import quote, unquote
@@ -115,10 +116,13 @@ def _cents(value: str) -> int | None:
         return None
     if "," in v:
         v = v.replace(".", "").replace(",", ".")
-    n = round(float(v) * 100)
-    if n < 0:
+    n = float(v)
+    if not math.isfinite(n) or not math.isfinite(n * 100):
         raise ValueError
-    return n
+    cents = round(n * 100)
+    if cents < 0:
+        raise ValueError
+    return cents
 
 
 def _int(value: str) -> int | None:

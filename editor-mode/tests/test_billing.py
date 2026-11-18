@@ -446,6 +446,15 @@ def test_the_console_shows_customers_resellers_and_plans(db, admin):
     billing.save_plan(admin, "starter", {"price_month_cents": 4900, "price_year_cents": 49000, "max_drafts_month": 30})
 
 
+def test_console_price_refuses_non_finite_numbers():
+    from editor.commerce import _cents
+
+    assert _cents("59,00") == 5900 and _cents("1.490,00") == 149000
+    for value in ("inf", "1e309", "nan", "-1"):
+        with pytest.raises(ValueError):
+            _cents(value)
+
+
 def test_a_paid_plan_chosen_on_the_site_waits_for_its_payment(db, admin):
     c, sent = client(db)
     r = signup(c, key(db), unique("web"), f"{unique('amm')}@rossi.it", plan="pro", interval="year", language="de")
