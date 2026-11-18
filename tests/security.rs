@@ -449,6 +449,23 @@ async fn s4_methods_other_than_get_are_refused_by_default() {
 }
 
 #[tokio::test]
+async fn s4_fetch_tool_refuses_free_headers() {
+    let t = FetchUrlTool::new(&http_cfg());
+    for (k, v) in [
+        ("Cookie", "session=secret"),
+        ("Authorization", "Bearer victim-token"),
+        ("X-Api-Key", "secret"),
+    ] {
+        let err = t
+            .execute(&json!({"url": "https://example.com/", "headers": {k: v}}))
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("cannot be set"), "{err}");
+    }
+}
+
+#[tokio::test]
 async fn s4_response_body_is_capped() {
     let srv = internal_server().await;
     let t = FetchUrlTool::new(&HttpToolConfig {
