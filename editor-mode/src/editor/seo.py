@@ -12,6 +12,7 @@ new page at once with IndexNow; Google has no such call for articles.
 
 from __future__ import annotations
 
+import hashlib
 import math
 
 import re
@@ -82,6 +83,7 @@ def recipe_card(meta: dict | None, claims) -> dict | None:
 
 
 def slugify(text: str, limit: int = 70) -> str:
+    original = text
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
     words = re.sub(r"[^a-z0-9]+", " ", text).split()
     out = ""
@@ -89,6 +91,8 @@ def slugify(text: str, limit: int = 70) -> str:
         if len(out) + len(w) + 1 > limit:
             break
         out = f"{out}-{w}" if out else w
+    if not out and original.strip():
+        return hashlib.sha256(original.encode("utf-8")).hexdigest()[:min(12, limit)]
     return out
 
 
