@@ -33,7 +33,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from . import i18n
 from . import models as m
 from .mailstamp import stamp
-from . import repo, searchconsole
+from . import repo, rubrics, searchconsole
 from .autopilot import settings_of
 from .i18n import t
 
@@ -64,6 +64,7 @@ class SiteWeek:
     proposals_per_day: int = 0
     search: dict | None = None
     search_problem: str | None = None
+    rubrics: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -145,6 +146,8 @@ def collect(s, tenant_id: str, start: date, end: date, tz: ZoneInfo, language: s
             if auto.get("enabled") and ten is not None and ten.autopilot:
                 w.auto_per_day = int(auto.get("per_day") or 0)
             w.proposals_per_day = int(body.get("settings", {}).get("proposals_per_day") or 0)
+            # The rubrics the newsroom decided for the week to come, on Monday at dawn (rubrics.py).
+            w.rubrics = rubrics.since(body, t1 - timedelta(days=1))
         if site.gsc_property:
             if site.gsc_status not in (None, "ok"):
                 w.search_problem = searchconsole.problem(site.gsc_status)

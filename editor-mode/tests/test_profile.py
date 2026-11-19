@@ -521,3 +521,86 @@ def test_a_topic_that_widens_its_name_is_one_row_and_no_approved_topic_disappear
     assert "gone:Mondo" in gone and len(gone) == 2
     body = prof.mix(old, new, gone)  # keep every topic that would leave
     assert len(body["subtopics"]) == 4
+
+
+def test_a_rereading_does_not_learn_from_the_newsrooms_own_articles(db, tenant, monkeypatch):
+    """aitoday.it, 2026-11-19: every article is written by the newsroom, so
+    the weekly reading turned its own output into the next week's line."""
+    class C:
+        def __init__(self, articles):
+            self.articles = articles
+
+        def analyse(self, domain):
+            return snapshot(self.articles)
+
+    site_id = prof.analyse_site(db, tenant, "blog.example", C(fakesite.ARTICLES))["site_id"]
+    with db.tenant(tenant) as s:
+        assert prof.approve(s, site_id, 1, "francesco")
+    # Every article the site shows now was published by the newsroom.
+    monkeypatch.setattr(prof, "own_articles", lambda s, sid: ({slug for slug, *_ in fakesite.SHIFTED}, set()))
+    out = prof.analyse_site(db, tenant, "blog.example", C(fakesite.SHIFTED))
+    assert out["profile_id"] is None and out["own_articles"] == len(fakesite.SHIFTED)
+    with db.tenant(tenant) as s:
+        rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+        posts = s.execute(text("SELECT count(*) FROM editor.site_posts")).scalar()
+    assert [tuple(r) for r in rows] == [(1, "approved")]
+    assert posts >= len(fakesite.SHIFTED)  # still known as covered by the site
+
+
+def test_a_rereading_adds_topics_but_never_takes_one_away():
+    current = {"subtopics": [{"name": "Fibra", "keywords": ["fibra"], "share": 0.5},
+                             {"name": "Satelliti", "keywords": ["satellite"], "share": 0.2}],
+               "settings": {}}
+    body = {"subtopics": [{"name": "Fibra", "keywords": ["fibra"], "share": 0.6},
+                          {"name": "Sicurezza", "keywords": ["ransomware"], "share": 0.3}], "settings": {}}
+    out = prof._keep_approved_topics(current, body)
+    assert [x["name"] for x in out["subtopics"]] == ["Fibra", "Sicurezza", "Satelliti"]
+    # A topic the owner took out stays out.
+    body = {"subtopics": [{"name": "Fibra", "keywords": ["fibra"], "share": 0.6}],
+            "settings": {"removed": [{"name": "Satelliti", "keywords": ["satellite"]}]}}
+    assert [x["name"] for x in prof._keep_approved_topics(current, body)["subtopics"]] == ["Fibra"]
+
+
+def test_without_the_automatic_newsroom_the_owners_choices_weigh_the_topics(db, tenant):
+    """Francesco 2026-11-19: an owner who picks 60% politics gives the site
+    its direction; the site is not re-read for it."""
+    from sqlalchemy import insert
+
+    body = {"subtopics": [{"name": n, "keywords": [n.lower()], "share": 0.25}
+                          for n in ("Politica", "Economia", "Sport", "Cultura")], "settings": {}}
+    with db.tenant(tenant) as s:
+        from editor import repo
+        site_id = repo.ensure_site(s, tenant, "blog.example", "Blog")
+        pid = prof.save_draft(s, tenant, site_id, body, "analysis")
+        assert prof.approve(s, site_id, 1, "francesco")
+
+        def accept(name, n):
+            for i in range(n):
+                tid = s.execute(insert(m.topics).values(tenant_id=tenant, label=f"{name} {i}", keywords=[name])
+                                .returning(m.topics.c.id)).scalar_one()
+                s.execute(insert(m.opportunity_scores).values(
+                    tenant_id=tenant, topic_id=tid, site_id=site_id, profile_id=pid, formula_version="v",
+                    score=50, components={"matched_subtopic": name}, missing=[]))
+                s.execute(insert(m.proposals).values(
+                    tenant_id=tenant, site_id=site_id, topic_id=tid, profile_id=pid, opportunity=50,
+                    title=f"{name} {i}", generated_by="model", status="accepted"))
+        accept("Politica", 6)
+        accept("Economia", 3)
+    assert prof.direction_from_choices(db, tenant, site_id) is None  # 9 choices: too few to say
+    with db.tenant(tenant) as s:
+        accept("Sport", 1)
+    new = prof.direction_from_choices(db, tenant, site_id)
+    assert new is not None
+    with db.tenant(tenant) as s:
+        draft = s.execute(select(m.editorial_profiles).where(m.editorial_profiles.c.id == new)).first()
+        shares = {x["name"]: x["share"] for x in draft.body["subtopics"]}
+        rows = prof.compare(prof.approved_profile(s, site_id).body, draft.body)
+    assert shares == {"Politica": 0.6, "Economia": 0.3, "Sport": 0.1, "Cultura": 0.0}  # Cultura stays
+    assert draft.status == "draft" and draft.body["direction"]["accepted"] == 10
+    assert not any(r.get("kind") == "gone" for r in rows)
+    # With the automatic newsroom the line changes only by the owner's hand.
+    with db.tenant(tenant) as s:
+        prof.approve(s, site_id, draft.version, "francesco")
+        prof._set_settings(s, site_id, auto={"enabled": True})
+        accept("Cultura", 20)
+    assert prof.direction_from_choices(db, tenant, site_id) is None

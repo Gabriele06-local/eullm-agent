@@ -224,7 +224,23 @@ def check_settings(values: dict) -> dict:
 
 
 def settings_of(body: dict | None) -> dict:
-    return {**DEFAULTS, **(((body or {}).get("settings") or {}).get("auto") or {})}
+    """The automatic newsroom's settings, with the rubrics the newsroom
+    itself added (`added_sections`) and the weight of each rubric for the
+    week (`section_weights`), both from rubrics.py: never written back."""
+    st = (body or {}).get("settings") or {}
+    cfg = {**DEFAULTS, **(st.get("auto") or {})}
+    rb = st.get("rubrics") or {}
+    own = {x.lower() for x in cfg.get("sections") or []}
+    on = rb.get("enabled") if rb.get("enabled") is not None else cfg.get("enabled")
+    cfg["added_sections"] = [x["name"] for x in rb.get("added") or []
+                             if isinstance(x, dict) and x.get("name") and x["name"].lower() not in own] if on else []
+    cfg["section_weights"] = dict(rb.get("weights") or {}) if on else {}
+    return cfg
+
+
+def sections_of(cfg: dict) -> list[str]:
+    """The site's rubrics: the owner's, then those the newsroom added."""
+    return [*(cfg.get("sections") or []), *(cfg.get("added_sections") or [])]
 
 
 def save(s, site_id: int, values: dict) -> bool:
@@ -267,8 +283,8 @@ def brief_lines(body: dict | None) -> list[str]:
     out = [RECIPE_SITE] if recipe_site(body) else []
     if cfg["brief"]:
         out.append(f"Newsroom brief: {cfg['brief'][:2000]}")
-    if cfg["sections"]:
-        out.append(f"Sections of the site: {', '.join(cfg['sections'])}")
+    if secs := sections_of(cfg):
+        out.append(f"Sections of the site: {', '.join(secs)}")
     if cfg["directives"]:
         out.append(f"Directives of the newsroom: {cfg['directives'][:2000]}")
     if cfg["avoid"]:
@@ -476,16 +492,22 @@ def country_cap(cfg: dict) -> int | None:
     return _cap(cfg, "country_share")
 
 
-def section_cap(cfg: dict) -> int | None:
+def section_cap(cfg: dict, section: str | None = None) -> int | None:
     """Articles a day one section may have, when the site lists its
-    sections; None: no limit."""
-    return _cap(cfg, "section_share") if len(cfg.get("sections") or []) > 1 else None
+    sections; None: no limit. With `section`, its own: the share times the
+    weight the newsroom gave it for the week (rubrics.py), never below one
+    a day, so a rubric with a lowered priority is never shut."""
+    base = _cap(cfg, "section_share") if len(sections_of(cfg)) > 1 else None
+    if base is None or section is None:
+        return base
+    w = (cfg.get("section_weights") or {}).get(section, 1.0)
+    return max(1, round(base * w))
 
 
 def section_of(cfg: dict, name: str | None) -> str | None:
     """The site's section `name` says, as the site writes it, or None."""
     name = (name or "").strip().lower()
-    return next((x for x in cfg.get("sections") or [] if x.lower() == name), None) if name else None
+    return next((x for x in sections_of(cfg) if x.lower() == name), None) if name else None
 
 
 def mix_today(s, site_id: int, since: datetime, now: datetime) -> tuple[dict[str, int], dict[str, int]]:
@@ -521,7 +543,7 @@ def full_today(s, site_id: int, cfg: dict, now: datetime, since: datetime | None
     countries, sections = mix_today(s, site_id, since or now - timedelta(hours=24), now)
     home = home_of(s, site_id, cfg)
     return [*(f"news about {c}" for c, n in countries.items() if ccap and c != home and n >= ccap),
-            *(f"the section {x}" for x, n in sections.items() if scap and n >= scap)]
+            *(f"the section {x}" for x, n in sections.items() if scap and n >= section_cap(cfg, x))]
 
 
 # Proposals read each round: enough to get past a day of news that only one outlet tells,
@@ -550,7 +572,7 @@ def choose(s, site_id: int, cfg: dict, now: datetime, n: int, minimum: float | N
         b = r.basis or {}
         c, sec = b.get("country"), section_of(cfg, b.get("section"))
         return bool(ccap and c and c != home and countries.get(c, 0) >= ccap) \
-            or bool(scap and sec and sections.get(sec, 0) >= scap)
+            or bool(scap and sec and sections.get(sec, 0) >= section_cap(cfg, sec))
 
     def take(r) -> None:
         out.append(r)
@@ -1233,7 +1255,7 @@ def finish(db, tenant_id: str, draft_id: int, core: CoreClient, publish, transla
                 out["cut"] = out.get("cut", 0) + len(verdict["cut"])
                 if d.status == "needs_review" or cited < need:
                     fixable += verdict["problems"] or [t("dopo i tagli l'articolo non supera i controlli", lang)]
-        section = None if evening else next((x for x in cfg["sections"] if x.lower() == verdict["section"].lower()), None)
+        section = None if evening else next((x for x in sections_of(cfg) if x.lower() == verdict["section"].lower()), None)
         if section:  # the site files the article under it
             with db.tenant(tenant_id) as s:
                 s.execute(update(m.drafts).where(m.drafts.c.id == draft_id).values(
