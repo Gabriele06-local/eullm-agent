@@ -75,7 +75,7 @@ def enqueue(db, tenant_id: str, kind: str, subject: str, args: dict | None = Non
         lock(s, f"editor-queue:{tenant_id}")
         j = m.jobs.c
         waiting = s.execute(select(j.id).where(j.tenant_id == tenant_id, j.kind == kind, j.subject == subject,
-                                               j.status == "queued")).scalar()
+                                               j.status == "queued")).scalars().first()
         if waiting is not None:
             return waiting
         now = datetime.now(UTC)

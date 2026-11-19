@@ -39,6 +39,14 @@ def test_queued_work_waits_for_the_worker_and_is_not_queued_twice(db, tenant):
     assert queue.enqueue(db, tenant, "analysis", "blog.example") != a
 
 
+def test_two_queued_duplicates_do_not_break_enqueue(db, tenant):
+    first = queue.enqueue(db, tenant, "analysis", "dup.example")
+    second = queue.enqueue(db, tenant, "draft", "other")
+    with db.tenant(tenant) as s:
+        s.execute(update(m.jobs).where(m.jobs.c.id == second).values(kind="analysis", subject="dup.example"))
+    assert queue.enqueue(db, tenant, "analysis", "dup.example") in (first, second)
+
+
 def test_work_asked_by_a_person_comes_before_the_tick(db, tenant):
     queue.enqueue(db, tenant, "tick", "hourly", priority=queue.PRIORITY_TICK)
     queue.enqueue(db, tenant, "draft", "proposal 7", {"proposal_id": 7})
