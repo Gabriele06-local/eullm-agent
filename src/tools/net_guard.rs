@@ -120,11 +120,12 @@ impl NetPolicy {
     fn domain_allowed(&self, host: &str) -> bool {
         let host = host.trim_end_matches('.').to_ascii_lowercase();
         self.allowed_domains.iter().any(|d| {
-            let d = d
-                .trim_start_matches("*.")
-                .trim_end_matches('.')
-                .to_ascii_lowercase();
-            host == d || host.ends_with(&format!(".{d}"))
+            let d = d.trim_end_matches('.').to_ascii_lowercase();
+            if let Some(base) = d.strip_prefix("*.") {
+                host.ends_with(&format!(".{base}"))
+            } else {
+                host == d || host.ends_with(&format!(".{d}"))
+            }
         })
     }
 }
@@ -187,5 +188,18 @@ mod tests {
         assert!(p.domain_allowed("api.example.com"));
         assert!(!p.domain_allowed("evilexample.com"));
         assert!(!p.domain_allowed("example.com.evil.net"));
+    }
+
+    #[test]
+    fn wildcard_domains_do_not_match_the_apex() {
+        let p = NetPolicy {
+            allow_http: false,
+            allow_private_networks: false,
+            allowed_domains: vec!["*.example.com".into()],
+        };
+        assert!(!p.domain_allowed("example.com"));
+        assert!(p.domain_allowed("api.example.com"));
+        assert!(p.domain_allowed("a.b.example.com"));
+        assert!(!p.domain_allowed("evilexample.com"));
     }
 }
