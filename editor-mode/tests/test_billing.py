@@ -446,6 +446,14 @@ def test_the_console_shows_customers_resellers_and_plans(db, admin):
     billing.save_plan(admin, "starter", {"price_month_cents": 4900, "price_year_cents": 49000, "max_drafts_month": 30})
 
 
+def test_money_formats_negative_amounts():
+    from editor.billing import money
+
+    assert money(-505) == "-5,05 €"
+    assert money(-1) == "-0,01 €"
+    assert money(5900) == "59 €" and money(None) == "–"
+
+
 def test_console_price_refuses_non_finite_numbers():
     from editor.commerce import _cents
 

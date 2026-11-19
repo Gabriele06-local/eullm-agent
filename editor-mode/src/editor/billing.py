@@ -97,9 +97,11 @@ def vat_in(gross_cents: int, customer: dict | None) -> int:
 def money(cents: int | None, currency: str = "EUR") -> str:
     if cents is None:
         return "–"
-    whole, rest = divmod(int(cents), 100)
+    value = int(cents)
+    sign = "-" if value < 0 else ""
+    whole, rest = divmod(abs(value), 100)
     symbol = "€" if currency == "EUR" else currency
-    return f"{whole:,}".replace(",", ".") + (f",{rest:02d}" if rest else "") + f" {symbol}"
+    return f"{sign}{whole:,}".replace(",", ".") + (f",{rest:02d}" if rest else "") + f" {symbol}"
 
 
 # --- plans ---------------------------------------------------------------------------
