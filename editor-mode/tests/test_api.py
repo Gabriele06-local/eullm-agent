@@ -122,6 +122,14 @@ def test_draft_routes(db, tenant):
     assert len(listed) == 1
     d = c.get(f"/api/drafts/{listed[0]['id']}", headers=h).json()
     assert len(d["claims"]) == 3 and all(x["sources"] == [cited[0]] for x in d["claims"])
+    # The director's own sentence has no source: it must reach the API too.
+    from editor import drafts
+    text = drafts.as_text(d["claims"]) + "\nUna frase scritta dal direttore."
+    drafts.edit_text(db, tenant, d["id"], d["title"], d["subtitle"], text)
+    after = c.get(f"/api/drafts/{d['id']}", headers=h).json()
+    assert len(after["claims"]) == 4
+    assert after["claims"][-1]["text"] == "Una frase scritta dal direttore."
+    assert after["claims"][-1]["sources"] == []
     assert c.post(f"/api/drafts/{d['id']}/decision", json={"accept": True}, headers=h).json() == {"status": "approved"}
 
 
