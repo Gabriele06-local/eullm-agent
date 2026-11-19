@@ -54,9 +54,14 @@ struct OllamaToolCall {
     function: OllamaFunction,
 }
 
+fn empty_arguments() -> Value {
+    serde_json::json!({})
+}
+
 #[derive(Serialize, Deserialize)]
 struct OllamaFunction {
     name: String,
+    #[serde(default = "empty_arguments")]
     arguments: Value,
 }
 
