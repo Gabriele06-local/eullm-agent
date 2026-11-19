@@ -30,7 +30,7 @@ from email.utils import format_datetime
 
 from sqlalchemy import delete, func, insert, select, text
 
-from . import models as m
+from . import images, models as m
 from .mailstamp import stamp
 from .i18n import t
 from .markdown import to_html
@@ -56,8 +56,8 @@ def article(s, draft_id: int, public_url: str = "") -> dict | None:
     d = s.execute(select(m.drafts).where(m.drafts.c.id == draft_id)).first()
     if d is None:
         return None
-    di, si, dc, dcs = m.draft_images.c, m.source_items, m.draft_claims, m.draft_claim_sources
-    img = s.execute(select(di.mime, di.content, di.alt, di.token).where(di.draft_id == draft_id)).first()
+    si, dc, dcs = m.source_items, m.draft_claims, m.draft_claim_sources
+    img = images.content(s, draft_id)
     sources = s.execute(select(si.c.title, si.c.url).join(dcs, dcs.c.item_id == si.c.id)
                         .join(dc, dc.c.id == dcs.c.claim_id).where(dc.c.draft_id == draft_id)
                         .group_by(si.c.id, si.c.title, si.c.url).order_by(func.min(dc.c.ordinal))).all()

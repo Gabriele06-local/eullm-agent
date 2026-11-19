@@ -227,3 +227,29 @@ def test_covers_avoid_the_stock_scenes_and_the_sites_last_covers(db, tenant):
         images.make(db, tenant, did, imager(), CoreClient("http://core.test", "tok"))
     second = json.loads(route.calls[0].request.content)["messages"][-1]["content"]
     assert "last covers" in second and "Empty conference room with a long wooden table" in second
+
+
+def test_a_translation_points_at_the_original_image_instead_of_copying_it(db, tenant):
+    """2026-11-19: one copy of every cover per language made the backups grow
+    by 20 MB a day. The translation keeps no bytes of its own; it shows the
+    original's, also by token, and gets them when the original's goes away."""
+    did, _ = approved_draft(db, tenant)
+    with respx.mock() as router:
+        fake_bfl(router)
+        images.make(db, tenant, did, imager(), None)
+        router.post("http://core.test/v1/llm/chat").mock(
+            return_value=chat(json.dumps(dict(ENGLISH, image_alt="A fibre cabinet in Bari"))))
+        tid = tr.translate(db, tenant, did, "en", CoreClient("http://core.test", "tok"))
+    with db.tenant(tenant) as s:
+        stored = s.execute(select(m.draft_images.c.content, m.draft_images.c.same_as)
+                           .where(m.draft_images.c.draft_id == tid)).first()
+        assert bytes(stored.content) == b"" and stored.same_as == did
+        got = images.content(s, tid)
+        assert bytes(got.content) == JPEG and got.alt == "A fibre cabinet in Bari"
+        token = got.token
+    assert TestClient(create_app(db)).get(f"/media/{token}").content == JPEG
+    assert images.remove(db, tenant, did)  # the original's image deleted: the translation keeps a real copy
+    with db.tenant(tenant) as s:
+        stored = s.execute(select(m.draft_images.c.content, m.draft_images.c.same_as)
+                           .where(m.draft_images.c.draft_id == tid)).first()
+        assert bytes(stored.content) == JPEG and stored.same_as is None

@@ -218,4 +218,9 @@ def prune(db, tenant_id: str, now: datetime | None = None, days: int | None = No
         items = s.execute(delete(i).where(i.c.id.in_(old))).rowcount
         jobs = s.execute(delete(m.jobs).where(m.jobs.c.status.in_(("done", "failed")),
                                               m.jobs.c.finished_at < cutoff)).rowcount
-    return {"items": items, "observations": observations, "jobs": jobs}
+        # Hype scores: only the latest of each topic is read (the hourly
+        # scoring removes the older ones; this clears what earlier versions kept).
+        ts, newer = m.trend_scores, m.trend_scores.alias("newer")
+        scores = s.execute(delete(ts).where(select(newer.c.id).where(
+            newer.c.topic_id == ts.c.topic_id, newer.c.id > ts.c.id).exists())).rowcount
+    return {"items": items, "observations": observations, "jobs": jobs, "scores": scores}

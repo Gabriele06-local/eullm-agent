@@ -477,6 +477,9 @@ draft_images = Table(
     Column("height", Integer),
     Column("content", LargeBinary, nullable=False),
     Column("created_at", _ts()),
+    # A translation shows its original's image: the bytes stay on the
+    # original's row (content is empty here), not one copy per language.
+    Column("same_as", BigInteger),
 )
 
 feeds = Table(

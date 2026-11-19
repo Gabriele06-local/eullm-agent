@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.37.1
+
+### Fixed
+
+- **I backup non crescono più di 20 MB al giorno** (Francesco, 19 novembre:
+  archivi decuplicati in meno di un mese). Due cause:
+  - i punteggi Hype: ogni ora una riga per ogni tema della settimana, mai
+    cancellata, ma si legge solo l'ultima. Sul server erano 7,7 GB. Ora il
+    calcolo orario tiene solo l'ultimo punteggio di ogni tema e la
+    manutenzione notturna cancella quelli vecchi;
+  - le copertine delle traduzioni: ogni lingua teneva una copia identica
+    dell'immagine (11-12 MB al giorno su aitoday.it). Ora la traduzione
+    punta all'immagine dell'originale; la migrazione 0048 trasforma in
+    rimandi le copie già fatte. Se l'immagine dell'originale viene
+    cancellata, le traduzioni ne ricevono prima una copia.
+
+### Changed
+
+- **Backup: più archivi eliminati in una volta** (Francesco, 19 novembre:
+  oggi bisognava cliccare ogni archivio). In Console › Backup ogni archivio
+  ha una spunta, in testa una per spuntarli tutti, e "Elimina gli archivi
+  spuntati" li cancella insieme dopo una conferma. Le richieste fatte prima
+  che il server le esegua si sommano; `update.sh` (si aggiorna da solo con
+  la versione) cancella solo nomi di archivio validi della cartella dei
+  backup.
+
 ## 0.37.0
 
 ### Changed
@@ -21,13 +47,6 @@
   si tolgono e si rimettono dalla tabella dei temi, come prima. Il JSON
   grezzo non c'è più nelle pagine della redazione (resta solo l'API
   `PUT /api/sites/{id}/profile` per chi integra da programma).
-- **Backup: più archivi eliminati in una volta** (Francesco, 19 novembre:
-  oggi bisognava cliccare ogni archivio). In Console › Backup ogni archivio
-  ha una spunta, in testa una per spuntarli tutti, e "Elimina gli archivi
-  spuntati" li cancella insieme dopo una conferma. Le richieste fatte prima
-  che il server le esegua si sommano; `update.sh` (si aggiorna da solo con
-  la versione) cancella solo nomi di archivio validi della cartella dei
-  backup.
 
 ## 0.36.7
 

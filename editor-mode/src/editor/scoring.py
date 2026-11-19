@@ -17,7 +17,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
 from . import models as m
@@ -156,11 +156,14 @@ def score_topics(db: Database, tenant_id: str, days: int = 7, now: datetime | No
         ).scalars().all()
         for tid in topic_ids:
             h = hype(load_members(s, tid), now)
-            s.execute(
+            new_id = s.execute(
                 insert(m.trend_scores).values(
                     tenant_id=tenant_id, topic_id=tid, formula_version=h.version,
                     score=h.score, components=h.components, missing=h.missing,
-                )
-            )
+                ).returning(m.trend_scores.c.id)
+            ).scalar_one()
+            # Only the latest score of a topic is ever read: one row per
+            # topic, not one an hour (2026-11-19: 7.7 GB on the server).
+            s.execute(delete(m.trend_scores).where(m.trend_scores.c.topic_id == tid, m.trend_scores.c.id < new_id))
             results[tid] = h
     return results

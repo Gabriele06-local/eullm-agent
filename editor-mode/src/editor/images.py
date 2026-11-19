@@ -28,7 +28,7 @@ import struct
 import time
 
 import httpx
-from sqlalchemy import delete, insert, select, text
+from sqlalchemy import case, delete, insert, select, text
 
 from . import models as m
 from . import credits, usage
@@ -376,14 +376,24 @@ def make(db, tenant_id: str, draft_id: int, imager: Imager, core=None) -> str:
 
 def copy(s, tenant_id: str, from_draft: int, to_draft: int, alt: str | None = None) -> None:
     """The original's image for one of its translations, with the alternative
-    text in the translation's language."""
+    text in the translation's language. The bytes are not copied: the
+    translation points at the original's image (`same_as`), so a site in
+    five languages keeps one image per article, not five."""
     img = s.execute(select(m.draft_images).where(m.draft_images.c.draft_id == from_draft)).first()
     if img is None:
         return
     s.execute(delete(m.draft_images).where(m.draft_images.c.draft_id == to_draft))
     s.execute(insert(m.draft_images).values(
         tenant_id=tenant_id, draft_id=to_draft, token=secrets.token_urlsafe(24), prompt=img.prompt,
-        alt=alt or img.alt, model=img.model, mime=img.mime, width=img.width, height=img.height, content=img.content))
+        alt=alt or img.alt, model=img.model, mime=img.mime, width=img.width, height=img.height,
+        content=b"", same_as=img.same_as if img.same_as is not None else from_draft))
+
+
+def _with_bytes():
+    """draft_images with the bytes of the image it points at, if any."""
+    i, o = m.draft_images, m.draft_images.alias("orig")
+    content = case((i.c.same_as.is_not(None) & o.c.content.is_not(None), o.c.content), else_=i.c.content)
+    return i, o, content
 
 
 def of(s, draft_id: int):
@@ -394,9 +404,11 @@ def of(s, draft_id: int):
 
 
 def content(s, draft_id: int):
-    return s.execute(select(m.draft_images.c.mime, m.draft_images.c.content, m.draft_images.c.alt,
-                            m.draft_images.c.token)
-                     .where(m.draft_images.c.draft_id == draft_id)).first()
+    """mime, content (the bytes, the original's for a translation), alt, token, created_at."""
+    i, o, data = _with_bytes()
+    return s.execute(select(i.c.mime, data.label("content"), i.c.alt, i.c.token, i.c.created_at)
+                     .select_from(i.outerjoin(o, o.c.draft_id == i.c.same_as))
+                     .where(i.c.draft_id == draft_id)).first()
 
 
 def by_token(db, token: str):
@@ -405,8 +417,10 @@ def by_token(db, token: str):
         return None
     with db.engine.connect() as conn:
         if db.sqlite:
-            return conn.execute(text("SELECT mime, content FROM editor.draft_images WHERE token = :t"),
-                                {"t": token}).first()
+            return conn.execute(text(
+                "SELECT i.mime, CASE WHEN i.same_as IS NOT NULL AND o.content IS NOT NULL THEN o.content "
+                "ELSE i.content END AS content FROM editor.draft_images i "
+                "LEFT JOIN editor.draft_images o ON o.draft_id = i.same_as WHERE i.token = :t"), {"t": token}).first()
         return conn.execute(text("SELECT mime, content FROM editor.image_by_token(:t)"), {"t": token}).first()
 
 

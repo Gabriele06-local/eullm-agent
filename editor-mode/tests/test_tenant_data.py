@@ -159,3 +159,26 @@ def test_the_daily_maintenance_prunes(db, tenant, monkeypatch):
     assert pruned == [tenant]
     runner.tenant_tick(tenant, datetime(2026, 10, 9, 5, tzinfo=UTC), [])  # once a day
     assert pruned == [tenant]
+
+
+def test_only_the_latest_hype_score_of_a_topic_is_kept(db, tenant):
+    """2026-11-19: one score an hour for every topic of the week, never
+    deleted, was 7.7 GB on the server; only the latest is read."""
+    from sqlalchemy import func, insert, select
+
+    from editor import models as m
+
+    with db.tenant(tenant) as s:
+        ids = [s.execute(insert(m.topics).values(tenant_id=tenant, label=x, keywords=[x])
+                         .returning(m.topics.c.id)).scalar_one() for x in ("a", "b")]
+        for n in range(4):
+            for topic in ids:
+                s.execute(insert(m.trend_scores).values(tenant_id=tenant, topic_id=topic, formula_version="v",
+                                                        score=float(n), components={}, missing=[]))
+    out = tenant_data.prune(db, tenant)
+    assert out["scores"] == 6
+    with db.tenant(tenant) as s:
+        rows = s.execute(select(m.trend_scores.c.topic_id, m.trend_scores.c.score)
+                         .order_by(m.trend_scores.c.topic_id)).all()
+        assert [tuple(r) for r in rows] == [(ids[0], 3.0), (ids[1], 3.0)]
+        assert s.execute(select(func.count()).select_from(m.trend_scores)).scalar() == 2
