@@ -355,6 +355,16 @@ async fn s2_large_files_are_truncated() {
 }
 
 #[tokio::test]
+async fn s2_truncation_does_not_split_a_utf8_character() {
+    let (ws, _) = workspace("s2utf8");
+    std::fs::write(ws.root().join("unicode.txt"), "éé").unwrap();
+    let read = ReadFileTool::new(ws, 3);
+    let out = read.execute(&json!({"path": "unicode.txt"})).await.unwrap();
+    assert!(out.starts_with("é\n[truncated at 3 bytes]"), "{out:?}");
+    assert!(!out.contains('\u{fffd}'));
+}
+
+#[tokio::test]
 async fn s3_list_dir_is_confined() {
     let (ws, _) = workspace("s3");
     let t = ListDirTool::new(ws);

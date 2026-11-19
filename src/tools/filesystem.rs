@@ -55,7 +55,12 @@ impl Tool for ReadFileTool {
             .read_to_end(&mut data)
             .await?;
         let truncated = data.len() > self.max_bytes;
-        data.truncate(self.max_bytes);
+        if truncated {
+            let cut = std::str::from_utf8(&data[..self.max_bytes])
+                .map(|_| self.max_bytes)
+                .unwrap_or_else(|e| e.valid_up_to());
+            data.truncate(cut);
+        }
         let mut text = String::from_utf8_lossy(&data).into_owned();
         if truncated {
             text.push_str(&format!("\n[truncated at {} bytes]", self.max_bytes));
