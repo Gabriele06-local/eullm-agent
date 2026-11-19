@@ -231,6 +231,24 @@ async fn ollama_uses_native_api_chat() {
 }
 
 #[tokio::test]
+async fn ollama_accepts_a_tool_call_without_arguments() {
+    let srv = MockServer::start(|_, _| {
+        http_response(
+            "200 OK",
+            "",
+            r#"{"message":{"role":"assistant","content":"","tool_calls":[{"function":{"name":"get_weather"}}]},"prompt_eval_count":1,"eval_count":1}"#,
+        )
+    })
+    .await;
+    let client = OllamaClient::new(srv.url(), "llama3.1", Duration::from_secs(5));
+    let resp = client
+        .chat(&[Message::user("x")], &weather_tool())
+        .await
+        .unwrap();
+    assert_eq!(resp.tool_calls[0].arguments, json!({}));
+}
+
+#[tokio::test]
 async fn anthropic_tolerates_unknown_blocks_and_reads_usage() {
     let srv = MockServer::start(|_, _| {
         http_response(
