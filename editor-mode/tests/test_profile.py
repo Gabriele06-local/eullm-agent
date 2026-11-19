@@ -417,3 +417,89 @@ def test_the_hourly_tick_queues_the_incomplete_analysis_again(db, tenant):
     with db.tenant(tenant) as s:
         job = s.execute(select(m.jobs.c.kind, m.jobs.c.subject, m.jobs.c.status)).one()
     assert tuple(job) == ("analysis", "blog.example", "queued")
+
+
+V2 = {"sector": {"value": "Tecnologia", "evidence": ["https://blog.example/a"], "by": "model"},
+      "audience": {"value": "Professionisti", "evidence": [], "by": "model"},
+      "style": {"tone": "sobrio", "formats": ["news"]},
+      "settings": {"proposals_per_day": 6, "min_relevance": 0.15},
+      "subtopics": [{"name": "Fibra", "keywords": ["fibra", "ftth"], "share": 0.4},
+                    {"name": "Wi-Fi", "keywords": ["wifi", "router"], "share": 0.3},
+                    {"name": "Satelliti", "keywords": ["satellite", "starlink"], "share": 0.2}]}
+V4 = {"sector": {"value": "Informazione generalista", "evidence": ["https://blog.example/b"], "by": "model"},
+      "audience": {"value": "Professionisti", "evidence": [], "by": "model"},
+      "style": {"tone": "informativo", "formats": ["news"]},
+      "settings": {"proposals_per_day": 6, "min_relevance": 0.15},
+      "subtopics": [{"name": "Fibra", "keywords": ["fibra", "ftth"], "share": 0.7},
+                    {"name": "Wi-Fi", "keywords": ["wifi", "router"], "share": 0.3},
+                    {"name": "Politica", "keywords": ["governo", "elezioni"], "share": 0.25}]}
+
+
+def test_every_row_of_the_comparison_can_be_chosen():
+    rows = prof.compare(V2, V4)
+    keys = {r["key"] for r in rows if r.get("key")}
+    assert keys == {"sector", "tone", "topic:Fibra", "topic:Politica", "gone:Satelliti"}
+
+
+def test_mix_keeps_the_unticked_rows_as_approved():
+    # Everything from the proposal but the sector, the new topic and the topic that leaves.
+    body = prof.mix(V2, V4, {"sector", "topic:Politica", "gone:Satelliti"})
+    assert body["sector"]["value"] == "Tecnologia"
+    assert body["style"]["tone"] == "informativo"
+    names = {s["name"]: s["share"] for s in body["subtopics"]}
+    assert names == {"Fibra": 0.7, "Wi-Fi": 0.3, "Satelliti": 0.2}  # Politica not added, Satelliti stays
+    body = prof.mix(V2, V4, {"topic:Fibra", "tone"})
+    assert {s["name"]: s["share"] for s in body["subtopics"]}["Fibra"] == 0.4
+    assert body["style"]["tone"] == "sobrio" and body["sector"]["value"] == "Informazione generalista"
+    with pytest.raises(ValueError):
+        prof.mix(V2, V4, {"audience"})  # not a difference: nothing to choose
+    assert V4["subtopics"][0]["share"] == 0.7  # the proposal itself is not touched
+
+
+def _two_versions(db, tenant):
+    from editor import repo
+    with db.tenant(tenant) as s:
+        site_id = repo.ensure_site(s, tenant, "blog.example", "Blog")
+        prof.save_draft(s, tenant, site_id, dict(V2), "analysis")
+        assert prof.approve(s, site_id, 1, "francesco")
+        prof.save_draft(s, tenant, site_id, dict(V4), "reanalysis", based_on=1)
+    return site_id
+
+
+def test_owner_choices_become_a_new_approved_version(db, tenant):
+    site_id = _two_versions(db, tenant)
+    with db.tenant(tenant) as s:
+        version, how = prof.approve_choice(s, tenant, site_id, 2, 1, {"tone", "topic:Fibra", "topic:Politica"}, "francesco")
+        rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+        body = prof.approved_profile(s, site_id).body
+    assert (version, how) == (3, "mixed")
+    assert [tuple(r) for r in rows] == [(1, "retired"), (2, "retired"), (3, "approved")]
+    assert body["sector"]["value"] == "Tecnologia" and body["style"]["tone"] == "informativo"
+    assert {s["name"] for s in body["subtopics"]} == {"Fibra", "Wi-Fi", "Politica", "Satelliti"}
+
+
+def test_owner_choices_all_or_none(db, tenant):
+    site_id = _two_versions(db, tenant)
+    with db.tenant(tenant) as s:
+        # Versions no longer on screen: nothing changes.
+        with pytest.raises(LookupError):
+            prof.approve_choice(s, tenant, site_id, 2, 7, set(), "francesco")
+        with pytest.raises(ValueError):
+            prof.approve_choice(s, tenant, site_id, 2, 1, {"audience"}, "francesco")
+        assert prof.approve_choice(s, tenant, site_id, 2, 1, set(), "francesco") == (1, "kept")
+        rows = s.execute(text("SELECT version, status FROM editor.editorial_profiles ORDER BY version")).all()
+    assert [tuple(r) for r in rows] == [(1, "approved"), (2, "retired")]
+    with db.tenant(tenant) as s:
+        prof.save_draft(s, tenant, site_id, dict(V4), "reanalysis", based_on=1)
+        every = {r["key"] for r in prof.compare(V2, V4) if r.get("key")}
+        assert prof.approve_choice(s, tenant, site_id, 3, 1, every, "francesco") == (3, "approved")
+
+
+def test_owner_writes_sector_audience_and_tone_in_a_form(db, tenant):
+    site_id = _two_versions(db, tenant)
+    with db.tenant(tenant) as s:
+        # A draft waiting is changed in place.
+        assert prof.set_basics(s, tenant, site_id, "francesco", "Telecomunicazioni", "Professionisti", "informativo") == 2
+        assert prof.set_basics(s, tenant, site_id, "francesco", "Telecomunicazioni", "Professionisti", "informativo") is None
+        draft = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.version == 2)).scalar()
+    assert draft["sector"] == {"value": "Telecomunicazioni", "evidence": [], "by": "owner"}

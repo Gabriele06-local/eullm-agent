@@ -238,14 +238,17 @@
 {% if analysis and analysis.problems %}
 <div class="dashed"><strong>{{ _("Note sulla lettura del sito") if analysis.status == 'complete' else _("Perché la lettura del sito è parziale") }}</strong>{% for p in analysis.problems[:6] %}<span class="hint">{{ p|problem }}</span>{% endfor %}</div>
 {% endif %}
-{% if editing %}
+{% if editing and shown %}
+{% set eb = shown.body %}
 <section class="card pad" aria-labelledby="h-edit">
   <h2 id="h-edit">{{ _('Modifica il profilo') }}</h2>
-  <p class="lead">{{ _('Le modifiche diventano una nuova versione in bozza: la linea cambia solo quando la approvi.') }}</p>
+  <p class="lead">{% if draft %}{{ _('Cambi la proposta v{version} che aspetta la tua approvazione: la linea cambia solo quando la approvi.', version=draft.version) }}{% else %}{{ _('Le modifiche diventano subito la nuova versione della linea.') }}{% endif %} {{ _('I temi si tolgono e si rimettono dalla tabella dei temi, sotto il profilo.') }}</p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="/ui/sites/{{ site.id }}/profile" style="display: flex; flex-direction: column; gap: 12px;">
-    <label class="field">{{ _('Profilo (JSON)') }}<textarea name="body" spellcheck="false">{{ body_json }}</textarea></label>
-    <div class="row"><a class="btn" href="/site">{{ _('Annulla') }}</a><button class="btn pri" type="submit">{{ _('Salva come bozza') }}</button></div>
+    <label class="field">{{ _('Settore') }}<input name="sector" maxlength="500" value="{{ (eb.get('sector') or {}).get('value') or '' }}" placeholder="{{ _('Per esempio: informazione su tecnologia e intelligenza artificiale') }}"></label>
+    <label class="field">{{ _('Pubblico') }}<input name="audience" maxlength="500" value="{{ (eb.get('audience') or {}).get('value') or '' }}" placeholder="{{ _('Chi legge il sito') }}"></label>
+    <label class="field">{{ _('Tono') }}<input name="tone" maxlength="200" value="{{ (eb.get('style') or {}).get('tone') or '' }}" placeholder="{{ _('Per esempio: informativo e sobrio') }}"></label>
+    <div class="row"><a class="btn" href="/site">{{ _('Annulla') }}</a><button class="btn pri" type="submit">{{ _('Salva') }}</button></div>
   </form>
 </section>
 {% elif shown %}
@@ -268,7 +271,7 @@
     {% if draft and caller.can('owner') %}
     <div class="row">
       {% if approved %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/discard/{{ draft.version }}"><button class="btn" type="submit">{{ _('Mantieni la v{version}', version=approved.version) }}</button></form>{% endif %}
-      <a class="btn" href="/site?edit=1">{{ _('Modifica') }}</a>
+      {% if not approved %}<a class="btn" href="/site?edit=1">{{ _('Modifica') }}</a>{% endif %}
       {% if thin %}
       <a class="btn pri" href="/site?tab=auto">{{ _('Crea il profilo dal contesto') }}</a>
       {% elif incomplete %}
@@ -284,7 +287,26 @@
   {% if draft and approved %}
   <div class="pad" style="gap: 10px; border-bottom: 1px solid var(--line);" aria-labelledby="h-cmp">
     <h3 id="h-cmp">{{ _('Cosa cambia rispetto alla v{version} approvata', version=approved.version) }}</h3>
-    {% if comparison %}
+    {% set choosable = comparison|selectattr('key')|list %}
+    {% if choosable and caller.can('owner') %}
+    <p class="hint" style="margin: 0;">{{ _('Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com\'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi "Approva le scelte".', new=draft.version, old=approved.version) }}</p>
+    <form method="post" action="/ui/sites/{{ site.id }}/choose" style="display: flex; flex-direction: column; gap: 10px;">
+      <input type="hidden" name="draft" value="{{ draft.version }}"><input type="hidden" name="approved" value="{{ approved.version }}">
+      <div class="scroll">
+        <table style="min-width: 560px;">
+          <thead><tr><th style="width: 1%;">{{ _('Prendi') }}</th><th>{{ _('Cosa') }}</th><th>{{ _('Oggi (v{version})', version=approved.version) }}</th><th>{{ _('Proposta (v{version})', version=draft.version) }}</th></tr></thead>
+          <tbody>
+          {% for c in comparison %}
+          {% if c.note %}<tr><td></td><td colspan="3" class="hint">{{ c.note }}</td></tr>
+          {% else %}<tr><td><input type="checkbox" name="take" value="{{ c.key }}" id="take-{{ loop.index }}" checked aria-label="{{ _('Prendi la proposta per: {what}', what=c.what) }}"></td><td><label for="take-{{ loop.index }}">{{ c.what }}</label></td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="row"><button class="btn pri" type="submit">{{ _('Approva le scelte') }}</button></div>
+    </form>
+    <p class="hint" style="margin: 0;">{{ _('"Approva le scelte" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com\'è. "Mantieni la v{old}" scarta la proposta. Sotto trovi il profilo proposto per intero.', new=draft.version, old=approved.version) }}</p>
+    {% elif comparison %}
     <div class="scroll">
       <table style="min-width: 520px;">
         <thead><tr><th>{{ _('Cosa') }}</th><th>{{ _('Oggi (v{version})', version=approved.version) }}</th><th>{{ _('Proposta (v{version})', version=draft.version) }}</th></tr></thead>
@@ -299,8 +321,6 @@
     {% else %}
     <p class="hint" style="margin: 0;">{{ _('Nessuna differenza nella linea: la proposta nasce da un modo migliore di leggere il sito.') }}</p>
     {% endif %}
-    <p class="hint" style="margin: 0;">{{ _('"Approva" rende attiva la proposta; "Mantieni" la scarta e resta la v{version}. Sotto trovi il profilo proposto per intero.', version=approved.version) }}</p>
-  </div>
   {% endif %}
 
   {% set b = shown.body %}

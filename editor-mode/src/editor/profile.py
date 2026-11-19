@@ -354,7 +354,9 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
 
 def compare(old: dict, new: dict) -> list[dict]:
     """Side by side, what a proposed version changes in the approved one:
-    rows of {what, before, after, note} for the profile page."""
+    rows of {key, what, before, after, note} for the profile page. `key`
+    names the row for `mix`: the owner can keep the approved value of any
+    row (a note has no key: there is nothing to choose)."""
     rows = []
 
     def value(body, key):
@@ -363,32 +365,34 @@ def compare(old: dict, new: dict) -> list[dict]:
     for key, label in (("sector", t("Settore")), ("audience", t("Pubblico"))):
         a, b = value(old, key), value(new, key)
         if a != b:
-            rows.append({"what": label, "before": a or t("non determinato"), "after": b or t("non determinato")})
+            rows.append({"key": key, "what": label, "before": a or t("non determinato"), "after": b or t("non determinato")})
     ta, tb = (old.get("style") or {}).get("tone"), (new.get("style") or {}).get("tone")
     if ta != tb:
-        rows.append({"what": t("Tono"), "before": ta or t("non determinato"), "after": tb or t("non determinato")})
+        rows.append({"key": "tone", "what": t("Tono"), "before": ta or t("non determinato"), "after": tb or t("non determinato")})
     la = old.get("languages") or ({old["language"]: None} if old.get("language") else {})
     lb = new.get("languages") or ({new["language"]: None} if new.get("language") else {})
     if set(la) != set(lb):
-        rows.append({"what": t("Lingue"), "before": ", ".join(la) or t("non determinate"),
+        rows.append({"key": "languages", "what": t("Lingue"), "before": ", ".join(la) or t("non determinate"),
                      "after": ", ".join(lb) or t("non determinate")})
     if bool(old.get("summary")) != bool(new.get("summary")) and new.get("summary"):
-        rows.append({"what": t("Descrizione della linea"), "before": t("assente"),
+        rows.append({"key": "summary", "what": t("Descrizione della linea"), "before": t("assente"),
                      "after": t("scritta dal modello sulle pagine lette")})
     old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
     pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
     for sub in new_subs:
         o = _match(sub, old_subs)
         if o is None:
-            rows.append({"what": t("Tema «{name}»", name=sub["name"]), "before": t("non c'era"),
-                         "after": t("nuovo, {pct} degli articoli", pct=pct(sub.get("share")))})
+            rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": t("non c'era"),
+                         "after": t("nuovo, {pct} degli articoli", pct=pct(sub.get("share"))), "kind": "new"})
         elif abs((sub.get("share") or 0) - (o.get("share") or 0)) >= 0.05 or o["name"] != sub["name"]:
             before = (t("{pct} come «{name}»", pct=pct(o.get("share")), name=o["name"])
                       if o["name"] != sub["name"] else pct(o.get("share")))
-            rows.append({"what": t("Tema «{name}»", name=sub["name"]), "before": before, "after": pct(sub.get("share"))})
+            rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": before,
+                         "after": pct(sub.get("share")), "kind": "changed"})
     gone = [o for o in old_subs if _match(o, new_subs) is None]
     for o in gone:
-        rows.append({"what": t("Tema «{name}»", name=o["name"]), "before": pct(o.get("share")), "after": t("esce dal profilo")})
+        rows.append({"key": f"gone:{o['name']}", "what": t("Tema «{name}»", name=o["name"]), "before": pct(o.get("share")),
+                     "after": t("esce dal profilo"), "kind": "gone"})
     if gone and sum(1 for o in gone if (o.get("share") or 0) >= 0.9) >= 2:
         rows.append({"what": t("Perché quei temi escono"), "before": "", "after": "",
                      "note": t("Nella versione precedente erano parole chiave presenti su quasi tutte le pagine del sito "
@@ -397,8 +401,56 @@ def compare(old: dict, new: dict) -> list[dict]:
     so, sn = old.get("settings") or {}, new.get("settings") or {}
     for key, label in (("proposals_per_day", t("Proposte al giorno")), ("min_relevance", t("Pertinenza minima"))):
         if key in so and key in sn and so[key] != sn[key]:
-            rows.append({"what": label, "before": str(so[key]), "after": str(sn[key])})
+            rows.append({"key": f"setting:{key}", "what": label, "before": str(so[key]), "after": str(sn[key])})
     return rows
+
+
+def mix(old: dict, new: dict, keep: set[str]) -> dict:
+    """The proposed version with the rows the owner chose to keep as in the
+    approved one (keys of `compare`). A new topic kept out is not added; a
+    topic that leaves and is kept stays; a topic that changes and is kept
+    goes back to its approved name, keywords and share."""
+    body = copy.deepcopy(new)
+    keys = {r["key"] for r in compare(old, new) if r.get("key")}
+    unknown = set(keep) - keys
+    if unknown:
+        raise ValueError(f"not a difference between the two versions: {', '.join(sorted(unknown))[:200]}")
+    for key in ("sector", "audience"):
+        if key in keep:
+            if old.get(key) is None:
+                body.pop(key, None)
+            else:
+                body[key] = copy.deepcopy(old[key])
+    if "tone" in keep:
+        style = dict(body.get("style") or {})
+        style["tone"] = (old.get("style") or {}).get("tone")
+        body["style"] = style
+    if "languages" in keep:
+        for key in ("language", "languages"):
+            if key in old:
+                body[key] = copy.deepcopy(old[key])
+            else:
+                body.pop(key, None)
+    if "summary" in keep:
+        body["summary"] = copy.deepcopy(old.get("summary"))
+    old_subs = old.get("subtopics", [])
+    subs = []
+    for sub in new.get("subtopics", []):
+        if f"topic:{sub['name']}" not in keep:
+            subs.append(copy.deepcopy(sub))
+            continue
+        o = _match(sub, old_subs)
+        if o is not None and all(x["name"] != o["name"] for x in subs):  # changed: the approved topic
+            subs.append(copy.deepcopy(o))
+        # new and kept out: not added
+    for o in old_subs:
+        if f"gone:{o['name']}" in keep and all(x["name"] != o["name"] for x in subs):
+            subs.append(copy.deepcopy(o))
+    body["subtopics"] = sorted(subs, key=lambda x: -(x.get("share") or 0))
+    for key in ("proposals_per_day", "min_relevance"):
+        if f"setting:{key}" in keep:
+            body["settings"] = {**(body.get("settings") or {}), key: (old.get("settings") or {})[key]}
+    return body
 
 
 # --- persistence ---------------------------------------------------------------
@@ -591,6 +643,62 @@ def restore_topic(s, tenant_id: str, site_id: int, name: str, by: str) -> int | 
         if all(x.get("name") != name for x in body.get("subtopics", [])):
             body["subtopics"] = sorted(body.get("subtopics", []) + [sub], key=lambda x: -(x.get("share") or 0))
         return True
+    return _change_topics(s, tenant_id, site_id, by, change)
+
+
+def approve_choice(s, tenant_id: str, site_id: int, draft_version: int, approved_version: int,
+                   take: set[str], by: str) -> tuple[int, str]:
+    """The owner's choice, row by row, between the approved version and the
+    proposed one (`compare`): the rows in `take` come from the proposal, the
+    others stay as approved (a box left unticked keeps the approved value). Returns (version in use, "approved" | "mixed" | "kept").
+
+    Raises LookupError when the two versions on screen are no longer the
+    approved one and the draft waiting, ValueError when the choice does not
+    make a valid profile."""
+    draft, approved = _editable(s, site_id)
+    if draft is None or approved is None or draft.version != draft_version or approved.version != approved_version:
+        raise LookupError("the versions changed")
+    rows = [r for r in compare(approved.body, draft.body) if r.get("key")]
+    keys = {r["key"] for r in rows}
+    take = set(take)
+    if take - keys:
+        raise ValueError("not a difference between the two versions")
+    keep = keys - take
+    if not keep:
+        approve(s, site_id, draft.version, by)
+        return draft.version, "approved"
+    if keys and keep >= keys:
+        p = m.editorial_profiles
+        s.execute(update(p).where(p.c.id == draft.id).values(status="retired"))
+        return approved.version, "kept"
+    body = mix(approved.body, draft.body, keep)
+    validate_edit(body)  # ValueError: a mix that is not a profile is not stored
+    pid = save_draft(s, tenant_id, site_id, body, "manual", based_on=approved.version,
+                     changes=drift(approved.body, body))
+    version = s.execute(select(m.editorial_profiles.c.version).where(m.editorial_profiles.c.id == pid)).scalar_one()
+    approve(s, site_id, version, by)
+    return version, "mixed"
+
+
+def set_basics(s, tenant_id: str, site_id: int, by: str, sector: str, audience: str, tone: str) -> int | None:
+    """Sector, audience and tone written by the owner, from a form: like the
+    choice of topics, a draft waiting is changed in place, an approved
+    profile becomes a new approved version. None when nothing changes."""
+    values = {"sector": sector.strip()[:500], "audience": audience.strip()[:500], "tone": tone.strip()[:200]}
+
+    def change(body):
+        changed = False
+        for key in ("sector", "audience"):
+            now = (body.get(key) or {}).get("value") or ""
+            if values[key] != now:
+                body[key] = {"value": values[key] or None, "evidence": [], "by": "owner" if values[key] else None}
+                changed = True
+        style = dict(body.get("style") or {})
+        if values["tone"] != (style.get("tone") or ""):
+            style["tone"] = values["tone"] or None
+            body["style"] = style
+            changed = True
+        return changed
     return _change_topics(s, tenant_id, site_id, by, change)
 
 

@@ -2821,5 +2821,22 @@
  "{pct}% delle proposte è uscito come articolo": "{pct}% der Vorschläge wurden als Artikel veröffentlicht",
  "in attesa del tuo sì, senza pubblicate e scartate": "warten auf dein Ja, ohne veröffentlichte und verworfene",
  "{n} in attesa del tuo sì": "{n} warten auf dein Ja",
- "{n} per la redazione automatica": "{n} für die automatische Redaktion"
+ "{n} per la redazione automatica": "{n} für die automatische Redaktion",
+ "Cambi la proposta v{version} che aspetta la tua approvazione: la linea cambia solo quando la approvi.": "Du änderst den Vorschlag v{version}, der auf deine Freigabe wartet: Die Linie ändert sich erst, wenn du ihn freigibst.",
+ "Le modifiche diventano subito la nuova versione della linea.": "Deine Änderungen werden sofort zur neuen Version der Linie.",
+ "I temi si tolgono e si rimettono dalla tabella dei temi, sotto il profilo.": "Themen entfernst und stellst du in der Thementabelle unter dem Profil wieder her.",
+ "Per esempio: informazione su tecnologia e intelligenza artificiale": "Zum Beispiel: Nachrichten über Technologie und künstliche Intelligenz",
+ "Chi legge il sito": "Wer die Website liest",
+ "Per esempio: informativo e sobrio": "Zum Beispiel: informativ und sachlich",
+ "Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi \"Approva le scelte\".": "Jede angehakte Zeile übernimmt den Vorschlag v{new}. Entferne den Haken, um den Punkt wie in v{old} zu behalten: ein neues Thema ohne Haken kommt nicht hinzu, ein ausscheidendes Thema ohne Haken bleibt. Dann drücke \"Auswahl freigeben\".",
+ "Prendi": "Übernehmen",
+ "Prendi la proposta per: {what}": "Vorschlag übernehmen für: {what}",
+ "Approva le scelte": "Auswahl freigeben",
+ "\"Approva le scelte\" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com'è. \"Mantieni la v{old}\" scarta la proposta. Sotto trovi il profilo proposto per intero.": "\"Auswahl freigeben\" aktiviert eine neue Version mit den angehakten Zeilen aus v{new} und den übrigen aus v{old}; sind alle Zeilen angehakt, wird v{new} unverändert freigegeben. \"v{old} behalten\" verwirft den Vorschlag. Darunter steht das vollständige vorgeschlagene Profil.",
+ "Profilo aggiornato (v{version}).": "Profil aktualisiert (v{version}).",
+ "Approvata la v{version}, con le tue scelte fra la v{old} e la v{new}: è la linea del sito da ora. Cerco le fonti adatte.": "v{version} freigegeben, mit deiner Auswahl zwischen v{old} und v{new}: Ab jetzt ist sie die Linie der Website. Ich suche passende Quellen.",
+ "Nessuna modifica: il profilo resta com'era.": "Keine Änderung: Das Profil bleibt, wie es war.",
+ "Hai tenuto tutto della v{version}: la proposta è scartata.": "Du hast alles aus v{version} behalten: Der Vorschlag ist verworfen.",
+ "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Das Profil hat sich inzwischen geändert: Prüfe den Vergleich erneut und wähle.",
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Diese Auswahl ergibt kein gültiges Profil: Nichts wurde geändert, die Linie bleibt v{version}."
 }
