@@ -260,3 +260,24 @@ async fn anthropic_tolerates_unknown_blocks_and_reads_usage() {
     assert_eq!(body["max_tokens"], 1024);
     assert_eq!(body["tools"][0]["input_schema"]["required"][0], "city");
 }
+
+#[tokio::test]
+async fn anthropic_decodes_stringified_tool_arguments() {
+    let srv = MockServer::start(|_, _| {
+        http_response(
+            "200 OK",
+            "",
+            r#"{"content":[
+                {"type":"tool_use","id":"tu_2","name":"get_weather","input":"{\"city\":\"Roma\"}"}
+            ],"usage":{"input_tokens":1,"output_tokens":1}}"#,
+        )
+    })
+    .await;
+    let client = AnthropicClient::new("sk-test", "claude-x", 1024, Duration::from_secs(5))
+        .with_base_url(format!("{}/v1", srv.url()));
+    let resp = client
+        .chat(&[Message::user("x")], &weather_tool())
+        .await
+        .unwrap();
+    assert_eq!(resp.tool_calls[0].arguments, json!({"city": "Roma"}));
+}

@@ -7,8 +7,8 @@ use std::time::Duration;
 use tracing::debug;
 
 use super::{
-    http_client, send_with_retry, ChatResponse, LlmClient, Message, Role, ToolCall, ToolDefinition,
-    Usage,
+    http_client, openai::parse_arguments, send_with_retry, ChatResponse, LlmClient, Message, Role,
+    ToolCall, ToolDefinition, Usage,
 };
 
 const DEFAULT_BASE_URL: &str = "https://api.anthropic.com/v1";
@@ -214,7 +214,7 @@ impl LlmClient for AnthropicClient {
                     tool_calls.push(ToolCall {
                         id,
                         name,
-                        arguments: input,
+                        arguments: parse_arguments(input),
                     });
                 }
                 AnthropicBlock::Unknown => {}
