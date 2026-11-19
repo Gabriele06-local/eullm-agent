@@ -107,7 +107,7 @@ def components(members: list[Member], now: datetime) -> dict[str, float]:
         out["models"] = _sat(sum(x.metrics.get("trending", 0) for x in hf), 100)
 
     papers = [x for x in members if x.kind == "arxiv" and x.at >= now - timedelta(days=3)]
-    if any(x.kind == "arxiv" for x in members):
+    if papers:
         out["research"] = min(1.0, len(papers) / 5)
     return out
 
