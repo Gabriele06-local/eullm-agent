@@ -1234,7 +1234,6 @@ def register(app, ctx) -> None:
                       lang_offer=language_offer(c, s, site),
                       feed_token=delivery.current_token(s, site.id) if site else None,
                       feed_base=(getattr(ctx, "public_url", "") or str(request.base_url)).rstrip("/"),
-                      body_json=json.dumps(shown.body, ensure_ascii=False, indent=2) if shown is not None else "",
                       gsc=search_panel(s, site) if site else None)
 
     def language_offer(c: auth.Caller, s, site) -> dict | None:
@@ -1713,22 +1712,43 @@ def register(app, ctx) -> None:
         return done("/site?tab=site", t("Versione v{version} eliminata.", version=version))
 
     @app.post("/ui/sites/{site_id}/profile")
-    def ui_edit_profile(request: Request, site_id: int, body: str = Form(...),
+    def ui_edit_profile(site_id: int, sector: str = Form(""), audience: str = Form(""), tone: str = Form(""),
                         c: auth.Caller = Depends(ctx.need("owner"))):
+        """Sector, audience and tone from a form: the owner never writes the
+        profile by hand (Francesco 2026-11-19)."""
         with db.tenant(c.tenant_id) as s:
-            sites, site = current_site(s, request)
-            site = next((x for x in sites if x.id == site_id), None)
-            if site is None:
+            if s.execute(select(m.sites.c.id).where(m.sites.c.id == site_id)).scalar() is None:
                 raise HTTPException(404, "site not found")
+            version = prof.set_basics(s, c.tenant_id, site_id, c.name, sector, audience, tone)
+        if version is None:
+            return done("/site", t("Nessuna modifica: il profilo resta com'era."))
+        return done("/site", t("Profilo aggiornato (v{version}).", version=version))
+
+    @app.post("/ui/sites/{site_id}/choose")
+    async def ui_choose_profile(request: Request, site_id: int, c: auth.Caller = Depends(ctx.need("owner"))):
+        """The comparison of a proposed version, row by row: a ticked row
+        takes the proposal, an unticked one keeps the approved value."""
+        form = await request.form()
+        try:
+            draft_v, approved_v = int(form.get("draft", "")), int(form.get("approved", ""))
+        except ValueError:
+            raise HTTPException(400, "versions missing") from None
+        take = {str(x) for x in form.getlist("take")}
+        with db.tenant(c.tenant_id) as s:
             try:
-                value = prof.validate_edit(json.loads(body))
-            except ValueError as e:
-                return site_page(request, c, s, sites, site, editing=True, status_code=400,
-                                 error=t("Profilo non valido: {e}", e=e))
-            value["domain"] = site.domain
-            pid = prof.edit(s, c.tenant_id, site_id, value)
-            version = s.execute(select(m.editorial_profiles.c.version).where(m.editorial_profiles.c.id == pid)).scalar()
-        return done("/site", t("Modifiche salvate come bozza v{version}: approvala per renderla attiva.", version=version))
+                version, how = prof.approve_choice(s, c.tenant_id, site_id, draft_v, approved_v, take, c.name)
+            except LookupError:
+                return done("/site", t("Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli."))
+            except ValueError:
+                return done("/site", t("Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.",
+                                       version=approved_v))
+        if how == "kept":
+            return done("/site", t("Hai tenuto tutto della v{version}: la proposta è scartata.", version=version))
+        ctx.run_discovery(c.tenant_id, site_id)
+        if how == "approved":
+            return done("/site", t("Versione {version} approvata: è la linea del sito da ora. Cerco le fonti adatte.", version=version))
+        return done("/site", t("Approvata la v{version}, con le tue scelte fra la v{old} e la v{new}: è la linea del sito da ora. "
+                               "Cerco le fonti adatte.", version=version, old=approved_v, new=draft_v))
 
     @app.get("/guide", response_class=HTMLResponse)
     def guide(request: Request, c: auth.Caller = Depends(viewer)):

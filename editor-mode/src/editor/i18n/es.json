@@ -2821,5 +2821,22 @@
  "{pct}% delle proposte è uscito come articolo": "el {pct}% de las propuestas salió como artículo",
  "in attesa del tuo sì, senza pubblicate e scartate": "esperan tu sí, sin publicadas ni descartadas",
  "{n} in attesa del tuo sì": "{n} esperan tu sí",
- "{n} per la redazione automatica": "{n} para la redacción automática"
+ "{n} per la redazione automatica": "{n} para la redacción automática",
+ "Cambi la proposta v{version} che aspetta la tua approvazione: la linea cambia solo quando la approvi.": "Cambias la propuesta v{version} que espera tu aprobación: la línea cambia solo cuando la apruebas.",
+ "Le modifiche diventano subito la nuova versione della linea.": "Tus cambios se convierten enseguida en la nueva versión de la línea.",
+ "I temi si tolgono e si rimettono dalla tabella dei temi, sotto il profilo.": "Los temas se quitan y se vuelven a poner desde la tabla de temas, debajo del perfil.",
+ "Per esempio: informazione su tecnologia e intelligenza artificiale": "Por ejemplo: información sobre tecnología e inteligencia artificial",
+ "Chi legge il sito": "Quién lee el sitio",
+ "Per esempio: informativo e sobrio": "Por ejemplo: informativo y sobrio",
+ "Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi \"Approva le scelte\".": "Cada fila marcada toma la propuesta v{new}. Desmarca una fila para mantener ese elemento como está en la v{old}: un tema nuevo sin marcar no entra, un tema que sale sin marcar se queda. Luego pulsa \"Aprobar mis elecciones\".",
+ "Prendi": "Tomar",
+ "Prendi la proposta per: {what}": "Tomar la propuesta para: {what}",
+ "Approva le scelte": "Aprobar mis elecciones",
+ "\"Approva le scelte\" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com'è. \"Mantieni la v{old}\" scarta la proposta. Sotto trovi il profilo proposto per intero.": "\"Aprobar mis elecciones\" activa una nueva versión con las filas marcadas de la v{new} y las demás de la v{old}; con todas las filas marcadas aprueba la v{new} tal cual. \"Mantener la v{old}\" descarta la propuesta. Debajo está el perfil propuesto completo.",
+ "Profilo aggiornato (v{version}).": "Perfil actualizado (v{version}).",
+ "Approvata la v{version}, con le tue scelte fra la v{old} e la v{new}: è la linea del sito da ora. Cerco le fonti adatte.": "v{version} aprobada, con tus elecciones entre la v{old} y la v{new}: desde ahora es la línea del sitio. Busco las fuentes adecuadas.",
+ "Nessuna modifica: il profilo resta com'era.": "Ningún cambio: el perfil sigue como estaba.",
+ "Hai tenuto tutto della v{version}: la proposta è scartata.": "Has mantenido todo de la v{version}: la propuesta se descarta.",
+ "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Mientras tanto el perfil ha cambiado: revisa de nuevo la comparación y elige.",
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Estas elecciones no forman un perfil válido: nada ha cambiado, la línea sigue siendo la v{version}."
 }

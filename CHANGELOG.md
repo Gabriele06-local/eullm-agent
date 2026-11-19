@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.37.0
+
+### Changed
+
+- **Il nuovo profilo si sceglie voce per voce, senza mai toccare il JSON**
+  (Francesco, 19 novembre: "Modifica" sulla proposta v4 di aitoday.it
+  apriva il profilo in JSON da correggere a mano). In Sito e profilo la
+  tabella "Cosa cambia rispetto alla v2 approvata" ha una spunta per ogni
+  riga (settore, pubblico, tono, lingue, descrizione, ogni tema nuovo, ogni
+  tema che cambia, ogni tema che esce, proposte al giorno, pertinenza),
+  tutte spuntate sulla proposta. Togliendo la spunta resta il valore della
+  versione approvata: un tema nuovo non entra, un tema che esce resta, un
+  tema che cambia torna com'era. "Approva le scelte" crea e approva una
+  nuova versione con quelle scelte, controllata dal server (se nel
+  frattempo è arrivata un'altra proposta o le scelte non formano un profilo
+  valido non cambia nulla e lo dice); con tutte le righe spuntate approva la
+  proposta così com'è, con nessuna tiene la versione approvata.
+- "Modifica il profilo" ora è un modulo con settore, pubblico e tono; i temi
+  si tolgono e si rimettono dalla tabella dei temi, come prima. Il JSON
+  grezzo non c'è più nelle pagine della redazione (resta solo l'API
+  `PUT /api/sites/{id}/profile` per chi integra da programma).
+
 ## 0.36.7
 
 ### Fixed

@@ -1,9 +1,10 @@
 import socket
 
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import select, text, update
 
 from editor import auth
+from editor import models as m
 from editor.api import create_app
 from editor.ui import safe_path
 from test_publishing import approved_draft, public_resolver
@@ -333,3 +334,35 @@ def test_the_desk_counts_the_proposals_that_came_out_as_articles(db, tenant, mon
     page = c.get("/").text
     assert "1/1" in page and "100% delle proposte è uscito come articolo" in page
     assert "Costo modello, 30 giorni" not in page
+
+
+def test_owner_chooses_row_by_row_and_never_sees_the_json(db, tenant):
+    from test_profile import V2, V4
+    _, site_id = approved_draft(db, tenant)
+    with db.tenant(tenant) as s:
+        p = m.editorial_profiles
+        s.execute(update(p).where(p.c.status == "approved").values(body=dict(V2)))
+        approved = s.execute(text("SELECT version FROM editor.editorial_profiles WHERE status = 'approved'")).scalar()
+        from editor import profile as prof
+        prof.save_draft(s, tenant, site_id, dict(V4), "reanalysis", based_on=approved)
+        draft = s.execute(text("SELECT max(version) FROM editor.editorial_profiles")).scalar()
+    owner = logged_in(db, tenant, "owner")
+    page = owner.get("/site").text
+    assert "Approva le scelte" in page and 'name="take" value="gone:Satelliti"' in page and "checked" in page
+    assert "Profilo (JSON)" not in page and "<textarea" not in owner.get("/site?edit=1").text
+    assert 'name="sector"' in owner.get("/site?edit=1").text
+    r = owner.post(f"/ui/sites/{site_id}/choose", follow_redirects=False,
+                   data={"draft": draft, "approved": approved, "take": ["tone", "topic:Fibra", "topic:Politica"]})
+    assert r.status_code == 303
+    assert "con le tue scelte" in owner.get("/site").text
+    with db.tenant(tenant) as s:
+        body = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.status == "approved")).scalar()
+    assert body["sector"]["value"] == "Tecnologia" and body["style"]["tone"] == "informativo"
+    assert {x["name"] for x in body["subtopics"]} == {"Fibra", "Wi-Fi", "Politica", "Satelliti"}
+    # The page of an older choice: nothing changes, the owner is told.
+    r = owner.post(f"/ui/sites/{site_id}/choose", data={"draft": draft, "approved": approved, "take": ["tone"]})
+    assert "Nel frattempo il profilo è cambiato" in r.text
+    assert logged_in(db, tenant, "editor").post(f"/ui/sites/{site_id}/choose", data={"draft": 1, "approved": 1}).status_code == 403
+    r = owner.post(f"/ui/sites/{site_id}/profile", data={"sector": "Telecomunicazioni", "audience": "Professionisti",
+                                                         "tone": "informativo"}, follow_redirects=False)
+    assert r.status_code == 303 and "Profilo aggiornato" in owner.get("/site").text

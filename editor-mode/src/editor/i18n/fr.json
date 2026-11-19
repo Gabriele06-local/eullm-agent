@@ -2821,5 +2821,22 @@
  "{pct}% delle proposte è uscito come articolo": "{pct}% des propositions sont parues en article",
  "in attesa del tuo sì, senza pubblicate e scartate": "en attente de ton accord, hors publiées et écartées",
  "{n} in attesa del tuo sì": "{n} en attente de ton accord",
- "{n} per la redazione automatica": "{n} pour la rédaction automatique"
+ "{n} per la redazione automatica": "{n} pour la rédaction automatique",
+ "Cambi la proposta v{version} che aspetta la tua approvazione: la linea cambia solo quando la approvi.": "Tu modifies la proposition v{version} en attente de ton approbation : la ligne ne change que lorsque tu l'approuves.",
+ "Le modifiche diventano subito la nuova versione della linea.": "Tes modifications deviennent tout de suite la nouvelle version de la ligne.",
+ "I temi si tolgono e si rimettono dalla tabella dei temi, sotto il profilo.": "Les thèmes se retirent et se remettent depuis le tableau des thèmes, sous le profil.",
+ "Per esempio: informazione su tecnologia e intelligenza artificiale": "Par exemple : information sur la technologie et l'intelligence artificielle",
+ "Chi legge il sito": "Qui lit le site",
+ "Per esempio: informativo e sobrio": "Par exemple : informatif et sobre",
+ "Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi \"Approva le scelte\".": "Chaque ligne cochée prend la proposition v{new}. Décoche une ligne pour garder cet élément tel qu'il est dans la v{old} : un nouveau thème décoché n'entre pas, un thème qui sort décoché reste. Puis appuie sur \"Approuver mes choix\".",
+ "Prendi": "Prendre",
+ "Prendi la proposta per: {what}": "Prendre la proposition pour : {what}",
+ "Approva le scelte": "Approuver mes choix",
+ "\"Approva le scelte\" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com'è. \"Mantieni la v{old}\" scarta la proposta. Sotto trovi il profilo proposto per intero.": "\"Approuver mes choix\" active une nouvelle version avec les lignes cochées de la v{new} et les autres de la v{old} ; si toutes les lignes sont cochées, la v{new} est approuvée telle quelle. \"Garder la v{old}\" écarte la proposition. Le profil proposé complet est ci-dessous.",
+ "Profilo aggiornato (v{version}).": "Profil mis à jour (v{version}).",
+ "Approvata la v{version}, con le tue scelte fra la v{old} e la v{new}: è la linea del sito da ora. Cerco le fonti adatte.": "v{version} approuvée, avec tes choix entre la v{old} et la v{new} : c'est désormais la ligne du site. Je cherche les sources adaptées.",
+ "Nessuna modifica: il profilo resta com'era.": "Aucune modification : le profil reste tel qu'il était.",
+ "Hai tenuto tutto della v{version}: la proposta è scartata.": "Tu as tout gardé de la v{version} : la proposition est écartée.",
+ "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Le profil a changé entre-temps : vérifie à nouveau la comparaison et choisis.",
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Ces choix ne forment pas un profil valide : rien n'a changé, la ligne reste la v{version}."
 }

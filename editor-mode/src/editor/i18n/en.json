@@ -2821,5 +2821,22 @@
  "{pct}% delle proposte è uscito come articolo": "{pct}% of proposals came out as an article",
  "in attesa del tuo sì, senza pubblicate e scartate": "awaiting your yes, excluding published and discarded",
  "{n} in attesa del tuo sì": "{n} awaiting your yes",
- "{n} per la redazione automatica": "{n} for the automatic newsroom"
+ "{n} per la redazione automatica": "{n} for the automatic newsroom",
+ "Cambi la proposta v{version} che aspetta la tua approvazione: la linea cambia solo quando la approvi.": "You are changing the proposed v{version} waiting for your approval: the line changes only when you approve it.",
+ "Le modifiche diventano subito la nuova versione della linea.": "Your changes become the new version of the line straight away.",
+ "I temi si tolgono e si rimettono dalla tabella dei temi, sotto il profilo.": "Topics are removed and restored from the topics table, below the profile.",
+ "Per esempio: informazione su tecnologia e intelligenza artificiale": "For example: news on technology and artificial intelligence",
+ "Chi legge il sito": "Who reads the site",
+ "Per esempio: informativo e sobrio": "For example: informative and sober",
+ "Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi \"Approva le scelte\".": "Every ticked row takes the proposed v{new}. Untick a row to keep that item as it is in v{old}: an unticked new topic is not added, an unticked topic that leaves stays. Then press \"Approve my choices\".",
+ "Prendi": "Take",
+ "Prendi la proposta per: {what}": "Take the proposal for: {what}",
+ "Approva le scelte": "Approve my choices",
+ "\"Approva le scelte\" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com'è. \"Mantieni la v{old}\" scarta la proposta. Sotto trovi il profilo proposto per intero.": "\"Approve my choices\" makes active a new version with the ticked rows from v{new} and the others from v{old}; with every row ticked it approves v{new} as it is. \"Keep v{old}\" discards the proposal. Below is the full proposed profile.",
+ "Profilo aggiornato (v{version}).": "Profile updated (v{version}).",
+ "Approvata la v{version}, con le tue scelte fra la v{old} e la v{new}: è la linea del sito da ora. Cerco le fonti adatte.": "v{version} approved, with your choices between v{old} and v{new}: it is the site's line from now on. Looking for suitable sources.",
+ "Nessuna modifica: il profilo resta com'era.": "No change: the profile stays as it was.",
+ "Hai tenuto tutto della v{version}: la proposta è scartata.": "You kept everything from v{version}: the proposal is discarded.",
+ "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "The profile changed in the meantime: check the comparison again and choose.",
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "These choices do not make a valid profile: nothing changed, the line stays v{version}."
 }
