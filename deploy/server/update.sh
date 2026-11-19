@@ -153,11 +153,13 @@ backup_status() {  # state: what the console shows; written only when it changes
 }
 backups() {
   settings
-  # An archive to delete, asked from the console: only a name of this folder.
+  # Archives to delete, asked from the console: only names of this folder.
   if [ -f "$dir/backup-delete.json" ]; then
-    f=$(sed -n 's/.*"file": *"\([A-Za-z0-9_-]*-[0-9-]*_[0-9]*\.tgz\)".*/\1/p' "$dir/backup-delete.json" | head -n 1)
+    names=$(grep -o '[A-Za-z0-9_-]*-[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}_[0-9]\{4\}\.tgz' "$dir/backup-delete.json" | head -n 500)
     rm -f "$dir/backup-delete.json"
-    case $f in "$b_name"-*) [ -f "$bdir/$f" ] && rm -f "$bdir/$f" ;; esac
+    for f in $names; do
+      case $f in "$b_name"-*) [ -f "$bdir/$f" ] && rm -f "$bdir/$f" ;; esac
+    done
   fi
   asked=
   [ -f "$dir/backup-now.json" ] && { asked=1; rm -f "$dir/backup-now.json"; }

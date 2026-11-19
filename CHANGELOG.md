@@ -21,6 +21,13 @@
   si tolgono e si rimettono dalla tabella dei temi, come prima. Il JSON
   grezzo non c'è più nelle pagine della redazione (resta solo l'API
   `PUT /api/sites/{id}/profile` per chi integra da programma).
+- **Backup: più archivi eliminati in una volta** (Francesco, 19 novembre:
+  oggi bisognava cliccare ogni archivio). In Console › Backup ogni archivio
+  ha una spunta, in testa una per spuntarli tutti, e "Elimina gli archivi
+  spuntati" li cancella insieme dopo una conferma. Le richieste fatte prima
+  che il server le esegua si sommano; `update.sh` (si aggiorna da solo con
+  la versione) cancella solo nomi di archivio validi della cartella dei
+  backup.
 
 ## 0.36.7
 

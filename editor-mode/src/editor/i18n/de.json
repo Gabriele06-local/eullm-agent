@@ -2838,5 +2838,11 @@
  "Nessuna modifica: il profilo resta com'era.": "Keine Änderung: Das Profil bleibt, wie es war.",
  "Hai tenuto tutto della v{version}: la proposta è scartata.": "Du hast alles aus v{version} behalten: Der Vorschlag ist verworfen.",
  "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Das Profil hat sich inzwischen geändert: Prüfe den Vergleich erneut und wähle.",
- "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Diese Auswahl ergibt kein gültiges Profil: Nichts wurde geändert, die Linie bleibt v{version}."
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Diese Auswahl ergibt kein gültiges Profil: Nichts wurde geändert, die Linie bleibt v{version}.",
+ "Spunta almeno un archivio da eliminare.": "Hake mindestens ein Archiv zum Löschen an.",
+ "{n} archivi eliminati dal server.": "{n} Archive vom Server gelöscht.",
+ "Eliminare gli archivi spuntati? Non si può annullare.": "Die angehakten Archive löschen? Das lässt sich nicht rückgängig machen.",
+ "Spunta tutti gli archivi": "Alle Archive anhaken",
+ "Spunta {name}": "{name} anhaken",
+ "Elimina gli archivi spuntati": "Angehakte Archive löschen"
 }

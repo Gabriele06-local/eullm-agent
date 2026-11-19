@@ -63,15 +63,30 @@
 
     <h3>{{ _('Archivi sul server') }}</h3>
     {% if b.archives %}
+    <form method="post" action="/admin/backups/delete" id="bk-del" onsubmit='var n = this.querySelectorAll("input[name=file]:checked").length; if (!n) return false; return confirm({{ _('Eliminare gli archivi spuntati? Non si può annullare.')|string|tojson }} + " (" + n + ")")'>
     <table class="tbl">
-      <thead><tr><th>{{ _('Archivio') }}</th><th class="num">{{ _('Dimensione') }}</th><th>{{ _('Data') }}</th><th></th></tr></thead>
+      <thead><tr><th style="width: 1%;"><input type="checkbox" id="bk-all" aria-label="{{ _('Spunta tutti gli archivi') }}" title="{{ _('Spunta tutti gli archivi') }}"></th><th>{{ _('Archivio') }}</th><th class="num">{{ _('Dimensione') }}</th><th>{{ _('Data') }}</th></tr></thead>
       <tbody>
       {% for a in b.archives %}
-      <tr><td class="num">{{ a.name }}</td><td class="num">{{ ((a.size or 0) / 1048576)|round(1) }} MB</td><td class="num">{{ a.at[8:10] ~ '/' ~ a.at[5:7] ~ ' ' ~ a.at[11:16] }}</td>
-        <td><form method="post" action="/admin/backups/delete" onsubmit='return confirm({{ _('Eliminare {name}? Non si può annullare.', name=a.name)|string|tojson }})'><input type="hidden" name="file" value="{{ a.name }}"><button class="btn sm" type="submit">{{ _('Elimina') }}</button></form></td></tr>
+      <tr><td><input type="checkbox" name="file" value="{{ a.name }}" id="bk-{{ loop.index }}" aria-label="{{ _('Spunta {name}', name=a.name) }}"></td><td class="num"><label for="bk-{{ loop.index }}">{{ a.name }}</label></td><td class="num">{{ ((a.size or 0) / 1048576)|round(1) }} MB</td><td class="num">{{ a.at[8:10] ~ '/' ~ a.at[5:7] ~ ' ' ~ a.at[11:16] }}</td></tr>
       {% endfor %}
       </tbody>
     </table>
+    <div class="row" style="margin-top: 8px;"><button class="btn sm" type="submit" id="bk-go" disabled>{{ _('Elimina gli archivi spuntati') }}</button> <span class="hint" id="bk-n"></span></div>
+    </form>
+    <script>
+    /* Tick several archives, or all, then delete them at once. */
+    (function () {
+      var f = document.getElementById('bk-del'), all = document.getElementById('bk-all'), go = document.getElementById('bk-go');
+      var boxes = function () { return f.querySelectorAll('input[name=file]'); };
+      function count() {
+        var n = f.querySelectorAll('input[name=file]:checked').length;
+        go.disabled = !n; all.checked = n && n === boxes().length; all.indeterminate = n > 0 && n < boxes().length;
+      }
+      all.addEventListener('change', function () { boxes().forEach(function (b) { b.checked = all.checked; }); count(); });
+      f.addEventListener('change', function (e) { if (e.target.name === 'file') count(); });
+    })();
+    </script>
     {% else %}<p class="hint">{{ _('Nessun archivio ancora.') }}</p>{% endif %}
     {% if b.log %}<details class="act sm"><summary><span class="ico" aria-hidden="true">≡</span>{{ _('Registro') }}</summary><pre style="white-space: pre-wrap; font-size: 12px;">{{ b.log }}</pre></details>{% endif %}
     {% if b.pending and not b.stale %}
