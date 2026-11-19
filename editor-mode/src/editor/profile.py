@@ -352,6 +352,24 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
     return changes
 
 
+def _pair(sub: dict, candidates: list[dict]) -> dict | None:
+    """The topic of the other version that `sub` continues, for the
+    comparison the owner chooses from: shared keywords, or a name that
+    contains the other ("Intelligenza artificiale" and "Intelligenza
+    artificiale e agenti IA", 2026-11-19)."""
+    found = _match(sub, candidates)
+    if found is not None:
+        return found
+    words = set(tokens(sub["name"]))
+    best = None
+    for c in candidates:
+        other = set(tokens(c["name"]))
+        if words and other and (words <= other or other <= words):
+            if best is None or len(other) > len(set(tokens(best["name"]))):
+                best = c
+    return best
+
+
 def compare(old: dict, new: dict) -> list[dict]:
     """Side by side, what a proposed version changes in the approved one:
     rows of {key, what, before, after, note} for the profile page. `key`
@@ -380,7 +398,7 @@ def compare(old: dict, new: dict) -> list[dict]:
     old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
     pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
     for sub in new_subs:
-        o = _match(sub, old_subs)
+        o = _pair(sub, old_subs)
         if o is None:
             rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": t("non c'era"),
                          "after": t("nuovo, {pct} degli articoli", pct=pct(sub.get("share"))), "kind": "new"})
@@ -389,7 +407,8 @@ def compare(old: dict, new: dict) -> list[dict]:
                       if o["name"] != sub["name"] else pct(o.get("share")))
             rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": before,
                          "after": pct(sub.get("share")), "kind": "changed"})
-    gone = [o for o in old_subs if _match(o, new_subs) is None]
+    paired = {id(_pair(sub, old_subs)) for sub in new_subs}
+    gone = [o for o in old_subs if id(o) not in paired]  # every approved topic no new one continues
     for o in gone:
         rows.append({"key": f"gone:{o['name']}", "what": t("Tema «{name}»", name=o["name"]), "before": pct(o.get("share")),
                      "after": t("esce dal profilo"), "kind": "gone"})
@@ -439,7 +458,7 @@ def mix(old: dict, new: dict, keep: set[str]) -> dict:
         if f"topic:{sub['name']}" not in keep:
             subs.append(copy.deepcopy(sub))
             continue
-        o = _match(sub, old_subs)
+        o = _pair(sub, old_subs)
         if o is not None and all(x["name"] != o["name"] for x in subs):  # changed: the approved topic
             subs.append(copy.deepcopy(o))
         # new and kept out: not added

@@ -2844,5 +2844,9 @@
  "Eliminare gli archivi spuntati? Non si può annullare.": "¿Eliminar los archivos marcados? No se puede deshacer.",
  "Spunta tutti gli archivi": "Marcar todos los archivos",
  "Spunta {name}": "Marcar {name}",
- "Elimina gli archivi spuntati": "Eliminar los archivos marcados"
+ "Elimina gli archivi spuntati": "Eliminar los archivos marcados",
+ "Con queste scelte la redazione segue {n} tema.": "Con estas elecciones la redacción sigue {n} tema.",
+ "Con queste scelte la redazione segue {n} temi.": "Con estas elecciones la redacción sigue {n} temas.",
+ "Pochi temi: arrivano meno notizie e meno proposte.": "Pocos temas: llegan menos noticias y menos propuestas.",
+ "Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.": "Los porcentajes dicen de qué hablan los artículos ya publicados en el sitio. Los temas son el filtro de la redacción: de las fuentes llegan propuestas solo sobre noticias cercanas a al menos un tema, así que un tema quitado es un asunto sin más propuestas."
 }

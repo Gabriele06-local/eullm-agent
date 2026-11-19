@@ -2844,5 +2844,9 @@
  "Eliminare gli archivi spuntati? Non si può annullare.": "Delete the ticked archives? It cannot be undone.",
  "Spunta tutti gli archivi": "Tick all archives",
  "Spunta {name}": "Tick {name}",
- "Elimina gli archivi spuntati": "Delete the ticked archives"
+ "Elimina gli archivi spuntati": "Delete the ticked archives",
+ "Con queste scelte la redazione segue {n} tema.": "With these choices the newsroom follows {n} topic.",
+ "Con queste scelte la redazione segue {n} temi.": "With these choices the newsroom follows {n} topics.",
+ "Pochi temi: arrivano meno notizie e meno proposte.": "Few topics: fewer news and fewer proposals come in.",
+ "Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.": "The percentages say what the articles already published on the site are about. Topics are the newsroom's filter: from the sources come proposals only on news close to at least one topic, so a topic taken out is a subject with no more proposals."
 }

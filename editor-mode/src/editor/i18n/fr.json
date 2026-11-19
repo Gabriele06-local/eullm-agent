@@ -2844,5 +2844,9 @@
  "Eliminare gli archivi spuntati? Non si può annullare.": "Supprimer les archives cochées ? Impossible d'annuler.",
  "Spunta tutti gli archivi": "Cocher toutes les archives",
  "Spunta {name}": "Cocher {name}",
- "Elimina gli archivi spuntati": "Supprimer les archives cochées"
+ "Elimina gli archivi spuntati": "Supprimer les archives cochées",
+ "Con queste scelte la redazione segue {n} tema.": "Avec ces choix, la rédaction suit {n} thème.",
+ "Con queste scelte la redazione segue {n} temi.": "Avec ces choix, la rédaction suit {n} thèmes.",
+ "Pochi temi: arrivano meno notizie e meno proposte.": "Peu de thèmes : moins d'actualités et moins de propositions arrivent.",
+ "Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.": "Les pourcentages disent de quoi parlent les articles déjà publiés sur le site. Les thèmes sont le filtre de la rédaction : les sources ne donnent des propositions que sur les actualités proches d'au moins un thème, donc un thème retiré est un sujet sans plus aucune proposition."
 }

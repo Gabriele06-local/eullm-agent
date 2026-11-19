@@ -2844,5 +2844,9 @@
  "Eliminare gli archivi spuntati? Non si può annullare.": "Die angehakten Archive löschen? Das lässt sich nicht rückgängig machen.",
  "Spunta tutti gli archivi": "Alle Archive anhaken",
  "Spunta {name}": "{name} anhaken",
- "Elimina gli archivi spuntati": "Angehakte Archive löschen"
+ "Elimina gli archivi spuntati": "Angehakte Archive löschen",
+ "Con queste scelte la redazione segue {n} tema.": "Mit dieser Auswahl folgt die Redaktion {n} Thema.",
+ "Con queste scelte la redazione segue {n} temi.": "Mit dieser Auswahl folgt die Redaktion {n} Themen.",
+ "Pochi temi: arrivano meno notizie e meno proposte.": "Wenige Themen: Es kommen weniger Nachrichten und weniger Vorschläge.",
+ "Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.": "Die Prozentsätze zeigen, worüber die bereits auf der Website veröffentlichten Artikel sprechen. Die Themen sind der Filter der Redaktion: Aus den Quellen kommen nur Vorschläge zu Nachrichten, die mindestens einem Thema nahe sind; ein entferntes Thema ist also ein Gebiet ohne weitere Vorschläge."
 }

@@ -290,7 +290,8 @@
     {% set choosable = comparison|selectattr('key')|list %}
     {% if choosable and caller.can('owner') %}
     <p class="hint" style="margin: 0;">{{ _('Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com\'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi "Approva le scelte".', new=draft.version, old=approved.version) }}</p>
-    <form method="post" action="/ui/sites/{{ site.id }}/choose" style="display: flex; flex-direction: column; gap: 10px;">
+    <p class="hint" style="margin: 0;">{{ _('Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.') }}</p>
+    <form method="post" action="/ui/sites/{{ site.id }}/choose" id="choose" data-topics="{{ (draft.body.get('subtopics') or [])|length }}" style="display: flex; flex-direction: column; gap: 10px;">
       <input type="hidden" name="draft" value="{{ draft.version }}"><input type="hidden" name="approved" value="{{ approved.version }}">
       <div class="scroll">
         <table style="min-width: 560px;">
@@ -298,13 +299,33 @@
           <tbody>
           {% for c in comparison %}
           {% if c.note %}<tr><td></td><td colspan="3" class="hint">{{ c.note }}</td></tr>
-          {% else %}<tr><td><input type="checkbox" name="take" value="{{ c.key }}" id="take-{{ loop.index }}" checked aria-label="{{ _('Prendi la proposta per: {what}', what=c.what) }}"></td><td><label for="take-{{ loop.index }}">{{ c.what }}</label></td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
+          {% else %}<tr><td><input type="checkbox" name="take" value="{{ c.key }}" data-kind="{{ c.kind or '' }}" id="take-{{ loop.index }}" checked aria-label="{{ _('Prendi la proposta per: {what}', what=c.what) }}"></td><td><label for="take-{{ loop.index }}">{{ c.what }}</label></td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
           {% endfor %}
           </tbody>
         </table>
       </div>
-      <div class="row"><button class="btn pri" type="submit">{{ _('Approva le scelte') }}</button></div>
+      <div class="row" style="align-items: center;"><button class="btn pri" type="submit">{{ _('Approva le scelte') }}</button> <span id="choose-count" aria-live="polite"></span></div>
     </form>
+    <script>
+    /* How many topics the line will follow with these choices: the topics
+       are the filter of the newsroom, fewer topics mean fewer news. */
+    (function () {
+      var f = document.getElementById('choose'), out = document.getElementById('choose-count');
+      var one = {{ _('Con queste scelte la redazione segue {n} tema.')|string|tojson }};
+      var many = {{ _('Con queste scelte la redazione segue {n} temi.')|string|tojson }};
+      var few = {{ _('Pochi temi: arrivano meno notizie e meno proposte.')|string|tojson }};
+      function count() {
+        var n = parseInt(f.dataset.topics, 10) || 0;
+        f.querySelectorAll('input[name=take]').forEach(function (b) {
+          if (!b.checked && b.dataset.kind === 'new') n -= 1;
+          if (!b.checked && b.dataset.kind === 'gone') n += 1;
+        });
+        out.textContent = (n === 1 ? one : many).replace('{n}', n) + (n < 4 ? ' ' + few : '');
+        out.className = n < 4 ? 'chip amber' : 'hint';
+      }
+      f.addEventListener('change', count); count();
+    })();
+    </script>
     <p class="hint" style="margin: 0;">{{ _('"Approva le scelte" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com\'è. "Mantieni la v{old}" scarta la proposta. Sotto trovi il profilo proposto per intero.', new=draft.version, old=approved.version) }}</p>
     {% elif comparison %}
     <div class="scroll">

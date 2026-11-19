@@ -503,3 +503,21 @@ def test_owner_writes_sector_audience_and_tone_in_a_form(db, tenant):
         assert prof.set_basics(s, tenant, site_id, "francesco", "Telecomunicazioni", "Professionisti", "informativo") is None
         draft = s.execute(select(m.editorial_profiles.c.body).where(m.editorial_profiles.c.version == 2)).scalar()
     assert draft["sector"] == {"value": "Telecomunicazioni", "evidence": [], "by": "owner"}
+
+
+def test_a_topic_that_widens_its_name_is_one_row_and_no_approved_topic_disappears():
+    """aitoday.it, 2026-11-19: "Intelligenza artificiale" became "Intelligenza
+    artificiale e agenti IA" and showed as a new topic plus one leaving."""
+    old = {"subtopics": [{"name": n, "keywords": [n.lower()], "share": 0.14}
+                         for n in ("Mondo", "Intelligenza artificiale", "Clima", "Cultura")]}
+    new = {"subtopics": [{"name": "Intelligenza artificiale e agenti IA", "keywords": ["agenti", "llm"], "share": 0.16},
+                         {"name": "Sport, cultura e clima", "keywords": ["sport"], "share": 0.10}]}
+    rows = {r["key"]: r for r in prof.compare(old, new) if r.get("key")}
+    assert rows["topic:Intelligenza artificiale e agenti IA"]["kind"] == "changed"
+    assert "come «Intelligenza artificiale»" in rows["topic:Intelligenza artificiale e agenti IA"]["before"]
+    # Clima and Cultura both fit the new topic; one is its continuation, the other still has its row.
+    assert rows["topic:Sport, cultura e clima"]["kind"] == "changed"
+    gone = {k for k, r in rows.items() if r.get("kind") == "gone"}
+    assert "gone:Mondo" in gone and len(gone) == 2
+    body = prof.mix(old, new, gone)  # keep every topic that would leave
+    assert len(body["subtopics"]) == 4

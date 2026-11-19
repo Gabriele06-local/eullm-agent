@@ -19,6 +19,14 @@
 
 ### Changed
 
+- **Il confronto del profilo spiega cosa vuol dire togliere un tema e quanti
+  ne restano** (Francesco, 19 novembre, su aitoday.it: "aggiunge o
+  filtra?"). Sopra la tabella: le percentuali vengono dagli articoli del
+  sito, i temi sono il filtro delle notizie delle fonti. Sotto: "Con queste
+  scelte la redazione segue N temi", con un avviso quando sono pochi. Un
+  tema che allarga il nome ("Intelligenza artificiale" → "Intelligenza
+  artificiale e agenti IA") è una riga sola, non un tema nuovo più uno che
+  esce, e nessun tema approvato sparisce dal confronto senza la sua riga.
 - **Backup: più archivi eliminati in una volta** (Francesco, 19 novembre:
   oggi bisognava cliccare ogni archivio). In Console › Backup ogni archivio
   ha una spunta, in testa una per spuntarli tutti, e "Elimina gli archivi
