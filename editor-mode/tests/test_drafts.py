@@ -214,6 +214,7 @@ def test_two_letter_acronyms_are_content_words():
 
     assert {"ai", "eu", "us", "uk"} <= set(tokens("AI act, EU rules, US and UK elections"))
     assert "ai" not in tokens("Gli aiuti vanno ai comuni")
+    assert not {"si", "ci", "ne", "el", "en"} & set(tokens("Se ne parla, ci si vede; el pueblo en fiesta"))
 
 
 def test_arxiv_is_read_in_full():

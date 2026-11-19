@@ -37,7 +37,7 @@ def tokens(text: str) -> list[str]:
     for t in normalize_text(_SHORT_HYPHEN.sub(r"\1\2", text or "")).split():
         if t in STOPWORDS and t not in acronyms:
             continue
-        if len(t) >= 2:
+        if len(t) >= 3 or (len(t) == 2 and (t in acronyms or any(c.isdigit() for c in t))):
             out.append(t)
     return out
 
