@@ -418,11 +418,6 @@ impl<'a> Agent<'a> {
                 tc.name,
                 truncate_utf8(raw, 200)
             ),
-            Value::Null => {
-                self.tools
-                    .execute(&tc.name, &Value::Object(Default::default()))
-                    .await
-            }
             _ => bail!("arguments for '{}' must be a JSON object", tc.name),
         }
     }

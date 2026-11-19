@@ -117,6 +117,19 @@ async fn malformed_arguments_are_reported_to_the_model() {
 }
 
 #[tokio::test]
+async fn null_arguments_are_reported_instead_of_running_the_tool() {
+    let llm = ScriptedLlm::new(vec![call("echo", Value::Null)]);
+    let tools = registry("should not run");
+    let out = Agent::new(&llm, &tools, 5)
+        .run("sys", "task", |_| {})
+        .await
+        .unwrap();
+    assert_eq!(out, "done");
+    let result = last_tool_result(&llm);
+    assert!(result.contains("must be a JSON object"), "{result}");
+}
+
+#[tokio::test]
 async fn tool_output_is_truncated_before_the_model_sees_it() {
     let llm = ScriptedLlm::new(vec![call("echo", json!({}))]);
     let tools = registry(&"é".repeat(5000));
