@@ -2838,5 +2838,11 @@
  "Nessuna modifica: il profilo resta com'era.": "No change: the profile stays as it was.",
  "Hai tenuto tutto della v{version}: la proposta è scartata.": "You kept everything from v{version}: the proposal is discarded.",
  "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "The profile changed in the meantime: check the comparison again and choose.",
- "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "These choices do not make a valid profile: nothing changed, the line stays v{version}."
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "These choices do not make a valid profile: nothing changed, the line stays v{version}.",
+ "Spunta almeno un archivio da eliminare.": "Tick at least one archive to delete.",
+ "{n} archivi eliminati dal server.": "{n} archives deleted from the server.",
+ "Eliminare gli archivi spuntati? Non si può annullare.": "Delete the ticked archives? It cannot be undone.",
+ "Spunta tutti gli archivi": "Tick all archives",
+ "Spunta {name}": "Tick {name}",
+ "Elimina gli archivi spuntati": "Delete the ticked archives"
 }

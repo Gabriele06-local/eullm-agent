@@ -683,15 +683,20 @@ def register(app, ctx) -> None:
         return back(t("Backup chiesto: il server lo fa subito, l'elenco qui sotto si aggiorna da solo."), "backup")
 
     @app.post("/admin/backups/delete")
-    def ui_backups_delete(file: str = Form(...), s=Depends(need_console)):
+    async def ui_backups_delete(request: Request, s=Depends(need_console)):
         where = updates.folder(ctx.updates_dir)
         if where is None:
             return back(t("Backup dal pannello non attivi su questo server."), "backup", error=True)
+        files = [str(x) for x in (await request.form()).getlist("file")]
+        if not files:
+            return back(t("Spunta almeno un archivio da eliminare."), "backup", error=True)
         try:
-            backups.ask_delete(where, file, s.email)
+            names = backups.ask_delete(where, files, s.email)
         except backups.Invalid as e:
             return back(t(str(e)), "backup", error=True)
-        return back(t("Archivio {name} eliminato dal server.", name=file), "backup")
+        if len(names) == 1:
+            return back(t("Archivio {name} eliminato dal server.", name=names[0]), "backup")
+        return back(t("{n} archivi eliminati dal server.", n=len(names)), "backup")
 
     @app.get("/admin/backups/state")
     def ui_backups_state(s=Depends(need_console)):

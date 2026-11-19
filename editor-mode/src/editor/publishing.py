@@ -37,7 +37,7 @@ import httpx
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from . import drafts, models as m
+from . import drafts, images, models as m
 from . import quotas, seo
 from .markdown import to_html
 
@@ -497,9 +497,7 @@ class Publisher:
             cms_url = s.execute(select(m.publications.c.external_url).where(
                 m.publications.c.draft_id == pub.draft_id, m.publications.c.status == "published",
                 m.publications.c.external_url.is_not(None)).limit(1)).scalar()
-            image = s.execute(select(m.draft_images.c.mime, m.draft_images.c.content, m.draft_images.c.alt,
-                                     m.draft_images.c.token)
-                              .where(m.draft_images.c.draft_id == pub.draft_id)).first()
+            image = images.content(s, pub.draft_id)
         secret = None
         try:
             secret = resolve_secret(db, target) if target.secret_env else None
@@ -571,20 +569,18 @@ class Publisher:
                 return {"status": cur.status, "url": cur.external_url}
             targets = {t.id: t for t in s.execute(select(m.publish_targets).where(
                 m.publish_targets.c.id.in_({x.target_id for x in pubs}))).all()}
-            images = {}
+            covers = {}
             for x in pubs:
-                images[x.id] = s.execute(select(m.draft_images.c.mime, m.draft_images.c.content,
-                                                m.draft_images.c.alt, m.draft_images.c.token)
-                                         .where(m.draft_images.c.draft_id == x.draft_id)).first()
+                covers[x.id] = images.content(s, x.draft_id)
         head, rest = pubs[0], pubs[1:]
         target = targets[head.target_id]
-        more = [(targets[x.target_id], x, images[x.id]) for x in rest]
+        more = [(targets[x.target_id], x, covers[x.id]) for x in rest]
         secret = None
         try:
             secret = resolve_secret(db, target) if target.secret_env else None
             for pause in (*GITHUB_AGAIN, None):
                 try:
-                    ext_id, urls = self._github(target, head, None, secret, images[head.id], more=more)
+                    ext_id, urls = self._github(target, head, None, secret, covers[head.id], more=more)
                     break
                 except (PublishError, httpx.HTTPError) as e:
                     if pause is None or not _github_hiccup(e):
@@ -641,9 +637,7 @@ class Publisher:
             payload = build_payload(s, d)
             if (pub.payload or {}).get("slug"):  # the address stays the same
                 payload["slug"] = pub.payload["slug"]
-            image = s.execute(select(m.draft_images.c.mime, m.draft_images.c.content, m.draft_images.c.alt,
-                                     m.draft_images.c.token, m.draft_images.c.created_at)
-                              .where(m.draft_images.c.draft_id == d.id)).first()
+            image = images.content(s, d.id)
         result = self._change(db, tenant_id, pub, target, "update", payload, image)
         if result["status"] == "failed":
             return result

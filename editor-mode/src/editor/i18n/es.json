@@ -2838,5 +2838,11 @@
  "Nessuna modifica: il profilo resta com'era.": "Ningún cambio: el perfil sigue como estaba.",
  "Hai tenuto tutto della v{version}: la proposta è scartata.": "Has mantenido todo de la v{version}: la propuesta se descarta.",
  "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Mientras tanto el perfil ha cambiado: revisa de nuevo la comparación y elige.",
- "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Estas elecciones no forman un perfil válido: nada ha cambiado, la línea sigue siendo la v{version}."
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Estas elecciones no forman un perfil válido: nada ha cambiado, la línea sigue siendo la v{version}.",
+ "Spunta almeno un archivio da eliminare.": "Marca al menos un archivo para eliminar.",
+ "{n} archivi eliminati dal server.": "{n} archivos eliminados del servidor.",
+ "Eliminare gli archivi spuntati? Non si può annullare.": "¿Eliminar los archivos marcados? No se puede deshacer.",
+ "Spunta tutti gli archivi": "Marcar todos los archivos",
+ "Spunta {name}": "Marcar {name}",
+ "Elimina gli archivi spuntati": "Eliminar los archivos marcados"
 }

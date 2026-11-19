@@ -262,8 +262,18 @@ def test_backups_are_set_from_the_console_and_checked(db, tmp_path):
     assert "Copiato sul server remoto" in page
     c.post("/admin/backups/delete", data={"file": "../../etc/passwd"})
     assert not (tmp_path / "backup-delete.json").exists()
+    assert 'id="bk-all"' in page and 'name="file" value="redazia-2026-11-03_1000.tgz"' in page
+    r = c.post("/admin/backups/delete", data={})
+    assert "Spunta almeno un archivio" in r.text and not (tmp_path / "backup-delete.json").exists()
     c.post("/admin/backups/delete", data={"file": "redazia-2026-11-03_1000.tgz"})
-    assert json.loads((tmp_path / "backup-delete.json").read_text())["file"] == "redazia-2026-11-03_1000.tgz"
+    assert json.loads((tmp_path / "backup-delete.json").read_text())["files"] == ["redazia-2026-11-03_1000.tgz"]
+    # Several at once, added to those still waiting for the script; one bad name refuses them all.
+    r = c.post("/admin/backups/delete", data={"file": ["redazia-2026-11-02_1000.tgz", "redazia-2026-11-01_1000.tgz"]})
+    assert "2 archivi eliminati" in r.text
+    assert json.loads((tmp_path / "backup-delete.json").read_text())["files"] == [
+        "redazia-2026-11-03_1000.tgz", "redazia-2026-11-02_1000.tgz", "redazia-2026-11-01_1000.tgz"]
+    c.post("/admin/backups/delete", data={"file": ["redazia-2026-10-31_1000.tgz", "../x.tgz"]})
+    assert len(json.loads((tmp_path / "backup-delete.json").read_text())["files"]) == 3
 
     other = TestClient(create_app(db, updates_dir=str(tmp_path)))
     assert other.post("/admin/backups/now").status_code in (401, 403)

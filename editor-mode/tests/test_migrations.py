@@ -83,3 +83,52 @@ def test_cannot_write_rows_for_another_tenant(db: Database):
 def test_no_tenant_sees_nothing(pg_urls):
     with psycopg.connect(pg_urls[1]) as conn:
         assert conn.execute("SELECT count(*) FROM editor.tenants").fetchone()[0] == 0
+
+
+def test_copies_of_a_cover_become_pointers_on_upgrade(pg_urls):
+    """0048 on a server with covers already copied for the translations: the
+    copies point at the first image, the bytes stay once; as the server's
+    owner, who is not a superuser."""
+    import uuid
+
+    from editor import migrate, repo
+    from test_publishing import approved_draft
+
+    admin = pg_urls[0].rsplit("/", 1)[0]
+    name = f"editor_mig_{uuid.uuid4().hex[:8]}"
+    with psycopg.connect(admin + "/postgres", autocommit=True) as conn:
+        conn.execute(f'CREATE DATABASE "{name}"')
+    url = f"{admin}/{name}"
+    try:
+        migrate.upgrade(url, "0047")
+        with psycopg.connect(url, autocommit=True) as conn:
+            conn.execute("ALTER ROLE editor_app WITH LOGIN PASSWORD 'editor_app_test'")
+            conn.execute(f'GRANT CONNECT ON DATABASE "{name}" TO editor_app')
+        app = pg_urls[1].rsplit("/", 1)[0] + "/" + name
+        db = Database.from_url(app)
+        db.admin_url = url
+        tenant = "t-mig"
+        with db.tenant(tenant) as s:
+            repo.ensure_tenant(s, tenant, name=tenant)
+        did, _ = approved_draft(db, tenant)
+        with db.tenant(tenant) as s:
+            cols = [c for c in s.execute(text("SELECT column_name FROM information_schema.columns WHERE "
+                                              "table_schema = 'editor' AND table_name = 'drafts'")).scalars() if c != "id"]
+            picked = ", ".join("version + 1" if c == "version" else c for c in cols)
+            other = s.execute(text(f"INSERT INTO editor.drafts ({', '.join(cols)}) SELECT {picked} "
+                                   "FROM editor.drafts WHERE id = :d RETURNING id"), {"d": did}).scalar()
+            for d, tok in ((did, "a"), (other, "b")):
+                s.execute(text("INSERT INTO editor.draft_images (tenant_id, draft_id, token, prompt, model, mime, content) "
+                               "VALUES (:t, :d, :k, 'p', 'm', 'image/jpeg', :c)"),
+                          {"t": tenant, "d": d, "k": tok, "c": b"\xff\xd8same"})
+        db.engine.dispose()
+        migrate.upgrade(url, "head")
+        db = Database.from_url(app)
+        with db.tenant(tenant) as s:
+            rows = s.execute(text("SELECT draft_id, length(content), same_as FROM editor.draft_images ORDER BY id")).all()
+            assert [tuple(r) for r in rows] == [(did, 6, None), (other, 0, did)]
+            assert bytes(s.execute(text("SELECT content FROM editor.image_by_token('b')")).scalar()) == b"\xff\xd8same"
+        db.engine.dispose()
+    finally:
+        with psycopg.connect(admin + "/postgres", autocommit=True) as conn:
+            conn.execute(f'DROP DATABASE "{name}" WITH (FORCE)')

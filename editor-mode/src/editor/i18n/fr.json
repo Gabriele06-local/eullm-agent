@@ -2838,5 +2838,11 @@
  "Nessuna modifica: il profilo resta com'era.": "Aucune modification : le profil reste tel qu'il était.",
  "Hai tenuto tutto della v{version}: la proposta è scartata.": "Tu as tout gardé de la v{version} : la proposition est écartée.",
  "Nel frattempo il profilo è cambiato: controlla di nuovo il confronto e scegli.": "Le profil a changé entre-temps : vérifie à nouveau la comparaison et choisis.",
- "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Ces choix ne forment pas un profil valide : rien n'a changé, la ligne reste la v{version}."
+ "Queste scelte non formano un profilo valido: nulla è cambiato, la linea resta la v{version}.": "Ces choix ne forment pas un profil valide : rien n'a changé, la ligne reste la v{version}.",
+ "Spunta almeno un archivio da eliminare.": "Coche au moins une archive à supprimer.",
+ "{n} archivi eliminati dal server.": "{n} archives supprimées du serveur.",
+ "Eliminare gli archivi spuntati? Non si può annullare.": "Supprimer les archives cochées ? Impossible d'annuler.",
+ "Spunta tutti gli archivi": "Cocher toutes les archives",
+ "Spunta {name}": "Cocher {name}",
+ "Elimina gli archivi spuntati": "Supprimer les archives cochées"
 }

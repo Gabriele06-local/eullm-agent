@@ -11,7 +11,7 @@ Files in the folder:
   backup.conf         the settings, KEY=value lines the script reads (written here)
   backup.json         the same settings for the console (written here)
   backup-now.json     a backup asked now (written here, removed by the script)
-  backup-delete.json  an archive to delete (written here, removed by the script)
+  backup-delete.json  the archives to delete (written here, removed by the script)
   backup-status.json  the last backup, the archives in the folder, the
                       public key for the remote copy (written by the script)
   backup.log          the log of the last backup (written by the script)
@@ -118,10 +118,17 @@ def ask_now(where: Path, by: str, now: datetime | None = None) -> None:
     _write(where / "backup-now.json", {"by": by, "at": (now or datetime.now(UTC)).isoformat()})
 
 
-def ask_delete(where: Path, name: str, by: str) -> None:
-    if not ARCHIVE.match(name or ""):
+def ask_delete(where: Path, names, by: str) -> list[str]:
+    """One or more archives to delete; added to those still waiting, so two
+    requests before the script runs both count."""
+    names = [names] if isinstance(names, str) else list(names)
+    names = list(dict.fromkeys(n for n in names if n))
+    if not names or len(names) > 500 or not all(ARCHIVE.match(n) for n in names):
         raise Invalid(N_("Archivio non valido."))
-    _write(where / "backup-delete.json", {"file": name, "by": by})
+    waiting = (_read(where / "backup-delete.json") or {}).get("files") or []
+    files = list(dict.fromkeys([n for n in waiting if isinstance(n, str) and ARCHIVE.match(n)] + names))
+    _write(where / "backup-delete.json", {"files": files, "by": by})
+    return names
 
 
 def state(where: Path | None, now: datetime | None = None) -> dict:
