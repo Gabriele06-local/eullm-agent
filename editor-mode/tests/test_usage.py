@@ -26,6 +26,18 @@ def good_article(first):
                                {"text": "Le velocità annunciate arrivano a 10 Gbit/s.", "sources": [first]}]}]})
 
 
+def test_the_routes_cache_is_not_shared_between_databases(db, tmp_path):
+    from editor import db as dbmod, migrate, usage
+
+    usage._routes_cache.update(db=None, at=0.0, routes={})
+    url = f"sqlite:///{tmp_path}/other.db"
+    migrate.upgrade(url)
+    other = dbmod.Database.from_url(url)
+    usage.set_route(other, "draft", "model-a")
+    assert usage.routes(other).get("draft") == "model-a"
+    assert usage.routes(db).get("draft") is None
+
+
 def test_every_call_is_recorded_when_it_happens_even_when_the_work_fails(db, tenant, monkeypatch):
     pid, cited = accepted_proposal(db, tenant)
     monkeypatch.setattr(core_client, "RETRY_WAITS", (0,))
