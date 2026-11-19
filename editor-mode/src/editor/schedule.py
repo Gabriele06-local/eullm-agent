@@ -12,11 +12,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select, text
 
-from . import briefing, jobs, models as m, news_base, opportunity, proposals, readers, repo, searchconsole, sources, tenant_data, trends
+from . import briefing, jobs, models as m, news_base, opportunity, proposals, readers, repo, rubrics, searchconsole, sources, tenant_data, trends
 from .i18n import N_
 from .ingest import collect_archive
 from .progress import step as progress
-from .profile import analyse_site
+from .profile import direction_from_choices
 from .scoring import score_topics
 from .topics import detect_topics
 
@@ -356,13 +356,19 @@ class Runner:
             done.append("evening")
 
     def review(self, tenant: str, client) -> None:
-        from .site import SiteCrawler
-
+        """The weekly review: the sources of every site; for a site
+        without the automatic newsroom the weight of its topics from the
+        owner's choices, with it the rubrics of the week from the news. The site itself is read again only on request
+        ("Rianalizza ora"): its own articles must not set the line."""
         with self.db.tenant(tenant) as s:
             sites = s.execute(select(m.sites.c.id, m.sites.c.domain)).all()
         core = self.core_for(tenant)
         for site in sites:
-            analyse_site(self.db, tenant, site.domain, SiteCrawler(client), core)
+            direction_from_choices(self.db, tenant, site.id)
+            try:  # the rubrics of the week, with the automatic newsroom (rubrics.py)
+                rubrics.review(self.db, tenant, site.id, core)
+            except Exception:
+                log.exception("rubrics of site %s failed", site.id)
             sources.discover(self.db, tenant, site.id, client, core)
 
     def morning(self, tenant: str, day: date, now: datetime, language: str = "it") -> int:

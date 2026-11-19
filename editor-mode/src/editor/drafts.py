@@ -701,10 +701,10 @@ def site_section(profile: dict | None, given) -> str | None:
     """The site's section the writer chose, as the site writes it; None when
     it is not one of them. The automatic newsroom's editor-in-chief may
     still move the article (autopilot.finish)."""
-    from .autopilot import settings_of
+    from .autopilot import sections_of, settings_of
 
     want = str(given or "").strip().lower()
-    return next((x for x in settings_of(profile)["sections"] if x.lower() == want), None) if want else None
+    return next((x for x in sections_of(settings_of(profile)) if x.lower() == want), None) if want else None
 
 
 _ARXIV = re.compile(r"^https?://(?:www\.)?arxiv\.org/(?:abs|pdf)/([\w.\-/]+?)(?:\.pdf)?/?$")

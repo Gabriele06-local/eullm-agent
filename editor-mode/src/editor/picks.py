@@ -205,7 +205,7 @@ def _score(c: Candidate, new: float) -> float:
 
 
 def _prompt(profile: dict, cands: list[Candidate], learned: list[str] | None = None) -> str:
-    from .autopilot import settings_of
+    from .autopilot import sections_of, settings_of
 
     style = profile.get("style", {})
     lines = [
@@ -214,7 +214,7 @@ def _prompt(profile: dict, cands: list[Candidate], learned: list[str] | None = N
         f"Audience: {(profile.get('audience') or {}).get('value') or 'not determined'}",
         f"Tone: {style.get('tone') or 'not determined'}",
         f"Subtopics: {', '.join(s['name'] for s in profile.get('subtopics', []))}",
-        *([f"Sections of the site: {', '.join(secs)}"] if (secs := settings_of(profile)["sections"]) else []),
+        *([f"Sections of the site: {', '.join(secs)}"] if (secs := sections_of(settings_of(profile))) else []),
         *(learned or []),
         "News:",
     ]

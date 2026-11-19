@@ -26,7 +26,8 @@
 
 {% endif %}
 {{ _('La prossima settimana') }}: {% if s.auto_per_day %}{{ _('la redazione automatica pubblica fino a {n} articoli al giorno.', n=s.auto_per_day) }}{% elif s.proposals_per_day %}{{ _('{n} proposte nuove ogni mattina.', n=s.proposals_per_day) }}{% else %}{{ _('nuove proposte ogni mattina.') }}{% endif %}
-{% if s.coming %}{{ _('In scrittura') }}: {{ s.coming|join('; ') }}
+{% for e in s.rubrics %}{{ _('Rubriche decise dalla redazione') }}: {% for x in e.changes %}{{ x.section }} {{ _('più spazio') if x['to'] > x['from'] else _('meno spazio') }}{% if not loop.last %}, {% endif %}{% endfor %}{% if e.added %}{% if e.changes %}; {% endif %}{{ _('nuova rubrica «{name}»', name=e.added) }}{% if e.added_topics %} ({{ e.added_topics|join(', ') }}){% endif %}{% endif %}. {{ _('Si annulla in Sito e profilo, Redazione automatica.') }}
+{% endfor %}{% if s.coming %}{{ _('In scrittura') }}: {{ s.coming|join('; ') }}
 {% endif %}
 
 {% endfor %}

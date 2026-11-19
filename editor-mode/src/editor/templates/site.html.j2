@@ -146,6 +146,39 @@
   </form>
 </section>
 
+{% set rb = numbers.rubrics %}
+{% if rb and rb.rows %}
+<section class="card pad" aria-labelledby="h-rubrics">
+  <h2 id="h-rubrics">{{ _('Rubriche decise dalla redazione') }}</h2>
+  <p class="hint">{{ _("Ogni lunedì la redazione guarda di cosa hanno parlato le notizie nella settimana (non gli articoli del sito) e dà più posti al giorno alle rubriche più calde, meno alle altre. Le tue rubriche non vengono mai tolte: al massimo scendono a un articolo al giorno e risalgono quando la notizia torna. Può aggiungere una rubrica a settimana, al massimo {n} in tutto, solo su un argomento in tendenza da almeno 3 giorni, dentro il contesto e mai sugli argomenti da non trattare.", n=3) }}</p>
+  {% if rb.on %}
+  <table class="tbl" style="margin: 8px 0;">
+    <thead><tr><th>{{ _('Rubrica') }}</th><th>{{ _('Priorità questa settimana') }}</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rb.rows %}
+      <tr>
+        <td>{{ r.name }}{% if r.added %} <span class="chip">{{ _('aggiunta dalla redazione') }}</span>{% endif %}</td>
+        <td>{% if r.weight >= 1.5 %}{{ _('alta') }}{% elif r.weight <= 0.5 %}{{ _('bassa') }}{% else %}{{ _('normale') }}{% endif %} <span class="hint">({{ (r.weight * 100)|round|int }}%)</span></td>
+        <td>{% if r.added %}<form class="inline" method="post" action="/ui/sites/{{ site.id }}/rubrics"><input type="hidden" name="name" value="{{ r.name }}"><button class="btn" type="submit" name="action" value="out">{{ _('Togli') }}</button></form>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if not rb.week %}<p class="hint">{{ _('Non ha ancora deciso: la prima volta è lunedì. Fino ad allora tutte le rubriche pesano uguale.') }}</p>{% endif %}
+  {% if rb.last %}
+  <p class="hint">{{ _('Ultimo cambio, settimana del {date}:', date=rb.last.week) }}
+    {% for x in rb.last.changes %}{{ x.section }} {{ (x['from'] * 100)|round|int }}% → {{ (x['to'] * 100)|round|int }}%{% if not loop.last %}, {% endif %}{% endfor %}{% if rb.last.added %}{% if rb.last.changes %}; {% endif %}{{ _('nuova rubrica «{name}»', name=rb.last.added) }}{% endif %}.</p>
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/rubrics"><button class="btn" type="submit" name="action" value="undo">{{ _('Annulla l\'ultimo cambio') }}</button></form>
+  {% endif %}
+  {% if rb.rows|selectattr('added')|list %}<p class="hint">{{ _('Su un sito collegato con GitHub una rubrica nuova ha la sua pagina solo quando la aggiungi anche alla configurazione del sito; su WordPress la categoria si crea da sola.') }}</p>{% endif %}
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/rubrics"><button class="btn" type="submit" name="action" value="off">{{ _('Spegni') }}</button></form>
+  {% else %}
+  <p class="hint">{{ _('Spente per questo sito: tutte le rubriche pesano uguale.') }}</p>
+  <form class="inline" method="post" action="/ui/sites/{{ site.id }}/rubrics"><button class="btn" type="submit" name="action" value="on">{{ _('Accendi') }}</button></form>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if n.per_day is not none %}
 <section class="card pad" aria-labelledby="h-write">
   <h2 id="h-write">{{ _('Come scrive il sito') }}</h2>
@@ -259,7 +292,7 @@
     <div style="display: flex; flex-direction: column; gap: 4px;">
       {% if draft and approved %}
       <h2 id="h-profile">{{ _('Proposta di aggiornamento della linea · versione {version}', version=draft.version) }}</h2>
-      <span style="font-size: 14px;">{% if draft.origin == 'reanalysis' %}{{ _("Dalla rianalisi del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% else %}{{ _("Modifica del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% endif %}</span>
+      <span style="font-size: 14px;">{% if draft.body.get('direction') %}{{ _("Dalle tue scelte: {n} proposte accettate nelle ultime 4 settimane. I temi pesano come li hai scelti; nessun tema esce. La linea cambia solo se approvi.", n=draft.body['direction'].get('accepted')) }}{% elif draft.origin == 'reanalysis' %}{{ _("Dalla rianalisi del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% else %}{{ _("Modifica del {date}. L'agente propone, la linea cambia solo se approvi.", date=when(draft.created_at, 'day')) }}{% endif %}</span>
       {% elif draft %}
       <h2 id="h-profile">{{ _('Profilo proposto · versione {version}', version=draft.version) }}</h2>
       <span style="font-size: 14px;">{{ _("Ricostruito dall'analisi del sito: controllalo e approvalo per avviare piano e opportunità.") }}</span>
@@ -290,7 +323,8 @@
     {% set choosable = comparison|selectattr('key')|list %}
     {% if choosable and caller.can('owner') %}
     <p class="hint" style="margin: 0;">{{ _('Ogni riga spuntata prende la proposta v{new}. Togli la spunta a una riga per tenere quella voce com\'è nella v{old}: un tema nuovo non spuntato non entra, un tema che esce non spuntato resta. Poi premi "Approva le scelte".', new=draft.version, old=approved.version) }}</p>
-    <form method="post" action="/ui/sites/{{ site.id }}/choose" style="display: flex; flex-direction: column; gap: 10px;">
+    <p class="hint" style="margin: 0;">{{ _('Le percentuali dicono di cosa parlano gli articoli già pubblicati sul sito. I temi sono il filtro della redazione: dalle fonti arrivano proposte solo sulle notizie vicine ad almeno un tema, quindi un tema tolto è un argomento su cui non arrivano più proposte.') }}</p>
+    <form method="post" action="/ui/sites/{{ site.id }}/choose" id="choose" data-topics="{{ (draft.body.get('subtopics') or [])|length }}" style="display: flex; flex-direction: column; gap: 10px;">
       <input type="hidden" name="draft" value="{{ draft.version }}"><input type="hidden" name="approved" value="{{ approved.version }}">
       <div class="scroll">
         <table style="min-width: 560px;">
@@ -298,13 +332,33 @@
           <tbody>
           {% for c in comparison %}
           {% if c.note %}<tr><td></td><td colspan="3" class="hint">{{ c.note }}</td></tr>
-          {% else %}<tr><td><input type="checkbox" name="take" value="{{ c.key }}" id="take-{{ loop.index }}" checked aria-label="{{ _('Prendi la proposta per: {what}', what=c.what) }}"></td><td><label for="take-{{ loop.index }}">{{ c.what }}</label></td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
+          {% else %}<tr><td><input type="checkbox" name="take" value="{{ c.key }}" data-kind="{{ c.kind or '' }}" id="take-{{ loop.index }}" checked aria-label="{{ _('Prendi la proposta per: {what}', what=c.what) }}"></td><td><label for="take-{{ loop.index }}">{{ c.what }}</label></td><td>{{ c.before }}</td><td><strong>{{ c.after }}</strong></td></tr>{% endif %}
           {% endfor %}
           </tbody>
         </table>
       </div>
-      <div class="row"><button class="btn pri" type="submit">{{ _('Approva le scelte') }}</button></div>
+      <div class="row" style="align-items: center;"><button class="btn pri" type="submit">{{ _('Approva le scelte') }}</button> <span id="choose-count" aria-live="polite"></span></div>
     </form>
+    <script>
+    /* How many topics the line will follow with these choices: the topics
+       are the filter of the newsroom, fewer topics mean fewer news. */
+    (function () {
+      var f = document.getElementById('choose'), out = document.getElementById('choose-count');
+      var one = {{ _('Con queste scelte la redazione segue {n} tema.')|string|tojson }};
+      var many = {{ _('Con queste scelte la redazione segue {n} temi.')|string|tojson }};
+      var few = {{ _('Pochi temi: arrivano meno notizie e meno proposte.')|string|tojson }};
+      function count() {
+        var n = parseInt(f.dataset.topics, 10) || 0;
+        f.querySelectorAll('input[name=take]').forEach(function (b) {
+          if (!b.checked && b.dataset.kind === 'new') n -= 1;
+          if (!b.checked && b.dataset.kind === 'gone') n += 1;
+        });
+        out.textContent = (n === 1 ? one : many).replace('{n}', n) + (n < 4 ? ' ' + few : '');
+        out.className = n < 4 ? 'chip amber' : 'hint';
+      }
+      f.addEventListener('change', count); count();
+    })();
+    </script>
     <p class="hint" style="margin: 0;">{{ _('"Approva le scelte" rende attiva una nuova versione con le righe spuntate dalla v{new} e le altre dalla v{old}; con tutte le righe spuntate approva la v{new} così com\'è. "Mantieni la v{old}" scarta la proposta. Sotto trovi il profilo proposto per intero.', new=draft.version, old=approved.version) }}</p>
     {% elif comparison %}
     <div class="scroll">

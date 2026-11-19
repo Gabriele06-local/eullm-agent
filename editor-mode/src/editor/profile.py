@@ -15,6 +15,7 @@ person approves the version that drives proposals.
 from __future__ import annotations
 
 import copy
+import dataclasses
 import json
 import logging
 import math
@@ -352,6 +353,24 @@ def drift(old: dict, new: dict, min_share: float = 0.1, min_change: float = 0.15
     return changes
 
 
+def _pair(sub: dict, candidates: list[dict]) -> dict | None:
+    """The topic of the other version that `sub` continues, for the
+    comparison the owner chooses from: shared keywords, or a name that
+    contains the other ("Intelligenza artificiale" and "Intelligenza
+    artificiale e agenti IA", 2026-11-19)."""
+    found = _match(sub, candidates)
+    if found is not None:
+        return found
+    words = set(tokens(sub["name"]))
+    best = None
+    for c in candidates:
+        other = set(tokens(c["name"]))
+        if words and other and (words <= other or other <= words):
+            if best is None or len(other) > len(set(tokens(best["name"]))):
+                best = c
+    return best
+
+
 def compare(old: dict, new: dict) -> list[dict]:
     """Side by side, what a proposed version changes in the approved one:
     rows of {key, what, before, after, note} for the profile page. `key`
@@ -380,7 +399,7 @@ def compare(old: dict, new: dict) -> list[dict]:
     old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
     pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
     for sub in new_subs:
-        o = _match(sub, old_subs)
+        o = _pair(sub, old_subs)
         if o is None:
             rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": t("non c'era"),
                          "after": t("nuovo, {pct} degli articoli", pct=pct(sub.get("share"))), "kind": "new"})
@@ -389,7 +408,8 @@ def compare(old: dict, new: dict) -> list[dict]:
                       if o["name"] != sub["name"] else pct(o.get("share")))
             rows.append({"key": f"topic:{sub['name']}", "what": t("Tema «{name}»", name=sub["name"]), "before": before,
                          "after": pct(sub.get("share")), "kind": "changed"})
-    gone = [o for o in old_subs if _match(o, new_subs) is None]
+    paired = {id(_pair(sub, old_subs)) for sub in new_subs}
+    gone = [o for o in old_subs if id(o) not in paired]  # every approved topic no new one continues
     for o in gone:
         rows.append({"key": f"gone:{o['name']}", "what": t("Tema «{name}»", name=o["name"]), "before": pct(o.get("share")),
                      "after": t("esce dal profilo"), "kind": "gone"})
@@ -439,7 +459,7 @@ def mix(old: dict, new: dict, keep: set[str]) -> dict:
         if f"topic:{sub['name']}" not in keep:
             subs.append(copy.deepcopy(sub))
             continue
-        o = _match(sub, old_subs)
+        o = _pair(sub, old_subs)
         if o is not None and all(x["name"] != o["name"] for x in subs):  # changed: the approved topic
             subs.append(copy.deepcopy(o))
         # new and kept out: not added
@@ -786,6 +806,120 @@ def recipe_repository(db, tenant_id: str, site_id: int) -> bool:
     return any((c or {}).get("recipe_path") for c in configs)
 
 
+# A re-reading must not learn the line from what the newsroom wrote itself:
+# on a site written by Redazia the topics it covered most would grow, the
+# others leave, and the line would narrow to the week's hype by itself
+# (Francesco 2026-11-19, aitoday.it). Its own articles are left out; with
+# too few written by people the reading proposes no change.
+MIN_OWN_POSTS = 5
+
+
+def _slug(url: str) -> str:
+    return (url or "").split("?", 1)[0].split("#", 1)[0].rstrip("/").rsplit("/", 1)[-1].lower()
+
+
+def own_articles(s, site_id: int) -> tuple[set[str], set[str]]:
+    """Slugs and titles of the articles the newsroom published on the site."""
+    d, p = m.drafts, m.publications
+    rows = s.execute(select(d.c.title, p.c.external_url, p.c.payload).join(p, p.c.draft_id == d.c.id)
+                     .where(d.c.site_id == site_id, p.c.status == "published")).all()
+    slugs, titles = set(), set()
+    for r in rows:
+        if r.title:
+            titles.add(" ".join(r.title.lower().split()))
+        if r.external_url:
+            slugs.add(_slug(r.external_url))
+        if isinstance(r.payload, dict) and r.payload.get("slug"):
+            slugs.add(str(r.payload["slug"]).lower())
+    slugs.discard("")
+    return slugs, titles
+
+
+def _people_only(snap: SiteSnapshot, slugs: set[str], titles: set[str]) -> tuple[SiteSnapshot, int]:
+    """The snapshot to learn the line from, without the articles the newsroom
+    wrote, and how many were left out. The full snapshot is still stored:
+    the site's own articles count for what it already covered."""
+    if not slugs and not titles:
+        return snap, 0
+    kept = [x for x in snap.posts if _slug(x.url) not in slugs and " ".join((x.title or "").lower().split()) not in titles]
+    return dataclasses.replace(snap, posts=kept), len(snap.posts) - len(kept)
+
+
+def _keep_approved_topics(current: dict, body: dict) -> dict:
+    """A re-reading may add topics, never take one away: only the owner does."""
+    subs = list(body.get("subtopics") or [])
+    paired = {id(_pair(x, current.get("subtopics") or [])) for x in subs}
+    removed = (body.get("settings") or {}).get("removed") or []
+    for o in current.get("subtopics") or []:
+        if id(o) not in paired and _match(o, removed) is None:
+            subs.append(copy.deepcopy(o))
+    body["subtopics"] = sorted(subs, key=lambda x: -(x.get("share") or 0))
+    return body
+
+
+# The weekly review no longer re-reads the site (Francesco 2026-11-19: the
+# site is read to decide what to write and what to look for, once; then the
+# owner's choices give the direction). Without the automatic newsroom, the
+# proposals the owner accepted in the last weeks weigh the topics; with it,
+# the line changes only by the owner's hand.
+CHOICE_DAYS = 28
+MIN_CHOICES = 10
+MIN_SHIFT = 0.15
+
+
+def direction_from_choices(db, tenant_id: str, site_id: int, now: datetime | None = None) -> int | None:
+    """A proposed version whose topics weigh as the owner chose in the last
+    four weeks; None when there is nothing to propose."""
+    from .autopilot import settings_of
+
+    now = now or datetime.now(UTC)
+    with db.tenant(tenant_id) as s:
+        current = approved_profile(s, site_id)
+        draft, _ = _editable(s, site_id)
+        if current is None or settings_of(current.body)["enabled"]:
+            return None
+        if draft is not None and draft.origin != "reanalysis":
+            return None  # the owner's own proposal waits: not replaced
+        pr, os_ = m.proposals, m.opportunity_scores
+        rows = s.execute(select(pr.c.topic_id, pr.c.profile_id).where(
+            pr.c.site_id == site_id, pr.c.status == "accepted",
+            pr.c.created_at >= now - timedelta(days=CHOICE_DAYS))).all()
+        names = [x["name"] for x in current.body.get("subtopics") or []]
+        chosen = Counter()
+        for r in rows:
+            comp = s.execute(select(os_.c.components).where(
+                os_.c.topic_id == r.topic_id, os_.c.site_id == site_id, os_.c.profile_id == r.profile_id)
+                .order_by(os_.c.computed_at.desc()).limit(1)).scalar()
+            if isinstance(comp, str):
+                comp = json.loads(comp)
+            name = (comp or {}).get("matched_subtopic")
+            if name in names:
+                chosen[name] += 1
+        total = sum(chosen.values())
+        if total < MIN_CHOICES:
+            return None
+        body = copy.deepcopy(dict(current.body))
+        shift = 0.0
+        for sub in body.get("subtopics") or []:
+            share = round(chosen[sub["name"]] / total, 2)
+            shift = max(shift, abs(share - (sub.get("share") or 0)))
+            sub["share"] = share  # no topic leaves: one never chosen weighs less
+        if shift < MIN_SHIFT:
+            return None
+        body["subtopics"] = sorted(body["subtopics"], key=lambda x: -(x.get("share") or 0))
+        body["direction"] = {"accepted": total, "days": CHOICE_DAYS, "at": now.isoformat()}
+        p = m.editorial_profiles
+        s.execute(update(p).where(p.c.site_id == site_id, p.c.status == "draft", p.c.origin == "reanalysis")
+                  .values(status="retired"))
+        changes = drift(current.body, body)
+        pid = save_draft(s, tenant_id, site_id, body, "reanalysis", None, current.version, changes)
+        s.execute(insert(m.profile_reviews).values(
+            tenant_id=tenant_id, site_id=site_id, analysis_id=None,
+            drift={"changes": changes, "from": "choices", "accepted": total},
+            significant=True, proposed_profile_id=pid))
+        return pid
+
+
 def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | None = None) -> dict:
     """First analysis or periodic review of a site. Returns what happened."""
     snap = crawler.analyse(domain)
@@ -800,8 +934,25 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
         cms = connect.known_categories(s, known) if known else {}
     for name, count in cms.items():
         snap.categories.setdefault(name, count)
+    own, reading = 0, snap
+    if known:
+        with db.tenant(tenant_id) as s:
+            reviewing = approved_profile(s, known) is not None
+            mine = own_articles(s, known) if reviewing else (set(), set())
+        reading, own = _people_only(snap, *mine)
+        if reviewing and own and len(reading.posts) < MIN_OWN_POSTS:
+            # Written by the newsroom: nothing of the site's own to learn from.
+            with db.tenant(tenant_id) as s:
+                analysis_id = store_snapshot(s, tenant_id, known, snap)
+                s.execute(insert(m.profile_reviews).values(
+                    tenant_id=tenant_id, site_id=known, analysis_id=analysis_id,
+                    drift={"changes": [], "own_articles": own, "people_articles": len(reading.posts)},
+                    significant=False, proposed_profile_id=None))
+            return {"site_id": known, "analysis_id": analysis_id, "status": snap.status, "problems": snap.problems,
+                    "profile_id": None, "changes": [], "significant": False, "model_failed": None,
+                    "own_articles": own}
     with usage.tagged(db, tenant_id, "site_profile", site_id=known, ref=f"site:{snap.domain}"):
-        body, calls = build_profile(snap, core)
+        body, calls = build_profile(reading, core)
     if cms:  # the sections of the automatic newsroom, until the owner sets their own
         auto = body.setdefault("settings", {}).setdefault("auto", {})
         if not auto.get("sections"):
@@ -841,6 +992,7 @@ def analyse_site(db, tenant_id: str, domain: str, crawler, core: CoreClient | No
             return result
         # A model that did not answer says nothing about the site: the line
         # in use stays, and the reading is tried again (retry_due).
+        body = _keep_approved_topics(current.body, body)
         changes = drift(current.body, body) if snap.status in ("complete", "partial") and not model_failed else []
         if not changes and snap.status in ("complete", "partial") and not model_failed and (
                 current.body.get("method") != METHOD

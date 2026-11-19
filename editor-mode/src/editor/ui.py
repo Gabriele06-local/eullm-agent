@@ -23,7 +23,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, bindparam, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import connect, evergreen, menus, opportunity as oppo, queue, ratelimit, readers
+from . import connect, evergreen, menus, opportunity as oppo, queue, ratelimit, readers, rubrics
 from . import activity as act, accounts, auth, autopilot, billing, credits, delivery, drafts, evening, i18n, jobs, manage, models as m, news_base, profile as prof, proposals as props, images, publishing, quotas, repo, tenant_data, translate as tr, trends, trials, usage, vault, searchconsole, weekly
 from .i18n import N_, t
 from .markdown import to_html
@@ -1150,6 +1150,7 @@ def register(app, ctx) -> None:
             "auto": autopilot.settings_of(body or s.execute(select(m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.site_id == site.id, m.editorial_profiles.c.status == "draft")
                 .order_by(m.editorial_profiles.c.version.desc()).limit(1)).scalar()),
+            "rubrics": rubrics.panel(body) if body else None,
             "auto_today": autopilot.today(s, site.id, start_of_day(s)),
             "auto_last": auto_last((body or {}).get("settings") or {}),
             "auto_allowed": quotas.autopilot_allowed(s),
@@ -1579,6 +1580,28 @@ def register(app, ctx) -> None:
                 autopilot.save(s, site_id, {**autopilot.settings_of(body), "enabled": False})
         return done("/site?tab=auto", t("Redazione automatica fermata: non parte nessun articolo nuovo. Quelli già in "
                                       "scrittura restano bozze da rileggere."))
+
+    @app.post("/ui/sites/{site_id}/rubrics")
+    def ui_rubrics(site_id: int, action: str = Form(""), name: str = Form(""),
+                   c: auth.Caller = Depends(ctx.need("owner"))):
+        """The rubrics the newsroom decides each week (rubrics.py): on or off
+        for the site, its last change undone, a rubric it added taken out."""
+        with db.tenant(c.tenant_id) as s:
+            if action in ("on", "off"):
+                ok = rubrics.set_enabled(s, site_id, action == "on")
+                said = (t("Rubriche decise dalla redazione: accese, si decidono lunedì dalle notizie della settimana.")
+                        if action == "on" else t("Rubriche decise dalla redazione: spente, tutte le rubriche pesano uguale."))
+            elif action == "undo":
+                ok = rubrics.undo(s, site_id)
+                said = t("Ultimo cambio delle rubriche annullato.")
+            elif action == "out":
+                ok = rubrics.take_out(s, site_id, name)
+                said = t("Rubrica «{name}» tolta: la redazione non la propone più.", name=name.strip())
+            else:
+                raise HTTPException(400, "unknown action")
+        if not ok:
+            return done("/site?tab=auto", t("Niente da cambiare nelle rubriche."))
+        return done("/site?tab=auto", said)
 
     @app.post("/ui/sites/{site_id}/analysis")
     def ui_analysis(site_id: int, on: str = Form(""), c: auth.Caller = Depends(ctx.need("owner"))):
@@ -2112,8 +2135,8 @@ def register(app, ctx) -> None:
             courses = {r.id: {"status": r.status, "decided_by": r.decided_by, "online": menus.online(s, r.id)}
                        for r in s.execute(select(m.drafts.c.id, m.drafts.c.status, m.drafts.c.decided_by)
                                           .where(m.drafts.c.id.in_(course_ids or [0]))).all()}
-            site_sections = autopilot.settings_of(s.execute(select(m.editorial_profiles.c.body).where(
-                m.editorial_profiles.c.site_id == d.site_id, m.editorial_profiles.c.status == "approved")).scalar())["sections"]
+            site_sections = autopilot.sections_of(autopilot.settings_of(s.execute(select(m.editorial_profiles.c.body).where(
+                m.editorial_profiles.c.site_id == d.site_id, m.editorial_profiles.c.status == "approved")).scalar()))
             return render(request, "draft.html.j2", c, s, "drafts", _sites=(sites, site), d=d, sections=sections,
                           site_sections=site_sections, courses=courses,
                           original=original, translations=[x for x in family if x.translation_of],

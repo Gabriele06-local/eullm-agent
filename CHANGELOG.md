@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.38.0
+
+### Added
+
+- **Rubriche decise dalla redazione** (Francesco, 19 novembre, con i suoi
+  paletti). Ogni lunedì, per un sito con la redazione automatica, la
+  redazione guarda gli argomenti in tendenza nell'archivio nella settimana
+  appena finita (non gli articoli del sito), il modello li assegna alle
+  rubriche del sito o a nessuna se sono fuori contesto, e ogni rubrica pesa
+  quanto il suo hype: più posti al giorno alle più calde, meno alle altre
+  (il massimo per rubrica per il peso, tra un quarto e il doppio). I limiti:
+  - le rubriche del direttore non vengono mai tolte: scendono al massimo a
+    un articolo al giorno e risalgono la settimana in cui la notizia torna;
+  - al massimo una rubrica nuova a settimana, 3 in tutto, solo su un
+    argomento in tendenza da almeno 3 giorni, dentro il contesto e mai
+    sugli argomenti da non trattare; diventa anche un tema della linea, così
+    le sue notizie arrivano;
+  - i cambi sono nel rapporto del lunedì e in Sito e profilo › Redazione
+    automatica › "Rubriche decise dalla redazione", con la priorità di ogni
+    rubrica, "Annulla l'ultimo cambio", "Togli" per una rubrica aggiunta
+    (non torna più) e l'interruttore per sito, acceso da solo solo con la
+    redazione automatica.
+  Su un sito collegato con GitHub una rubrica nuova ha la sua pagina quando
+  la si aggiunge anche alla configurazione del sito; su WordPress la
+  categoria si crea da sola.
+
+### Changed
+
+- **La rianalisi settimanale non impara più la linea dagli articoli scritti
+  dalla redazione** (Francesco, 19 novembre, su aitoday.it: "un cane che si
+  morde la coda"). Su un sito scritto da Redazia la rianalisi misurava il
+  proprio lavoro: i temi più trattati crescevano, gli altri uscivano e la
+  linea si restringeva da sola all'hype della settimana. Ora:
+  - gli articoli pubblicati dalla redazione (riconosciuti da indirizzo,
+    slug o titolo delle pubblicazioni) non contano per il profilo, ma
+    restano tra gli articoli del sito per sapere cosa è già stato scritto;
+  - con meno di 5 articoli scritti da persone la rianalisi non propone
+    nessuna nuova versione: la linea resta quella approvata;
+  - una nuova versione può aggiungere temi ma non toglierne: un tema lo
+    toglie solo il direttore;
+  - il sito non si rilegge più ogni lunedì: si legge all'inizio e quando
+    premi "Rianalizza ora";
+  - senza redazione automatica, ogni lunedì la direzione la danno le tue
+    scelte: con almeno 10 proposte accettate nelle ultime 4 settimane e uno
+    scarto di almeno 15 punti, arriva una proposta con i temi pesati come
+    li hai scelti (nessun tema esce), da approvare con le spunte. Con la
+    redazione automatica la linea cambia solo per mano del direttore.
+- **Il confronto del profilo spiega cosa vuol dire togliere un tema e quanti
+  ne restano** (Francesco, 19 novembre, su aitoday.it: "aggiunge o
+  filtra?"). Sopra la tabella: le percentuali vengono dagli articoli del
+  sito, i temi sono il filtro delle notizie delle fonti. Sotto: "Con queste
+  scelte la redazione segue N temi", con un avviso quando sono pochi. Un
+  tema che allarga il nome ("Intelligenza artificiale" → "Intelligenza
+  artificiale e agenti IA") è una riga sola, non un tema nuovo più uno che
+  esce, e nessun tema approvato sparisce dal confronto senza la sua riga.
+
 ## 0.37.1
 
 ### Fixed
