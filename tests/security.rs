@@ -365,6 +365,18 @@ async fn s2_truncation_does_not_split_a_utf8_character() {
 }
 
 #[tokio::test]
+async fn s2_a_file_that_is_not_utf8_keeps_its_full_limit() {
+    let (ws, _) = workspace("s2latin1");
+    std::fs::write(ws.root().join("latin1.txt"), b"a\xffbcde").unwrap();
+    let read = ReadFileTool::new(ws, 4);
+    let out = read.execute(&json!({"path": "latin1.txt"})).await.unwrap();
+    assert!(
+        out.starts_with("a\u{fffd}bc\n[truncated at 4 bytes]"),
+        "{out:?}"
+    );
+}
+
+#[tokio::test]
 async fn s3_list_dir_is_confined() {
     let (ws, _) = workspace("s3");
     let t = ListDirTool::new(ws);
