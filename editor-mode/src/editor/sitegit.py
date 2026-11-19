@@ -677,9 +677,9 @@ class Repo:
                     states.append(("failure", run.get("details_url") or run.get("html_url")))
         if not states:
             return "none", None
-        bad = next((u for s, u in states if s in ("failure", "error")), None)
-        if bad is not None or any(s in ("failure", "error") for s, _ in states):
-            return "failure", bad
+        failures = [u for s, u in states if s in ("failure", "error")]
+        if failures:
+            return "failure", next((u for u in failures if u is not None), None)
         if any(s == "pending" for s, _ in states):
             return "pending", None
         return "success", None
