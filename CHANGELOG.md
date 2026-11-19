@@ -9,7 +9,8 @@
   - i punteggi Hype: ogni ora una riga per ogni tema della settimana, mai
     cancellata, ma si legge solo l'ultima. Sul server erano 7,7 GB. Ora il
     calcolo orario tiene solo l'ultimo punteggio di ogni tema e la
-    manutenzione notturna cancella quelli vecchi;
+    manutenzione notturna cancella quelli vecchi in una sola lettura della
+    tabella;
   - le copertine delle traduzioni: ogni lingua teneva una copia identica
     dell'immagine (11-12 MB al giorno su aitoday.it). Ora la traduzione
     punta all'immagine dell'originale; la migrazione 0048 trasforma in

@@ -23,7 +23,7 @@ import re
 import zipfile
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import delete, select, text, union
+from sqlalchemy import delete, func, select, text, union
 
 from . import models as m
 
@@ -220,7 +220,9 @@ def prune(db, tenant_id: str, now: datetime | None = None, days: int | None = No
                                               m.jobs.c.finished_at < cutoff)).rowcount
         # Hype scores: only the latest of each topic is read (the hourly
         # scoring removes the older ones; this clears what earlier versions kept).
-        ts, newer = m.trend_scores, m.trend_scores.alias("newer")
-        scores = s.execute(delete(ts).where(select(newer.c.id).where(
-            newer.c.topic_id == ts.c.topic_id, newer.c.id > ts.c.id).exists())).rowcount
+        # One pass over the table: a comparison of every row with the others
+        # of its topic ran for hours on 7.7 GB (2026-11-19).
+        ts = m.trend_scores
+        latest = select(func.max(ts.c.id)).group_by(ts.c.topic_id)
+        scores = s.execute(delete(ts).where(ts.c.id.not_in(latest))).rowcount
     return {"items": items, "observations": observations, "jobs": jobs, "scores": scores}
