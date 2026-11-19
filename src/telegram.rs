@@ -56,6 +56,10 @@ fn approval_message(a: &Approval) -> String {
 /// A bare "/approve" or "/deny" parses with an empty id so the caller can
 /// answer with usage instead of silently ignoring it — or worse, matching
 /// every pending approval, since "" is a prefix of any id.
+fn command_is(text: &str, command: &str) -> bool {
+    text == command || text.starts_with(&format!("{command} "))
+}
+
 fn approval_command(text: &str) -> Option<(bool, &str, Option<&str>)> {
     for (cmd, approve) in [("/approve", true), ("/deny", false)] {
         let Some(rest) = text.strip_prefix(cmd) else {
@@ -104,7 +108,7 @@ async fn dispatch(bot: Bot, msg: Message, core: Arc<Core>) -> Result<()> {
         None => return Ok(()),
     };
 
-    if text == "/help" || text.starts_with("/help ") {
+    if command_is(text, "/help") {
         bot.send_message(
             msg.chat.id,
             "/run <task> — execute a task\n/approve <id> — allow a pending action\n\
@@ -115,7 +119,7 @@ async fn dispatch(bot: Bot, msg: Message, core: Arc<Core>) -> Result<()> {
         return Ok(());
     }
 
-    if text == "/status" {
+    if command_is(text, "/status") {
         let defs = core.tools.definitions();
         let tool_names: Vec<&str> = defs.iter().map(|t| t.name.as_str()).collect();
         bot.send_message(
@@ -217,6 +221,15 @@ pub fn is_allowed(allowed_users: &[i64], uid: i64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn commands_accept_a_trailing_space() {
+        assert!(command_is("/status", "/status"));
+        assert!(command_is("/status ", "/status"));
+        assert!(command_is("/help ", "/help"));
+        assert!(!command_is("/statusX", "/status"));
+        assert!(!command_is("/run /status", "/status"));
+    }
 
     #[test]
     fn approval_command_parses_id_and_note() {
