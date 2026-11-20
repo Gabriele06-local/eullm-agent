@@ -42,6 +42,19 @@ impl ModuleTool {
 
     /// Build the argv for one call; exposed for tests.
     pub fn build_argv(&self, arguments: &Value) -> Result<Vec<String>> {
+        if let (Some(props), Some(given)) = (
+            self.spec
+                .parameters
+                .get("properties")
+                .and_then(Value::as_object),
+            arguments.as_object(),
+        ) {
+            for key in given.keys() {
+                if !props.contains_key(key) {
+                    bail!("unknown argument '{key}' for module {}", self.spec.name);
+                }
+            }
+        }
         let mut out = Vec::with_capacity(self.argv.len());
         for tok in &self.argv {
             match tok {
