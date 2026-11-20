@@ -18,8 +18,8 @@ def _db():
 
 def cmd_migrate(a):
     from . import migrate
-    from .runtime import settings
-    migrate.upgrade(settings().admin_database_url)
+    from .runtime import environment
+    migrate.upgrade(environment().admin_database_url)
     print("editor schema up to date")
     # docker compose up -d with the administrator in .env: created here, once.
     email, password = os.environ.get("EDITOR_ADMIN_EMAIL", "").strip(), os.environ.get("EDITOR_ADMIN_PASSWORD", "")
@@ -308,7 +308,12 @@ def cmd_worker(a):
         from importlib import metadata
         updates.check(updates.folder(st.updates_dir), installed=metadata.version("eullm-editor-mode"),
                       iid=updates.this_install())
-    queue.Worker(db, handlers(), concurrency=slots, hourly=hourly).run()
+    from . import appsettings
+    worker = queue.Worker(db, handlers(), concurrency=slots, hourly=hourly)
+    # A change in /admin › Impostazioni: the running jobs end, then the worker
+    # exits and Docker starts it again with the new values.
+    appsettings.watch(admin_database(), worker.drain)
+    worker.run()
 
 
 def cmd_redraft(a):

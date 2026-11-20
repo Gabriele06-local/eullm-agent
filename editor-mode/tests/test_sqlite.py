@@ -17,7 +17,7 @@ def local(tmp_path):
                                            "0011_usage_detail", "0012_proposal_basis", "0013_translations", "0014_draft_images", "0015_feeds", "0016_github_target",
                                            "0017_more_proposals", "0018_trial_once",
                                            "0019_proposals_only", "0020_discard_reasons", "0021_model_routes",
-                                           "0022_installations", "0023_refunds", "0024_topic_labelled_items", "0025_weekly_and_search", "0026_credits", "0027_publication_changes", "0028_items_fetched_index", "0029_opportunity_by_topic", "0030_operator_key_use", "0031_evening", "0032_credit_prices", "0033_max_users", "0034_extra_languages", "0035_reader_messages", "0036_shared_covers"]
+                                           "0022_installations", "0023_refunds", "0024_topic_labelled_items", "0025_weekly_and_search", "0026_credits", "0027_publication_changes", "0028_items_fetched_index", "0029_opportunity_by_topic", "0030_operator_key_use", "0031_evening", "0032_credit_prices", "0033_max_users", "0034_extra_languages", "0035_reader_messages", "0036_shared_covers", "0037_app_settings"]
     database = Database.from_url(url)
     yield url, database
     database.engine.dispose()

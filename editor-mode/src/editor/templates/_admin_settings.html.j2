@@ -1,0 +1,61 @@
+{# Console › Impostazioni: the settings of the installation that used to be
+   written in .env (appsettings.py). A value in .env wins and is shown as such. #}
+{% set cfg = app_settings %}
+<header class="page-head">
+  <div class="ph-text">
+    <h1>{{ _('Impostazioni') }}</h1>
+    <p class="ph-sub">{{ _('Email, pagamenti, copertine e gli altri servizi del server, senza toccare il file .env.') }}</p>
+  </div>
+</header>
+<section class="card pad" id="impostazioni" aria-labelledby="h-settings">
+  <h2 id="h-settings" class="sr">{{ _('Impostazioni del server') }}</h2>
+  <p class="lead">{{ _('Cosa aspettarti: quello che salvi qui vale per tutte le redazioni. Le chiavi si salvano cifrate e non si mostrano più, solo le ultime quattro cifre; per cambiarle scrivi quella nuova. Un valore scritto nel file .env vince sempre su quello di qui: lo vedi segnato come "dal file .env".') }}</p>
+  <p class="hint">{{ _('Nel file .env restano solo le password del database, i token, EDITOR_SECRET_KEY, le porte e la versione: servono prima che il pannello possa partire.') }}</p>
+  {% if cfg.pending %}<p class="notice" role="status">{{ _('Ci sono modifiche salvate non ancora in uso: il servizio si sta riavviando per usarle.') if cfg.restarts else _('Ci sono modifiche salvate non ancora in uso: riavvia il servizio per usarle.') }}</p>{% endif %}
+  {% if not cfg.has_key %}<p class="error">{{ _('Questo server non ha EDITOR_SECRET_KEY nel file .env: le impostazioni normali si salvano, le chiavi no.') }}</p>{% endif %}
+
+  <form method="post" action="/admin/settings" class="form-stack" autocomplete="off">
+    {% for g in cfg.groups %}
+    <fieldset class="group" id="set-{{ g.code }}">
+      <legend>{{ _(g.title) }}</legend>
+      <p class="hint">{{ _(g.lead) }}</p>
+      {% for it in g['items'] %}{% set f = it.f %}
+      <div class="field" style="margin-top: 12px; max-width: 560px;">
+        <label for="in-{{ f.name }}" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">{{ _(f.label) }}
+          {% if it.source == 'env' %}<span class="chip" title="{{ f.name }}">{{ _('dal file .env') }}</span>
+          {% elif it.source == 'panel' %}<span class="chip teal">{{ _('salvata qui') }}</span>
+          {% elif it.source == 'broken' %}<span class="chip amber">{{ _('da inserire di nuovo') }}</span>{% endif %}
+        </label>
+        {% if it.source == 'env' %}
+          <input id="in-{{ f.name }}" value="{{ it.shown }}" disabled>
+          <p class="hint">{{ _('Scritta nel file .env come {var}: per gestirla da qui toglila dal file e riavvia.', var=f.name) }}</p>
+        {% elif f.kind == 'select' %}
+          <select id="in-{{ f.name }}" name="{{ f.name }}" style="max-width: 200px;">{% for code, label in f.choices %}<option value="{{ code }}" {% if (it.value or f.default) == code %}selected{% endif %}>{{ _(label) }}</option>{% endfor %}</select>
+        {% elif f.secret and f.kind == 'textarea' %}
+          <textarea id="in-{{ f.name }}" name="{{ f.name }}" rows="4" spellcheck="false" style="font: 12px/1.5 var(--mono);" placeholder="{{ _('Già salvata: incolla una chiave nuova solo per cambiarla') if it.set else '{"type": "service_account", …}' }}"></textarea>
+        {% elif f.secret %}
+          <input id="in-{{ f.name }}" name="{{ f.name }}" type="password" autocomplete="new-password" spellcheck="false" placeholder="{{ it.shown if it.set else '' }}">
+        {% else %}
+          <input id="in-{{ f.name }}" name="{{ f.name }}" type="{{ 'number' if f.kind == 'number' else 'text' }}" {% if f.kind == 'number' %}min="0" style="max-width: 200px;"{% endif %} value="{{ it.value }}" placeholder="{{ f.default or f.placeholder }}" spellcheck="false">
+        {% endif %}
+        {% if f.hint and it.source != 'env' %}<p class="hint">{{ _(f.hint) }}</p>{% endif %}
+        {% if it.why == 'otherkey' %}<p class="hint">{{ _('Salvata con un altro EDITOR_SECRET_KEY: non si può leggere, scrivila di nuovo.') }}</p>{% elif it.why == 'nokey' %}<p class="hint">{{ _('Salvata cifrata, ma questo server non ha EDITOR_SECRET_KEY.') }}</p>{% endif %}
+        {% if it.account %}<p class="hint">{{ _('Email da dare ai clienti per Search Console: {email}', email=it.account) }}</p>{% endif %}
+        {% if f.secret and it.source == 'panel' %}<label class="check sm"><input type="checkbox" name="clear" value="{{ f.name }}">{{ _('Cancella la chiave salvata') }}</label>{% endif %}
+        {% if it.meta and it.meta.updated_by %}<p class="hint">{{ _('Cambiata da {who} il {date}.', who=it.meta.updated_by, date=it.meta.updated_at.strftime('%d/%m/%Y %H:%M') ~ ' UTC') }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+    <div><button class="btn pri" type="submit">{{ _('Salva') }}</button></div>
+  </form>
+
+  <h3>{{ _('Prove') }}</h3>
+  <p class="hint">{{ _('Usano i valori salvati, anche prima del riavvio. Non cambiano niente.') }}</p>
+  <div class="row" style="gap: 8px; flex-wrap: wrap;">
+    <form class="inline" method="post" action="/admin/settings/test-email"><button class="btn sm" type="submit">{{ _('Mandami un\'email di prova') }}</button></form>
+    <form class="inline" method="post" action="/admin/settings/test-mollie"><button class="btn sm" type="submit">{{ _('Verifica la chiave di Mollie') }}</button></form>
+    <form class="inline" method="post" action="/admin/settings/test-telegram"><button class="btn sm" type="submit">{{ _('Verifica il bot Telegram') }}</button></form>
+  </div>
+  <p class="hint" style="margin-top: 12px;">{{ _('Il numero di lavori del worker in parallelo (EDITOR_WORKER_CONCURRENCY) e i modelli del Core restano nel file .env e in core.yaml.') }}</p>
+</section>

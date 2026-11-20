@@ -4,12 +4,13 @@
 {% set titles = {'redazioni': _('Redazioni'), 'redazione': rooms[0].name if rooms else _('Redazioni'), 'nuova': _('Nuova redazione'),
                  'clienti': _('Clienti'), 'cliente': the_customer.name if the_customer else _('Clienti'), 'nuovo-cliente': _('Nuovo cliente'),
                  'pagamenti': _('Pagamenti'), 'cerca': _('Cerca'), 'rivenditori': _('Rivenditori'), 'piani': _('Piani e crediti'),
-                 'operatori': _('Amministratori'), 'api': _('Chiavi API'), 'aggiornamenti': _('Aggiornamenti'), 'backup': _('Backup')} %}
+                 'operatori': _('Amministratori'), 'api': _('Chiavi API'), 'aggiornamenti': _('Aggiornamenti'), 'backup': _('Backup'), 'impostazioni': _('Impostazioni')} %}
 {% set parts = {'redazioni': '_admin_rooms.html.j2', 'redazione': '_admin_room.html.j2', 'nuova': '_admin_new_room.html.j2',
                 'clienti': '_admin_customers.html.j2', 'cliente': '_admin_customer.html.j2', 'nuovo-cliente': '_admin_new_customer.html.j2',
                 'pagamenti': '_admin_payments.html.j2', 'cerca': '_admin_search.html.j2', 'rivenditori': '_admin_resellers.html.j2',
                 'piani': '_admin_plans.html.j2', 'operatori': '_admin_operators.html.j2', 'api': '_admin_keys.html.j2',
-                'aggiornamenti': '_admin_updates.html.j2', 'backup': '_admin_backup.html.j2'} %}
+                'aggiornamenti': '_admin_updates.html.j2', 'backup': '_admin_backup.html.j2',
+                'impostazioni': '_admin_settings.html.j2'} %}
 <html lang="{{ lang() }}">
 <head>
 <meta charset="utf-8">

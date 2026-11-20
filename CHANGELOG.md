@@ -1,5 +1,88 @@
 # Changelog
 
+## 0.38.1
+
+### Added
+
+- **Impostazioni dal pannello, senza il file .env** (Francesco, 20
+  novembre: "il file .env è proprio necessario? Per chi non ha accesso al
+  server potrebbe essere un problema"). Nuova voce /admin › Impostazioni:
+  email (server SMTP, utente, password, mittente), indirizzo pubblico del
+  pannello, fuso orario, giorni di conservazione delle notizie, chiave di
+  Mollie, chiave, modello e qualità delle copertine, chiave JSON di Google
+  Search Console (la pagina mostra l'email dell'account da dare ai
+  clienti), bot Telegram e Cloudflare Turnstile del feedback dei lettori.
+  Le chiavi si salvano cifrate con EDITOR_SECRET_KEY, come le credenziali
+  di pubblicazione, e non si mostrano più: solo le ultime quattro cifre.
+  Tre prove: email di prova all'amministratore, verifica della chiave di
+  Mollie, verifica del bot Telegram. Un valore scritto nel file .env vince
+  sempre e la pagina lo segna "dal file .env" (un valore uguale a quello
+  predefinito, come EDITOR_TIMEZONE=Europe/Rome dei compose vecchi, non
+  conta come scelta). Dopo un salvataggio pannello e worker si riavviano da
+  soli entro mezzo minuto; il worker prima finisce i lavori in corso (al
+  massimo 15 minuti). Nel file .env restano password del database, token,
+  EDITOR_SECRET_KEY, porte, versione e lavori in parallelo del worker.
+  Migrazione 0049 (tabella editor.app_settings, letta solo dalla
+  connessione proprietaria).
+
+### Changed
+
+- **Variabili vuote = valore predefinito.** EDITOR_TIMEZONE=,
+  EDITOR_SMTP_PORT= e simili non rompono più l'avvio; il compose non passa
+  più i predefiniti (fuso, porta, qualità, conservazione) e passa anche le
+  chiavi Turnstile, prima impostabili solo a mano.
+- **Copertine leggere sui siti GitHub** (Francesco, 20 novembre: lo
+  storage dei deploy di aitoday.it su Vercel era diventato la voce più cara).
+  Ogni deploy porta con sé tutte le copertine e Vercel lo conserva per
+  giorni: ad aitoday ogni deploy pesava 200 MB. Ora la copertina va nel
+  repository al massimo a 1600 pixel sul lato lungo, in JPEG progressivo
+  qualità 78 (PNG solo se ha trasparenze): sulle copertine di aitoday da
+  450 a circa 145 KB, senza differenze visibili. Nuova dipendenza Pillow
+  13.0.0.
+- **La traduzione usa la copertina dell'originale.** Sullo stesso
+  repository la versione in un'altra lingua punta allo stesso file invece
+  di salvarne una copia col proprio nome (ad aitoday 207 copertine su 456
+  erano copie). Se la traduzione ha una copertina diversa, ha il suo file.
+
+### Fixed
+
+Correzioni di Gabriele Pau (PR #285-#308, #310):
+
+- Core: gli argomenti degli strumenti che un provider compatibile Anthropic
+  manda come testo JSON vengono decodificati (#285); una chiamata Ollama senza
+  argomenti vale `{}` invece di far fallire la risposta (#299).
+- Core: `read_file` taglia un file lungo al confine di un carattere UTF-8, e un
+  file che non è UTF-8 conserva tutto il limite (#287); l'anteprima degli
+  argomenti nelle approvazioni non supera mai la lunghezza originale (#306).
+- Core: `*.example.com` copre solo i sottodomini, non `example.com` (#288); un
+  modulo rifiuta argomenti che il suo schema non dichiara (#307).
+- Core: un'approvazione scaduta riporta la run da "in attesa" a "in corso" su
+  tutti gli store (#294).
+- Telegram: `/status ` con uno spazio finale risponde (#289); il wizard rifiuta
+  ID utente non numerici invece di scartarli in silenzio (#305).
+- `server-init`: rifiuta email malformate come `a@@b.com` o `a@b..com` (#304);
+  `.env.example` porta EDITOR_WORKER_CONCURRENCY a 4 come il compose (#300).
+- Coda: due lavori uguali già in coda non fanno più fallire l'accodamento (#290).
+- API: `GET /api/drafts/{id}` restituisce anche le frasi scritte dal direttore
+  senza fonte (#291).
+- Testi: le sigle di due lettere (AI, EU, US, UK) contano come parole di
+  contenuto, le parole brevi comuni no (#292); nome di un tema senza titoli
+  non va più in errore (#302).
+- Siti GitHub: se più controlli falliscono si mostra il primo link disponibile
+  (#293).
+- Importi negativi mostrati giusti (−5,05 € invece di −6,95 €) (#295).
+- Modello per passo: la cache delle rotte non si mescola tra database
+  diversi (#296).
+- Hype: articoli arXiv vecchi lasciano la ricerca "non misurata" invece di
+  contarla zero (#298).
+- Bozze: le risposte delle FAQ contano per il minimo di tre frasi (#301).
+- Profilo: il confronto mostra anche quando la nuova versione toglie la
+  descrizione della linea (#303).
+- Search Console: la posizione media conta solo le righe che hanno una
+  posizione (#308).
+- Raccolta: una fonte di tipo sconosciuto viene segnata come errore e le altre
+  continuano (#310).
+
 ## 0.38.0
 
 ### Added

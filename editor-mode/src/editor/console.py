@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
-from . import accounts, backups, billing, commerce, credits, installs, newsrooms, repo, trials, updates, usage
+from . import accounts, appsettings, backups, billing, commerce, credits, installs, newsrooms, repo, trials, updates, usage
 from . import models as m
 from .auth import ROLES
 from .i18n import t
@@ -348,6 +348,7 @@ def register(app, ctx) -> None:
             "refusals": refusals(), "trial_kinds": trials.LABELS,
             "updates": updates.state(updates.folder(ctx.updates_dir), INSTALLED), "installs": installs.summary(admin),
             "backups": backups.state(updates.folder(ctx.updates_dir)) if view == "backup" else None,
+            "app_settings": appsettings.view(admin) if view == "impostazioni" else None,
             "notice_error": notice_error, "new": None, "form": {}, "reopen": None, "q": "", **extra, **data},
             status_code=status_code)
         if notice:
@@ -398,7 +399,8 @@ def register(app, ctx) -> None:
                 "nuovo-pacchetto": "/admin/plans", "nuovo-rivenditore": "/admin/resellers",
                 "aggiornamenti": "/admin/updates", "backup": "/admin/backups", "operatori": "/admin/operators",
                 "nuovo-amministratore": "/admin/operators", "api": "/admin/keys", "nuova-chiave": "/admin/keys",
-                "pagamenti": "/admin/payments", "nuova": "/admin/new"}.get(at, "/admin")
+                "pagamenti": "/admin/payments", "nuova": "/admin/new",
+                "impostazioni": "/admin/settings"}.get(at, "/admin")
 
     def need_console(request: Request):
         s = console_user(request)
@@ -520,7 +522,7 @@ def register(app, ctx) -> None:
     # stays short however many there are, the rest opens when needed.
     for path, view in (("new", "nuova"), ("customers", "clienti"), ("resellers", "rivenditori"),
                        ("plans", "piani"), ("operators", "operatori"), ("keys", "api"),
-                       ("updates", "aggiornamenti"), ("backups", "backup")):
+                       ("updates", "aggiornamenti"), ("backups", "backup"), ("settings", "impostazioni")):
         app.get(f"/admin/{path}", response_class=HTMLResponse)(section(view))
 
     @app.get("/admin/customers/new", response_class=HTMLResponse)
@@ -703,6 +705,73 @@ def register(app, ctx) -> None:
         st = backups.state(updates.folder(ctx.updates_dir))
         return JSONResponse({"pending": st["pending"], "at": (st["status"].get("result") or {}).get("at"),
                              "count": len(st["archives"])}, headers={"Cache-Control": "no-store"})
+
+    @app.post("/admin/settings")
+    async def ui_settings_save(request: Request, s=Depends(need_console)):
+        form = await request.form()
+        values = {f.name: str(form.get(f.name) or "") for f in appsettings.FIELDS if f.name in form}
+        clear = {str(x) for x in form.getlist("clear")}
+        try:
+            changed = appsettings.save(admin, values, clear, s.email)
+        except appsettings.Invalid as e:
+            return back(t(e.text, label=t(e.label)) if e.label else t(e.text), "impostazioni", error=True)
+        if not changed:
+            return back(t("Nessuna modifica."), "impostazioni")
+        if appsettings.supervised():
+            return back(t("Impostazioni salvate. Il pannello e il worker si riavviano da soli entro mezzo minuto per "
+                          "usarle; il worker prima finisce i lavori in corso."), "impostazioni")
+        return back(t("Impostazioni salvate: valgono dal prossimo riavvio del servizio."), "impostazioni")
+
+    def current() -> "object":
+        from .config import Settings
+        return Settings.from_env(appsettings.effective(admin))
+
+    @app.post("/admin/settings/test-email")
+    def ui_settings_test_email(s=Depends(need_console)):
+        st = current()
+        send = accounts.smtp_mailer(st)
+        if send is None:
+            return back(t("Manca il server SMTP: salvalo e riprova."), "impostazioni", error=True)
+        try:
+            send(s.email, t("Email di prova di Redazia"),
+                 t("Se leggi questa email, il server SMTP {host} funziona: inviti, reimpostazioni della password e "
+                   "briefing partiranno da {sender}.", host=st.smtp_host, sender=st.mail_from or st.smtp_user))
+        except Exception as e:
+            return back(t("Email non partita: {why}", why=f"{type(e).__name__}: {str(e)[:200]}"), "impostazioni",
+                        error=True)
+        return back(t("Email di prova mandata a {email}: controlla la posta (anche lo spam).", email=s.email),
+                    "impostazioni")
+
+    @app.post("/admin/settings/test-mollie")
+    def ui_settings_test_mollie(s=Depends(need_console)):
+        from . import gateway as gw
+        key = current().mollie_api_key
+        if not key:
+            return back(t("Manca la chiave di Mollie: salvala e riprova."), "impostazioni", error=True)
+        try:
+            g = gw.Mollie(key)
+            methods = (g._call("GET", "/methods") or {}).get("_embedded", {}).get("methods", [])
+        except Exception as e:
+            return back(t("Mollie ha rifiutato la chiave: {why}", why=str(e)[:200]), "impostazioni", error=True)
+        names = ", ".join(x.get("description") or x.get("id") for x in methods[:6]) or "-"
+        mode = t("di prova") if g.test else t("reale")
+        return back(t("La chiave {mode} di Mollie funziona. Metodi di pagamento attivi: {names}.", mode=mode,
+                      names=names), "impostazioni")
+
+    @app.post("/admin/settings/test-telegram")
+    def ui_settings_test_telegram(s=Depends(need_console)):
+        import httpx
+        token = current().telegram_token
+        if not token:
+            return back(t("Manca il token del bot: salvalo e riprova."), "impostazioni", error=True)
+        try:
+            r = httpx.get(f"https://api.telegram.org/bot{token}/getMe", timeout=15)
+            bot = r.json().get("result") or {} if r.status_code == 200 else None
+        except Exception as e:
+            return back(t("Telegram non risponde: {why}", why=type(e).__name__), "impostazioni", error=True)
+        if not bot:
+            return back(t("Telegram ha rifiutato il token."), "impostazioni", error=True)
+        return back(t("Il bot @{name} è pronto.", name=bot.get("username") or "?"), "impostazioni")
 
     @app.post("/admin/updates/apply")
     def ui_updates_apply(version: str = Form(...), s=Depends(need_console)):

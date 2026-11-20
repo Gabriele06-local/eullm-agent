@@ -270,6 +270,19 @@ installations = Table(
     Column("checks", Integer, nullable=False, default=1),
 )
 
+# Settings of the installation entered in /admin › Impostazioni
+# (appsettings.py); the secret ones encrypted with EDITOR_SECRET_KEY.
+app_settings = Table(
+    "app_settings",
+    metadata,
+    Column("name", Text, primary_key=True),
+    Column("value", Text, nullable=False),
+    Column("secret", Boolean, nullable=False, default=False),
+    Column("key_id", Text),
+    Column("updated_at", _ts()),
+    Column("updated_by", Text),
+)
+
 editorial_profiles = Table(
     "editorial_profiles",
     metadata,

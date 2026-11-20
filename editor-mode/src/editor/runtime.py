@@ -13,20 +13,37 @@ from .publishing import Publisher
 from .schedule import Runner
 
 
+def environment() -> Settings:
+    """The environment alone: the database connections never come from the panel."""
+    return Settings.from_env()
+
+
 @lru_cache(maxsize=1)
 def settings() -> Settings:
+    """The environment, completed with the settings of /admin › Impostazioni
+    (appsettings.py), which also go into os.environ for the modules that
+    read it."""
+    from . import appsettings
+
+    url = environment().admin_database_url
+    if url:  # a connection of its own: the cached ones follow the environment as before
+        db = Database.from_url(url)
+        try:
+            appsettings.load(db)
+        finally:
+            db.engine.dispose()
     return Settings.from_env()
 
 
 @lru_cache(maxsize=1)
 def database() -> Database:
-    return Database.from_url(settings().database_url)
+    return Database.from_url(environment().database_url)
 
 
 @lru_cache(maxsize=1)
 def admin_database() -> Database:
     """The owner connection: plans, accounts, the operator's work."""
-    st = settings()
+    st = environment()
     if not st.admin_database_url or st.admin_database_url == st.database_url:
         return database()
     return Database.from_url(st.admin_database_url)
