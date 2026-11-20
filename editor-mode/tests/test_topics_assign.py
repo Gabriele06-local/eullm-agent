@@ -1,6 +1,10 @@
 """Unit tests for topics.assign: greedy clustering, no database needed."""
 
-from editor.topics import assign
+from editor.topics import assign, keyword_label
+
+
+def test_keyword_label_handles_an_empty_list():
+    assert keyword_label([]) == ("", [])
 
 
 def test_related_items_share_one_cluster():
