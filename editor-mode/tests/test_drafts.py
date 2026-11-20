@@ -34,6 +34,17 @@ def test_missing_subtitle_becomes_empty():
     assert drafts.parse_article(doc, {7}).subtitle == ""
 
 
+def test_faq_answers_count_as_claims():
+    doc = _article_doc()
+    doc["sections"] = [{"heading": "Facts", "claims": doc["sections"][0]["claims"][:2]}]
+    doc["faq"] = [{"question": " Quando? ", "claims": [
+        {"text": "Entro giugno.", "sources": [7]},
+        {"text": "Anche a Bari.", "sources": [7]},
+    ]}]
+    article = drafts.parse_article(doc, {7})
+    assert len(article.claims) == 4 and article.faq == ["Quando?"]
+
+
 def test_numbers_and_copy_checks():
     assert drafts.numbers("Copre 120.000 case al 35% e 3,5 Gbit") == {"120000", "35", "3.5"}
     assert drafts.numbers("1,200 utenti") == {"1200"}

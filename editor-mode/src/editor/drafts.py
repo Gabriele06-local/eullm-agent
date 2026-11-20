@@ -512,8 +512,6 @@ def parse_article(value, allowed: set[int], language: str | None = None, own: bo
             claims += [Claim(t, ids, ih) for t, ids in ingredients] + [Claim(t, ids, sh) for t, ids in steps]
             recipe = {"ingredients": ih, "steps": sh, "yield": " ".join(str(r.get("yield") or "").split())[:60] or None,
                       "prep_minutes": _minutes(r.get("prep_minutes")), "cook_minutes": _minutes(r.get("cook_minutes"))}
-    if len(claims) < (1 if own or brief else 3):
-        raise ValueError("an article needs at least 3 claims")
     # Questions readers ask, each answered with sourced claims like the rest.
     faq = []
     for q in value.get("faq") or []:
@@ -533,6 +531,8 @@ def parse_article(value, allowed: set[int], language: str | None = None, own: bo
                 raise ValueError(f"FAQ answer without valid sources: {c['text'][:80]!r}")
             claims.append(Claim(humanize(c["text"].strip()), list(dict.fromkeys(ids)), question))
         faq.append(question)
+    if len(claims) < (1 if own or brief else 3):
+        raise ValueError("an article needs at least 3 claims")
     seo = value.get("seo") if isinstance(value.get("seo"), dict) else {}
     return Article(humanize(title.strip()), humanize(str(value.get("subtitle") or "").strip())[:300], claims, faq, seo,
                    recipe)
