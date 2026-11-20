@@ -558,6 +558,12 @@ impl Store for PgStore {
         .fetch_optional(&mut *tx)
         .await?;
         if let Some((tenant, run)) = row {
+            sqlx::query(
+                "UPDATE core.runs SET status = 'running' WHERE id = $1 AND status = 'waiting_approval'",
+            )
+            .bind(run)
+            .execute(&mut *tx)
+            .await?;
             self.audit(
                 &mut tx,
                 &tenant,

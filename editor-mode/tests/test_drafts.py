@@ -209,6 +209,14 @@ def test_same_event_is_most_of_a_title_not_a_shared_word():
     assert not _same_event(trump, item_terms("Amazon licenzia 14.000 dipendenti, Trump commenta"))
 
 
+def test_two_letter_acronyms_are_content_words():
+    from editor.text import tokens
+
+    assert {"ai", "eu", "us", "uk"} <= set(tokens("AI act, EU rules, US and UK elections"))
+    assert "ai" not in tokens("Gli aiuti vanno ai comuni")
+    assert not {"si", "ci", "ne", "el", "en"} & set(tokens("Se ne parla, ci si vede; el pueblo en fiesta"))
+
+
 def test_arxiv_is_read_in_full():
     assert drafts.reading_url("https://arxiv.org/abs/2611.01234v2") == "https://arxiv.org/html/2611.01234v2"
     assert drafts.reading_url("https://arxiv.org/pdf/2611.01234") == "https://arxiv.org/html/2611.01234"

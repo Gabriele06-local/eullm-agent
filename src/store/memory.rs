@@ -233,10 +233,19 @@ impl Store for MemoryStore {
     }
 
     async fn expire_approval(&self, id: &str) -> Result<()> {
-        if let Some(a) = self.inner.lock().unwrap().approvals.get_mut(id) {
-            if a.status == ApprovalStatus::Pending {
-                a.status = ApprovalStatus::Expired;
-                a.decided_at_ms = Some(now_ms());
+        let mut g = self.inner.lock().unwrap();
+        let Some(a) = g.approvals.get_mut(id) else {
+            return Ok(());
+        };
+        if a.status != ApprovalStatus::Pending {
+            return Ok(());
+        }
+        a.status = ApprovalStatus::Expired;
+        a.decided_at_ms = Some(now_ms());
+        let run_id = a.run_id.clone();
+        if let Some(r) = g.runs.get_mut(&run_id) {
+            if r.summary.status == RunStatus::WaitingApproval {
+                r.summary.status = RunStatus::Running;
             }
         }
         Ok(())
@@ -312,6 +321,43 @@ mod tests {
             created_at_ms: 0,
             decided_at_ms: None,
         }
+    }
+
+    #[tokio::test]
+    async fn expiry_releases_the_waiting_run() {
+        let store = MemoryStore::new();
+        store
+            .create_run(&NewRun {
+                id: "r".into(),
+                tenant: "t".into(),
+                profile: "default".into(),
+                source: "test".into(),
+                input: "task".into(),
+            })
+            .await
+            .unwrap();
+        store.create_approval(&approval("a1")).await.unwrap();
+        assert_eq!(
+            store
+                .get_run("t", "r")
+                .await
+                .unwrap()
+                .unwrap()
+                .summary
+                .status,
+            RunStatus::WaitingApproval
+        );
+        store.expire_approval("a1").await.unwrap();
+        assert_eq!(
+            store
+                .get_run("t", "r")
+                .await
+                .unwrap()
+                .unwrap()
+                .summary
+                .status,
+            RunStatus::Running
+        );
     }
 
     #[tokio::test]

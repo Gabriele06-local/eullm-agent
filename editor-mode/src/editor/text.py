@@ -27,15 +27,17 @@ STOPWORDS = set(
 
 
 _SHORT_HYPHEN = re.compile(r"\b(\w{1,3})-(\w{1,3})\b")
+_ACRONYM = re.compile(r"\b[A-Z]{2}\b")
 
 
 def tokens(text: str) -> list[str]:
     """Content words; short hyphenated pairs are joined (Wi-Fi -> wifi)."""
+    acronyms = {a.lower() for a in _ACRONYM.findall(text or "")}
     out = []
     for t in normalize_text(_SHORT_HYPHEN.sub(r"\1\2", text or "")).split():
-        if t in STOPWORDS:
+        if t in STOPWORDS and t not in acronyms:
             continue
-        if len(t) >= 3 or (len(t) == 2 and any(c.isdigit() for c in t)):
+        if len(t) >= 3 or (len(t) == 2 and (t in acronyms or any(c.isdigit() for c in t))):
             out.append(t)
     return out
 

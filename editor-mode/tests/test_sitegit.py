@@ -49,3 +49,20 @@ def test_a_merge_that_did_not_happen_is_sent_again():
                     httpx.Response(200, json={"sha": "m2"})])
     repo = sitegit.Repo(lambda m, p, **kw: next(answers), "o/r", sleep=lambda s: None)
     assert repo.merge(7, "t") == "m2"
+
+
+def test_checks_uses_the_link_of_a_later_failure():
+    import httpx
+
+    from editor import sitegit
+
+    def call(method, path, **kw):
+        if path.endswith("/status"):
+            return httpx.Response(200, json={"statuses": [
+                {"state": "failure", "target_url": None},
+                {"state": "failure", "target_url": "https://ci.example/failed"},
+            ]})
+        return httpx.Response(200, json={"check_runs": []})
+
+    repo = sitegit.Repo(call, "o/r", sleep=lambda s: None)
+    assert repo.checks("abc") == ("failure", "https://ci.example/failed")

@@ -53,7 +53,7 @@ PURPOSES = {
 ROUTABLE = ("site_profile", "profile", "source_discovery", "topic_label", "proposal", "draft", "translate",
             "editor_check", "auto_fix", "primary_source", "evening", "precheck")
 ROUTES_TTL = 60.0
-_routes_cache: dict = {"at": 0.0, "routes": {}}
+_routes_cache: dict = {"db": None, "at": 0.0, "routes": {}}
 
 
 def routes(db) -> dict[str, str]:
@@ -61,7 +61,8 @@ def routes(db) -> dict[str, str]:
     import time
 
     now = time.monotonic()
-    if now - _routes_cache["at"] < ROUTES_TTL:
+    key = id(db.engine)
+    if _routes_cache["db"] == key and now - _routes_cache["at"] < ROUTES_TTL:
         return _routes_cache["routes"]
     try:
         with db.engine.connect() as conn:
@@ -69,7 +70,7 @@ def routes(db) -> dict[str, str]:
     except Exception:
         log.exception("model routes not read: every step uses the default model")
         found = {}
-    _routes_cache.update(at=now, routes=found)
+    _routes_cache.update(db=key, at=now, routes=found)
     return found
 
 

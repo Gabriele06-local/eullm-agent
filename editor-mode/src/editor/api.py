@@ -422,7 +422,7 @@ def create_app(db, core=None, admin=None, mail=None, public_url: str = "", gatew
                 raise HTTPException(404, "draft not found")
             claims = drafts.stored_claims(s, draft_id)
         out = {k: v for k, v in d._mapping.items() if k != "tenant_id"}
-        out["claims"] = [{k: c[k] for k in ("ordinal", "section", "text", "sources")} for c in claims if c["sources"]]
+        out["claims"] = [{k: c[k] for k in ("ordinal", "section", "text", "sources")} for c in claims]
         return out
 
     @app.post("/api/drafts/{draft_id}/decision")

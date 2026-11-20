@@ -21,6 +21,14 @@ def test_rss_only_topic_declares_missing_components():
     assert h.score == pytest.approx(expected, abs=0.01)
 
 
+def test_stale_arxiv_items_leave_research_unmeasured():
+    stale = [Member(1, "arxiv", ago(24 * 5))]
+    h = hype(stale, NOW)
+    assert "research" not in h.components and "research" in h.missing
+    fresh = [Member(2, "arxiv", ago(2))]
+    assert "research" in hype(fresh, NOW).components
+
+
 def test_score_is_bounded_and_weights_sum_to_one():
     assert sum(WEIGHTS.values()) == pytest.approx(1.0)
     members = [Member(i, k, ago(1), {"points": 5000, "comments": 900, "stars": 90000, "trending": 900})

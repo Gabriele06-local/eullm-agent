@@ -185,6 +185,15 @@ pub async fn unanswered_approval_expires(s: Arc<dyn Store>) {
     let list = s.list_approvals(&t, None).await.unwrap();
     assert_eq!(list[0].id, id.unwrap());
     assert_eq!(list[0].status, ApprovalStatus::Expired);
+    assert_eq!(
+        s.get_run(&t, &run.id)
+            .await
+            .unwrap()
+            .unwrap()
+            .summary
+            .status,
+        RunStatus::Running
+    );
 }
 
 pub async fn a_decision_taken_elsewhere_reaches_the_waiting_run(s: Arc<dyn Store>) {
