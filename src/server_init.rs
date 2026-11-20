@@ -150,9 +150,12 @@ pub fn valid_email(e: &str) -> bool {
     match e.split_once('@') {
         Some((user, host)) => {
             !user.is_empty()
+                && !host.is_empty()
+                && !host.contains('@')
                 && host.contains('.')
                 && !host.starts_with('.')
                 && !host.ends_with('.')
+                && !host.contains("..")
                 && !e.chars().any(char::is_whitespace)
                 && e.len() <= 254
         }
@@ -590,6 +593,11 @@ mod tests {
         assert!(!valid_email("@i3k.eu"));
         assert!(!valid_email("info@i3k"));
         assert!(!valid_email("in fo@i3k.eu"));
+        assert!(!valid_email("a@@b.com"));
+        assert!(!valid_email("a@b@c.com"));
+        assert!(!valid_email("a@b..com"));
+        assert!(!valid_email("a@.b.com"));
+        assert!(!valid_email("a@b.com."));
     }
 
     #[test]
