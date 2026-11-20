@@ -121,6 +121,14 @@ def test_alerts_at_80_and_100_percent_once_a_month(db, tenant, admin):
     assert (tenant, 100) in credits.alerts(admin)
 
 
+def test_a_jump_past_both_thresholds_sends_both_alerts(db, tenant, admin):
+    set_plan(db, tenant, credits_month=100, language="it")
+    with db.tenant(tenant) as s:
+        credits.spend(s, "image", credits=100)
+    got = credits.alerts(admin)
+    assert (tenant, 80) in got and (tenant, 100) in got
+
+
 def test_a_pack_is_bought_online_and_added_once(db, admin):
     fake = FakeGateway()
     fake.one_off_payment = lambda customer_id, amount_cents, currency, description, redirect_url, webhook_url, metadata: (

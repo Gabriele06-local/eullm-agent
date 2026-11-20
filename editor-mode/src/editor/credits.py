@@ -301,33 +301,37 @@ def alerts(admin, mail=None, public_url: str = "", now: datetime | None = None) 
         if not st["enabled"]:
             continue
         month = f"{st['since']:%Y-%m}"
-        level = max((a for a in ALERTS if st["pct"] >= a), default=None)
-        if level is None:
+        reached = [a for a in ALERTS if st["pct"] >= a]
+        if not reached:
             continue
+        level = max(reached)
         last = r.credits_alert or ""
         if last.startswith(month + ":") and int(last.split(":")[1]) >= level:
             continue
+        due = [a for a in reached
+               if not (last.startswith(month + ":") and int(last.split(":")[1]) >= a)]
         with admin.engine.begin() as conn:
             conn.execute(update(tn).where(tn.c.tenant_id == r.tenant_id).values(credits_alert=f"{month}:{level}"))
-        sent.append((r.tenant_id, level))
+        sent.extend((r.tenant_id, a) for a in due)
         if mail is None:
             continue
         lang = r.language if r.language in i18n.LANGS else i18n.DEFAULT
-        if level >= 100:
-            subject = t("{name}: crediti del mese finiti", lang, name=r.name)
-            body = t("La redazione {name} ha usato tutti i {n} crediti di questo mese.", lang, name=r.name,
-                     n=st["month"])
-            body += " " + (t("Restano {n} crediti extra, usati da adesso.", lang, n=st["extra"]) if st["extra"]
-                           else t("Gli articoli del piano continuano; quello che va oltre il piano si ferma finché "
-                                  "non aggiungi crediti o non riparte il mese.", lang))
-        else:
-            subject = t("{name}: usato l'80% dei crediti del mese", lang, name=r.name)
-            body = t("La redazione {name} ha usato {used} dei {n} crediti di questo mese.", lang, name=r.name,
-                     used=st["month_used"], n=st["month"])
-        body += "\n\n" + t("Crediti e pacchetti nella pagina Il mio piano:", lang) + f"\n\n{link}\n"
-        for to in owners(admin, r.tenant_id):
-            try:
-                mail(to, subject, body)
-            except Exception:
-                log.exception("credits alert to %s failed", to)
+        for level in due:
+            if level >= 100:
+                subject = t("{name}: crediti del mese finiti", lang, name=r.name)
+                body = t("La redazione {name} ha usato tutti i {n} crediti di questo mese.", lang, name=r.name,
+                         n=st["month"])
+                body += " " + (t("Restano {n} crediti extra, usati da adesso.", lang, n=st["extra"]) if st["extra"]
+                               else t("Gli articoli del piano continuano; quello che va oltre il piano si ferma finché "
+                                      "non aggiungi crediti o non riparte il mese.", lang))
+            else:
+                subject = t("{name}: usato l'80% dei crediti del mese", lang, name=r.name)
+                body = t("La redazione {name} ha usato {used} dei {n} crediti di questo mese.", lang, name=r.name,
+                         used=st["month_used"], n=st["month"])
+            body += "\n\n" + t("Crediti e pacchetti nella pagina Il mio piano:", lang) + f"\n\n{link}\n"
+            for to in owners(admin, r.tenant_id):
+                try:
+                    mail(to, subject, body)
+                except Exception:
+                    log.exception("credits alert to %s failed", to)
     return sent
