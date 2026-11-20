@@ -58,20 +58,27 @@ class Settings:
     extra: dict = field(default_factory=dict)
 
     @classmethod
-    def from_env(cls) -> "Settings":
-        env = os.environ
+    def from_env(cls, env=None) -> "Settings":
+        """From the environment, or from `env` (a mapping): an empty variable
+        is the default, as if it were not set (the compose file passes
+        EDITOR_TIMEZONE= when .env leaves it empty)."""
+        env = os.environ if env is None else env
+
+        def get(name: str, default):
+            value = (env.get(name) or "").strip()
+            return value if value else default
         db = env.get("EDITOR_DATABASE_URL", "")
         return cls(
             database_url=db,
             admin_database_url=env.get("EDITOR_ADMIN_DATABASE_URL", db),
-            core_url=env.get("EDITOR_CORE_URL", cls.core_url),
+            core_url=get("EDITOR_CORE_URL", cls.core_url),
             core_token=env.get("EDITOR_CORE_TOKEN", ""),
-            core_model=env.get("EDITOR_CORE_MODEL", cls.core_model),
+            core_model=get("EDITOR_CORE_MODEL", cls.core_model),
             core_delegate=env.get("EDITOR_CORE_DELEGATE", "").strip().lower() in ("1", "true", "yes"),
-            timezone=env.get("EDITOR_TIMEZONE", cls.timezone),
-            briefing_hour=int(env.get("EDITOR_BRIEFING_HOUR", cls.briefing_hour)),
+            timezone=get("EDITOR_TIMEZONE", cls.timezone),
+            briefing_hour=int(get("EDITOR_BRIEFING_HOUR", cls.briefing_hour)),
             smtp_host=env.get("EDITOR_SMTP_HOST", ""),
-            smtp_port=int(env.get("EDITOR_SMTP_PORT", cls.smtp_port)),
+            smtp_port=int(get("EDITOR_SMTP_PORT", cls.smtp_port)),
             smtp_user=env.get("EDITOR_SMTP_USER", ""),
             smtp_password=env.get("EDITOR_SMTP_PASSWORD", ""),
             mail_from=env.get("EDITOR_MAIL_FROM", ""),
@@ -83,6 +90,6 @@ class Settings:
             images_provider=env.get("EDITOR_IMAGES_PROVIDER", "").strip().lower(),
             images_url=env.get("EDITOR_IMAGES_URL", "").strip().rstrip("/"),
             images_model=env.get("EDITOR_IMAGES_MODEL", "").strip(),
-            images_quality=env.get("EDITOR_IMAGES_QUALITY", cls.images_quality).strip().lower(),
+            images_quality=get("EDITOR_IMAGES_QUALITY", cls.images_quality).lower(),
             updates_dir=env.get("EDITOR_UPDATES_DIR", "").strip(),
         )

@@ -45,6 +45,7 @@ HEARTBEAT_SECONDS = 30
 STALE_SECONDS = 300  # no heartbeat for this long: the worker is gone
 POLL_SECONDS = 2.0
 STOP_GRACE_SECONDS = 20  # on stop, how long the running jobs may take before they go back in the queue
+DRAIN_MAX_SECONDS = 900  # on a restart for new settings, how long the running jobs may take
 # A job stopped by a model provider that is down runs again after 10, 20,
 # 30... minutes, up to this many attempts (about 4 hours in all).
 RETRY_AFTER = timedelta(minutes=10)
@@ -256,7 +257,16 @@ class Worker:
         self.concurrency = max(1, concurrency)
         self.name = name or f"{socket.gethostname()}:{os.getpid()}"
         self.stopping = threading.Event()
+        self.draining = threading.Event()
         self.running: dict[int, Job] = {}
+
+    def drain(self):
+        """Take no new job and exit once the running ones have finished (at
+        most DRAIN_MAX_SECONDS, then as on a stop): new settings of the
+        panel restart the worker without cutting a draft short."""
+        if not self.draining.is_set():
+            log.info("restart asked: no new jobs, exiting when the running ones finish")
+        self.draining.set()
 
     def stop(self, *_):
         if not self.stopping.is_set():
@@ -264,7 +274,7 @@ class Worker:
         self.stopping.set()
 
     def _loop(self, n: int):
-        while not self.stopping.is_set():
+        while not self.stopping.is_set() and not self.draining.is_set():
             busy = False
             try:
                 job = claim(self.db, f"{self.name}/{n}")
@@ -310,8 +320,12 @@ class Worker:
             t.start()
         log.info("worker %s running with %d slots", self.name, self.concurrency)
         workers = threads[1:]
+        drain_since = None
         while not self.stopping.wait(1):
-            pass
+            if self.draining.is_set():
+                drain_since = drain_since or time.monotonic()
+                if not any(t.is_alive() for t in workers) or time.monotonic() - drain_since > DRAIN_MAX_SECONDS:
+                    self.stop()
         deadline = time.monotonic() + STOP_GRACE_SECONDS
         for t in workers:
             t.join(max(0, deadline - time.monotonic()))

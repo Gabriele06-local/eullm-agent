@@ -179,6 +179,19 @@ ends without a payment. Its data stay, and its owner can still sign in to
 - **Plan of a newsroom**: `GET` and `PUT /api/operator/tenants/{id}/subscription`
   (`plan`, `interval` month or year, `paid_until`, and `amount_cents` to
   record a payment received by bank transfer), `POST .../cancel`.
+- **Settings from the console** (0.38.1): email (SMTP), Mollie, cover
+  images, Google Search Console, Telegram, Turnstile, time zone, retention
+  and the public address can be entered in `/admin` › Impostazioni instead
+  of `.env`. Secret values are stored encrypted with `EDITOR_SECRET_KEY`
+  and shown only by their last four characters; buttons send a test email
+  and check the Mollie key and the Telegram bot. A value in `.env` always
+  wins (the page marks it "dal file .env"): to manage it from the console,
+  remove it from `.env` and run `docker compose up -d`. After a change the
+  dashboard and the worker restart by themselves within half a minute (the
+  worker first finishes the jobs it is running). `.env` keeps what is needed
+  before the dashboard starts: database passwords, tokens,
+  `EDITOR_SECRET_KEY`, ports, version, `EDITOR_WORKER_CONCURRENCY`. The
+  variables below still work as before.
 - **Online payments** (Mollie): set `EDITOR_MOLLIE_API_KEY` in `.env`
   (a `test_` key first) and `EDITOR_PUBLIC_URL`. The owner chooses the
   plan in `/account` and pays; the first payment also authorises the

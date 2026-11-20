@@ -2,8 +2,35 @@
 
 ## 0.38.1
 
+### Added
+
+- **Impostazioni dal pannello, senza il file .env** (Francesco, 20
+  novembre: "il file .env è proprio necessario? Per chi non ha accesso al
+  server potrebbe essere un problema"). Nuova voce /admin › Impostazioni:
+  email (server SMTP, utente, password, mittente), indirizzo pubblico del
+  pannello, fuso orario, giorni di conservazione delle notizie, chiave di
+  Mollie, chiave, modello e qualità delle copertine, chiave JSON di Google
+  Search Console (la pagina mostra l'email dell'account da dare ai
+  clienti), bot Telegram e Cloudflare Turnstile del feedback dei lettori.
+  Le chiavi si salvano cifrate con EDITOR_SECRET_KEY, come le credenziali
+  di pubblicazione, e non si mostrano più: solo le ultime quattro cifre.
+  Tre prove: email di prova all'amministratore, verifica della chiave di
+  Mollie, verifica del bot Telegram. Un valore scritto nel file .env vince
+  sempre e la pagina lo segna "dal file .env" (un valore uguale a quello
+  predefinito, come EDITOR_TIMEZONE=Europe/Rome dei compose vecchi, non
+  conta come scelta). Dopo un salvataggio pannello e worker si riavviano da
+  soli entro mezzo minuto; il worker prima finisce i lavori in corso (al
+  massimo 15 minuti). Nel file .env restano password del database, token,
+  EDITOR_SECRET_KEY, porte, versione e lavori in parallelo del worker.
+  Migrazione 0049 (tabella editor.app_settings, letta solo dalla
+  connessione proprietaria).
+
 ### Changed
 
+- **Variabili vuote = valore predefinito.** EDITOR_TIMEZONE=,
+  EDITOR_SMTP_PORT= e simili non rompono più l'avvio; il compose non passa
+  più i predefiniti (fuso, porta, qualità, conservazione) e passa anche le
+  chiavi Turnstile, prima impostabili solo a mano.
 - **Copertine leggere sui siti GitHub** (Francesco, 20 novembre: lo
   storage dei deploy di aitoday.it su Vercel era diventato la voce più cara).
   Ogni deploy porta con sé tutte le copertine e Vercel lo conserva per

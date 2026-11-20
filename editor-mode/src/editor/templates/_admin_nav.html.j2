@@ -22,6 +22,7 @@
   <a class="sub" href="#prezzi">{{ _('Prezzi di riferimento') }}</a>
   <a class="sub" href="#articoli">{{ _('Costo per articolo') }}</a>
   {% endif %}
+  <a href="/admin/settings" {% if view == 'impostazioni' %}class="on" aria-current="page"{% endif %}>{{ icon('settings') }}{{ _('Impostazioni') }}</a>
   <a href="/admin/operators" {% if view == 'operatori' %}class="on" aria-current="page"{% endif %}>{{ icon('admins') }}{{ _('Amministratori') }}</a>
   <a href="/admin/updates" {% if view == 'aggiornamenti' %}class="on" aria-current="page"{% endif %}>{{ icon('updates') }}{{ _('Aggiornamenti') }}{% if updates.newer %} <span class="chip teal" style="margin-left: auto;">{{ updates.available.version }}</span>{% endif %}</a>
   <a href="/admin/backups" {% if view == 'backup' %}class="on" aria-current="page"{% endif %}>{{ icon('backup') }}{{ _('Backup') }}</a>

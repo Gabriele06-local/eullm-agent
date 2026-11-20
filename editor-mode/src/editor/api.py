@@ -638,8 +638,10 @@ def default_app() -> FastAPI:
     from . import gateway
 
     st = runtime.settings()
-    from . import images
+    from . import appsettings, images
 
+    # A change in /admin › Impostazioni restarts the dashboard with the new values.
+    appsettings.watch(runtime.admin_database(), appsettings.restart_self)
     return create_app(runtime.database(), runtime.core(), runtime.admin_database(),
                       accounts.smtp_mailer(st), st.public_url, gateway.from_settings(st), images.from_settings(st),
                       st.updates_dir)
