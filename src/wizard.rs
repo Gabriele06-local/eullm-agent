@@ -144,6 +144,17 @@ fn setup_openai() -> Result<ProviderConfig> {
     })
 }
 
+fn parse_user_ids(raw: &str) -> Result<Vec<i64>> {
+    let mut ids = Vec::new();
+    for s in raw.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+        match s.parse::<i64>() {
+            Ok(id) => ids.push(id),
+            Err(_) => anyhow::bail!("'{s}' is not a numeric Telegram user ID"),
+        }
+    }
+    Ok(ids)
+}
+
 fn pick_telegram() -> Result<Option<TelegramConfig>> {
     println!();
     let enable = prompt("Enable Telegram bot?", "N")?;
@@ -154,16 +165,11 @@ fn pick_telegram() -> Result<Option<TelegramConfig>> {
     let (token, token_env) = secret("Bot token", "TELEGRAM_BOT_TOKEN")?;
     let allowed_users = loop {
         let ids_raw = prompt_required("Allowed Telegram user IDs, comma-separated")?;
-        let ids: Vec<i64> = ids_raw
-            .split(',')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .filter_map(|s| s.parse::<i64>().ok())
-            .collect();
-        if !ids.is_empty() {
-            break ids;
+        match parse_user_ids(&ids_raw) {
+            Ok(ids) if !ids.is_empty() => break ids,
+            Ok(_) => println!("  (at least one numeric user ID is required)"),
+            Err(e) => println!("  {e}"),
         }
-        println!("  (at least one numeric user ID is required)");
     };
     Ok(Some(TelegramConfig {
         token,
@@ -234,5 +240,17 @@ pub(crate) fn prompt_required(label: &str) -> Result<String> {
             return Ok(val);
         }
         println!("  (required \u{2014} please enter a value)");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn telegram_user_ids_are_parsed_strictly() {
+        assert_eq!(parse_user_ids("123, 456").unwrap(), vec![123, 456]);
+        assert!(parse_user_ids("123, abc, 456").is_err());
+        assert!(parse_user_ids("").unwrap().is_empty());
     }
 }
