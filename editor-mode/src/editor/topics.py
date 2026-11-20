@@ -92,7 +92,7 @@ def label_topic(core: CoreClient, titles: list[str]) -> tuple[dict, list]:
 
 def keyword_label(titles: list[str]) -> tuple[str, list[str]]:
     terms = top_terms(titles)
-    return (" ".join(terms[:4]) or titles[0][:80]), terms
+    return (" ".join(terms[:4]) or (titles[0][:80] if titles else "")), terms
 
 
 @dataclass
