@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.38.1
+
+### Changed
+
+- **Copertine leggere sui siti GitHub** (Francesco, 20 novembre: lo
+  storage dei deploy di aitoday.it su Vercel era diventato la voce più cara).
+  Ogni deploy porta con sé tutte le copertine e Vercel lo conserva per
+  giorni: ad aitoday ogni deploy pesava 200 MB. Ora la copertina va nel
+  repository al massimo a 1600 pixel sul lato lungo, in JPEG progressivo
+  qualità 78 (PNG solo se ha trasparenze): sulle copertine di aitoday da
+  450 a circa 145 KB, senza differenze visibili. Nuova dipendenza Pillow
+  13.0.0.
+- **La traduzione usa la copertina dell'originale.** Sullo stesso
+  repository la versione in un'altra lingua punta allo stesso file invece
+  di salvarne una copia col proprio nome (ad aitoday 207 copertine su 456
+  erano copie). Se la traduzione ha una copertina diversa, ha il suo file.
+
 ## 0.38.0
 
 ### Added

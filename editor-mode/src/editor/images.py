@@ -151,6 +151,40 @@ def _mime(content: bytes) -> str:
     return "image/png" if content.startswith(b"\x89PNG") else "image/webp" if content[8:12] == b"WEBP" else "image/jpeg"
 
 
+COVER_SIDE = 1600  # the longest side a cover needs on a page (1360 x 768 from the generators)
+
+
+def for_site(content: bytes, mime: str) -> tuple[bytes, str]:
+    """The cover as a site should keep it: at most COVER_SIDE pixels on its
+    longest side, a progressive JPEG at quality 78 (a PNG when it has
+    transparency). Measured on aitoday.it's covers: 450 KB down to 145 KB,
+    no visible difference. The same image always gives the same bytes, so a
+    translation finds its original's file. The original when it cannot be
+    read, or when the new one would not be at least a tenth smaller."""
+    import io
+
+    try:
+        from PIL import Image
+
+        with Image.open(io.BytesIO(content)) as im:
+            im.load()
+            icc = im.info.get("icc_profile")
+            if max(im.size) > COVER_SIDE:
+                im.thumbnail((COVER_SIDE, COVER_SIDE), Image.Resampling.LANCZOS)
+            out = io.BytesIO()
+            if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+                im.save(out, "PNG", optimize=True)
+                new_mime = "image/png"
+            else:
+                im.convert("RGB").save(out, "JPEG", quality=78, optimize=True, progressive=True,
+                                       **({"icc_profile": icc} if icc else {}))
+                new_mime = "image/jpeg"
+    except Exception:  # not an image Pillow reads: sent as it came
+        return content, mime
+    data = out.getvalue()
+    return (data, new_mime) if len(data) < len(content) * 0.9 else (content, mime)
+
+
 def mime_of(content: bytes) -> str:
     """An image type read from the file's first bytes; never anything else."""
     return _mime(content)

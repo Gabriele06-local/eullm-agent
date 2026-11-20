@@ -1124,21 +1124,37 @@ class Publisher:
         files: list[tuple[str, bytes]] = []
         image_ref = None
         if image is not None:
-            ext = "png" if image.mime == "image/png" else "jpg"
+            # Every deploy of the site carries all its covers, and the host keeps
+            # the deploys for days (aitoday.it, 2026-11-20: 200 MB a deploy, the
+            # most of the Vercel bill): a cover the size a page needs.
+            from .images import for_site
+
+            content_, mime_ = for_site(bytes(image.content), image.mime)
+            ext = {"image/png": "png", "image/webp": "webp"}.get(mime_, "jpg")
+            own_folder = False
             if fmt.image_mode == "relative" and fmt.image_dir:
                 own_folder = fmt.folder and fmt.samples and fmt.image_dir == posixpath.dirname(fmt.samples[0].path)
                 img_dir = post_dir if own_folder else fmt.image_dir
                 img_path = f"{img_dir}/{'cover' if own_folder else slug}.{ext}"
-                rel = posixpath.relpath(img_path, post_dir)
-                image_ref = rel if rel.startswith(".") else f"./{rel}"
             else:
                 guessed = None
                 if fmt.image_sample and fmt.image_sample.startswith("/"):
                     guessed = "public" + posixpath.dirname(fmt.image_sample)
                 img_dir = (guessed if routed else None) or cfg.get("image_path") or guessed or "public/images"
                 img_path = f"{img_dir}/{slug}.{ext}"
+            # A translation has its original's cover: the same file, not a copy
+            # under its own name (207 of aitoday's 456 covers were copies).
+            original = payload.get("translation_of")
+            shared = f"{img_dir}/{original}.{ext}" if original and not own_folder and op != "withdraw" else None
+            if shared and shared != img_path and gh.file(shared, base) == content_:
+                img_path = shared
+            else:
+                files.append((img_path, content_))
+            if fmt.image_mode == "relative" and fmt.image_dir:
+                rel = posixpath.relpath(img_path, post_dir)
+                image_ref = rel if rel.startswith(".") else f"./{rel}"
+            else:
                 image_ref = site_path(img_path)
-            files.append((img_path, bytes(image.content)))
         body = delivery.body_md(payload["markdown"])
         if fmt.ext == ".json":
             content = sitegit.json_post(fmt, payload, slug, when, image_ref, image.alt if image is not None else None,
@@ -1165,7 +1181,7 @@ class Publisher:
             # The cover sent with it: the article's own name, in the usual places.
             for folder in dict.fromkeys(x for x in (cfg.get("image_path"), "public/images",
                                                      post_dir if fmt.folder else None) if x):
-                for name in (f"{slug}.jpg", f"{slug}.png", "cover.jpg", "cover.png"):
+                for name in (f"{slug}.jpg", f"{slug}.png", f"{slug}.webp", "cover.jpg", "cover.png", "cover.webp"):
                     if name.startswith("cover") and folder != post_dir:
                         continue
                     if gh.file(f"{folder}/{name}", base) is not None:

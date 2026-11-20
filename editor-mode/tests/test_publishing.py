@@ -433,3 +433,70 @@ def test_a_translation_names_its_original_for_the_language_switch():
     fm = sitegit.front_matter(learned, payload, "ban-on-the-term", when, None, None)
     assert fm.rstrip().endswith('translation_of: "divieto-del-termine"\n---')
     assert "translation_of" not in sitegit.front_matter(learned, {"title": "Divieto"}, "divieto", when, None, None)
+
+
+def _jpeg(w=1360, h=768) -> bytes:
+    import io
+
+    from PIL import Image
+    im = Image.new("RGB", (w, h))
+    im.putdata([((x * 7) % 256, (y * 3) % 256, (x * y) % 256) for y in range(h) for x in range(w)])
+    out = io.BytesIO()
+    im.save(out, "JPEG", quality=98)
+    return out.getvalue()
+
+
+def test_a_cover_is_made_light_for_the_site_and_the_same_every_time():
+    from editor.images import for_site
+    big = _jpeg(2400, 1350)
+    light, mime = for_site(big, "image/jpeg")
+    assert mime == "image/jpeg" and len(light) < len(big) * 0.6
+    from PIL import Image
+    import io
+    assert Image.open(io.BytesIO(light)).size == (1600, 900)
+    assert for_site(big, "image/jpeg") == (light, mime)  # a translation finds its original's file
+    assert for_site(b"\xff\xd8jpeg", "image/jpeg") == (b"\xff\xd8jpeg", "image/jpeg")  # unreadable: as it came
+
+
+def test_a_translation_on_the_same_repository_shares_its_originals_cover():
+    """aitoday.it, 2026-11-20: 207 of 456 covers were the English copy of the
+    Italian one, all in every Vercel deploy."""
+    from types import SimpleNamespace
+
+    from editor import delivery, sitegit
+    from editor.images import for_site
+
+    cover = _jpeg()
+    light, _ = for_site(cover, "image/jpeg")
+    staged = {}
+
+    class View:
+        repo = "me/site"
+
+        def file(self, path, ref):
+            return staged.get(path)
+
+        def posts(self, *a, **k):
+            return []
+
+    cfg = {"repo": "me/site", "path": "src/content/articles/it", "image_path": "public/images",
+           "url": "https://sito.it/articoli/{slug}"}
+    image = SimpleNamespace(content=cover, mime="image/jpeg", alt="Una strada")
+    p = pub.Publisher(resolver=public_resolver, sleep=lambda s: None)
+    files, _, _ = p._github_files(View(), cfg, "main", image, delivery, sitegit, "publish",
+                                  {"title": "Divieto", "slug": "divieto", "markdown": "# Divieto\n\nTesto."})
+    staged.update(files)
+    assert staged["public/images/divieto.jpg"] == light
+    en = {**cfg, "path": "src/content/articles/en", "url": "https://sito.it/en/articles/{slug}"}
+    files, _, _ = p._github_files(View(), en, "main", image, delivery, sitegit, "publish",
+                                  {"title": "Ban", "slug": "ban", "markdown": "# Ban\n\nText.",
+                                   "translation_of": "divieto", "language": "en"})
+    paths = dict(files)
+    assert "public/images/ban.jpg" not in paths
+    assert '"/images/divieto.jpg"' in paths["src/content/articles/en/ban.md"].decode()
+    # Another cover for the translation: its own file.
+    other = SimpleNamespace(content=_jpeg(1360, 700), mime="image/jpeg", alt="x")
+    files, _, _ = p._github_files(View(), en, "main", other, delivery, sitegit, "publish",
+                                  {"title": "Ban", "slug": "ban", "markdown": "# Ban\n\nText.",
+                                   "translation_of": "divieto", "language": "en"})
+    assert "public/images/ban.jpg" in dict(files)
