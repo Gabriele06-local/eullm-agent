@@ -64,7 +64,9 @@ impl Approver for DenyAll {
 pub fn preview_arguments(v: &Value) -> Value {
     match v {
         Value::String(s) if s.len() > 2000 => {
-            Value::String(format!("{}… [{} bytes]", truncate_utf8(s, 2000), s.len()))
+            let suffix = format!("… [{} bytes]", s.len());
+            let keep = 2000usize.saturating_sub(suffix.len());
+            Value::String(format!("{}{}", truncate_utf8(s, keep), suffix))
         }
         Value::Array(a) => Value::Array(a.iter().map(preview_arguments).collect()),
         Value::Object(o) => Value::Object(
@@ -254,5 +256,30 @@ impl Approver for TerminalApprover {
                 Outcome::Denied { by, note: None }
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn preview_never_grows_past_the_original() {
+        let long = "a".repeat(2001);
+        let shown = preview_arguments(&json!(long))
+            .as_str()
+            .unwrap()
+            .to_string();
+        assert!(shown.len() <= 2001, "{} bytes", shown.len());
+        assert!(shown.contains("… [2001 bytes]"));
+
+        let unicode = "€".repeat(1000);
+        let shown = preview_arguments(&json!(unicode.clone()))
+            .as_str()
+            .unwrap()
+            .to_string();
+        assert!(shown.len() <= unicode.len());
+        assert!(!shown.contains('\u{fffd}'));
     }
 }
