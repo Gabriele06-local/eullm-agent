@@ -529,6 +529,18 @@ fn s5_module_arguments_stay_single_argv_elements() {
 }
 
 #[test]
+fn s5_unknown_module_arguments_are_refused() {
+    let (ws, _) = workspace("s5unknown");
+    let t = pdf_tool(ws);
+    let err = t
+        .build_argv(&json!({"pdf_path": "x.pdf", "pdfpath": "y.pdf"}))
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("pdfpath"), "{err}");
+    assert!(t.build_argv(&json!({"pdf_path": "x.pdf"})).is_ok());
+}
+
+#[test]
 fn s5_module_paths_and_options_are_checked() {
     let (ws, _) = workspace("s5b");
     let t = pdf_tool(ws);
