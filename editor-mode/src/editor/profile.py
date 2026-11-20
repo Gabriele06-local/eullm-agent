@@ -393,9 +393,12 @@ def compare(old: dict, new: dict) -> list[dict]:
     if set(la) != set(lb):
         rows.append({"key": "languages", "what": t("Lingue"), "before": ", ".join(la) or t("non determinate"),
                      "after": ", ".join(lb) or t("non determinate")})
-    if bool(old.get("summary")) != bool(new.get("summary")) and new.get("summary"):
-        rows.append({"key": "summary", "what": t("Descrizione della linea"), "before": t("assente"),
-                     "after": t("scritta dal modello sulle pagine lette")})
+    if bool(old.get("summary")) != bool(new.get("summary")):
+        written = t("scritta dal modello sulle pagine lette")
+        absent = t("assente")
+        rows.append({"key": "summary", "what": t("Descrizione della linea"),
+                     "before": written if old.get("summary") else absent,
+                     "after": written if new.get("summary") else absent})
     old_subs, new_subs = old.get("subtopics", []), new.get("subtopics", [])
     pct = lambda x: f"{round(100 * (x or 0))}%"  # noqa: E731
     for sub in new_subs:

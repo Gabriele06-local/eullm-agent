@@ -308,6 +308,9 @@ def test_compare_says_what_changes_against_what():
     assert by["Tema «Branding»"]["before"] == "non c'era"
     assert by["Tema «EuLLM»"]["after"] == "esce dal profilo"
     assert any(r.get("note") for r in rows)  # why the 100% topics leave
+    removed = prof.compare({"summary": "s", "subtopics": []}, {"summary": None, "subtopics": []})
+    row = next(r for r in removed if r["key"] == "summary")
+    assert row["before"] != row["after"] and "assente" in row["after"]
 
 
 def test_a_newer_reanalysis_replaces_the_proposal_still_waiting(db, tenant):
