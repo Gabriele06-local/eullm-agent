@@ -34,7 +34,7 @@ from urllib.parse import quote
 import httpx
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import case, delete, func, select, update
 
 from . import models as m
 from .text import tokens
@@ -244,22 +244,24 @@ def totals(s, site_id: int, start: date, end: date) -> dict:
     """Clicks, impressions and average position of the site's pages in [start, end]."""
     st = m.search_stats.c
     r = s.execute(select(func.coalesce(func.sum(st.clicks), 0), func.coalesce(func.sum(st.impressions), 0),
-                         func.sum(st.position * st.impressions))
+                         func.sum(st.position * st.impressions),
+                         func.sum(case((st.position.is_not(None), st.impressions), else_=0)))
                   .where(st.site_id == site_id, st.kind == "page", st.day >= start, st.day <= end)).one()
-    clicks, impressions, weighted = int(r[0]), int(r[1]), r[2]
+    clicks, impressions, weighted, weighted_impressions = int(r[0]), int(r[1]), r[2], int(r[3] or 0)
     return {"clicks": clicks, "impressions": impressions,
-            "position": round(weighted / impressions, 1) if impressions and weighted is not None else None}
+            "position": round(weighted / weighted_impressions, 1) if weighted_impressions and weighted is not None else None}
 
 
 def top(s, site_id: int, kind: str, start: date, end: date, limit: int = 5) -> list[dict]:
     st = m.search_stats.c
     rows = s.execute(select(st.key, func.sum(st.clicks).label("clicks"), func.sum(st.impressions).label("impressions"),
-                            func.sum(st.position * st.impressions).label("w"))
+                            func.sum(st.position * st.impressions).label("w"),
+                            func.sum(case((st.position.is_not(None), st.impressions), else_=0)).label("wi"))
                      .where(st.site_id == site_id, st.kind == kind, st.day >= start, st.day <= end)
                      .group_by(st.key).order_by(func.sum(st.clicks).desc(), func.sum(st.impressions).desc())
                      .limit(limit)).all()
     return [{"key": r.key, "clicks": int(r.clicks), "impressions": int(r.impressions),
-             "position": round(r.w / r.impressions, 1) if r.impressions and r.w is not None else None} for r in rows]
+             "position": round(r.w / r.wi, 1) if r.wi and r.w is not None else None} for r in rows]
 
 
 def demand(s, site_id: int, today: date | None = None, days: int = 28, limit: int = 300) -> list[tuple[frozenset, float]]:
