@@ -107,6 +107,20 @@ def _google(router, rows_page, rows_query, level="siteOwner"):
     router.post(url__regex=r".*/searchAnalytics/query$").mock(side_effect=query)
 
 
+def test_position_averages_only_rows_that_have_a_position(db, tenant):
+    _, site_id = approved_draft(db, tenant)
+    start, end = date(2026, 10, 1), date(2026, 10, 31)
+    with db.tenant(tenant) as s:
+        s.execute(text("INSERT INTO editor.search_stats (tenant_id, site_id, day, kind, key, clicks, impressions, position) "
+                       "VALUES (:t, :s, '2026-10-10', 'page', 'a', 2, 100, 5.0), "
+                       "(:t, :s, '2026-10-11', 'page', 'b', 0, 100, NULL), "
+                       "(:t, :s, '2026-10-12', 'query', 'fibra', 1, 50, 4.0)"), {"t": tenant, "s": site_id})
+        tot = searchconsole.totals(s, site_id, start, end)
+        top = searchconsole.top(s, site_id, "page", start, end)
+    assert tot["clicks"] == 2 and tot["impressions"] == 200 and tot["position"] == 5.0
+    assert top[0]["position"] == 5.0
+
+
 def test_connect_read_and_disconnect(db, tenant, key):
     _, site_id = approved_draft(db, tenant)
     client = searchconsole.Client(searchconsole.Key(key["client_email"], key["private_key"]))
