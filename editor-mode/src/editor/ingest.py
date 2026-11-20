@@ -118,6 +118,11 @@ def collect_archive(db: Database, archive: str, client: httpx.Client, only: set[
         r = SourceReport(src.id, src.name)
         report.sources.append(r)
         collector = COLLECTORS.get(src.kind)
+        if collector is None:
+            r.error = f"unknown source kind: {src.kind}"[:500]
+            log.warning("source %s failed: %s", src.name, r.error)
+            failed.append((src.id, r.error, True))
+            continue
         spec = SourceSpec(src.kind, src.url, src.config or {}, src.etag, src.last_modified)
         try:
             result = collector.fetch(client, spec)

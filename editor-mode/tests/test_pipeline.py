@@ -9,7 +9,7 @@ import respx
 from sqlalchemy import text
 
 from conftest import fixture
-from editor import repo
+from editor import ingest, repo
 from editor.core_client import CoreClient
 from editor.core_fetch import core_http_client
 from editor.ingest import collect_tenant
@@ -76,6 +76,18 @@ def test_failing_source_is_recorded_and_others_continue(db, tenant):
     with db.tenant(tenant) as s:
         errors = s.execute(text("SELECT count(*) FROM editor.sources WHERE last_error IS NOT NULL")).scalar()
     assert errors == 2
+
+
+@respx.mock
+def test_an_unknown_source_kind_does_not_stop_the_other_sources(db, tenant, monkeypatch):
+    add_sources(db, tenant)
+    monkeypatch.setattr(ingest, "COLLECTORS", {k: v for k, v in ingest.COLLECTORS.items() if k != "hackernews"})
+    respx.get(FEED).mock(return_value=httpx.Response(200, content=fixture("rss.xml")))
+    respx.get(FEED2).mock(return_value=httpx.Response(200, content=MIRROR))
+    with httpx.Client() as c:
+        report = collect_tenant(db, tenant, c)
+    assert [r.error for r in report.sources][2] == "unknown source kind: hackernews"
+    assert report.new > 0
 
 
 @respx.mock
