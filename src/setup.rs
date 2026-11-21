@@ -264,6 +264,10 @@ pub async fn build_core(
 }
 
 /// The model an EuLLM Engine (or another OpenAI-compatible server) at
+fn models_url(base_url: &str) -> String {
+    format!("{}/models", crate::llm::eullm::v1_url(base_url))
+}
+
 /// `base_url` offers first, if one answers within two seconds.
 pub async fn detect_engine(base_url: &str) -> Option<String> {
     let client = reqwest::Client::builder()
@@ -272,7 +276,7 @@ pub async fn detect_engine(base_url: &str) -> Option<String> {
         .build()
         .ok()?;
     let v: serde_json::Value = client
-        .get(format!("{}/v1/models", base_url.trim_end_matches('/')))
+        .get(models_url(base_url))
         .send()
         .await
         .ok()?
@@ -282,4 +286,29 @@ pub async fn detect_engine(base_url: &str) -> Option<String> {
         .await
         .ok()?;
     v["data"][0]["id"].as_str().map(str::to_string)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn models_url_never_duplicates_the_v1_suffix() {
+        assert_eq!(
+            models_url("http://host:11434"),
+            "http://host:11434/v1/models"
+        );
+        assert_eq!(
+            models_url("http://host:11434/"),
+            "http://host:11434/v1/models"
+        );
+        assert_eq!(
+            models_url("http://host:11434/v1"),
+            "http://host:11434/v1/models"
+        );
+        assert_eq!(
+            models_url("http://host:11434/v1/"),
+            "http://host:11434/v1/models"
+        );
+    }
 }
