@@ -133,7 +133,7 @@ def test_a_deactivated_newsroom_stops_an_operator_session_too(db, tenant, admin)
     session = accounts.start_session(admin, uid, tenant)
     assert accounts.resolve_session(admin, session).role == "owner"
     with admin.engine.begin() as conn:
-        conn.execute(text("UPDATE editor.tenants SET active = 0 WHERE tenant_id = :t"), {"t": tenant})
+        conn.execute(text("UPDATE editor.tenants SET active = :a WHERE tenant_id = :t"), {"a": False, "t": tenant})
     assert accounts.resolve_session(admin, session) is None
 
 
