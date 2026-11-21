@@ -480,10 +480,15 @@ def outlets_used(s, site_id: int, since: datetime) -> dict[str, int]:
     day's share of an outlet counts across rounds (Francesco 2026-11-10:
     four recipes, all from the same blog)."""
     pc, si = m.proposal_citations.c, m.source_items.c
-    rows = s.execute(select(pc.proposal_id, m.sources.c.name).distinct()
-                     .join(m.source_items, si.id == pc.item_id).join(m.sources, m.sources.c.id == si.source_id)
-                     .join(m.proposals, m.proposals.c.id == pc.proposal_id)
-                     .where(m.proposals.c.site_id == site_id, m.proposals.c.created_at >= since)).all()
+    f = m.sources.alias("f")
+    rows = s.execute(
+        select(pc.proposal_id, func.coalesce(f.c.name, m.sources.c.name).label("source")).distinct()
+        .join(m.source_items, si.id == pc.item_id).join(m.sources, m.sources.c.id == si.source_id)
+        .outerjoin(f, and_(or_(f.c.id == si.source_id, f.c.archive_id == si.source_id),
+                           f.c.shared.is_not(True), f.c.status == "active",
+                           or_(f.c.site_id == site_id, f.c.site_id.is_(None))))
+        .join(m.proposals, m.proposals.c.id == pc.proposal_id)
+        .where(m.proposals.c.site_id == site_id, m.proposals.c.created_at >= since)).all()
     out: dict[str, int] = {}
     for _, name in rows:
         out[name] = out.get(name, 0) + 1
