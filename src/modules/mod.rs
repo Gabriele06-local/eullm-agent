@@ -179,6 +179,9 @@ impl ModuleRegistry {
             .find(|m| m.name == name)
             .cloned()
             .ok_or_else(|| anyhow::anyhow!("Unknown module '{name}'"))?;
+        if self.state.installed.contains(name) {
+            return Ok(());
+        }
         for cmd in manifest.install_commands() {
             println!("$ {cmd}");
             #[cfg(target_os = "windows")]
@@ -211,6 +214,31 @@ mod tests {
                 t.argv_template().unwrap();
             }
         }
+    }
+
+    #[test]
+    fn install_runs_its_commands_only_once() {
+        let dir = std::env::temp_dir().join(format!("eullm-modules-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let marker = dir.join("install-count");
+        let cmd = format!("echo x >> {}", marker.display());
+        let mut reg = ModuleRegistry {
+            manifests: vec![ModuleManifest {
+                name: "x".into(),
+                description: String::new(),
+                version: "1",
+                install_linux: vec![cmd.clone()],
+                install_macos: vec![cmd.clone()],
+                install_windows: vec![cmd],
+                tools: vec![],
+            }],
+            state: ModuleState::default(),
+            state_path: dir.join("state.json"),
+        };
+        reg.install("x").unwrap();
+        reg.install("x").unwrap();
+        assert_eq!(std::fs::read_to_string(&marker).unwrap().lines().count(), 1);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
