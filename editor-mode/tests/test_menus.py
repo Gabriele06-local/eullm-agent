@@ -94,6 +94,13 @@ def test_a_menu_reuses_the_site_recipes_and_writes_the_missing_ones(db, tenant, 
         for n, (pid_, kid) in enumerate(zip(sent, kids)):
             s.execute(update(m.publications).where(m.publications.c.id == pid_).values(
                 status="published", external_url=f"https://lagrandecucina.example/ricette/r{n}"))
+    with monkeypatch.context() as mp:
+        def refuse(*a, **kw):
+            raise pub.PublishError("target refused")
+        mp.setattr(pub, "request", refuse)
+        assert menus.after_publication(db, tenant, sent[0], sent.append) is None  # failed publish
+    with db.tenant(tenant) as s:
+        assert "publish_after" in s.execute(select(m.drafts.c.seo).where(m.drafts.c.id == did)).scalar()
     assert menus.after_publication(db, tenant, sent[0], sent.append) is not None  # both online now
     with db.tenant(tenant) as s:
         p = s.execute(select(m.publications).where(m.publications.c.draft_id == did)).one()

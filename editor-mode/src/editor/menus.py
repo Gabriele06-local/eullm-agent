@@ -220,13 +220,16 @@ def after_publication(db, tenant_id: str, pub_id: int, run) -> int | None:
         wait = sd.get("publish_after")
         if not wait or missing(s, menu):
             return None
-        s.execute(update(m.drafts).where(m.drafts.c.id == menu).values(
-            seo={k: v for k, v in sd.items() if k != "publish_after"}))
     try:
         pid = publishing.request(db, tenant_id, menu, wait["target_id"], wait["mode"], wait["by"])
     except publishing.PublishError as e:
         log.warning("menu %s not sent after its recipes: %s", menu, e)
         return None
+    with db.tenant(tenant_id) as s:
+        sd = s.execute(select(m.drafts.c.seo).where(m.drafts.c.id == menu)).scalar() or {}
+        if "publish_after" in sd:
+            s.execute(update(m.drafts).where(m.drafts.c.id == menu).values(
+                seo={k: v for k, v in sd.items() if k != "publish_after"}))
     if wait.get("approve"):
         publishing.decide(db, tenant_id, pid, True, wait["by"])
         run(pid)
