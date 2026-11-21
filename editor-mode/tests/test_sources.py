@@ -53,6 +53,17 @@ def test_freshness_never_exceeds_one_for_future_dates():
     assert src.rate(future, kws)["components"]["freshness"] == 1.0
 
 
+def test_freshness_decays_with_fractional_days():
+    kws = {"fibra"}
+
+    def one(when):
+        return [Item(url="u", title="Fibra FTTH", summary="x" * 400, published_at=when)]
+
+    fresh = src.rate(one(NOW - timedelta(days=14, hours=1)), kws, now=NOW)
+    old = src.rate(one(NOW - timedelta(days=14, hours=23)), kws, now=NOW)
+    assert fresh["components"]["freshness"] > old["components"]["freshness"]
+
+
 def test_api_candidates_follow_the_profile():
     body = {"subtopics": [{"name": "Sicurezza", "keywords": ["ransomware", "firewall"], "share": 0.5},
                           {"name": "Cloud", "keywords": ["cloud", "datacenter"], "share": 0.3}]}
