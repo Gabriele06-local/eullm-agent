@@ -116,6 +116,9 @@ def test_wrong_values_are_refused_with_their_field(admin, name, value):
 def test_an_empty_variable_is_the_default():
     st = Settings.from_env({"EDITOR_TIMEZONE": "", "EDITOR_SMTP_PORT": "", "EDITOR_IMAGES_QUALITY": ""})
     assert (st.timezone, st.smtp_port, st.images_quality) == ("Europe/Rome", 587, "medium")
+    db_url = "sqlite:///editor.db"
+    st = Settings.from_env({"EDITOR_DATABASE_URL": db_url, "EDITOR_ADMIN_DATABASE_URL": ""})
+    assert st.database_url == st.admin_database_url == db_url
 
 
 def test_the_console_page_saves_and_the_tests_say_what_is_missing(db, admin):

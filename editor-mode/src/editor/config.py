@@ -70,7 +70,7 @@ class Settings:
         db = env.get("EDITOR_DATABASE_URL", "")
         return cls(
             database_url=db,
-            admin_database_url=env.get("EDITOR_ADMIN_DATABASE_URL", db),
+            admin_database_url=get("EDITOR_ADMIN_DATABASE_URL", db),
             core_url=get("EDITOR_CORE_URL", cls.core_url),
             core_token=env.get("EDITOR_CORE_TOKEN", ""),
             core_model=get("EDITOR_CORE_MODEL", cls.core_model),
