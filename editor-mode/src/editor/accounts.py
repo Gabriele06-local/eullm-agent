@@ -292,7 +292,7 @@ def resolve_session(admin, token: str | None, now: datetime | None = None) -> Se
             ms = m.memberships
             member = conn.execute(select(ms.c.role).where(ms.c.user_id == row.id,
                                                          ms.c.tenant_id == row.tenant_id)).scalar()
-            if row.operator and t is not None:
+            if row.operator and t is not None and t.active:
                 role = "owner"
             elif t is not None and t.active and member:
                 role = member

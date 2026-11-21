@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 import io
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from editor import accounts, quotas
 from editor.api import create_app
@@ -123,6 +124,17 @@ def test_suspending_a_newsroom_closes_it_and_patch_changes_limits(db, admin):
     assert c.get(f"/api/operator/tenants/{tid}", headers=key).status_code == 404
     # People stay; their membership went with the newsroom.
     assert accounts.memberships(admin, uid) == []
+
+
+def test_a_deactivated_newsroom_stops_an_operator_session_too(db, tenant, admin):
+    uid = accounts.create_user(admin, "op-inactive@example.com", password="password operatore", operator=True)
+    with admin.engine.begin() as conn:
+        accounts.set_member(conn, uid, tenant, "owner")
+    session = accounts.start_session(admin, uid, tenant)
+    assert accounts.resolve_session(admin, session).role == "owner"
+    with admin.engine.begin() as conn:
+        conn.execute(text("UPDATE editor.tenants SET active = 0 WHERE tenant_id = :t"), {"t": tenant})
+    assert accounts.resolve_session(admin, session) is None
 
 
 def test_owners_invite_people_with_a_role(db, tenant, admin):
