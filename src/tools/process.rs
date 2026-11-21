@@ -314,7 +314,7 @@ mod tests {
 
     #[tokio::test]
     async fn read_capped_stays_within_the_byte_limit() {
-        let invalid = vec![0xffu8; 100];
+        let invalid = [0xffu8; 100];
         let (out, truncated) = read_capped(&invalid[..], 10).await.unwrap();
         assert!(truncated);
         assert!(out.len() <= 10, "{} bytes", out.len());
