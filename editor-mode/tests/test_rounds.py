@@ -72,6 +72,17 @@ def test_an_outlet_keeps_its_share_over_the_whole_day(db, tenant):
         assert made and props.outlets_used(s, site_id, NOW - timedelta(days=1)).get("news", 0) >= 1
 
 
+def test_outlets_used_counts_the_site_source_name(db, tenant):
+    site_id = setup_site(db, tenant)
+    picks.fill(db, tenant, site_id, 2, now=NOW)
+    with db.tenant(tenant) as s:
+        assert props.outlets_used(s, site_id, NOW - timedelta(days=1)).get("news", 0) >= 1
+        s.execute(update(m.sources).where(m.sources.c.name == "news", m.sources.c.shared.is_(False))
+                  .values(name="Fonti principali"))
+        outlets = props.outlets_used(s, site_id, NOW - timedelta(days=1))
+    assert outlets.get("Fonti principali", 0) >= 1 and "news" not in outlets
+
+
 def test_a_theme_is_not_written_from_one_blog_alone():
     It = namedtuple("It", "id source_id")
     items = [It(i, 1) for i in range(1, 8)] + [It(8, 2), It(9, 3)]
