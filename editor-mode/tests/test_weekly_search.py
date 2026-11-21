@@ -177,6 +177,16 @@ def test_the_week_in_one_email(db, tenant):
     assert weekly.build(db, tenant, monday, mail_settings())[0] == rid
 
 
+def test_a_withdrawn_article_is_not_listed_in_the_weekly_report(db, tenant, admin):
+    did, site_id = approved_draft(db, tenant)
+    _published(db, tenant, did, site_id, datetime(2026, 10, 28, 9, tzinfo=UTC))
+    with db.tenant(tenant) as s:
+        s.execute(text("UPDATE editor.publications SET withdrawn_at = :w WHERE draft_id = :d"),
+                  {"w": datetime(2026, 10, 29, 9, tzinfo=UTC), "d": did})
+    rid, w, _ = weekly.build(db, tenant, date(2026, 10, 26), mail_settings())
+    assert rid and w.published == 0
+
+
 def test_monday_report_goes_out_once(db, tenant, admin):
     approved_draft(db, tenant)
     with db.tenant(tenant) as s:
