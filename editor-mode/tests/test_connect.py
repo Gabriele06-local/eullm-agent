@@ -458,6 +458,15 @@ def test_the_sections_become_the_wordpress_menu(db, tenant, monkeypatch):
     lines, _, _ = activity._result("wpmenu", {"sites": [{"name": "Blog", "error": "role", "categories": 2}]},
                                    site_id, str)
     assert "categorie pronte (2)" in lines[0] and "amministratore" in lines[0]
+    # A target switched off in Connect is not used by the menu job.
+    with db.tenant(tenant) as s:
+        s.execute(update(m.publish_targets).where(m.publish_targets.c.site_id == site_id,
+                                                  m.publish_targets.c.kind == "wordpress").values(enabled=False))
+    assert work.handlers(db, publisher=p)["wpmenu"](tenant, f"site {site_id}", {"site_id": site_id}) == {
+        "site_id": site_id, "error": "no_wordpress"}
+    with db.tenant(tenant) as s:
+        s.execute(update(m.publish_targets).where(m.publish_targets.c.site_id == site_id,
+                                                  m.publish_targets.c.kind == "wordpress").values(enabled=True))
 
     # Saving new sections queues the menu, and so does the button.
     c = logged_in(db, tenant, "owner")

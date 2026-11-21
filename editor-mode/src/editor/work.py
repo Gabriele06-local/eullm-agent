@@ -136,7 +136,8 @@ def handlers(db, http_factory=None, core=None, publisher=None, runner=None, imag
             sections = args.get("sections") or autopilot.settings_of(s.execute(select(m.editorial_profiles.c.body).where(
                 m.editorial_profiles.c.site_id == site_id, m.editorial_profiles.c.status == "approved")).scalar())["sections"]
             targets = s.execute(select(m.publish_targets).where(
-                m.publish_targets.c.site_id == site_id, m.publish_targets.c.kind == "wordpress")
+                m.publish_targets.c.site_id == site_id, m.publish_targets.c.kind == "wordpress",
+                m.publish_targets.c.enabled.is_not(False))
                 .order_by(m.publish_targets.c.id)).all()
         if not sections:
             return {"site_id": site_id, "error": "no_sections"}
