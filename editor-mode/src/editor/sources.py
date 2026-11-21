@@ -107,7 +107,7 @@ def rate(
     dates = [i.published_at for i in items if i.published_at]
     month = [d for d in dates if d >= now - timedelta(days=30)]
     comp["frequency"] = round(_sat(len(month) / 4.3, 5), 3) if dates else 0.0
-    comp["freshness"] = round(min(1.0, math.exp(-(now - max(dates)).days / 14)), 3) if dates else 0.0
+    comp["freshness"] = round(min(1.0, math.exp(-(now - max(dates)).total_seconds() / 86400 / 14)), 3) if dates else 0.0
     if items and known:
         # One signature per item, compared with each known one: computed
         # inside the comparison it was redone for every known signature
