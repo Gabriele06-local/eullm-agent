@@ -47,6 +47,7 @@ def test_the_mode_says_how_many_proposals_are_on_a_theme():
     assert evergreen.split({"settings": {"content_mode": "evergreen"}}, 6) == (6, 0)
     assert evergreen.split({"settings": {"content_mode": "mixed"}}, 6) == (3, 3)
     assert evergreen.split({"settings": {"content_mode": "mixed", "evergreen_share": 34}}, 6) == (2, 4)
+    assert evergreen.split({"settings": {"content_mode": "mixed"}}, 5) == (3, 2)
     assert evergreen.mode_of({"settings": {"content_mode": "nonsense"}}) == "news"
 
 
