@@ -72,7 +72,7 @@ def split(body: dict | None, limit: int) -> tuple[int, int]:
         return 0, limit
     if mode == "evergreen":
         return limit, 0
-    n = round(limit * share_of(body) / 100)
+    n = int(limit * share_of(body) / 100 + 0.5)
     return n, limit - n
 
 
