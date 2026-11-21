@@ -119,7 +119,8 @@ def page(a: dict, image_src: str | None = None, intro: str = "") -> str:
     if a["subtitle"]:
         body.append(f'<p class="subtitle"><em>{e(a["subtitle"])}</em></p>')
     if src:
-        body.append(f'<img src="{e(src)}" alt="{e(img["alt"])}" width="1344" height="768">')
+        alt = (img.get("alt") or "") if img else ""
+        body.append(f'<img src="{e(src)}" alt="{e(alt)}" width="1344" height="768">')
     body.append(a["html"])
     style = ("body{max-width:720px;margin:2rem auto;padding:0 1rem;font:18px/1.6 Georgia,serif;color:#222}"
              "img{width:100%;height:auto}h1{line-height:1.2}.sources{font-size:.85em}")

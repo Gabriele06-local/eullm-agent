@@ -55,6 +55,13 @@ def test_the_package_has_page_text_markdown_image_and_fields(db, tenant):
     assert f'href="/drafts/{did}/package.zip"' in page and 'data-copy="body-html"' in page
 
 
+def test_page_accepts_an_external_image_without_a_cover():
+    a = {"title": "Titolo", "seo_title": "Titolo", "meta_description": "Descrizione", "subtitle": "",
+         "language": "it", "html": "<p>Testo.</p>", "jsonld": [], "image": None}
+    page = delivery.page(a, image_src="https://cdn.example/x.png")
+    assert '<img src="https://cdn.example/x.png" alt="" width="1344" height="768">' in page
+
+
 def test_approving_emails_the_article_with_the_package(db, tenant):
     did, _ = with_image(db, tenant)
     with db.tenant(tenant) as s:
