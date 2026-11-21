@@ -22,6 +22,12 @@ def test_names_and_numbers_stay_the_same_across_languages():
     assert {"meta", "google", "1200"} <= it & en
 
 
+def test_a_possessive_name_is_the_same_entity():
+    assert "starlink" in same_event.entities("Starlink's satellites cut prices")
+    assert "starlink" in same_event.entities("Starlink cuts prices")
+    assert "starlink" in same_event.entities("Starlink’s satellites cut prices")
+
+
 def test_a_report_in_another_language_counts_as_a_second_outlet(db, tenant):
     site_id = setup_site(db, tenant)
     with db.tenant(tenant) as s:
