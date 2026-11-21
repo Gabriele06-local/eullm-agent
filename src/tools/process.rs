@@ -15,6 +15,7 @@ use tokio::io::{AsyncRead, AsyncReadExt};
 use tokio::process::Command;
 
 use crate::config::{SandboxConfig, SandboxMode};
+use crate::util::truncate_utf8;
 
 pub struct ProgramOutput {
     pub status: ExitStatus,
@@ -264,7 +265,8 @@ async fn read_capped<R: AsyncRead + Unpin>(mut r: R, max: usize) -> Result<(Stri
         }
         kept.extend_from_slice(&buf[..n.min(room)]);
     }
-    Ok((String::from_utf8_lossy(&kept).into_owned(), truncated))
+    let text = String::from_utf8_lossy(&kept).into_owned();
+    Ok((truncate_utf8(&text, max).to_string(), truncated))
 }
 
 #[cfg(unix)]
@@ -304,4 +306,23 @@ pub fn format_output(out: &ProgramOutput) -> String {
         result = "(no output)".into();
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn read_capped_stays_within_the_byte_limit() {
+        let invalid = [0xffu8; 100];
+        let (out, truncated) = read_capped(&invalid[..], 10).await.unwrap();
+        assert!(truncated);
+        assert!(out.len() <= 10, "{} bytes", out.len());
+
+        let unicode = "€".repeat(10);
+        let (out, truncated) = read_capped(unicode.as_bytes(), 10).await.unwrap();
+        assert!(truncated);
+        assert!(out.len() <= 10, "{} bytes", out.len());
+        assert!(!out.contains('\u{fffd}'));
+    }
 }
