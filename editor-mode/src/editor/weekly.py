@@ -114,7 +114,8 @@ def collect(s, tenant_id: str, start: date, end: date, tz: ZoneInfo, language: s
                 select(dr.title, dr.language, pub.external_url, pub.published_at, pt.name.label("target"), dr.id)
                 .join(m.drafts, m.drafts.c.id == pub.draft_id)
                 .join(m.publish_targets, pt.id == pub.target_id)
-                .where(pt.site_id == site.id, pub.status == "published", pub.published_at >= t0, pub.published_at < t1)
+                .where(pt.site_id == site.id, pub.status == "published", pub.withdrawn_at.is_(None),
+                       pub.published_at >= t0, pub.published_at < t1)
                 .order_by(pub.published_at)).all():
             if r.id in seen:
                 continue
