@@ -249,6 +249,31 @@ async fn ollama_accepts_a_tool_call_without_arguments() {
 }
 
 #[tokio::test]
+async fn openai_defaults_missing_tool_arguments() {
+    let srv = MockServer::start(|_, _| {
+        http_response(
+            "200 OK",
+            "",
+            r#"{"choices":[{"message":{"role":"assistant","content":null,
+              "tool_calls":[{"id":"c","type":"function","function":{"name":"get_weather"}}]}}],
+              "usage":{"prompt_tokens":1,"completion_tokens":1}}"#,
+        )
+    })
+    .await;
+    let client = OpenAiClient::new(
+        None,
+        "gpt-x",
+        Some(format!("{}/v1", srv.url())),
+        Duration::from_secs(5),
+    );
+    let resp = client
+        .chat(&[Message::user("x")], &weather_tool())
+        .await
+        .unwrap();
+    assert_eq!(resp.tool_calls[0].arguments, json!({}));
+}
+
+#[tokio::test]
 async fn anthropic_tolerates_unknown_blocks_and_reads_usage() {
     let srv = MockServer::start(|_, _| {
         http_response(
