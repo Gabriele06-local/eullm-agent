@@ -89,10 +89,16 @@ struct OpenAiToolCall {
     function: OpenAiFunction,
 }
 
+fn empty_arguments() -> Value {
+    json!({})
+}
+
 #[derive(Deserialize)]
 struct OpenAiFunction {
     name: String,
-    /// Normally a JSON string; some servers send an object.
+    /// Normally a JSON string; some servers send an object or omit it for
+    /// tools that take no parameters.
+    #[serde(default = "empty_arguments")]
     arguments: Value,
 }
 
