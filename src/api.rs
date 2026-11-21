@@ -158,6 +158,11 @@ fn bad_request(msg: impl Into<String>) -> ApiError {
     ApiError(StatusCode::BAD_REQUEST, msg.into())
 }
 
+fn bearer_token(header: &str) -> Option<&str> {
+    let (scheme, token) = header.split_once(' ')?;
+    scheme.eq_ignore_ascii_case("Bearer").then_some(token)
+}
+
 /// The authenticated caller.
 pub struct Caller(ApiToken);
 
@@ -170,7 +175,7 @@ impl FromRequestParts<AppState> for Caller {
             .headers
             .get(header::AUTHORIZATION)
             .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.strip_prefix("Bearer "))
+            .and_then(bearer_token)
             .ok_or_else(unauthorized)?;
         let digest: [u8; 32] = Sha256::digest(token.trim().as_bytes()).into();
         // Compare every byte of every token so timing reveals nothing.
@@ -644,5 +649,14 @@ mod tests {
         std::env::remove_var(var);
         let expected: [u8; 32] = Sha256::digest(b"test-token-0123456789abcdef01234567").into();
         assert_eq!(token.sha256, expected);
+    }
+
+    #[test]
+    fn bearer_scheme_is_case_insensitive() {
+        assert_eq!(bearer_token("Bearer abc"), Some("abc"));
+        assert_eq!(bearer_token("bearer abc"), Some("abc"));
+        assert_eq!(bearer_token("BEARER abc"), Some("abc"));
+        assert_eq!(bearer_token("Basic abc"), None);
+        assert_eq!(bearer_token("Bearer"), None);
     }
 }
