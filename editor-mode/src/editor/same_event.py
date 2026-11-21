@@ -56,7 +56,7 @@ def entities(text: str) -> set[str]:
             if len(digits) >= 2:
                 out.add(digits)
         elif len(w) > 2 and w[:1].isupper() and tokens(w):
-            out.add(w.lower())
+            out.add(w.lower().removesuffix("'s").removesuffix("\u2019s"))
     return out
 
 
