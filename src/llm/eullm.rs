@@ -20,11 +20,22 @@ pub fn client(
 
 /// `http://host:port` → `http://host:port/v1`; an existing `/v1` is kept.
 pub fn v1_url(base_url: &str) -> String {
-    let base = base_url.trim_end_matches('/');
-    if base.ends_with("/v1") {
-        base.to_string()
-    } else {
-        format!("{base}/v1")
+    let Ok(mut url) = reqwest::Url::parse(base_url) else {
+        let base = base_url.trim_end_matches('/');
+        return if base.ends_with("/v1") {
+            base.to_string()
+        } else {
+            format!("{base}/v1")
+        };
+    };
+    let path = url.path().trim_end_matches('/');
+    if !path.ends_with("/v1") {
+        url.set_path(&format!("{path}/v1"));
+    }
+    let out = url.to_string();
+    match out.find(['?', '#']) {
+        Some(i) => format!("{}{}", out[..i].trim_end_matches('/'), &out[i..]),
+        None => out.trim_end_matches('/').to_string(),
     }
 }
 
@@ -46,5 +57,13 @@ mod tests {
             v1_url("http://localhost:11434/v1/"),
             "http://localhost:11434/v1"
         );
+    }
+
+    #[test]
+    fn v1_suffix_keeps_query_and_fragment() {
+        assert_eq!(v1_url("http://host/v1?k=1"), "http://host/v1?k=1");
+        assert_eq!(v1_url("http://host?k=1"), "http://host/v1?k=1");
+        assert_eq!(v1_url("http://host/v1#frag"), "http://host/v1#frag");
+        assert_eq!(v1_url("http://host/api?k=1"), "http://host/api/v1?k=1");
     }
 }
