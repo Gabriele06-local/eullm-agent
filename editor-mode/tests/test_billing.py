@@ -454,6 +454,14 @@ def test_money_formats_negative_amounts():
     assert money(5900) == "59 €" and money(None) == "–"
 
 
+def test_mollie_amounts_round_trip_negative_values():
+    from editor import gateway as gw
+
+    assert gw._amount(-150, "EUR") == {"currency": "EUR", "value": "-1.50"}
+    assert gw._cents({"value": "-1.50"}) == -150
+    assert gw._cents(gw._amount(-1, "EUR")) == -1
+
+
 def test_console_price_refuses_non_finite_numbers():
     from editor.commerce import _cents
 

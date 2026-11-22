@@ -26,14 +26,19 @@ class GatewayError(RuntimeError):
 
 
 def _amount(cents: int, currency: str) -> dict:
-    return {"currency": currency, "value": f"{cents // 100}.{cents % 100:02d}"}
+    value = int(cents)
+    sign = "-" if value < 0 else ""
+    whole, rest = divmod(abs(value), 100)
+    return {"currency": currency, "value": f"{sign}{whole}.{rest:02d}"}
 
 
 def _cents(amount: dict | None) -> int:
     if not amount:
         return 0
-    whole, _, frac = str(amount.get("value", "0")).partition(".")
-    return int(whole) * 100 + int((frac + "00")[:2])
+    raw = str(amount.get("value", "0")).strip()
+    sign = -1 if raw.startswith("-") else 1
+    whole, _, frac = raw.lstrip("+-").partition(".")
+    return sign * (int(whole or 0) * 100 + int((frac + "00")[:2]))
 
 
 class Mollie:
