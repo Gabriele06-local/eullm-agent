@@ -159,15 +159,15 @@ def test_one_site_down_for_a_day_is_suspended_and_tried_again_the_next_day(db, t
     with httpx.Client() as c:
         for _ in range(5):
             assert not collect_tenant(db, tenant, c).outage
-    assert src.maintain_archive(db, archive).suspended == []  # five hours down is not a dead feed
+    assert src.maintain_archive(db, archive, stale_days=365).suspended == []  # five hours down is not a dead feed
     with httpx.Client() as c:
         for _ in range(repo.ERROR_LIMIT - 5):
             collect_tenant(db, tenant, c)
-    rep = src.maintain_archive(db, archive)
+    rep = src.maintain_archive(db, archive, stale_days=365)
     assert [r for _, r in rep.suspended] == [f"{repo.ERROR_LIMIT} failed fetches in a row"]
     respx.get(FEED2).mock(return_value=httpx.Response(200, content=MIRROR))
     with httpx.Client() as c:
-        later = src.maintain_archive(db, archive, c, now=datetime.now(UTC) + timedelta(days=1, hours=1))
+        later = src.maintain_archive(db, archive, c, now=datetime.now(UTC) + timedelta(days=1, hours=1), stale_days=365)
     assert len(later.reactivated) == 1
 
 
