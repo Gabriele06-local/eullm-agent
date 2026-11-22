@@ -25,7 +25,8 @@ def parse_feed(content: bytes) -> list[Item]:
             Item(
                 url=link,
                 title=title,
-                summary=REDDIT_NOISE.sub("", clean_text(e.get("summary")))[:MAX_SUMMARY],
+                summary=(REDDIT_NOISE.sub("", clean_text(e.get("summary")))
+                         or clean_text(" ".join(str(c.get("value") or "") for c in (e.get("content") or []))))[:MAX_SUMMARY],
                 external_id=e.get("id") or link,
                 author=e.get("author"),
                 published_at=from_struct_time(e.get("published_parsed") or e.get("updated_parsed")),

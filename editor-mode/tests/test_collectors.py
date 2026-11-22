@@ -26,6 +26,19 @@ def test_rss_parses_and_skips_untitled():
 
 
 @respx.mock
+def test_rss_self_post_uses_the_content_when_the_summary_is_noise():
+    feed = """<?xml version="1.0"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel><item><title>Self post</title><link>https://reddit.example/r/x/comments/1</link>
+    <description>submitted by /u/x to r/italia [link] [comments]</description>
+    <content:encoded><![CDATA[<p>Il corpo del self-post.</p>]]></content:encoded>
+    </item></channel></rss>"""
+    respx.get("https://reddit.example/.rss").mock(return_value=httpx.Response(200, content=feed))
+    with httpx.Client() as c:
+        res = COLLECTORS["rss"].fetch(c, SourceSpec("rss", "https://reddit.example/.rss"))
+    assert res.items[0].summary == "Il corpo del self-post."
+
+
+@respx.mock
 def test_rss_conditional_get():
     route = respx.get("https://telecom.example/feed").mock(return_value=httpx.Response(304))
     with httpx.Client() as c:
