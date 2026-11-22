@@ -263,11 +263,11 @@ pub async fn build_core(
     ))
 }
 
-/// The model an EuLLM Engine (or another OpenAI-compatible server) at
 fn models_url(base_url: &str) -> String {
     format!("{}/models", crate::llm::eullm::v1_url(base_url))
 }
 
+/// The model an EuLLM Engine (or another OpenAI-compatible server) at
 /// `base_url` offers first, if one answers within two seconds.
 pub async fn detect_engine(base_url: &str) -> Option<String> {
     let client = reqwest::Client::builder()
