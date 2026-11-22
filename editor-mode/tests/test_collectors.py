@@ -70,6 +70,17 @@ def test_github():
     assert res.items[1].summary == ""
 
 
+@respx.mock
+def test_hackernews_comments_use_the_comment_text():
+    respx.get("https://hn.algolia.com/api/v1/search").mock(return_value=httpx.Response(200, json={"hits": [
+        {"objectID": "1", "title": "Commento", "story_title": "Commento",
+         "comment_text": "<p>Il testo del commento.</p>", "created_at_i": 1791446400, "points": 1}]}))
+    with httpx.Client() as c:
+        res = COLLECTORS["hackernews"].fetch(
+            c, SourceSpec("hackernews", "https://hn.algolia.com/api/v1/search", {}))
+    assert res.items[0].summary == "Il testo del commento."
+
+
 def test_hackernews_rejects_non_dict_json():
     with respx.mock() as router:
         router.get("https://hn.algolia.com/api/v1/search").mock(

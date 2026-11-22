@@ -43,7 +43,7 @@ class HackerNewsCollector:
                 Item(
                     url=hit.get("url") or discussion,
                     title=title,
-                    summary=clean_text(hit.get("story_text"))[:2000],
+                    summary=clean_text(hit.get("story_text") or hit.get("comment_text"))[:2000],
                     external_id=f"hn:{oid}",
                     author=hit.get("author"),
                     published_at=datetime.fromtimestamp(ts, tz=UTC) if ts else None,
